@@ -552,10 +552,10 @@ public class XDSbRepositoryServiceInvoker {
             }
         }
 
-        if (assigningAuthorityId.startsWith("urn:oid:")) {
-            result = authorIdentifier + "&amp;" + assigningAuthorityId.split(":")[2] + "&amp;ISO";
+        if (assigningAuthorityId.startsWith(Constants.OID_PREFIX)) {
+            result = authorIdentifier + "&" + assigningAuthorityId.split(":")[2] + "&ISO";
         } else {
-            result = authorIdentifier + "&amp;" + assigningAuthorityId + "&amp;ISO";
+            result = authorIdentifier + "&" + assigningAuthorityId + "&ISO";
         }
 
         return result;
