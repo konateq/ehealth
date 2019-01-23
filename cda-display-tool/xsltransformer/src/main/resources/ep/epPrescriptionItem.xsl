@@ -528,11 +528,9 @@
                                 </xsl:choose>
                             </input>
                             <!--  Substitution help text:-->
-                            <!-- TODO Has to be replaced with a value from the epSOSDisplayLabel value set -->
-                            Mark the checkbox if brand name (when allowed) has been substituted.
-                            <!--<xsl:call-template name="show-displayLabels">
+                            <xsl:call-template name="show-displayLabels">
                                 <xsl:with-param name="code" select="'202'"/>
-                            </xsl:call-template>-->
+                            </xsl:call-template>
                         </td>
                     </tr>
                     <tr>
