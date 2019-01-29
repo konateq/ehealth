@@ -22,11 +22,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.bull.javamelody</groupId>
-            <artifactId>javamelody-core</artifactId>
-            <version>${javamelody.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.lowagie</groupId>
             <artifactId>itext</artifactId>
             <version>2.1.7</version>
@@ -49,11 +44,6 @@
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>1.4.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jrobin</groupId>
-            <artifactId>jrobin</artifactId>
-            <version>1.5.9</version>
         </dependency>
         <dependency>
             <groupId>${openncp.policy-manager.groupId}</groupId>
@@ -261,8 +251,19 @@
                 <enable.monitoring.start/>
                 <enable.monitoring.stop/>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>net.bull.javamelody</groupId>
+                    <artifactId>javamelody-core</artifactId>
+                    <version>${javamelody.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.jrobin</groupId>
+                    <artifactId>jrobin</artifactId>
+                    <version>1.5.9</version>
+                </dependency>
+            </dependencies>
         </profile>
-
         <profile>
             <!-- This profile bundles the mock National Connector implementation -->
             <id>national-connector-mock</id>
