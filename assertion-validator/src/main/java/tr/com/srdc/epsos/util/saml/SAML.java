@@ -257,8 +257,8 @@ public class SAML {
         assertion.setSubject(subject);
 
         Conditions conditions = create(Conditions.class, Conditions.DEFAULT_ELEMENT_NAME);
-        conditions.setNotBefore(nowUTC.toDateTime().minusSeconds(10));
-        conditions.setNotOnOrAfter(nowUTC.toDateTime().plusMinutes(30));
+        conditions.setNotBefore(nowUTC.toDateTime());
+        conditions.setNotOnOrAfter(nowUTC.toDateTime().plusMinutes(4));
         assertion.setConditions(conditions);
 
         return assertion;

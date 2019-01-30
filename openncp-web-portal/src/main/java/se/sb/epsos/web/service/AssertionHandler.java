@@ -108,8 +108,8 @@ public class AssertionHandler implements Serializable {
 
         Conditions conditions = create(Conditions.class, Conditions.DEFAULT_ELEMENT_NAME);
 
-        conditions.setNotBefore(nowUTC.toDateTime().minusMinutes(1));
-        conditions.setNotOnOrAfter(nowUTC.toDateTime().plusHours(2));
+        conditions.setNotBefore(nowUTC.toDateTime());
+        conditions.setNotOnOrAfter(nowUTC.toDateTime().plusHours(4));
         assertion.setConditions(conditions);
 
         String countryCode = ConfigurationManagerFactory.getConfigurationManager().getProperty("COUNTRY_CODE");

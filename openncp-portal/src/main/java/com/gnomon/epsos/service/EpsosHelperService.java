@@ -1417,9 +1417,9 @@ public class EpsosHelperService {
             // Create and add conditions
             Conditions conditions = create(Conditions.class, Conditions.DEFAULT_ELEMENT_NAME);
 
-            conditions.setNotBefore(nowUTC.toDateTime().minusMinutes(1));
+            conditions.setNotBefore(nowUTC.toDateTime());
             // According to Spec
-            conditions.setNotOnOrAfter(nowUTC.toDateTime().plusHours(2));
+            conditions.setNotOnOrAfter(nowUTC.toDateTime().plusHours(4));
             assertion.setConditions(conditions);
 
             Issuer issuer = new IssuerBuilder().buildObject();
