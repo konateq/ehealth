@@ -1,7 +1,6 @@
 package org.openhealthtools.openatna.jaxb21;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.xml.security.utils.XMLUtils;
 import org.openhealthtools.openatna.anom.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +55,6 @@ public class JaxbIOFactory implements AtnaIOFactory {
             if (doc.getDocumentElement().getTagName().equalsIgnoreCase("IHEYr4")) {
                 return createProv(doc);
             }
-            if (!StringUtils.equals(System.getProperty("server.ehealth.mode"), "PROD")) {
-                loggerClinical.debug("Read Input Document: '{}'", XMLUtils.getFullTextChildrenFromElement(doc.getDocumentElement()));
-            }
             Unmarshaller u = jaxbContext.createUnmarshaller();
             AuditMessage a = (AuditMessage) u.unmarshal(doc);
             AtnaMessage am = createMessage(a);
@@ -69,10 +65,8 @@ public class JaxbIOFactory implements AtnaIOFactory {
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
                 marshaller.marshal(a, bout);
                 if (!StringUtils.equals(System.getProperty("server.ehealth.mode"), "PROD")) {
-                    loggerClinical.info("\n{}", new String(bout.toByteArray()));
-                    if (loggerClinical.isDebugEnabled() && am != null) {
-                        loggerClinical.debug("Event Outcome: '{}'", am.getEventOutcome());
-                    }
+
+                    loggerClinical.debug("Event Outcome: '{}'", am.getEventOutcome());
                 }
             }
 
