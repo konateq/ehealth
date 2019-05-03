@@ -11,6 +11,7 @@
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -47,7 +48,10 @@ public class RGBSOAPHandler implements SOAPHandler<SOAPMessageContext> {
 
 	@Override
 	public void close(MessageContext context) {
-		context.clear();
+		Iterator it = context.entrySet().iterator();
+		while (it.hasNext()) {
+			it.remove();
+		}
 	}
 
 	@Override
