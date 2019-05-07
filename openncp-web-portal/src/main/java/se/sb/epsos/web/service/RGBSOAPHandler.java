@@ -48,10 +48,7 @@ public class RGBSOAPHandler implements SOAPHandler<SOAPMessageContext> {
 
 	@Override
 	public void close(MessageContext context) {
-		Iterator it = context.entrySet().iterator();
-		while (it.hasNext()) {
-			it.remove();
-		}
+		context.entrySet().clear();
 	}
 
 	@Override
