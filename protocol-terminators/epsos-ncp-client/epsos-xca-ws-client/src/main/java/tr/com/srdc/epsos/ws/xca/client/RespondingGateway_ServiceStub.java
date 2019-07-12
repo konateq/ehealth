@@ -636,19 +636,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                     loggerClinical.debug("{}\n{}", XCAConstants.LOG.OUTGOING_XCA_RETRIEVE_MESSAGE, logRequestMsg);
                 }
                 logRequestBody = XMLUtil.prettyPrint(XMLUtils.toDOM(env.getBody().getFirstElement()));
-                // NRO
-//                try {
-//                    EvidenceUtils.createEvidenceREMNRO(envCanonicalized,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                            EventType.epsosOrderServiceRetrieve.getCode(),
-//                            new DateTime(),
-//                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                            "NCPB_XCA_RETRIEVE_REQ");
-//                } catch (Exception e) {
-//                    LOGGER.error(ExceptionUtils.getStackTrace(e));
-//                }
+                // Evidence NRO considered as optional.
+
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -717,7 +706,6 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                     to = new SOAP12HeaderBlockImpl("To", ns2, soapFactory);
                     node3 = newSoapFactory.createOMText(endpoint);
                     to.addChild(node3);
-//                    to.addAttribute(att2);
 
                     /* There's no way to remove a single header (and WS-Addressing specification forbids the existence of
                     more than 1 addressing:To header), so we need to remove all the old headers and add them again to _serviceClient
@@ -779,21 +767,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                     getEnvelopeNamespaces(returnEnv));
             retrieveDocumentSetResponse = (RetrieveDocumentSetResponseType) object;
 
+            // Evidence NRR considered as optional
             LOGGER.info("XCA Retrieve Request received. EVIDENCE NRR");
-
-//            // NRR
-//            try {
-//                EvidenceUtils.createEvidenceREMNRR(XMLUtil.prettyPrint(XMLUtils.toDOM(env)),
-//                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                        tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                        EventType.epsosOrderServiceRetrieve.getCode(),
-//                        new DateTime(),
-//                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                        "NCPB_XCA_RETRIEVE_RES");
-//            } catch (Exception e) {
-//                LOGGER.error(ExceptionUtils.getStackTrace(e));
-//            }
 
             //  Invoke eADC
             try {

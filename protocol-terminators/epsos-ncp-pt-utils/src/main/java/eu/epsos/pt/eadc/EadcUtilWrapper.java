@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
 /**
@@ -192,15 +192,18 @@ public class EadcUtilWrapper {
     }
 
     /**
-     * Utility method to convert a specific date to the RFC 2822 format.
+     * Utility method to convert a specific date to the RFC-2822 format.
      *
      * @param date the date object to be converted
      * @return the RFC 2822 string representation of the date
      */
     private static String getDateAsRFC822String(Date date) {
 
-        // Date format according to RFC 2822 specifications.
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.ROOT);
+        TimeZone timeZone = TimeZone.getTimeZone("UTC");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z");
+        dateFormat.setTimeZone(timeZone);
+
+        // Date format according to RFC-2822 specifications.
         return dateFormat.format(date);
     }
 
