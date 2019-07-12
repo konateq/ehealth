@@ -139,7 +139,7 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
             counter = 0;
         }
         counter++;
-        return java.lang.Long.toString(System.currentTimeMillis()) + "_" + counter;
+        return System.currentTimeMillis() + "_" + counter;
     }
 
     public void setAddr(String addr) {
@@ -512,8 +512,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                         java.lang.Class messageClass = java.lang.Class.forName(messageClassName);
                         java.lang.Object messageObject = fromOM(faultElt, messageClass, null);
                         java.lang.reflect.Method m = exceptionClass.getMethod("setFaultMessage",
-                                new java.lang.Class[]{messageClass});
-                        m.invoke(ex, new java.lang.Object[]{messageObject});
+                                messageClass);
+                        m.invoke(ex, messageObject);
 
                         throw new java.rmi.RemoteException(ex.getMessage(), ex);
 
@@ -795,9 +795,7 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
 //                LOGGER.error(ExceptionUtils.getStackTrace(e));
 //            }
 
-            /*
-             * Invoque eADC
-             */
+            //  Invoke eADC
             try {
                 Document cda = null;
                 if (retrieveDocumentSetResponse.getDocumentResponse() != null && !retrieveDocumentSetResponse.getDocumentResponse().isEmpty()) {
@@ -805,15 +803,9 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                     cda = TMServices.byteToDocument(cdaBytes);
                 }
 
-                EadcUtilWrapper.invokeEadc(_messageContext, // Request message context
-                        _returnMessageContext, // Response message context
-                        this._getServiceClient(), //Service Client
-                        cda, // CDA document
-                        transactionStartTime, // Transaction Start Time
-                        transactionEndTime, // Transaction End Time
-                        this.countryCode, // Country A ISO Code
-                        EadcEntry.DsTypes.XCA, // Data source type
-                        Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY); // Transaction direction
+                EadcUtilWrapper.invokeEadc(_messageContext, _returnMessageContext, this._getServiceClient(),
+                        cda, transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.XCA,
+                        Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY);
             } catch (Exception ex) {
                 LOGGER.error("EADC INVOCATION FAILED!", ex);
             }
@@ -847,8 +839,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                         java.lang.Class messageClass = java.lang.Class.forName(messageClassName);
                         java.lang.Object messageObject = fromOM(faultElt, messageClass, null);
                         java.lang.reflect.Method m = exceptionClass.getMethod("setFaultMessage",
-                                new java.lang.Class[]{messageClass});
-                        m.invoke(ex, new java.lang.Object[]{messageObject});
+                                messageClass);
+                        m.invoke(ex, messageObject);
 
                         throw new java.rmi.RemoteException(ex.getMessage(), ex);
 

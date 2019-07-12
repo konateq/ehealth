@@ -9,6 +9,8 @@ import eu.epsos.validation.datamodel.common.NcpSide;
 import eu.europa.ec.sante.ehdsi.eadc.ServiceType;
 import eu.europa.ec.sante.ehdsi.gazelle.validation.OpenNCPValidation;
 import eu.europa.ec.sante.ehdsi.openncp.audit.AuditServiceFactory;
+import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.apache.axiom.om.*;
 import org.apache.axiom.om.impl.builder.SAXOMBuilder;
 import org.apache.axiom.soap.SOAPEnvelope;
@@ -21,9 +23,11 @@ import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.axis2.util.JavaUtils;
 import org.apache.axis2.util.XMLUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.XMLUtil;
 import tr.com.srdc.epsos.util.http.HTTPUtil;
@@ -47,8 +51,6 @@ import java.util.UUID;
 public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XDR_ServiceMessageReceiverInOut.class);
-    private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
-
     private static final javax.xml.bind.JAXBContext wsContext;
 
     static {
@@ -71,6 +73,8 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         }
     }
 
+    private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
+
     private String getIPofSender(MessageContext messageContext) {
 
         return (String) messageContext.getProperty(MessageContext.REMOTE_ADDR);
@@ -89,7 +93,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
         try {
             Date startTime = new Date();
-
+            Document cda = null;
             // get the implementation class for the Web Service
             Object obj = getTheImplementationObject(msgContext);
 
@@ -133,13 +137,15 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateXDRMessage(requestMessage, NcpSide.NCP_A);
                     }
-                    oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType registryResponse;
-                    ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType wrappedParam = (ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType) fromOM(
-                            msgContext.getEnvelope().getBody().getFirstElement(),
-                            ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.class,
+
+                    ProvideAndRegisterDocumentSetRequestType wrappedParam = (ProvideAndRegisterDocumentSetRequestType) fromOM(
+                            msgContext.getEnvelope().getBody().getFirstElement(), ProvideAndRegisterDocumentSetRequestType.class,
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
-                    registryResponse = skel.documentRecipient_ProvideAndRegisterDocumentSetB(wrappedParam, sh, eventLog);
+                    if (!wrappedParam.getDocument().isEmpty() && ArrayUtils.isNotEmpty(wrappedParam.getDocument().get(0).getValue())) {
+                        cda = EadcUtilWrapper.convertToDomDocument(wrappedParam.getDocument().get(0).getValue());
+                    }
+                    RegistryResponseType registryResponse = skel.documentRecipient_ProvideAndRegisterDocumentSetB(wrappedParam, sh, eventLog);
 
                     envelope = toEnvelope(getSOAPFactory(msgContext), registryResponse, false);
 
@@ -171,7 +177,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                 //TODO: Review EADC specification for INBOUND/OUTBOUND [EHNCP-829]
                 try {
-                    EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, null, startTime,
+                    EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, cda, startTime,
                             endTime, Constants.COUNTRY_CODE, EadcEntry.DsTypes.XDR, EadcUtil.Direction.INBOUND, ServiceType.DOCUMENT_EXCHANGED_RESPONSE);
                 } catch (Exception e) {
                     LOGGER.error("EADC INVOCATION FAILED: '{}'", e.getMessage(), e);

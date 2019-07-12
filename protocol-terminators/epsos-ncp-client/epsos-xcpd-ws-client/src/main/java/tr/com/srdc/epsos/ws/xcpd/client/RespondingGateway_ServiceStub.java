@@ -63,7 +63,7 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
     private static int counter = 0;
 
     static {
-        LOGGER.debug("Loading the WS-Security init libraries in RespondingGateway_ServiceStub xcpd");
+        LOGGER.debug("Loading the WS-Security init libraries in RespondingGateway_ServiceStub XCPD");
         org.apache.xml.security.Init.init();
     }
 
@@ -113,8 +113,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
 
         _serviceClient.getOptions().setTo(new org.apache.axis2.addressing.EndpointReference(targetEndpoint));
         _serviceClient.getOptions().setUseSeparateListener(useSeparateListener);
-
-        _serviceClient.getOptions().setTimeOutInMilliSeconds(180000); //Wait time after which a client times out in a blocking scenario: 3 minutes
+        //  Wait time after which a client times out in a blocking scenario: 3 minutes
+        _serviceClient.getOptions().setTimeOutInMilliSeconds(180000);
 
         // Set the soap version
         _serviceClient.getOptions().setSoapVersionURI(org.apache.axiom.soap.SOAP12Constants.SOAP_ENVELOPE_NAMESPACE_URI);
@@ -144,7 +144,7 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
             counter = 0;
         }
         counter++;
-        return Long.toString(System.currentTimeMillis()) + "_" + counter;
+        return System.currentTimeMillis() + "_" + counter;
     }
 
     public void setCountryCode(String countryCode) {
@@ -184,7 +184,7 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
         LOGGER.info("respondingGateway_PRPA_IN201305UV02('{}', '{}'", pRPA_IN201305UV02.getId().getRoot(), idAssertion.getID());
 
         try {
-            // TMP
+
             // XCPD request start time
             long start = System.currentTimeMillis();
 
@@ -249,31 +249,16 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                 }
                 logRequestBody = XMLUtil.prettyPrint(XMLUtils.toDOM(env.getBody().getFirstElement()));
 
-//                LOGGER.info("XCPD Request sent. EVIDENCE NRO");
-//                NRO
-//                try {
-//                    EvidenceUtils.createEvidenceREMNRO(envCanonicalized,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                            EventType.epsosIdentificationServiceFindIdentityByTraits.getCode(),
-//                            new DateTime(),
-//                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                            "NCPB_XCPD_REQ");
-//                } catch (Exception e) {
-//                    LOGGER.error(ExceptionUtils.getStackTrace(e));
-//                }
-
+                //  Invoke NRO - Considered as optional.
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
 
-            // TMP
             // XCPD response end time
             long end = System.currentTimeMillis();
             LOGGER.info("XCPD REQUEST-RESPONSE TIME: '{}'", (end - start) / 1000.0);
 
-            // TMP
+
             // Validation start time
             start = System.currentTimeMillis();
 
@@ -281,12 +266,12 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validatePatientDemographicRequest(logRequestBody, NcpSide.NCP_B);
             }
-            // TMP
+
             // Transaction end time
             end = System.currentTimeMillis();
             LOGGER.info("XCPD VALIDATION REQ TIME: '{}'", (end - start) / 1000.0);
 
-            // TMP
+
             // Transaction start time
             start = System.currentTimeMillis();
 
@@ -354,12 +339,12 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
             SOAPEnvelope _returnEnv = _returnMessageContext.getEnvelope();
             transactionEndTime = new Date();
 
-            // TMP
+
             // Transaction end time
             end = System.currentTimeMillis();
             LOGGER.info("XCPD TRANSACTION TIME: '{}'", (end - start) / 1000.0);
 
-            // TMP
+
             // Validation start time
             start = System.currentTimeMillis();
 
@@ -381,62 +366,38 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
             }
             Object object = fromOM(_returnEnv.getBody().getFirstElement(), PRPAIN201306UV02.class, getEnvelopeNamespaces(_returnEnv));
 
-            // TMP
+
             // Validation end time
             end = System.currentTimeMillis();
-            LOGGER.info("XCPD VALIDATION RES TIME: '{}'", (end - start) / 1000.0);
+            LOGGER.info("XCPD VALIDATION RESPONSE TIME: '{}'", (end - start) / 1000.0);
 
-            // TMP
+
             // eADC start time
             start = System.currentTimeMillis();
 
-            /*
-             * Invoke NRR
-             */
-//            LOGGER.info("XCPD Response received. EVIDENCE NRR");
-//            // NRR
-//            try {
-//                EvidenceUtils.createEvidenceREMNRR(XMLUtil.prettyPrint(XMLUtils.toDOM(env)),
-//                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                        tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                        EventType.epsosIdentificationServiceFindIdentityByTraits.getCode(),
-//                        new DateTime(),
-//                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                        "NCPB_XCPD_RES");
-//            } catch (Exception e) {
-//                LOGGER.error(ExceptionUtils.getStackTrace(e));
-//            }
-            /*
-             * Invoque eADC
-             */
+            //  Invoke NRR - Considered as optional.
+
+            //  Invoque eADC
             try {
-                EadcUtilWrapper.invokeEadc(messageContext, // Request message context
-                        _returnMessageContext, // Response message context
-                        this._getServiceClient(), //Service Client
-                        null, // CDA document
-                        transactionStartTime, // Transaction Start Time
-                        transactionEndTime, // Transaction End Time
-                        this.countryCode, // Country A ISO Code
-                        EadcEntry.DsTypes.XCPD, // Data source type
-                        EadcUtil.Direction.OUTBOUND, ServiceType.PATIENT_IDENTIFICATION_QUERY); // Transaction direction
+                EadcUtilWrapper.invokeEadc(messageContext, _returnMessageContext, this._getServiceClient(), null,
+                        transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.XCPD, EadcUtil.Direction.OUTBOUND,
+                        ServiceType.PATIENT_IDENTIFICATION_QUERY);
             } catch (Exception ex) {
                 LOGGER.error("EADC INVOCATION FAILED: '{}'", ex.getMessage(), ex);
             }
 
-            // TMP
             // eADC end time
             end = System.currentTimeMillis();
             LOGGER.info("XCPD eADC TIME: '{}'", (end - start) / 1000.0);
 
-            // TMP
+
             // Audit start time
             start = System.currentTimeMillis();
 
             // eventLog
             EventLog eventLog = createAndSendEventLog(pRPA_IN201305UV02, (org.hl7.v3.PRPAIN201306UV02) object, messageContext,
                     _returnEnv, env, idAssertion, this._getServiceClient().getOptions().getTo().getAddress());
-            LOGGER.info("****** EventLog: '{}'", eventLog.getEventType());
+            LOGGER.info("[Audit] EventLog: '{}'", eventLog.getEventType());
 
             try {
                 LOGGER.info("SOAP MESSAGE IS: '{}'", XMLUtils.toDOM(_returnEnv));
@@ -451,8 +412,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
             return (org.hl7.v3.PRPAIN201306UV02) object;
 
         } catch (AxisFault f) {
-//            // TODO A.R. Audit log SOAP Fault is still missing
-//            LOGGER.error(f.getLocalizedMessage(), f);
+            // TODO A.R. Audit log SOAP Fault is still missing
+            // LOGGER.error(f.getLocalizedMessage(), f);
 
             OMElement faultElt = f.getDetail();
 
@@ -469,8 +430,8 @@ public class RespondingGateway_ServiceStub extends org.apache.axis2.client.Stub 
                         String messageClassName = (String) faultMessageMap.get(faultElt.getQName());
                         Class messageClass = Class.forName(messageClassName);
                         Object messageObject = fromOM(faultElt, messageClass, null);
-                        Method m = exceptionClass.getMethod("setFaultMessage", new Class[]{messageClass});
-                        m.invoke(ex, new Object[]{messageObject});
+                        Method m = exceptionClass.getMethod("setFaultMessage", messageClass);
+                        m.invoke(ex, messageObject);
 
                         throw new java.rmi.RemoteException(ex.getMessage(), ex);
 

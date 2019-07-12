@@ -35,6 +35,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -105,15 +106,14 @@ public class XMLUtil {
      */
     public static Document parseContent(String content) throws ParserConfigurationException, SAXException, IOException {
 
-        LOGGER.debug("parseContent(): \n'{}'", content);
-        Document doc;
+        LOGGER.debug("XMLUtil method parse String content: \n'{}'", content);
+
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
         DocumentBuilder docBuilder = dbf.newDocumentBuilder();
         StringReader lReader = new StringReader(content);
         InputSource inputSource = new InputSource(lReader);
-        doc = docBuilder.parse(inputSource);
-        return doc;
+        return docBuilder.parse(inputSource);
     }
 
     public static String documentToString(Document doc) throws TransformerException {
@@ -202,7 +202,7 @@ public class XMLUtil {
         transformer.setOutputProperty(OutputKeys.METHOD, "xml");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.transform(new DOMSource(doc), new StreamResult(new OutputStreamWriter(out, "UTF-8")));
+        transformer.transform(new DOMSource(doc), new StreamResult(new OutputStreamWriter(out, StandardCharsets.UTF_8)));
     }
 
     /**

@@ -30,6 +30,7 @@ import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import tr.com.srdc.epsos.util.XMLUtil;
 import tr.com.srdc.epsos.util.http.HTTPUtil;
 
@@ -95,10 +96,10 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
     public void invokeBusinessLogic(MessageContext msgContext, MessageContext newMsgContext) throws AxisFault {
 
-        ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = null;
         ServiceType serviceType;
         try {
             Date startTime = new Date();
+            Document cda = null;
             // get the implementation class for the Web Service
             Object obj = getTheImplementationObject(msgContext);
 
@@ -179,10 +180,8 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                         OpenNCPValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A);
                     }
 
-                    ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType retrieveDocumentSetResponse3 = null;
-                    ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType wrappedParam = (ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType) fromOM(
-                            msgContext.getEnvelope().getBody().getFirstElement(),
-                            ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.class,
+                    RetrieveDocumentSetRequestType wrappedParam = (RetrieveDocumentSetRequestType) fromOM(
+                            msgContext.getEnvelope().getBody().getFirstElement(), RetrieveDocumentSetRequestType.class,
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
                     OMFactory factory = OMAbstractFactory.getOMFactory();
@@ -212,7 +211,11 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A);
                     }
+                    // eADC parameters initialization
                     serviceType = ServiceType.DOCUMENT_EXCHANGED_RESPONSE;
+                    RetrieveDocumentSetResponseType responseType = (RetrieveDocumentSetResponseType) fromOM(
+                            omElement, RetrieveDocumentSetResponseType.class, null);
+                    cda = EadcUtilWrapper.getCDA(responseType);
 
                 } else {
                     LOGGER.error("Method not found: '{}'", methodName);
@@ -226,7 +229,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                 //TODO: Review EADC specification for INBOUND/OUTBOUND [EHNCP-829]
                 try {
                     EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null,
-                            EadcUtilWrapper.getCDA(retrieveDocumentSetResponseType), startTime, endTime, tr.com.srdc.epsos.util.Constants.COUNTRY_CODE,
+                            cda, startTime, endTime, tr.com.srdc.epsos.util.Constants.COUNTRY_CODE,
                             EadcEntry.DsTypes.XCA, EadcUtil.Direction.INBOUND, serviceType);
 
                 } catch (Exception e) {

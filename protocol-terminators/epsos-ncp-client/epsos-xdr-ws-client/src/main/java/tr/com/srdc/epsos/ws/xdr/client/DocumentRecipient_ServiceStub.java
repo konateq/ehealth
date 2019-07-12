@@ -25,23 +25,31 @@ import org.apache.axiom.soap.impl.llom.soap12.SOAP12HeaderBlockImpl;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.Constants;
 import org.apache.axis2.context.ConfigurationContext;
+import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.description.AxisOperation;
 import org.apache.axis2.description.AxisService;
 import org.apache.axis2.description.OutInAxisOperation;
 import org.apache.axis2.util.XMLUtils;
+import org.apache.axis2.wsdl.WSDLConstants;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.opensaml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 import tr.com.srdc.epsos.util.XMLUtil;
 
 import javax.activation.DataHandler;
 import javax.xml.bind.*;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -140,7 +148,7 @@ public class DocumentRecipient_ServiceStub extends org.apache.axis2.client.Stub 
             counter = 0;    // reset the counter if it is greater than 99999
         }
         counter++;
-        return Long.toString(System.currentTimeMillis()) + "_" + counter;
+        return System.currentTimeMillis() + "_" + counter;
     }
 
     public void setCountryCode(String countryCode) {
@@ -338,24 +346,28 @@ public class DocumentRecipient_ServiceStub extends org.apache.axis2.client.Stub 
                 }
             }
 
-            org.apache.axis2.context.MessageContext _returnMessageContext;
-            _returnMessageContext = _operationClient.getMessageContext(org.apache.axis2.wsdl.WSDLConstants.MESSAGE_LABEL_IN_VALUE);
+            MessageContext _returnMessageContext = _operationClient.getMessageContext(WSDLConstants.MESSAGE_LABEL_IN_VALUE);
             returnEnv = _returnMessageContext.getEnvelope();
             transactionEndTime = new Date();
 
-            /*
-             * Invoque eADC
-             */
+            //  Invoke eADC
+            Document cda = null;
+            if (!provideAndRegisterDocumentSetRequest.getDocument().isEmpty()
+                    && ArrayUtils.isNotEmpty(provideAndRegisterDocumentSetRequest.getDocument().get(0).getValue())) {
+
+                String xmlStr = new String(provideAndRegisterDocumentSetRequest.getDocument().get(0).getValue(), StandardCharsets.UTF_8);
+                try {
+                    cda = XMLUtil.parseContent(xmlStr);
+                } catch (ParserConfigurationException | SAXException | IOException e) {
+                    LOGGER.error("Exception: '{}'", e.getMessage(), e);
+                }
+            }
+
             try {
-                EadcUtilWrapper.invokeEadc(_messageContext, // Request message context
-                        _returnMessageContext, // Response message context
-                        this._getServiceClient(), //Service Client
-                        null, // CDA document
-                        transactionStartTime, // Transaction Start Time
-                        transactionEndTime, // Transaction End Time
-                        this.countryCode, // Country A ISO Code
-                        EadcEntry.DsTypes.XDR, // Data source type
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY); // Transaction direction
+
+                EadcUtilWrapper.invokeEadc(_messageContext, _returnMessageContext, this._getServiceClient(), cda,
+                        transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.XDR,
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY);
             } catch (Exception ex) {
                 LOGGER.error("EADC INVOCATION FAILED: '{}'", ex.getMessage(), ex);
             }
@@ -417,8 +429,8 @@ public class DocumentRecipient_ServiceStub extends org.apache.axis2.client.Stub 
                         String messageClassName = (String) faultMessageMap.get(faultElt.getQName());
                         Class messageClass = Class.forName(messageClassName);
                         Object messageObject = fromOM(faultElt, messageClass);
-                        java.lang.reflect.Method m = exceptionClass.getMethod("setFaultMessage", new Class[]{messageClass});
-                        m.invoke(ex, new Object[]{messageObject});
+                        java.lang.reflect.Method m = exceptionClass.getMethod("setFaultMessage", messageClass);
+                        m.invoke(ex, messageObject);
 
                         throw new java.rmi.RemoteException(ex.getMessage(), ex);
 

@@ -235,7 +235,7 @@ public class EadcUtilWrapper {
      * @throws SAXException
      * @throws IOException
      */
-    private static Document convertToDomDocument(byte[] documentData) throws ParserConfigurationException, SAXException, IOException {
+    public static Document convertToDomDocument(byte[] documentData) throws ParserConfigurationException, SAXException, IOException {
 
         Document xmlDocument;
         String xmlStr = new String(documentData, StandardCharsets.UTF_8);
