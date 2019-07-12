@@ -62,9 +62,9 @@
                                         </label>
                                         <div class="collapsible-content">
                                             <div class="content-inner">
-                                                <xsl:apply-templates
-                                                        select="/n1:ClinicalDocument/n1:component/n1:structuredBody/n1:component/n1:section/n1:code[@code='29762-2']/../n1:text/*"/>
-                                                <br/>
+                                                <xsl:call-template name="show-narrative">
+                                                    <xsl:with-param name="node" select="/n1:ClinicalDocument/n1:component/n1:structuredBody/n1:component/n1:section/n1:code[@code='29762-2']/../n1:text"/>
+                                                </xsl:call-template>
                                             </div>
                                         </div>
                                     </div>

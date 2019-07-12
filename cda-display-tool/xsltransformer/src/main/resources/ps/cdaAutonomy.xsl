@@ -47,8 +47,9 @@
                     <xsl:value-of select="$autonomySectionTitle"/>
                 </span>
                 <br/>
-                <xsl:apply-templates
-                        select="/n1:ClinicalDocument/n1:component/n1:structuredBody/n1:component/n1:section/n1:code[@code='47420-5']/../n1:text/*"/>
+                <xsl:call-template name="show-narrative">
+                    <xsl:with-param name="node" select="/n1:ClinicalDocument/n1:component/n1:structuredBody/n1:component/n1:section/n1:code[@code='47420-5']/../n1:text"/>
+                </xsl:call-template>
             </xsl:when>
         </xsl:choose>
 
