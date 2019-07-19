@@ -14,7 +14,7 @@ Detailed release notes: https://ec.europa.eu/cefdigital/wiki/x/hAkIBQ
 - [EHNCP-1637] Adding configuration to enable/disable Javamelody Monitoring.
 
 ### Changed
-- [EHNCP-1686]	Canonicalization method algorithm is not correct according eHDSI Specification.
+- [EHNCP-1686] Canonicalization method algorithm is not correct according eHDSI Specification.
 - [EHNCP-1680] Incoherent OIDs for pn-oid.xml.
 - [EHNCP-1677] eHDSI Gazelle Validators re-factoring.
 - [EHNCP-1676] Wrong appender-ref in all logback.xml.
