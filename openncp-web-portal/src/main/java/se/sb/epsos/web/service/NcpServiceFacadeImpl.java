@@ -354,7 +354,7 @@ public class NcpServiceFacadeImpl implements NcpServiceFacade {
         String cdaIdExtension = Long.toString(System.currentTimeMillis());
         String pdfIdExtension = Long.toString(System.currentTimeMillis());
         String dispensationDocumentCacheKey = dispensation.getDoc().getUuid();
-        dispensation.getDoc().setUuid(oidRoot + "." + cdaIdExtension);
+        dispensation.getDoc().setUuid(oidRoot + "^" + cdaIdExtension);
         try {
             bytes = getDispensationDocument(dispensation, user, cdaIdExtension, pdfIdExtension);
         } catch (Exception e) {
