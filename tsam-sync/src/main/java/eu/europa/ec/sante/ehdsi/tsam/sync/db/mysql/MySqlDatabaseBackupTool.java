@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Component
@@ -32,7 +32,10 @@ public class MySqlDatabaseBackupTool implements DatabaseBackupTool {
 
     @Override
     public boolean backupDatabase() {
-        String output = database + "." + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE) + ".sql";
+
+        String date = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
+        date = StringUtils.replace(date, ":", "-");
+        String output = database + "." + date + ".sql";
 
         StringBuilder command =
                 new StringBuilder("mysqldump --user=" + username + " --password=" + password + " --result-file=" + output);

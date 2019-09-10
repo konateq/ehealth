@@ -32,9 +32,11 @@ import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author karkaletsis
@@ -478,11 +480,10 @@ public class EvidenceUtils {
      */
     private static String getDocumentTitle(String uuid, String title, String evidenceType) {
 
-        TimeZone tz = TimeZone.getTimeZone("UTC");
         //ISO 8601 format: 2017-11-25T10:59:53Z
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        df.setTimeZone(tz);
-        return df.format(new Date()) + "_" + evidenceType + "_" + (StringUtils.isNotBlank(uuid) ? uuid : "NO-UUID") + "_" + title;
+        String date = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
+        date = StringUtils.replace(date, ":", "-");
+        return date + "_" + evidenceType + "_" + (StringUtils.isNotBlank(uuid) ? uuid : "NO-UUID") + "_" + title;
     }
 
     /**
