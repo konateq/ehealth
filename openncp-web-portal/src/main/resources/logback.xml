@@ -2,7 +2,7 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %-5level %logger{36} - %msg%n</pattern>
         </layout>
     </appender>
 
@@ -10,7 +10,7 @@
         <file>${catalina.base}/logs/openncp-web-portal.log</file>
         <append>true</append>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -18,7 +18,7 @@
         <file>${catalina.base}/logs/openncp-web-portal-clinical.log</file>
         <append>true</append>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%class{0}.%M\(%line\) - %msg%n</pattern>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %-5level %logger{36}.%class{0}.%M\(%line\) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -34,6 +34,10 @@
     <!--<appender-ref ref="FILE_CLINICAL"/>-->
     <!--</logger>-->
     <!-- End Spring Web Service Logging-->
+
+    <logger name="org.apache.axis2" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
 
     <logger name="eu" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
