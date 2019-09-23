@@ -11,7 +11,6 @@ import java.net.URL;
 public class NcpClientConnector {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(NcpClientConnector.class);
-    private static ClientConnectorServiceService service;
 
     private NcpClientConnector() {
     }
@@ -20,10 +19,11 @@ public class NcpClientConnector {
 
         String namespaceUrl = "http://cc.pt.epsos.eu";
         String clientConnectorWsdlUrl = System.getProperty("client-connector-wsdl-url");
-        LOGGER.debug("client-connector-wsdl-url: '{}'", clientConnectorWsdlUrl);
+        LOGGER.info("[Portal] Initializing client-connector-wsdl-url: '{}'", clientConnectorWsdlUrl);
         if (clientConnectorWsdlUrl == null) {
             throw new IllegalArgumentException("client-connector-wsdl-url is not set");
         }
+        ClientConnectorServiceService service;
         try {
             service = new ClientConnectorServiceService(new URL(clientConnectorWsdlUrl), new QName(namespaceUrl, "ClientConnectorService"));
         } catch (MalformedURLException ex) {

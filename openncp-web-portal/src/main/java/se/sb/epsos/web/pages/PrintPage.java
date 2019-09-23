@@ -57,7 +57,7 @@ public class PrintPage extends BasePage {
             backButtonText = getString("dispensation.modelwindow.back");
         } else {
             backButtonText = getString("form.button.back");
-            if (!document.getError().isEmpty() && FeatureFlagsManager.check(Feature.SHOW_PARTIALERRORMESSAGES)) {
+            if (!document.getError().isEmpty() && FeatureFlagsManager.check(Feature.SHOW_PARTIAL_ERROR_MESSAGES)) {
                 displayListOfWarnings(document.getError());
             }
         }

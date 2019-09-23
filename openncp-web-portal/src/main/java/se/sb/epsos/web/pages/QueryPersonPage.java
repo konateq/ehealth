@@ -1,13 +1,3 @@
-/***    Copyright 2011-2013 Apotekens Service AB <epsos@apotekensservice.se>
- *
- *    This file is part of epSOS-WEB.
- *
- *    epSOS-WEB is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- *
- *    epSOS-WEB is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License along with epSOS-WEB. If not, see http://www.gnu.org/licenses/.
- **/
 package se.sb.epsos.web.pages;
 
 import org.apache.wicket.PageParameters;
@@ -61,8 +51,7 @@ public class QueryPersonPage extends BasePage {
 
     public QueryPersonPage() {
 
-        final CompoundPropertyModel<QueryPerson> queryPerson = new CompoundPropertyModel<>(
-                new QueryPerson());
+        final CompoundPropertyModel<QueryPerson> queryPerson = new CompoundPropertyModel<>(new QueryPerson());
         getSession().clearBreadCrumbList();
         getSession().addToBreadCrumbList(new BreadCrumbVO<>(getString("queryPersonPage.title"), this));
         add(new QueryPersonForm("form", queryPerson)).setOutputMarkupId(true);
@@ -116,7 +105,6 @@ public class QueryPersonPage extends BasePage {
                                                 new CompoundPropertyModel<>(new LoadablePersonModel(person))));
                                 personInfoModalWindow.show(target);
                             }
-
                         });
                 if (getSession().getUserDetails().isDoctor() || getSession().getUserDetails().isNurse()
                         || getSession().getUserDetails().isAdmin()) {
@@ -146,7 +134,6 @@ public class QueryPersonPage extends BasePage {
                             setResponsePage(new QueryDocumentsPage(
                                     new PageParameters("docType=EP,personId=" + person.getEpsosId())));
                         }
-
                     });
                 }
                 item.add(new AbstractListViewPanel<LinkAction>(componentId, actions) {
@@ -161,6 +148,7 @@ public class QueryPersonPage extends BasePage {
         });
 
         SortableDataProvider<Person> provider = new SortableDataProvider<Person>() {
+
             private static final long serialVersionUID = 1L;
 
             public Iterator<Person> iterator(int start, int count) {
@@ -189,8 +177,7 @@ public class QueryPersonPage extends BasePage {
             }
         };
         provider.setSort("id", true);
-        datatablePersonList = new DefaultDataTable<>("dataTable", columns, provider,
-                EpsosWebConstants.DATATABLE_DEFAULT_PAGE_SIZE);
+        datatablePersonList = new DefaultDataTable<>("dataTable", columns, provider, EpsosWebConstants.DATATABLE_DEFAULT_PAGE_SIZE);
         datatablePersonList.setOutputMarkupId(true);
         add(datatablePersonList);
     }
@@ -202,8 +189,7 @@ public class QueryPersonPage extends BasePage {
     }
 
     /**
-     * Added as an explicit method for the content to be substituted in test
-     * (QueryPersonPageTest).
+     * Added as an explicit method for the content to be substituted in test (QueryPersonPageTest).
      *
      * @param selectedCountry The country to load the data for
      * @return A list of PatientIdVO objects
@@ -213,9 +199,9 @@ public class QueryPersonPage extends BasePage {
     }
 
     public class QueryPersonForm extends Form<QueryPerson> {
+
         private static final long serialVersionUID = 1L;
-        // encapsulate the ListView in a WebMarkupContainer in order for it to
-        // update
+        // encapsulate the ListView in a WebMarkupContainer in order for it to update
         private final WebMarkupContainer patientContainer;
         private final ListView<PatientIdVO> patientIds;
         private DropDownChoice<CountryVO> country;
@@ -259,7 +245,7 @@ public class QueryPersonPage extends BasePage {
                     // Order the update of the patient ids container
                     ajaxRequestTarget.addComponent(patientContainer);
                     // TODO - different external link for different country,
-                    // maybe put in countryconfig. Where is this information?
+                    // maybe put in country-config. Where is this information?
                     ajaxRequestTarget.addComponent(datatablePersonList);
                     ajaxRequestTarget.addComponent(QueryPersonForm.this);
                 }
@@ -269,14 +255,12 @@ public class QueryPersonPage extends BasePage {
                     clearErrorList(target);
                     target.addComponent(getFeedback());
                 }
-
             });
             country.setRequired(true);
             country.setMarkupId("country");
             patientContainer = new WebMarkupContainer("patientContainer");
             patientContainer.add(country);
-            // generate a markup-id so the contents can be updated through an
-            // AJAX call
+            // generate a markup-id so the contents can be updated through an AJAX call
             patientContainer.setOutputMarkupId(true);
             patientContainer.setOutputMarkupPlaceholderTag(true);
             patientIds = new ListView<PatientIdVO>("patientIds") {
@@ -306,10 +290,7 @@ public class QueryPersonPage extends BasePage {
                 @Override
                 public boolean isVisible() {
                     String helpLink = ((QueryPerson) getParent().getDefaultModelObject()).getHelpLink();
-                    if (helpLink == null || helpLink.isEmpty())
-                        return false;
-                    else
-                        return true;
+                    return helpLink != null && !helpLink.isEmpty();
                 }
             };
             link.add(new Label("helpLabel").setEscapeModelStrings(false));
@@ -319,6 +300,7 @@ public class QueryPersonPage extends BasePage {
 
                 @Override
                 protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+
                     clearErrorList(target);
                     AuthenticatedUser userDetails = ((EpsosAuthenticatedWebSession) getSession()).getUserDetails();
                     CountryVO countryVO = ((QueryPerson) form.getDefaultModelObject()).getCountry();
@@ -345,7 +327,6 @@ public class QueryPersonPage extends BasePage {
                         }
                         LOGGER.error("Failed to query for patient, " + e.getMessage(), e);
                     }
-
                     target.addComponent(getFeedback());
                     target.addComponent(datatablePersonList);
                 }
@@ -355,7 +336,6 @@ public class QueryPersonPage extends BasePage {
                     clearErrorList(target);
                     target.addComponent(getFeedback());
                 }
-
             };
             searchButton.setMarkupId("submit");
             add(searchButton);
@@ -364,6 +344,7 @@ public class QueryPersonPage extends BasePage {
         }
 
         private List<LoadablePersonModel> wrapPersonListIntoLoadableModel(List<Person> qResult) {
+
             LOGGER.debug("Wrapping person List into LoadableModel, size= '{}'", (qResult != null ? qResult.size() : 0));
             List<LoadablePersonModel> newList = new ArrayList<>();
             if (qResult != null) {

@@ -62,7 +62,7 @@ public class CountryConfigManager {
     }
 
     public static String getHomeCommunityId(String countryCode) {
-        return MasterConfigManager.get(CONFIG_PREFIX + countryCode + "[@homeCommuity]");
+        return MasterConfigManager.get(CONFIG_PREFIX + countryCode + "[@homeCommunity]");
     }
 
     public static String getText(CountryVO country) {

@@ -75,7 +75,7 @@ public class DispensePrescriptionPage extends BasePage {
         String personId = person.getEpsosId();
         add(new PersonShortInfoPanel("personinfo", new CompoundPropertyModel<>(new LoadablePersonModel(person))));
         LoadableDocumentModel<Prescription> prescription = (LoadableDocumentModel<Prescription>) parameters.get("prescription");
-        if (!prescription.getObject().getError().isEmpty() && FeatureFlagsManager.check(Feature.SHOW_PARTIALERRORMESSAGES)) {
+        if (!prescription.getObject().getError().isEmpty() && FeatureFlagsManager.check(Feature.SHOW_PARTIAL_ERROR_MESSAGES)) {
             displayListOfWarnings(prescription.getObject().getError());
         }
         Dispensation disp = new Dispensation(getSession().getId(), personId, prescription.getObject());
@@ -293,9 +293,6 @@ public class DispensePrescriptionPage extends BasePage {
                                     @Override
                                     protected Resource newResource() {
                                         dispResource.setBytes(bytes);
-                                        if (LOGGER.isInfoEnabled()) {
-                                            LOGGER.info("Bytes: '{}'", Arrays.toString(bytes));
-                                        }
                                         return dispResource;
                                     }
                                 };
