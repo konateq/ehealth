@@ -4,6 +4,7 @@ import epsos.ccd.netsmart.securitymanager.sts.client.TRCAssertionRequest;
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.ConfigurationManagerFactory;
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.PropertyNotFoundException;
 import hl7OrgV3.ClinicalDocumentDocument1;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.joda.time.DateTime;
@@ -303,12 +304,17 @@ public class NcpServiceFacadeImpl implements NcpServiceFacade {
 
     @Override
     public CdaDocument retrieveDocument(MetaDocument doc) throws NcpServiceException {
-        String hcid = doc.getDoc().getHcid();
-        if (hcid != null && hcid.startsWith(Constants.OID_PREFIX)) {
-            hcid = hcid.substring(8);
+
+        String homeCommunityId = doc.getDoc().getHcid();
+        if (StringUtils.startsWith(homeCommunityId, Constants.OID_PREFIX)) {
+            homeCommunityId = homeCommunityId.substring(8);
         }
-        CountryVO country = CountryConfigManager.getCountry(hcid);
+        // Fetch country from Portal configuration based on homeCommunityId
+        CountryVO country = CountryConfigManager.getCountry(homeCommunityId);
         String countryCode = country != null ? country.getId() : "UNKNOWN";
+        if (StringUtils.equals(countryCode, "UNKNOWN")) {
+            LOGGER.warn("Cannot retrieve Country Code from configuration with the following HomeCommunityId: '{}'", homeCommunityId);
+        }
         CdaDocument document = null;
 
         RetrieveDocumentRequest retrieveDocumentRequest = new RetrieveDocumentRequest();
@@ -338,7 +344,6 @@ public class NcpServiceFacadeImpl implements NcpServiceFacade {
             GRAPHITELOGGER.logMetric("epsos-web.service.retrieveDocument.failed. " + sfe.getMessage(), 1L);
             throw new NcpServiceException(sfe.getMessage(), sfe);
         }
-
         GRAPHITELOGGER.logMetric("epsos-web.service.retrieveDocument.success." + countryCode + "." + doc.getType(), 1L);
         if (LOGGER.isDebugEnabled() && document != null) {
             LOGGER.debug("Retreived Document:\n{}", new String(document.getBytes()));
