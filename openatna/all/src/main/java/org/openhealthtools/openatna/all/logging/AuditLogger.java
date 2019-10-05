@@ -6,9 +6,9 @@ import java.util.Map;
 
 public interface AuditLogger {
 
+    void destroy();
+    
     void start();
 
     void logViewRequest(HttpServletRequest request, Map<String, String> queryParameters, List<Long> messageEntityIds);
-
-    void destroy();
 }

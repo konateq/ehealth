@@ -1,7 +1,8 @@
 package org.openhealthtools.openatna.all.logging;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -9,59 +10,59 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dummy implementation of OpenATNALogViewLogger implementation
+ * Basic implementation of OpenATNALogViewLogger implementation
  */
 public class DefaultAuditLoggerImpl implements AuditLogger {
 
-    private static final Log log = LogFactory.getLog(DefaultAuditLoggerImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(DefaultAuditLoggerImpl.class);
 
-    public void logViewRequest(HttpServletRequest request, Map<String, String> queryParameters,
-                               List<Long> messageEntityIds) {
-        log.info("Cookies: " + cookiesToString(request.getCookies()));
-        log.info("Search parameters: " + queryParameters);
-        log.info("Logrow entity ids: " + messageEntityIds);
+    public void logViewRequest(HttpServletRequest request, Map<String, String> queryParameters, List<Long> messageEntityIds) {
+
+        if (logger.isInfoEnabled()) {
+            logger.info("Cookies: '{}'", cookiesToString(request.getCookies()));
+            logger.info("Search Parameters: '{}'", queryParameters);
+            logger.info("LogRow Entity Ids: '{}'", messageEntityIds);
+        }
     }
 
     public void start() {
+        // No specific action required during startup.
     }
 
     public void destroy() {
+        // No specific action required during shutdown.
     }
 
+    /**
+     * Returns a concatenate String with the Cookie attributes values {Name, Value, MaxAge and Secure} if available.
+     *
+     * @param cookies - Array of Cookie from the Session
+     * @return String chain of Cookie attributes.
+     */
     private String cookiesToString(Cookie[] cookies) {
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        for (int i = 0; i < cookies.length; i++) {
-            if (i != 0) {
-                sb.append(", ");
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("[");
+        if (ArrayUtils.isNotEmpty(cookies)) {
+            for (int i = 0; i < cookies.length; i++) {
+                if (i != 0) {
+                    stringBuilder.append(", ");
+                }
+                stringBuilder.append("{");
+                if (cookies[i].getName() != null) {
+                    stringBuilder.append("Name=").append(cookies[i].getName());
+                }
+                if (cookies[i].getValue() != null) {
+                    stringBuilder.append(" Value=").append(cookies[i].getValue());
+                }
+                if (cookies[i].getMaxAge() != -1) {
+                    stringBuilder.append(" MaxAge=").append(cookies[i].getMaxAge());
+                }
+                stringBuilder.append(" Secure=").append(cookies[i].getSecure());
+                stringBuilder.append("}");
             }
-            sb.append("[");
-            if (cookies[i].getComment() != null) {
-                sb.append(" Comment=").append(cookies[i].getComment());
-            }
-            if (cookies[i].getDomain() != null) {
-                sb.append(" Domain=").append(cookies[i].getDomain());
-            }
-            if (cookies[i].getMaxAge() != -1) {
-                sb.append(" MaxAge=").append(cookies[i].getMaxAge());
-            }
-            if (cookies[i].getName() != null) {
-                sb.append(" Name=").append(cookies[i].getName());
-            }
-            if (cookies[i].getPath() != null) {
-                sb.append(" Path=").append(cookies[i].getPath());
-            }
-            if (cookies[i].getValue() != null) {
-                sb.append(" Value=").append(cookies[i].getValue());
-            }
-            if (cookies[i].getVersion() != 0) {
-                sb.append(" Version=").append(cookies[i].getVersion());
-            }
-            sb.append(" Secure=").append(cookies[i].getSecure());
-            sb.append("]");
         }
-        sb.append("]");
-        return sb.toString();
+        stringBuilder.append("]");
+        return stringBuilder.toString();
     }
 }
