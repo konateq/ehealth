@@ -41,7 +41,6 @@ public class InternationalConfigManager {
             if (iSearchFile.exists() && iSearchFile.isFile()) {
 
                 String xmlConfig = removeNSAndPreamble(iSearchFile);
-                LOGGER.info("'{}':\n'{}'", iSearchFile.getName(), xmlConfig);
                 try {
                     XMLConfiguration xmlConfiguration = new XMLConfiguration();
                     xmlConfiguration.load(new ByteArrayInputStream(xmlConfig.getBytes(StandardCharsets.UTF_8)));
