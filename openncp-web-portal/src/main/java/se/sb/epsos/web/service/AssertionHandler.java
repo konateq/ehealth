@@ -67,11 +67,7 @@ public class AssertionHandler implements Serializable {
 
     private Assertion assertion;
 
-    public AssertionHandler(AssertionHandlerConfigManager config) {
-    }
-
-    AssertionHandler() {
-        this(new AssertionHandlerConfigManager());
+    public AssertionHandler() {
     }
 
     public Assertion createSAMLAssertion(AuthenticatedUser userDetails) throws InitializationException {
