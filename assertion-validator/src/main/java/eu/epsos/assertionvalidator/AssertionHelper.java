@@ -15,7 +15,7 @@ import java.util.List;
 public class AssertionHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionHelper.class);
-    private static final String ERROR_MESSAGE = "'{}' - attribute should contain AttributeValue element.";
+    private static final String ERROR_MESSAGE = "'{0}' - attribute should contain AttributeValue element.";
 
     private AssertionHelper() {
     }

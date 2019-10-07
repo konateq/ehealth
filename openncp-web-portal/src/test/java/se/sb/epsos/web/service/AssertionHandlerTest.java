@@ -91,6 +91,6 @@ public class AssertionHandlerTest extends TestCase {
 
     public void testSendAuditEpsos91() {
 
-        assertionHandler.sendAuditEpsos91(userDetailsMock, assertionMock);
+        assertionHandler.sendHPAuthenticationAudit(userDetailsMock, assertionMock);
     }
 }

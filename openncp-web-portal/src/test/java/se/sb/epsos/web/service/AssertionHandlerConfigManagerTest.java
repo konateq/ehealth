@@ -69,7 +69,7 @@ public class AssertionHandlerConfigManagerTest {
 
     @Test
     public void testGetPersmissions() {
-        Set<String> roles = AssertionHandlerConfigManager.getPersmissions("ROLE_PHARMACIST");
+        Set<String> roles = AssertionHandlerConfigManager.getPermissions("ROLE_PHARMACIST");
         assertNotNull(roles);
         assertEquals(4, roles.size());
     }

@@ -2,6 +2,7 @@ package se.sb.epsos.web.service;
 
 import eu.epsos.validation.datamodel.common.NcpSide;
 import eu.europa.ec.sante.ehdsi.gazelle.validation.OpenNCPValidation;
+import org.apache.commons.lang3.BooleanUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.impl.AssertionMarshaller;
 import org.slf4j.Logger;
@@ -61,7 +62,7 @@ public class RGBSOAPHandler implements SOAPHandler<SOAPMessageContext> {
     public boolean handleMessage(SOAPMessageContext context) {
 
         Boolean outboundProperty = (Boolean) context.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
-        if (outboundProperty) {
+        if (BooleanUtils.isTrue(outboundProperty)) {
             SOAPMessage message = context.getMessage();
             try {
                 SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
@@ -72,7 +73,7 @@ public class RGBSOAPHandler implements SOAPHandler<SOAPMessageContext> {
                 Assertion assertion = user.getAssertion();
 
                 // If the user has not received an assertion yet, generate it
-                if (assertion == null) {
+                if (assertion == null || assertionHandler.isExpired(assertion)) {
                     assertion = assertionHandler.createSAMLAssertion(user);
                     assertionHandler.signSAMLAssertion(assertion);
                     if (OpenNCPValidation.isValidationEnable()) {

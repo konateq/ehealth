@@ -34,6 +34,7 @@ import se.sb.epsos.web.auth.AuthenticatedUser;
 import se.sb.epsos.web.pages.KeyStoreManager;
 import se.sb.epsos.web.pages.KeyStoreManagerImpl;
 import se.sb.epsos.web.util.CdaHelper.Validator;
+import sun.security.x509.X500Name;
 import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.http.IPUtil;
 
@@ -48,30 +49,32 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
+import static org.opensaml.saml.saml2.core.NameIDType.UNSPECIFIED;
+
 public class AssertionHandler implements Serializable {
 
     private static final long serialVersionUID = 5209063407337843010L;
-
+    private static final DatatypeFactory DATATYPE_FACTORY;
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionHandler.class);
-    private AssertionHandlerConfigManager configHandler;
+
+    static {
+        try {
+            DATATYPE_FACTORY = DatatypeFactory.newInstance();
+        } catch (DatatypeConfigurationException e) {
+            throw new IllegalArgumentException();
+        }
+    }
+
     private Assertion assertion;
 
     public AssertionHandler(AssertionHandlerConfigManager config) {
-        this.configHandler = config;
     }
 
     AssertionHandler() {
         this(new AssertionHandlerConfigManager());
     }
 
-    public static void main(String[] args) {
-        DateTime now = new DateTime();
-        DateTime nowUTC = now.withZone(DateTimeZone.UTC).toDateTime();
-        LOGGER.debug("NotBefore: '{}'", nowUTC.toDateTime());
-        LOGGER.debug("NotOnOrAfter: '{}'", nowUTC.toDateTime().plusHours(4));
-    }
-
-    Assertion createSAMLAssertion(AuthenticatedUser userDetails) throws InitializationException {
+    public Assertion createSAMLAssertion(AuthenticatedUser userDetails) throws InitializationException {
 
         LOGGER.info("[OpenNCP Web Portal] HCP Assertion Creation");
         InitializationService.initialize();
@@ -81,7 +84,7 @@ public class AssertionHandler implements Serializable {
         SAMLObjectBuilder<Assertion> nameIdBuilder = (SAMLObjectBuilder<Assertion>) builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME);
         NameID nameId = (NameID) nameIdBuilder.buildObject();
         nameId.setValue(userDetails.getUsername());
-        nameId.setFormat(NameID.UNSPECIFIED);
+        nameId.setFormat(UNSPECIFIED);
 
         assertion = create(Assertion.class, Assertion.DEFAULT_ELEMENT_NAME);
 
@@ -157,10 +160,10 @@ public class AssertionHandler implements Serializable {
                 "urn:oasis:names:tc:xspa:1.0:subject:hl7:permission");
         Set<String> permissions = new HashSet<>();
         for (String r : userDetails.getRoles()) {
-            permissions.addAll(AssertionHandlerConfigManager.getPersmissions(r));
+            permissions.addAll(AssertionHandlerConfigManager.getPermissions(r));
         }
 
-        String permissionPrefix = AssertionHandlerConfigManager.getPersmissionsPrefix();
+        String permissionPrefix = AssertionHandlerConfigManager.getPermissionsPrefix();
         for (String permission : permissions) {
             AddAttributeValue(builderFactory, attrPID_8, permissionPrefix + permission, "", "");
         }
@@ -170,12 +173,21 @@ public class AssertionHandler implements Serializable {
         assertion.getStatements().add(attributeStatement);
 
         try {
-            sendAuditEpsos91(userDetails, assertion);
+            sendHPAuthenticationAudit(userDetails, assertion);
         } catch (Exception e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
         }
 
         return assertion;
+    }
+
+    public boolean isExpired(Assertion assertion) {
+
+        if (assertion.getConditions().getNotBefore() != null && assertion.getConditions().getNotBefore().isAfterNow()) {
+            return true;
+        }
+        return assertion.getConditions().getNotOnOrAfter() != null
+                && (assertion.getConditions().getNotOnOrAfter().isBeforeNow() || assertion.getConditions().getNotOnOrAfter().isEqualNow());
     }
 
     protected AuditService getAuditService() {
@@ -198,91 +210,82 @@ public class AssertionHandler implements Serializable {
         return ConfigurationManagerFactory.getConfigurationManager();
     }
 
-    void sendAuditEpsos91(AuthenticatedUser userDetails, Assertion assertion) {
+    public void sendHPAuthenticationAudit(AuthenticatedUser userDetails, Assertion assertion) {
 
-        String KEY_ALIAS = getPrivateKeyAlias();
-        LOGGER.debug("KEY_ALIAS: '{}'", KEY_ALIAS);
-        String KEYSTORE_LOCATION = getPrivateKeystoreLocation();
-        LOGGER.debug("KEYSTORE_LOCATION: '{}'", KEYSTORE_LOCATION);
-        String KEY_STORE_PASS = getPrivateKeyPassword();
-        LOGGER.debug("KEY_STORE_PASS: '{}'", StringUtils.isNotBlank(KEY_STORE_PASS) ? "******" : "N/A");
+        String serviceUserId = getCertificateTlsCommonName();
+        String securityHeader = "[No security header provided]";
+        String requestParticipantObjectID = Constants.UUID_PREFIX + assertion.getID();
+        String responseParticipantObjectID = Constants.UUID_PREFIX + assertion.getID();
 
-        final ConfigurationManager configurationManager = getConfigurationManager();
+        String sourceIP = IPUtil.getPrivateServerIp();
+        String pointOfCareUserId = userDetails.getOrganizationName();
+        String pointOfCareRoleId = "Other";
+        String userIdAlias = assertion.getSubject().getNameID().getSPProvidedID();
+        String humanRequesterUserId = StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "" + "<" + assertion.getSubject().getNameID().getValue()
+                + "@" + assertion.getIssuer().getValue() + ">";
+        String humanRequesterRoleId = AssertionHandlerConfigManager.getRoleDisplayName(userDetails.getRoles().get(0));
+        String humanRequesterAlternativeUserId = userDetails.getCommonName();
+        String auditServiceSourceId = ConfigurationManagerFactory.getConfigurationManager().getProperty("COUNTRY_PRINCIPAL_SUBDIVISION");
+        String eventTargetObjectId = Constants.UUID_PREFIX + assertion.getID();
 
-        if (Validator.isNull(KEY_ALIAS)) {
+        GregorianCalendar c = new GregorianCalendar();
+        c.setTime(new Date());
+        XMLGregorianCalendar eventLogDateTime = DATATYPE_FACTORY.newXMLGregorianCalendar(c);
+
+        // Preparing HCP assertions creation EventLog.
+        EventLog eventLog = EventLog.createEventLogHCPIdentity(TransactionName.epsosHcpAuthentication, EventActionCode.EXECUTE,
+                eventLogDateTime, EventOutcomeIndicator.FULL_SUCCESS, pointOfCareUserId, pointOfCareRoleId, humanRequesterUserId,
+                humanRequesterRoleId, humanRequesterAlternativeUserId, serviceUserId, serviceUserId, auditServiceSourceId,
+                eventTargetObjectId, requestParticipantObjectID, securityHeader.getBytes(StandardCharsets.UTF_8),
+                responseParticipantObjectID, securityHeader.getBytes(StandardCharsets.UTF_8), sourceIP, sourceIP, NcpSide.NCP_B);
+        eventLog.setEventType(EventType.epsosHcpAuthentication);
+
+        // Sending audit message to the ATNA repository.
+        AuditServiceFactory.getInstance().write(eventLog, "13", "2");
+    }
+
+    private String getCertificateTlsCommonName() {
+
+        String certTlsAlias = getTlsCertificateAlias();
+        LOGGER.debug("KEY_ALIAS: '{}'", certTlsAlias);
+        String keystoreTlsLocation = getTlsKeystoreLocation();
+        LOGGER.debug("KEYSTORE_LOCATION: '{}'", keystoreTlsLocation);
+        String keystoreTlsPassword = getTlsCertificatePassword();
+        LOGGER.debug("KEY_STORE_PASS: '{}'", StringUtils.isNotBlank(keystoreTlsPassword) ? "******" : "N/A");
+
+        if (Validator.isNull(certTlsAlias)) {
             LOGGER.error("Problem reading configuration parameters");
-            return;
+            return "TLS CN not available";
         }
-        java.security.cert.Certificate cert;
-        String name = "";
-        try (FileInputStream is = new FileInputStream(KEYSTORE_LOCATION)) {
+        java.security.cert.Certificate certificate;
+        try (FileInputStream is = new FileInputStream(keystoreTlsLocation)) {
 
             KeyStore keystore = KeyStore.getInstance("JKS");
-            keystore.load(is, KEY_STORE_PASS == null ? null : KEY_STORE_PASS.toCharArray());
+            keystore.load(is, keystoreTlsPassword == null ? null : keystoreTlsPassword.toCharArray());
             // Get certificate
-            cert = keystore.getCertificate(KEY_ALIAS);
+            certificate = keystore.getCertificate(certTlsAlias);
+            if (certificate instanceof X509Certificate) {
 
-            // List the aliases
-            Enumeration<String> enum1 = keystore.aliases();
-            while (enum1.hasMoreElements()) {
-                String alias = enum1.nextElement();
-
-                if (cert instanceof X509Certificate) {
-                    X509Certificate x509cert = (X509Certificate) cert;
-
-                    // Get subject
-                    Principal principal = x509cert.getSubjectDN();
-                    name = principal.getName();
-
-                    // Get issuer
-                    principal = x509cert.getIssuerDN();
-                    String issuerDn = principal.getName();
-                }
+                // Get subject
+                X509Certificate x509Certificate = (X509Certificate) certificate;
+                return ((X500Name) x509Certificate.getSubjectDN()).getCommonName();
             }
         } catch (KeyStoreException | NoSuchAlgorithmException | java.io.IOException | java.security.cert.CertificateException e) {
             LOGGER.error("{}: '{}'", e.getClass(), e.getMessage(), e);
         }
+        return "TLS CN not available";
+    }
 
-        String secHead = "[No security header provided]";
-        String reqm_participantObjectID = Constants.UUID_PREFIX + assertion.getID();
-        String resm_participantObjectID = Constants.UUID_PREFIX + assertion.getID();
+    private String getTlsCertificateAlias() {
+        return NcpServiceConfigManager.getPrivateKeyAlias("tls");
+    }
 
-        String sourceIP = IPUtil.getPrivateServerIp();
-        String email = userDetails.getUserId() + "@" + configurationManager.getProperty("ncp.country");
+    private String getTlsKeystoreLocation() {
+        return NcpServiceConfigManager.getPrivateKeystoreLocation("tls");
+    }
 
-        String PC_UserID = userDetails.getOrganizationName();
-        String PC_RoleID = "Other";
-        String userIdAlias = assertion.getSubject().getNameID().getSPProvidedID();
-        String HR_UserID = StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "" + "<" + assertion.getSubject().getNameID().getValue()
-                + "@" + assertion.getIssuer().getValue() + ">";
-        String HR_RoleID = AssertionHandlerConfigManager.getRoleDisplayName(userDetails.getRoles().get(0));
-        String HR_AlternativeUserID = userDetails.getCommonName();
-        String SC_UserID = name;
-        String SP_UserID = name;
-
-        String AS_AuditSourceId = configurationManager.getProperty("COUNTRY_PRINCIPAL_SUBDIVISION");
-        String ET_ObjectID = Constants.UUID_PREFIX + assertion.getID();
-
-        AuditService asd = getAuditService();
-        GregorianCalendar c = new GregorianCalendar();
-        c.setTime(new Date());
-        XMLGregorianCalendar eventLogDateTime = null;
-        try {
-            eventLogDateTime = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-        } catch (DatatypeConfigurationException ex) {
-            LOGGER.error("DatatypeConfigurationException: '{}'", ex.getMessage(), ex);
-        }
-
-        EventLog eventLog = EventLog.createEventLogHCPIdentity(TransactionName.epsosHcpAuthentication, EventActionCode.EXECUTE,
-                eventLogDateTime, EventOutcomeIndicator.FULL_SUCCESS, PC_UserID, PC_RoleID, HR_UserID, HR_RoleID, HR_AlternativeUserID,
-                SC_UserID, SP_UserID, AS_AuditSourceId, ET_ObjectID, reqm_participantObjectID,
-                secHead.getBytes(StandardCharsets.UTF_8), resm_participantObjectID, secHead.getBytes(StandardCharsets.UTF_8),
-                sourceIP, sourceIP, NcpSide.NCP_B);
-        eventLog.setEventType(EventType.epsosHcpAuthentication);
-        asd.write(eventLog, "13", "2");
-        LOGGER.debug("################################################");
-        LOGGER.debug("# sendAuditEpsos91 - stop                      #");
-        LOGGER.debug("################################################");
+    private String getTlsCertificatePassword() {
+        return NcpServiceConfigManager.getPrivateKeyPassword("tls");
     }
 
     public Attribute createAttribute(XMLObjectBuilderFactory builderFactory, String FriendlyName, String oasisName) {
