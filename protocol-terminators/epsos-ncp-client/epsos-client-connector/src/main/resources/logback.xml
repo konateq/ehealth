@@ -79,7 +79,7 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.epsos.pt.cc" level="DEBUG" additivity="false">
+    <logger name="eu.epsos.pt.cc" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
