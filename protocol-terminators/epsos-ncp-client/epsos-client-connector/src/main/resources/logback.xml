@@ -2,7 +2,7 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %-5level %logger{36}.%M\(%line\) - %msg%n</pattern>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %highlight(%-5level) %logger{36}.%M\(%line\) - %msg%n</pattern>
         </layout>
     </appender>
 
@@ -10,7 +10,7 @@
         <file>${catalina.base}/logs/openncp-client-connector.log</file>
         <append>true</append>
         <encoder>
-            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %-5level %logger{36}.%M\(%line\) - %msg%n</pattern>
+            <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %highlight(%-5level) %logger{36}.%M\(%line\) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -18,7 +18,7 @@
         <file>${catalina.base}/logs/openncp-client-connector-clinical.log</file>
         <append>true</append>
         <encoder>
-            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %-5level %logger{36}.%class{0}.%M\(%line\) - %msg%n</pattern>
+            <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %cyan([%logger{36}]) %highlight(%-5level) %C{36}.%M\(%line\) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -35,6 +35,10 @@
     <!--</logger>-->
     <!-- End Spring Web Service Logging-->
 
+    <logger name="org.apache.axis2" level="INFO" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <logger name="org.apache.http.client" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
@@ -45,7 +49,7 @@
 
     <logger name="eu.europa.ec.dynamicdiscovery" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
-    </logger>
+    </logger>ClientConnectorInit
 
     <logger name="org.springframework.jdbc.datasource.DataSourceTransactionManager" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
@@ -75,7 +79,7 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.epsos.pt.cc" level="INFO" additivity="false">
+    <logger name="eu.epsos.pt.cc" level="DEBUG" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
