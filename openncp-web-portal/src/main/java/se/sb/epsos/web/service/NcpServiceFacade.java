@@ -9,7 +9,7 @@ public interface NcpServiceFacade {
 
     String about();
 
-    void initUser(AuthenticatedUser userDetails) throws NcpServiceException;
+    void initServices(AuthenticatedUser userDetails) throws NcpServiceException;
 
     List<Person> queryForPatient(AuthenticatedUser userDetails, List<PatientIdVO> patientList, CountryVO country) throws NcpServiceException;
 

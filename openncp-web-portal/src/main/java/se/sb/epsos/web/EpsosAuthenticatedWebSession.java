@@ -1,18 +1,3 @@
-/***    Copyright 2011-2013 Apotekens Service AB <epsos@apotekensservice.se>
- *
- *    This file is part of epSOS-WEB.
- *
- *    epSOS-WEB is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- *
- *    epSOS-WEB is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License along with epSOS-WEB. If not, see http://www.gnu.org/licenses/.
- **/
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package se.sb.epsos.web;
 
 import org.apache.wicket.Request;
@@ -97,12 +82,11 @@ public class EpsosAuthenticatedWebSession extends AuthenticatedWebSession {
 
     @Override
     public boolean authenticate(String username, String password) {
-        boolean authenticated = false;
+        boolean authenticated;
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             authenticated = authentication.isAuthenticated();
-            LOGGER.info("LOGGED IN: '{}'", authenticated);
         } catch (AuthenticationException e) {
             LOGGER.warn(String.format("User '%s' failed to login. Reason: %s", username, e.getMessage()), e);
             authenticated = false;
@@ -148,7 +132,7 @@ public class EpsosAuthenticatedWebSession extends AuthenticatedWebSession {
                     }
                     getServiceFacade().bindToSession(this.getId());
                     try {
-                        getServiceFacade().initUser(authenticatedUser);
+                        getServiceFacade().initServices(authenticatedUser);
                     } catch (NcpServiceException e) {
                         LOGGER.error("NcpServiceException: '{}'", e.getMessage(), e);
                     }
@@ -190,8 +174,8 @@ public class EpsosAuthenticatedWebSession extends AuthenticatedWebSession {
     public void removeAllAfterBc(BreadCrumbVO<?> bcVo) {
         for (int i = 0; i < breadcrumbList.size(); i++) {
             if (breadcrumbList.get(i).getTitle().equals(bcVo.getTitle())) {
-                for (int j = breadcrumbList.size() - 1; j > i; j--) {
-                    breadcrumbList.remove(j);
+                if (breadcrumbList.size() > i + 1) {
+                    breadcrumbList.subList(i + 1, breadcrumbList.size()).clear();
                 }
                 break;
             }
@@ -245,8 +229,8 @@ public class EpsosAuthenticatedWebSession extends AuthenticatedWebSession {
     public void removeAllAfterTitle(String title) {
         for (int i = 0; i < breadcrumbList.size(); i++) {
             if (breadcrumbList.get(i).getTitle().equals(title)) {
-                for (int j = breadcrumbList.size() - 1; j > i; j--) {
-                    breadcrumbList.remove(j);
+                if (breadcrumbList.size() > i + 1) {
+                    breadcrumbList.subList(i + 1, breadcrumbList.size()).clear();
                 }
                 break;
             }

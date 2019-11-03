@@ -1,16 +1,3 @@
-/*    Copyright 2011-2013 Apotekens Service AB <epsos@apotekensservice.se>
- *
- *    This file is part of epSOS-WEB.
- *
- *    epSOS-WEB is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
- *    as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- *
- *    epSOS-WEB is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- *    warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License along with epSOS-WEB.
- *    If not, see http://www.gnu.org/licenses/.
- **/
 package se.sb.epsos.web.auth;
 
 import org.apache.wicket.markup.html.basic.Label;
@@ -32,13 +19,6 @@ import se.sb.epsos.web.util.MasterConfigManager;
 import javax.servlet.http.Cookie;
 import java.util.Locale;
 
-/**
- * Created by IntelliJ IDEA.
- * User: andreas
- * Date: 2011-06-20
- * Time: 14.27
- * To change this template use File | Settings | File Templates.
- */
 public class UserinfoPanel extends Panel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserinfoPanel.class);
@@ -63,7 +43,7 @@ public class UserinfoPanel extends Panel {
                     public void onClick() {
                         userDetails.setPrmiaryRole(item.getModelObject());
                         try {
-                            ((EpsosAuthenticatedWebSession) getSession()).getServiceFacade().initUser(userDetails);
+                            ((EpsosAuthenticatedWebSession) getSession()).getServiceFacade().initServices(userDetails);
                         } catch (NcpServiceException ex) {
                             LOGGER.error("NcpServiceException: '{}'", ex.getMessage(), ex);
                             error(getString("error.login.init"));
