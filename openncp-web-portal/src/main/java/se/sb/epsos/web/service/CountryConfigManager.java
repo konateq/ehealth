@@ -58,6 +58,20 @@ public class CountryConfigManager {
             patIds.add(vo);
         }
 
+        List<String> listBirthDate = internationalSearchConfig.getList(country.getId(), "country.searchFields.birthDate[@label]");
+        for (String str : listBirthDate) {
+            PatientIdVO vo = new PatientIdVO();
+            vo.setLabel(str);
+            patIds.add(vo);
+        }
+
+        List<String> listAdministrativeGender = internationalSearchConfig.getList(country.getId(), "country.searchFields.sex[@label]");
+        for (String str : listAdministrativeGender) {
+            PatientIdVO vo = new PatientIdVO();
+            vo.setLabel(str);
+            patIds.add(vo);
+        }
+
         return patIds;
     }
 
