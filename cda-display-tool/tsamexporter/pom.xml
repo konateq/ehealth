@@ -15,7 +15,6 @@
     <name>OpenNCP TSAM Exporter</name>
 
     <properties>
-        <ojdbc.version>11.2.0.4</ojdbc.version>
         <hikari.version>2.7.1</hikari.version>
     </properties>
 
@@ -40,16 +39,26 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+        <!-- Databases drivers -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql-connector.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>${mariadb-connector.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.oracle</groupId>
-            <artifactId>ojdbc6</artifactId>
-            <version>${ojdbc.version}</version>
-            <scope>runtime</scope>
+            <artifactId>ojdbc8</artifactId>
+            <version>${oracle-connector.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql-connector.version}</version>
         </dependency>
     </dependencies>
 

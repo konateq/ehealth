@@ -23,7 +23,6 @@
         <jackson.version>2.8.4</jackson.version>
         <javax-el.version>3.0.1-b08</javax-el.version>
         <mysql-connector.version>5.1.43</mysql-connector.version>
-        <ojdbc.version>11.2.0.4</ojdbc.version>
         <spring.version>4.3.10.RELEASE</spring.version>
         <spring-boot.version>1.5.6.RELEASE</spring-boot.version>
         <hibernate.version>5.2.10.Final</hibernate.version>
@@ -81,19 +80,30 @@
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc6</artifactId>
-            <version>${ojdbc.version}</version>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
         </dependency>
+        <!-- Databases drivers -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql-connector.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons-io.version}</version>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>${mariadb-connector.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <version>${oracle-connector.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql-connector.version}</version>
         </dependency>
     </dependencies>
 
