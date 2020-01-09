@@ -294,7 +294,7 @@ public class DefaultPolicyManagerImpl implements PolicyManagerInterface {
                 break;
             //  HCER is not supported currently in eHDSI project.
             case Constants.HCER_CLASSCODE:
-                XDRPermissionValidatorEDOrHCER(assertion);
+                XDRPermissionValidatorEncounterReport(assertion);
                 break;
             // CONSENT is not supported currently in eHDSI project.
             case Constants.CONSENT_CLASSCODE:
@@ -308,12 +308,12 @@ public class DefaultPolicyManagerImpl implements PolicyManagerInterface {
     }
 
     /**
-     * XDR for dispensation service (eDispensation) or HCER service
+     * XDR validation for HCER service
      *
      * @param assertion the SAML Assertion
      * @throws InsufficientRightsException
      */
-    private void XDRPermissionValidatorEDOrHCER(Assertion assertion) throws InsufficientRightsException {
+    private void XDRPermissionValidatorDispense(Assertion assertion) throws InsufficientRightsException {
 
         //  TODO: add support for discard operation
         boolean recordMedicationAdministrationRecord = false;
@@ -346,6 +346,17 @@ public class DefaultPolicyManagerImpl implements PolicyManagerInterface {
             logger.error("InsufficientRightsException");
             throw new InsufficientRightsException();
         }
+    }
+
+    /**
+     * XDR validation for HCER service
+     *
+     * @param assertion the SAML Assertion
+     * @throws InsufficientRightsException
+     */
+    private void XDRPermissionValidatorEncounterReport(Assertion assertion) throws InsufficientRightsException {
+
+        XDRPermissionValidatorDispense(assertion);
     }
 
     /**
