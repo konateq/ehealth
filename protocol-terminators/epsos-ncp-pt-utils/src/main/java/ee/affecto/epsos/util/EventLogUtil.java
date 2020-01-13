@@ -14,11 +14,14 @@ import org.apache.axiom.om.OMElement;
 import org.apache.axiom.soap.SOAPEnvelope;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.axis2.transport.http.TransportHeaders;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.v3.II;
 import org.hl7.v3.PRPAIN201305UV02;
 import org.hl7.v3.PRPAIN201306UV02;
 import org.opensaml.saml.saml2.core.Attribute;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.http.HTTPUtil;
 import tr.com.srdc.epsos.util.http.IPUtil;
@@ -34,6 +37,8 @@ import java.util.UUID;
 // Common part for client and server logging
 // TODO A.R. Should be moved into openncp-util later to avoid duplication
 public class EventLogUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventLogUtil.class);
 
     private EventLogUtil() {
     }
@@ -143,8 +148,8 @@ public class EventLogUtil {
             for (SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
                 if (org.apache.commons.lang.StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                     String documentType = slotType1.getValueList().getValue().get(0);
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "('");
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "')");
+                    documentType = StringUtils.remove(documentType, "('");
+                    documentType = StringUtils.remove(documentType, "')");
                     eventLog.getEventTargetParticipantObjectIds().add(documentType);
                 }
             }
@@ -157,8 +162,8 @@ public class EventLogUtil {
             for (SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
                 if (org.apache.commons.lang.StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                     String documentType = slotType1.getValueList().getValue().get(0);
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "('");
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "')");
+                    documentType = StringUtils.remove(documentType, "('");
+                    documentType = StringUtils.remove(documentType, "')");
                     eventLog.getEventTargetParticipantObjectIds().add(documentType);
                 }
             }
@@ -365,8 +370,26 @@ public class EventLogUtil {
         }
     }
 
+    /**
+     * @param messageContext - JAXWS Axis2 MessageContext used by the request.
+     * @return
+     */
     public static String getSourceGatewayIdentifier(MessageContext messageContext) {
 
+        TransportHeaders headers = (TransportHeaders) messageContext.getProperty(MessageContext.TRANSPORT_HEADERS);
+        String headerClientIp = headers.get("X-Forwarded-For");
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("--> X-Forwarded-For Address: '{}'", headerClientIp);
+            LOGGER.debug("--> Remote Address: '{}'", messageContext.getProperty(MessageContext.REMOTE_ADDR));
+            LOGGER.debug("--> Transport Address: '{}'", messageContext.getProperty(MessageContext.TRANSPORT_ADDR));
+        }
+        if (StringUtils.isNotBlank(headerClientIp)) {
+            if (StringUtils.contains(headerClientIp, ",")) {
+                return StringUtils.split(headerClientIp, ",")[0];
+            } else {
+                return headerClientIp;
+            }
+        }
         String clientIp = (String) messageContext.getProperty(MessageContext.REMOTE_ADDR);
         if (IPUtil.isLocalIp(clientIp)) {
             HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);

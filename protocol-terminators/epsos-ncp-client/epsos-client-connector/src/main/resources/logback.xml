@@ -35,11 +35,11 @@
     <!--</logger>-->
     <!-- End Spring Web Service Logging-->
 
-    <logger name="org.apache.axis2" level="INFO" additivity="false">
+    <logger name="org.apache.http.client" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="org.apache.http.client" level="INFO" additivity="false">
+    <logger name="tr.com.srdc.epsos.util.http" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
@@ -52,6 +52,10 @@
     </logger>ClientConnectorInit
 
     <logger name="org.springframework.jdbc.datasource.DataSourceTransactionManager" level="INFO" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="org.apache.axis2" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 

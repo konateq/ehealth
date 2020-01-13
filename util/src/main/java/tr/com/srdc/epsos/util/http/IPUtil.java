@@ -54,6 +54,7 @@ public class IPUtil {
     }
 
     public static boolean isThisMyIpAddress(InetAddress addr) {
+
         // Check if the address is a valid special local or loop back
         if (addr.isAnyLocalAddress() || addr.isLoopbackAddress())
             return true;
@@ -64,23 +65,23 @@ public class IPUtil {
                 NetworkInterface networkInterface = NetworkInterface.getByInetAddress(addr);
                 while (networkInterface.getInetAddresses().hasMoreElements()) {
                     InetAddress inetAddress = networkInterface.getInetAddresses().nextElement();
-                    System.out.println(inetAddress.getHostName());
-                    return true;
+                    LOGGER.debug("isThisMyIpAddress: '{}'", inetAddress.getHostName());
                 }
             }
-            return false;
+            return NetworkInterface.getByInetAddress(addr) != null;
         } catch (SocketException e) {
-            System.out.println(e.getMessage());
+            LOGGER.error(e.getMessage());
             return false;
         }
     }
 
     public static boolean isLocalIp(String ipAddress) {
+
         boolean isMyDesiredIp = false;
         try {
-            isMyDesiredIp = isThisMyIpAddress(InetAddress.getByName(ipAddress)); //"localhost" for localhost
+            isMyDesiredIp = isThisMyIpAddress(InetAddress.getByName(ipAddress));
         } catch (UnknownHostException unknownHost) {
-            unknownHost.printStackTrace();
+            LOGGER.error(unknownHost.getMessage());
         }
         return isMyDesiredIp;
     }

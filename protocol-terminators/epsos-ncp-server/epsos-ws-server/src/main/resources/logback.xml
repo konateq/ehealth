@@ -40,7 +40,7 @@
     <!--</logger>-->
     <!-- End Spring Web Service Logging-->
 
-    <logger name="org.apache.axis2" level="INFO" additivity="false">
+    <logger name="tr.com.srdc.epsos.util.http" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
@@ -57,6 +57,10 @@
     </logger>
 
     <logger name="com.spirit.epsos.cc.adc" level="INFO" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="tr.com.srdc.epsos.util.http" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
