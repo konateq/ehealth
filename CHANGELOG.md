@@ -3,6 +3,38 @@
 All notable changes to the <a href="https://ec.europa.eu/cefdigital/wiki/x/8CEZAg" rel="nofollow">CEF EHDSI project</a> will be documented in this file.<br/> 
 This project adheres to <a href="http://semver.org/" rel="nofollow">Semantic Versioning</a>.
 
+## [3.2.0] - 13-01-2020
+The OpenNCP 3.2.0 release is the CEF eHDSI Wave 2 Operation Ready updated version which is improving and fixing issues discovered during the Production phase or with a priority set to minor.
+<br/>The main improvement of the release is related to the Audit messages and the support of the NAT environment.
+<br/>Detailed release notes: https://ec.europa.eu/cefdigital/wiki/x/PgEbCw
+### Added
+- [EHNCP-1844] - Authentication - role doctor is able to dispense a prescription.
+- [EHNCP-1869] - HCP and TRC Assertions - ServiceConsumer attribute set to localhost in NAT environment.
+- [EHNCP-1840] - OpenNCP Web Portal doesn't support all types of Identity Traits.
+- [EHNCP-1837] - PostgreSQL database support.
+- [EHNCP-1822] - Create ClientConnectorService client stub dynamic from WSDL definition.
+
+### Changed
+- [EHNCP-1870] - Personal data is being logged in PRODUCTION.
+- [EHNCP-1839] - Add color layout to Logback configuration for clarity in logs.
+- [EHNCP-1826] - Audit epsos-91 from Web Portal are not correct.
+- [EHNCP-1824] - OpenNCP ATNA webapp doesn't start properly.
+- [EHNCP-1810] - Add date information into the log files - Logback configuration.
+- [EHNCP-1808] - OpenNCP Web Portal is not handling ISM containing XML Namespaces.
+- [EHNCP-1801] - TSAM-Sync backup filename only contains the date.
+- [EHNCP-1798] - Incorrect separator in openncp-web-portal.
+- [EHNCP-1667] - Update the HCP and TRC Assertions validators.
+
+### Deprecated
+- [N/A].
+
+### Removed
+- [N/A].
+
+### Support
+- [EHNCP-1620] - The Wave 2 CDA L3 validator passes an ePrescription file although active ingredient is missing from manufactured Material.
+- [EHNCP-1816] - Incorrect country ISO in eADC entry.
+  
 ## [3.1.0] - 05-08-2019
 The OpenNCP 3.1.0 release is the CEF eHDSI Wave 2 Operation Ready version which is fixing the different findings discovered during the latest Formal Test Event.
 <br/>Most of the changed are related to the Audit and ATNA messages and the identification of the different network components used.

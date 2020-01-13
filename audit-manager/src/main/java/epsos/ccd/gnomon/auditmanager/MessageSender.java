@@ -41,7 +41,6 @@ public class MessageSender {
     private static String[] enabledProtocols = {"TLSv1.2"};
     private final Logger logger = LoggerFactory.getLogger(MessageSender.class);
     private AuditLogSerializer auditLogSerializer;
-    //private AuditMessage auditmessage;
     private String facility;
     private String severity;
 
@@ -54,7 +53,6 @@ public class MessageSender {
     public void send(AuditLogSerializer auditLogSerializer, AuditMessage auditmessage, String facility, String severity) {
 
         this.auditLogSerializer = auditLogSerializer;
-        //this.auditmessage = auditmessage;
         this.facility = facility;
         this.severity = severity;
 
@@ -81,7 +79,7 @@ public class MessageSender {
                 } while (!sent && !timeouted);
 
                 if (timeouted) {
-                    logger.info("The time set to openncp properties in order to retry sending the audit has passed");
+                    logger.info("The time set to OpenNCP properties in order to retry sending the audit has passed");
                 }
             }
             Thread.sleep(1000);
@@ -127,11 +125,11 @@ public class MessageSender {
 
             //  Set header AuditLogSerializer of syslog message.
             String hostName = sslsocket.getLocalAddress().getHostName();
-            logger.info("Syslog Server hostname: '{}'", hostName);
             if (!sslsocket.getLocalAddress().isLinkLocalAddress() && !sslsocket.getLocalAddress().isLoopbackAddress()
                     && (sslsocket.getLocalAddress() instanceof Inet4Address)) {
                 hostName = IPUtil.getPrivateServerIp();
             }
+            logger.info("Syslog Server hostname: '{}'", hostName);
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
             dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
             Date now = new Date();
