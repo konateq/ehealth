@@ -23,10 +23,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
@@ -56,7 +53,8 @@ public class EvidenceUtils {
      * @param messageType
      * @return
      */
-    private static boolean checkCorrectnessofIHEXCA(final MessageType messageType) {
+    private static boolean checkCorrectnessOfIHEXCA(final MessageType messageType) {
+        // TODO: Review the reason why the MessageType is not analyzed and the validity is set to true by default.
         return true;
     }
 
@@ -107,12 +105,12 @@ public class EvidenceUtils {
         String messageIdentifier;
         try {
             MessageInspector messageInspector = new MessageInspector(incomingMsg);
+            logMessage(incomingMsg);
             messageType = messageInspector.getMessageType();
             messageIdentifier = messageInspector.getMessageUUID();
         } catch (Exception e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
-            UnknownMessageType umt = new UnknownMessageType(incomingMsg);
-            messageType = umt;
+            messageType = new UnknownMessageType(incomingMsg);
             messageIdentifier = UUID.randomUUID().toString();
         }
         LOGGER.info("[Evidence Emitter] Creation of REMNRR for message type: '{}' with ID: '{}'", messageType, messageIdentifier);
@@ -177,8 +175,7 @@ public class EvidenceUtils {
 
         PDP simplePDP = SimplePDPFactory.getSimplePDP();
         UnorderedPolicyRepository polrep = (UnorderedPolicyRepository) simplePDP.getPolicyRepository();
-        ClassLoader loader;
-        loader = EvidenceUtils.class.getClassLoader();
+        ClassLoader loader = EvidenceUtils.class.getClassLoader();
         InputStream inputStream = loader.getResourceAsStream("policy/samplePolicyNRR.xml");
         polrep.deploy(PolicyMarshaller.unmarshal(inputStream));
 
@@ -189,11 +186,11 @@ public class EvidenceUtils {
 
         try {
             MessageInspector messageInspector = new MessageInspector(incomingMsg);
+            logMessage(incomingMsg);
             messageType = messageInspector.getMessageType();
         } catch (Exception e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
-            UnknownMessageType umt = new UnknownMessageType(incomingMsg);
-            messageType = umt;
+            messageType = new UnknownMessageType(incomingMsg);
         }
         /*
          * Now create the XACML request
@@ -302,6 +299,7 @@ public class EvidenceUtils {
         String msguuid;
         try {
             MessageInspector messageInspector = new MessageInspector(incomingSoap);
+            logMessage(incomingSoap);
             messageType = messageInspector.getMessageType();
             msguuid = messageInspector.getMessageUUID();
         } catch (Exception e) {
@@ -377,13 +375,13 @@ public class EvidenceUtils {
         MessageType messageType;
         try {
             MessageInspector messageInspector = new MessageInspector(incomingSoap);
+            logMessage(incomingSoap);
             messageType = messageInspector.getMessageType();
         } catch (Exception e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
-            UnknownMessageType umt = new UnknownMessageType(incomingSoap);
-            messageType = umt;
+            messageType = new UnknownMessageType(incomingSoap);
         }
-        if (checkCorrectnessofIHEXCA(messageType)) {
+        if (checkCorrectnessOfIHEXCA(messageType)) {
             LOGGER.info("The message type : '{}' is correct.", messageType);
         }
 
@@ -541,5 +539,25 @@ public class EvidenceUtils {
         InputStream keyStream = new FileInputStream(new File(keyStorePath));
         ks.load(keyStream, keyPassword == null ? null : keyPassword.toCharArray());
         return (PrivateKey) ks.getKey(certAlias, keyPassword == null ? null : keyPassword.toCharArray());
+    }
+
+    /**
+     * Print message in Clinical logs DEBUG.
+     *
+     * @param message - Incoming SOAP message.
+     */
+    private static void logMessage(Document message) {
+
+        if (!StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())
+                && LOGGER_CLINICAL.isDebugEnabled()) {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            try {
+                Utilities.serialize(message.getDocumentElement(), outputStream);
+                String messageAsString = outputStream.toString();
+                LOGGER_CLINICAL.debug("Message:\n'{}'", messageAsString);
+            } catch (TransformerException e) {
+                LOGGER_CLINICAL.error("TransformerException: Cannot display Incoming Message '{}'", e.getMessage());
+            }
+        }
     }
 }

@@ -11,8 +11,6 @@ import javax.mail.internet.MimeMessage;
 import javax.xml.soap.SOAPConstants;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import javax.xml.transform.TransformerException;
-import java.io.ByteArrayOutputStream;
 
 
 public class MessageInspector {
@@ -20,14 +18,9 @@ public class MessageInspector {
     private static final String SOAP_LOCAL_NAME = "Envelope";
     private static final String WS_ADDRESSING_NS = "http://www.w3.org/2005/08/addressing";
     private static final String IHE_ITI_XCA_RETRIEVE = "urn:ihe:iti:2007:CrossGatewayRetrieve";
-
     private final Logger logger = LoggerFactory.getLogger(MessageInspector.class);
-    private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
-
-
     private MessageType messageType;
     private String messageUUID;
-
 
     public MessageInspector(final MimeMessage incomingMsg) throws MalformedMIMEMessageException {
         throw new MalformedMIMEMessageException("Not yet implemented");
@@ -53,9 +46,7 @@ public class MessageInspector {
     private void checkHeaders(Document incomingMsg) throws MalformedIHESOAPException {
 
         Element docElement = incomingMsg.getDocumentElement();
-
         logger.info("[Non Repudiation] '{}' - '{}'", docElement.getLocalName(), docElement.getNamespaceURI());
-        logMessage(incomingMsg);
         if (StringUtils.equals(docElement.getLocalName(), SOAP_LOCAL_NAME)
                 && StringUtils.equals(docElement.getNamespaceURI(), SOAPConstants.URI_NS_SOAP_1_2_ENVELOPE)) {
 
@@ -124,20 +115,5 @@ public class MessageInspector {
 
     public String getMessageUUID() {
         return this.messageUUID;
-    }
-
-    /**
-     * @param message
-     */
-    private void logMessage(Document message) {
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            Utilities.serialize(message.getDocumentElement(), outputStream);
-            String messageAsString = outputStream.toString();
-            loggerClinical.info("Message:\n'{}'", messageAsString);
-        } catch (TransformerException e) {
-            loggerClinical.error("TransformerException: Cannot display Incoming Message '{}'", e.getMessage());
-        }
     }
 }
