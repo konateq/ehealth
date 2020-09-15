@@ -32,6 +32,7 @@ import javax.net.ssl.SSLContext;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.security.KeyStoreException;
@@ -131,7 +132,7 @@ public class DynamicDiscoveryService {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("International Search Mask Path: '{}", outPath);
                         }
-                        StreamResult result = new StreamResult(outPath);
+                        StreamResult result = new StreamResult(new File(outPath));
                         XMLUtil.transformDocument(source, result);
                     }
                 }
