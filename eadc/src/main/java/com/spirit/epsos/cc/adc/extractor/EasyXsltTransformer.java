@@ -16,14 +16,11 @@ import javax.xml.transform.dom.DOMSource;
 /**
  * Wrapper-utility for setting up and transforming an xml-document by using a provided xslt.
  * By initializing an object of this class a transformer object is being cached for improving performance.
- *
- * @author mk
  */
 public class EasyXsltTransformer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EasyXsltTransformer.class);
-
-    private static TransformerFactory objTransformerFact = TransformerFactory.newInstance();
+    private static final TransformerFactory objTransformerFact = TransformerFactory.newInstance();
+    private final Logger logger = LoggerFactory.getLogger(EasyXsltTransformer.class);
     private Document xsltDocument = null;
     private Transformer transformer = null;
 
@@ -34,7 +31,7 @@ public class EasyXsltTransformer {
     }
 
     /**
-     * Constructor for creating an EaysXsltTransformer-object.
+     * Constructor for creating an EasyXsltTransformer-object.
      *
      * @param xsltDocument
      * @throws Exception
@@ -43,23 +40,16 @@ public class EasyXsltTransformer {
 
         this();
         if (xsltDocument == null) {
-            LOGGER.error("The supplied XSLT-Document was null");
+            logger.error("The supplied XSLT-Document was null");
             throw new Exception("The supplied XSLT-Document was null");
         }
         DOMSource xsltDomSource = new DOMSource(xsltDocument);
         try {
             this.xsltDocument = xsltDocument;
             this.transformer = EasyXsltTransformer.objTransformerFact.newTransformer(xsltDomSource);
-            LOGGER.info("An XSLT-Transformer object was initialized successfully");
+            logger.info("An XSLT-Transformer object was initialized successfully");
         } catch (TransformerConfigurationException transformerConfigurationException) {
-            LOGGER.error("An error occurred, when loading the XSLT-Document", transformerConfigurationException);
-            LOGGER.error("\n"
-                    + "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
-                    + "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV\n"
-                    + "Used XSLT Document:\n"
-                    + EadcUtil.convertXMLDocumentToString(xsltDocument)
-                    + "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"
-                    + "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n");
+            logger.error("TransformerConfigurationException: Used XSLT Document:\n'{}'", EadcUtil.convertXMLDocumentToString(xsltDocument));
             throw new Exception("An error occurred, when loading the XSLT-Document", transformerConfigurationException);
         }
     }
@@ -70,35 +60,21 @@ public class EasyXsltTransformer {
      * @param xmlSourceNode
      * @return
      * @throws Exception
-     * @throws TransformerException
      */
     public synchronized Document transform(Node xmlSourceNode) throws Exception {
 
-        LOGGER.debug("Entering synchronous part");
+        logger.debug("Entering synchronized part");
         DOMResult objDomResult = new DOMResult(null);
         try {
             this.transformer.transform(new DOMSource(xmlSourceNode), objDomResult);
         } catch (TransformerException transformerException) {
-            LOGGER.error("An error occured during an XSLT-Transformation",
-                    transformerException);
-            LOGGER.error("The Documents leading to that exception are:\n"
-                    + "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
-                    + "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV\n"
-                    + "Used XML-Document:\n"
-                    + EadcUtil.convertXMLDocumentToString((Document) xmlSourceNode) + "\n"
-                    + "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"
-                    + "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
-                    + "\n"
-                    + "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
-                    + "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV\n"
-                    + "Used XSLT-Document:\n"
-                    + EadcUtil.convertXMLDocumentToString(this.xsltDocument) + "\n"
-                    + "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"
-                    + "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||\n");
-            LOGGER.debug("Leaving synchronous part");
-            throw new Exception("An error occured during an XSLT-Transformation", transformerException);
+            logger.error("TransformerException : Documents leading to that exception are:\nUsed XML-Document:\n'{}'\nUsed XSLT-Document:\n'{}'",
+                    EadcUtil.convertXMLDocumentToString((Document) xmlSourceNode),
+                    EadcUtil.convertXMLDocumentToString(this.xsltDocument));
+            logger.debug("Leaving synchronous part");
+            throw new Exception("An error occurred during an XSLT-Transformation", transformerException);
         }
-        LOGGER.debug("Leaving synchronous part");
+        logger.debug("Leaving synchronized part");
         return (Document) objDomResult.getNode();
     }
 }

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class EadcReceiverImpl implements EadcReceiver {
 
     private final Logger logger = LoggerFactory.getLogger(EadcReceiverImpl.class);
-    private AutomaticDataCollector automaticDataCollectorInstance = EadcFactory.INSTANCE.createAutomaticDataCollector();
+    private final AutomaticDataCollector automaticDataCollectorInstance = EadcFactory.INSTANCE.createAutomaticDataCollector();
 
     /**
      * This method is called from the NCP - called from multiple threads in parallel.

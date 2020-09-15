@@ -16,16 +16,13 @@ import java.io.IOException;
 /**
  * Utility-class for reading a file into a DOM-structure This class uses the singleton pattern for ensuring,
  * that cached utilized Objects are only initialized once.
- *
- * @author mk
  */
 public class XmlFileReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlFileReader.class);
     // Singleton-object
     private static XmlFileReader singletonInstance = null;
-    private static Boolean syncVariable = Boolean.TRUE;
-    private DocumentBuilder objDocBuilder;
+    private final DocumentBuilder objDocBuilder;
 
     /**
      * This constructor is private to ensure, that it is only called by the getInstance() method.
@@ -43,8 +40,7 @@ public class XmlFileReader {
             this.objDocBuilder = objDocBuilderFactory.newDocumentBuilder();
             LOGGER.info("XmlFileReader singleton object initialized successfully");
         } catch (ParserConfigurationException e) {
-            LOGGER.error("An Error occured during setting up an XML-DocumentBuilder Object: '{}'", e.getMessage(), e);
-            throw new Exception("An Error occured during setting up an XML-DocumentBuilder Object", e);
+            throw new Exception("An Error occurred during setting up an XML DocumentBuilder Object", e);
         }
     }
 
@@ -60,7 +56,6 @@ public class XmlFileReader {
             try {
                 XmlFileReader.singletonInstance = new XmlFileReader();
             } catch (Exception exception) {
-                LOGGER.error("Unable to initialize the singleton for class '{}'", XmlFileReader.class.getCanonicalName(), exception);
                 throw new Exception("Unable to initialize the singleton for class " + XmlFileReader.class.getCanonicalName(), exception);
             }
         }
@@ -83,8 +78,7 @@ public class XmlFileReader {
         try {
             fileInputStream = new FileInputStream(new File(strFilePath));
         } catch (FileNotFoundException fileNotFoundException) {
-            LOGGER.error("The xml file to parse was not found or can not be opened for reading: '{}'", strFilePath, fileNotFoundException);
-            throw new Exception("The xml file to parse was not found or can not be opened for reading:" + strFilePath, fileNotFoundException);
+            throw new Exception("The XML file to parse was not found or can not be opened for reading: " + strFilePath, fileNotFoundException);
         }
         LOGGER.debug("FileInputStream initialized successfully");
         // Preparing the xmlDocument
@@ -92,8 +86,7 @@ public class XmlFileReader {
         try {
             xmlDocument = this.objDocBuilder.parse(fileInputStream);
         } catch (SAXException saxException) {
-            LOGGER.error("Error, when parsing the following xml-document: '{}'", strFilePath, saxException);
-            throw new Exception("Error, when parsing the following xml-document" + strFilePath, saxException);
+            throw new Exception("Error, when parsing the following XML document: " + strFilePath, saxException);
         } catch (IOException e) {
             LOGGER.warn("IOException: '{}'", e.getMessage(), e);
         }
@@ -101,13 +94,11 @@ public class XmlFileReader {
         try {
             fileInputStream.close();
         } catch (IOException ioException) {
-            LOGGER.warn("Unable to close the fileInputStream for file:" + strFilePath,
-                    ioException);
+            LOGGER.warn("Unable to close the fileInputStream for file:" + strFilePath, ioException);
         }
         // Post-checking the result's validity
         if (xmlDocument == null) {
-            LOGGER.error("The resulting XML-Document from reading '{}' was null", strFilePath);
-            throw new Exception("The resulting XML-Document from reading " + strFilePath + " was null");
+            throw new Exception("The resulting XML Document from reading " + strFilePath + " was null");
         }
         LOGGER.debug("XML Document successfully parsed from File");
         return xmlDocument;

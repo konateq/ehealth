@@ -37,14 +37,14 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
             + "EADC_resources" + File.separator + "config" + File.separator + "config.xml";
     private static final String SERVER_EHEALTH_MODE = "server.ehealth.mode";
     private static AutomaticDataCollectorImpl INSTANCE = null;
-    private final Logger logger = LoggerFactory.getLogger(AutomaticDataCollector.class);
+    private final Logger logger = LoggerFactory.getLogger(AutomaticDataCollectorImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     // Map with one intermediateTransformer per CDA-classCode
     private final TreeMap<String, EasyXsltTransformer> intermediateTransformerList;
     // DOM structure for caching the factory.xslt
-    private Document factoryXslt;
+    private final Document factoryXslt;
     // DOM structure for caching the config.xml
-    private Document configXml;
+    private final Document configXml;
 
     /**
      * Private constructor initializing a new AutomaticDataCollector (Implementation hidden to use Singleton getInstance().
@@ -54,19 +54,19 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
     private AutomaticDataCollectorImpl() {
 
         try {
-
+            System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
             intermediateTransformerList = new TreeMap<>();
             this.factoryXslt = XmlFileReader.getInstance().readXmlDocumentFromFile(AutomaticDataCollectorImpl.PATH_XSLT_FACTORY);
             this.configXml = XmlFileReader.getInstance().readXmlDocumentFromFile(AutomaticDataCollectorImpl.PATH_XML_CONFIG);
 
         } catch (Exception e) {
-            logger.error("Exception while creating an Instance of AutomaticDataCollector: '{}'", e.getMessage(), e);
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Exception while creating an Instance of AutomaticDataCollector: " + e.getMessage(), e);
         }
     }
 
     /**
      * Initializer of class AutomaticDataCollectorImpl.
+     *
      * @return an Instance of AutomaticDataCollectorImpl initialized.
      */
     public static AutomaticDataCollectorImpl getInstance() {
@@ -159,8 +159,8 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
             // Extracting the document's codeSystem
             processedDocumentCodeSystem = codeElement.getAttribute("codeSystem");
             if (processedDocumentCodeSystem == null) {
-                logger.error("Unable to read the coceSystem Attribute");
-                throw new Exception("Unable to read the coceSystem Attribute");
+                logger.error("Unable to read the codeSystem Attribute");
+                throw new Exception("Unable to read the codeSystem Attribute");
             }
             if (processedDocumentCodeSystem.length() == 0) {
                 logger.error("The codeSystemAttribute was either not specified or it was the empty string");
@@ -191,8 +191,6 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
                     }
                 }
             } catch (Exception exception) {
-                logger.error("Unable to initialize the customized XSLT for processedDocumentCode:" + processedDocumentCode
-                        + " and processedDocumentCodeSystem:" + processedDocumentCodeSystem, exception);
                 throw new Exception("Unable to initialize the customized XSLT for processedDocumentCode:" + processedDocumentCode
                         + " and processedDocumentCodeSystem:" + processedDocumentCodeSystem, exception);
             }
@@ -202,7 +200,6 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
         try {
             result = currentTransformer.transform(transaction);
         } catch (Exception exception) {
-            logger.error("Error when transforming a document", exception);
             throw new Exception("Error when transforming a document", exception);
         }
         // As the XSLT returns plain text, the content is found within the result's root-node which is a text-node.
@@ -232,7 +229,6 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
             objScriptRunner.runScript(stringReader);
 
         } catch (Exception exception) {
-            logger.error("The following error occurred during an SQL operation:", exception);
             throw new Exception("The following error occurred during an SQL operation:", exception);
         } finally {
             if (sqlConnection != null) {
