@@ -278,8 +278,8 @@ public class TransformationService implements ITransformationService, TMConstant
 
                 // create & fill TMResponseStructure
                 responseStructure = new TMResponseStructure(finalDoc, status, errors, warnings);
-                if (logger.isInfoEnabled()) {
-                    logger.info("TM result:\n{}", responseStructure.toString());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("TM result:\n{}", responseStructure.toString());
                 }
             }
         } catch (TMException e) {

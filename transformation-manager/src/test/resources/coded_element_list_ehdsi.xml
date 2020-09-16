@@ -467,6 +467,26 @@
 		<valueSetVersion />
 		<targetLanguageCode />
 	</codedElement>
+	<!-- Medication Summary - Classification of the substance -->
+	<codedElement>
+		<elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.4']/consumable/manufacturedProduct/manufacturedMaterial/asSpecializedKind/generalizedMedicineClass/code</elementPath>
+		<usage>
+			<patientSummaryCDAl3>RNFA</patientSummaryCDAl3>
+			<patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+			<ePrescriptionCDAl3>NA</ePrescriptionCDAl3>
+			<ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+			<eDispensationCDAl3>NA</eDispensationCDAl3>
+			<eDispensationCDAl1pdf>NA</eDispensationCDAl1pdf>
+			<HCERDocCDAl3>NA</HCERDocCDAl3>
+			<HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+			<MRODocCDAl3>NA</MRODocCDAl3>
+			<MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+		</usage>
+		<!-- epSOSActiveIngredient -->
+		<valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.24</valueSet>
+		<valueSetVersion />
+		<targetLanguageCode />
+	</codedElement>
 	<!-- Prescription - Substitution -->
 	<codedElement>
 		<elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/entryRelationship[@typeCode='SUBJ'][@inversionInd='true']/observation[@classCode='OBS'][code/@code='SUBST'
