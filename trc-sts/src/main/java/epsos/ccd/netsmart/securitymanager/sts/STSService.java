@@ -49,6 +49,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -57,14 +59,12 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.UUID;
 
-/**
- * @author Jerry Dimitriou <jerouris at netsmart.gr>
- */
 @ServiceMode(value = Mode.MESSAGE)
 @WebServiceProvider(targetNamespace = "http://epsos.eu/", serviceName = "SecurityTokenService", portName = "ISecurityTokenService_Port")
 @BindingType(value = "http://java.sun.com/xml/ns/jaxws/2003/05/soap/bindings/HTTP/")
 public class STSService implements Provider<SOAPMessage> {
 
+    private static final String MESSAGE_ID = "MessageID";
     private static final QName Messaging_To = new QName("http://www.w3.org/2005/08/addressing", "To");
     private static final String SAML20_TOKEN_URN = "urn:oasis:names:tc:SAML:2.0:assertion"; // What
     // can be only requested from the STS
@@ -113,10 +113,6 @@ public class STSService implements Provider<SOAPMessage> {
             if (!SUPPORTED_ACTION_URI.equals(getRSTAction(body))) {
                 throw new WebServiceException("Only ISSUE action is supported");
             }
-        } catch (WSTrustException ex) {
-            throw new WebServiceException(ex);
-        }
-        try {
             if (!SAML20_TOKEN_URN.equals(getRequestedToken(body))) {
                 throw new WebServiceException("Only SAML2.0 Tokens are Issued");
             }
@@ -131,9 +127,9 @@ public class STSService implements Provider<SOAPMessage> {
             String patientID = getPatientID(body);
             String mid = getMessageIdFromHeader(header);
 
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
-            DocumentBuilder builder = dbf.newDocumentBuilder();
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setNamespaceAware(true);
+            DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
 
             // The response TRC Assertion Issuer.
             SamlTRCIssuer samlTRCIssuer = new SamlTRCIssuer();
@@ -187,7 +183,6 @@ public class STSService implements Provider<SOAPMessage> {
             return response;
 
         } catch (SOAPException | WSTrustException | MarshallingException | SMgrException | ParserConfigurationException ex) {
-            logger.error(null, ex);
             throw new WebServiceException(ex);
         }
     }
@@ -230,6 +225,7 @@ public class STSService implements Provider<SOAPMessage> {
     }
 
     private String getPatientID(SOAPElement body) {
+
         if (body.getElementsByTagNameNS(TRC_NS, "TRCParameters").getLength() < 1) {
             throw new WebServiceException("No TRC Parameters in RST");
         }
@@ -243,6 +239,7 @@ public class STSService implements Provider<SOAPMessage> {
     }
 
     private Assertion getIdAssertionFromHeader(SOAPHeader header) throws WSTrustException {
+
         try {
             // First, find the assertion from the header.
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -262,7 +259,6 @@ public class STSService implements Provider<SOAPMessage> {
                 try {
                     sm.verifyEnvelopedSignature(assertDoc);
                 } catch (SMgrException ex) {
-                    logger.error(null, ex);
                     throw new WSTrustException("Error validating SAML Assertion signature", ex);
                 }
             }
@@ -271,29 +267,28 @@ public class STSService implements Provider<SOAPMessage> {
             return (Assertion) unmarshaller.unmarshall(assertDoc.getDocumentElement());
 
         } catch (ParserConfigurationException | UnmarshallingException ex) {
-            logger.error(null, ex);
             throw new WSTrustException("Error Parsing SAML Assertion in Message Header", ex);
         }
     }
 
     private String getMessageIdFromHeader(SOAPHeader header) {
-        if (header.getElementsByTagNameNS(ADDRESSING_NS, "MessageID").getLength() < 1) {
+
+        if (header.getElementsByTagNameNS(ADDRESSING_NS, MESSAGE_ID).getLength() < 1) {
             throw new WebServiceException("Message ID not found in Header");
         }
-        String mid = header.getElementsByTagNameNS(ADDRESSING_NS, "MessageID").item(0).getTextContent();
-        // PT-236 has to be checked again why is coming like this from soap header
-        if (mid.startsWith("uuid"))
-            mid = "urn:" + mid;
-        return mid;
+        String messageID = header.getElementsByTagNameNS(ADDRESSING_NS, MESSAGE_ID).item(0).getTextContent();
+        if (messageID.startsWith("uuid"))
+            messageID = "urn:" + messageID;
+        return messageID;
     }
 
     private void createResponseHeader(SOAPHeader header, String messageId) {
-        try {
 
+        try {
             DateTime now = new DateTime();
 
             SOAPFactory fac = SOAPFactory.newInstance();
-            SOAPElement messageIdElem = header.addHeaderElement(new QName(ADDRESSING_NS, "MessageID", "wsa"));
+            SOAPElement messageIdElem = header.addHeaderElement(new QName(ADDRESSING_NS, MESSAGE_ID, "wsa"));
             messageIdElem.setTextContent("uuid:" + UUID.randomUUID().toString());
             SOAPElement securityHeaderElem = header.addHeaderElement(new QName(WS_SEC_NS, "Security", "wsse"));
 
@@ -337,7 +332,6 @@ public class STSService implements Provider<SOAPMessage> {
         }
 
         return body.getElementsByTagNameNS(WS_TRUST_NS, "TokenType").item(0).getTextContent();
-
     }
 
     /**
@@ -348,7 +342,7 @@ public class STSService implements Provider<SOAPMessage> {
      * @param patientID
      * @param facilityType
      * @param assertionId
-     * @param tls_cn
+     * @param certificateCommonName
      * @param reqMid
      * @param reqSecHeader
      * @param resMid
@@ -375,43 +369,54 @@ public class STSService implements Provider<SOAPMessage> {
         String serverName = servletRequest.getServerName();
 
         //TODO: Review Audit Trail specification - Identifying SC and SP as value of CN from TLS certificate.
-        EventLog evLogTRC = EventLog.createEventLogTRCA(TransactionName.TRC_ASSERTION, EventActionCode.EXECUTE,
+        EventLog eventLogTRCA = EventLog.createEventLogTRCA(TransactionName.TRC_ASSERTION, EventActionCode.EXECUTE,
                 date2, EventOutcomeIndicator.FULL_SUCCESS, pointOfCareID, facilityType, humanRequestorNameID, humanRequestorRole,
                 humanRequestorSubjectID, certificateCommonName, trcCommonName, ConfigurationManagerFactory.getConfigurationManager().getProperty("COUNTRY_PRINCIPAL_SUBDIVISION"),
                 patientID, Constants.UUID_PREFIX + assertionId, reqMid, reqSecHeader, resMid, resSecHeader,
-                IPUtil.isLocalLoopbackIp(sourceGateway) ? serverName : sourceGateway, STSUtils.getSTSServerIp(), NcpSide.NCP_B);
+                IPUtil.isLocalLoopbackIp(sourceGateway) ? serverName : sourceGateway, STSUtils.getSTSServerIP(), NcpSide.NCP_B);
 
-        evLogTRC.setEventType(EventType.TRC_ASSERTION);
-        auditService.write(evLogTRC, "13", "2");
+        eventLogTRCA.setEventType(EventType.TRC_ASSERTION);
+        auditService.write(eventLogTRCA, "13", "2");
     }
 
     /**
      * Returns IP address from the Web Service MessageContext.
      *
-     * @return String IP address of the client requesting the TRC-STS token.
+     * @return String IP address of the client requesting the NCP-B-STS token.
      */
-    private String getClientIP() {
-
-        MessageContext messageContext = context.getMessageContext();
-        HttpServletRequest servletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
-        return servletRequest.getRemoteAddr();
+    public String getClientIP() {
+        try {
+            MessageContext messageContext = context.getMessageContext();
+            HttpServletRequest httpServletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
+            String clientIpAddressAsString = httpServletRequest.getRemoteAddr();
+            logger.info("clientIpAddress: '{}'", clientIpAddressAsString);
+            InetAddress clientIpAddress = InetAddress.getByName(clientIpAddressAsString);
+            if (!clientIpAddress.isLinkLocalAddress() && !clientIpAddress.isLoopbackAddress()) {
+                return clientIpAddressAsString;
+            } else {
+                return STSUtils.getSTSServerIP();
+            }
+        } catch (UnknownHostException ex) {
+            logger.error("UnknownHostException: '{}'", ex.getMessage());
+        }
+        return "Could not get client IP address!";
     }
 
     /**
-     * @param message
+     * Logging SOAP messages processed by TRC server.
+     *
+     * @param message - Incoming SOAP message.
      */
     private void log(SOAPMessage message) {
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            message.writeTo(out);
-        } catch (IOException | SOAPException e) {
-            if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
+        if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
+            try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                message.writeTo(out);
+                loggerClinical.info("SOAPMessage:\n{}", out.toString());
+            } catch (IOException | SOAPException e) {
                 loggerClinical.error("Exception: '{}'", e.getMessage(), e);
             }
-        }
-        if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-            loggerClinical.info("SOAPMessage:\n{}", out.toString());
         }
     }
 }

@@ -1,6 +1,7 @@
 package epsos.ccd.netsmart.securitymanager.sts.util;
 
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.ConfigurationManagerFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import java.io.StringWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 
@@ -61,7 +63,7 @@ public class STSUtils {
         }
 
         String purposeOfUse = trcDetails.getElementsByTagNameNS(TRC_NS, "PurposeOfUse").item(0).getTextContent();
-        if (purposeOfUse != null && (!"TREATMENT".equals(purposeOfUse) && !"EMERGENCY".equals(purposeOfUse))) {
+        if (purposeOfUse != null && (!StringUtils.equals("TREATMENT", purposeOfUse) && !StringUtils.equals("EMERGENCY", purposeOfUse))) {
             throw new WebServiceException("Purpose of Use MUST be either TREATMENT of EMERGENCY");
         }
         return purposeOfUse;
@@ -101,12 +103,10 @@ public class STSUtils {
 
             Element ltCreated = respBody.createElementNS(WS_SEC_UTIL_NS, "wsu:Created");
             ltCreated.setTextContent(now.toDateTime(DateTimeZone.UTC).toString());
-
             lifeTimeElem.appendChild(ltCreated);
 
             Element ltExpires = respBody.createElementNS(WS_SEC_UTIL_NS, "wsu:Expires");
             ltExpires.setTextContent(now.plusHours(2).toDateTime(DateTimeZone.UTC).toString());
-
             lifeTimeElem.appendChild(ltExpires);
 
             return respBody;
@@ -118,16 +118,16 @@ public class STSUtils {
     }
 
     /**
-     * @param elem
+     * @param element
      * @return
      */
-    public static String domElementToString(Element elem) {
+    public static String domElementToString(Element element) {
         try {
-            TransformerFactory tf = TransformerFactory.newInstance();
-            tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            Transformer trans = tf.newTransformer();
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            Transformer transformer = transformerFactory.newTransformer();
             StringWriter sw = new StringWriter();
-            trans.transform(new DOMSource(elem), new StreamResult(sw));
+            transformer.transform(new DOMSource(element), new StreamResult(sw));
             return sw.toString();
         } catch (TransformerException ex) {
             LOGGER.error(null, ex);
@@ -138,10 +138,11 @@ public class STSUtils {
     /**
      * @return
      */
-    public static String getSTSServerIp() {
+    public static String getSTSServerIP() {
 
         try {
             URL url = new URL(ConfigurationManagerFactory.getConfigurationManager().getProperty("secman.sts.url"));
+
             InetAddress inetAddress = InetAddress.getByName(url.getHost());
             if (!inetAddress.isLinkLocalAddress() && !inetAddress.isLoopbackAddress()
                     && (inetAddress instanceof Inet4Address)) {
@@ -151,7 +152,7 @@ public class STSUtils {
             }
         } catch (Exception e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
-            return "UNKNOW_HOST";
+            return "UNKNOWN_HOST";
         }
     }
 
