@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <property name="blob_type" value="longblob" dbms="mysql"/>
+    <property name="blob_type" value="blob" dbms="oracle"/>
+    <property name="blob_type" value="bytea" dbms="postgresql"/>
 
     <changeSet id="1" author="subigre">
         <createTable tableName="codes">
@@ -131,7 +134,6 @@
             </column>
         </createTable>
 
-
         <createTable tableName="object_descriptions">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
@@ -148,7 +150,6 @@
             <column name="type" type="varchar(255)"/>
             <column name="value" type="blob"/>
         </createTable>
-
 
         <createTable tableName="provisional_messages">
             <column name="id" type="bigint" autoIncrement="true">
@@ -167,7 +168,6 @@
             <column name="sopId" type="varchar(255)"/>
             <column name="version" type="int"/>
         </createTable>
-
 
         <createTable tableName="descriptions_sop_classes">
             <column name="ObjectDescriptionEntity_id" type="bigint">
@@ -278,6 +278,14 @@
         </createTable>
 
         <addPrimaryKey tableName="participants_codes" columnNames="ParticipantEntity_id,participantTypeCodes_id"/>
+    </changeSet>
 
+    <changeSet id="2" author="subigje">
+        <modifyDataType columnName="payload" newDataType="${blob_type}" tableName="errors"/>
+        <modifyDataType columnName="stackTrace" newDataType="${blob_type}" tableName="errors"/>
+        <modifyDataType columnName="messageContent" newDataType="${blob_type}" tableName="messages"/>
+        <modifyDataType columnName="objectQuery" newDataType="${blob_type}" tableName="message_objects"/>
+        <modifyDataType columnName="value" newDataType="${blob_type}" tableName="object_details"/>
+        <modifyDataType columnName="content" newDataType="${blob_type}" tableName="provisional_messages"/>
     </changeSet>
 </databaseChangeLog>
