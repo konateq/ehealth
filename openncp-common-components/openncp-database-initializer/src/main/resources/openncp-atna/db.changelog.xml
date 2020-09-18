@@ -288,4 +288,8 @@
         <modifyDataType columnName="value" newDataType="${blob_type}" tableName="object_details"/>
         <modifyDataType columnName="content" newDataType="${blob_type}" tableName="provisional_messages"/>
     </changeSet>
+
+    <changeSet id="3" author="subigje">
+        <modifyDataType columnName="userId" newDataType="varchar(1000)" tableName="participants"/>
+    </changeSet>
 </databaseChangeLog>
