@@ -144,9 +144,7 @@ public class MessageEntity extends PersistentEntity {
         getMessageObjects().add(entity);
     }
 
-    //length = 65535)
     @Lob
-    @Column(columnDefinition = "BLOB")
     public byte[] getMessageContent() {
         return messageContent;
     }
