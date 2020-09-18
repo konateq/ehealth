@@ -23,12 +23,14 @@ Main issues fixed are described below:
 - [EHNCP-1976] - eADC - XML Transformer issue NullPointerException.
 - [EHNCP-1958] - Serialization of ISM forms might not work on Windows OS.
 - [EHNCP-1942] - IP address returned by TRC-STS not coherent for Portugal.
+- [EHNCP-1939] - ATNA persistence layer returns an exception with userId too long.
 
 ### Deprecated
 - [N/A].
 
 ### Removed
 - [EHNCP-1975] - TRC-STS: Evidence Emitter dependency is not needed.
+- [EHNCP-1970] - Java 8 and OpenSAML framework upgrade are creating an ACCESS_EXTERNAL_SCHEMA property.
 
 ## [4.1.0] - 03-06-2020
 The OpenNCP 4.1.0 release is the CEF eHDSI Wave 3 HotFix version - available for the eHDSI 2020 Re-Test Event.
