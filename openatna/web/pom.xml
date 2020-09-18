@@ -171,7 +171,7 @@
                                 </resource>
                             </webResources>
                             <packagingExcludes>
-                                WEB-INF/lib/xercesImpl-2.10.0.jar
+                                WEB-INF/lib/xercesImpl-${xerces.version}.jar
                             </packagingExcludes>
                         </configuration>
                     </plugin>
@@ -196,7 +196,7 @@
                             </webResources>
                             <includeEmptyDirectories>false</includeEmptyDirectories>
                             <packagingExcludes>
-                                WEB-INF/lib/xercesImpl-2.10.0.jar
+                                WEB-INF/lib/xercesImpl-${xerces.version}.jar
                             </packagingExcludes>
                         </configuration>
                     </plugin>
@@ -220,7 +220,7 @@
                                 </resource>
                             </webResources>
                             <packagingExcludes>
-                                WEB-INF/lib/xercesImpl-2.10.0.jar
+                                WEB-INF/lib/xercesImpl-${xerces.version}.jar
                             </packagingExcludes>
                         </configuration>
                     </plugin>

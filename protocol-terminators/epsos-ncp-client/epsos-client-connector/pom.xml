@@ -299,7 +299,7 @@
                         WEB-INF/lib/woodstox-core-asl-4.0.8.jar,
                         WEB-INF/lib/xalan-2.7.0.jar,
                         WEB-INF/lib/xalan-2.7.1.jar,
-                        WEB-INF/lib/xercesImpl-2.10.0.jar
+                        WEB-INF/lib/xercesImpl-${xerces.version}.jar
                     </packagingExcludes>
                 </configuration>
             </plugin>
