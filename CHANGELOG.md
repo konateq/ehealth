@@ -3,9 +3,36 @@
 All notable changes to the <a href="https://ec.europa.eu/cefdigital/wiki/x/8CEZAg" rel="nofollow">CEF EHDSI project</a> will be documented in this file.<br/> 
 This project adheres to <a href="http://semver.org/" rel="nofollow">Semantic Versioning</a>.
 
+## [4.1.1] - 17-09-2020
+The OpenNCP 4.1.1 HotFix is the release available in the context of CEF eHDSI Wave 3, available for the eHDSI Wave 3 Upgrade. 
+This version is fixing specific issues encountered by some Member State in their National infrastructure.
+Main issues fixed are described below:
+<br/>Fixing eADC component and TransformerFactoryImpl implementation (forced to use Saxon).
+<br/>Transformation Manager configuration file updated for Patient Summary.
+<br/>Evidence Emitter evidences logged even in Production mode has been removed.
+<br/>TRC-STS not retrieving anymore localhost or local IP address.
+<br/>Fixing File serialization on Windows Operating System.
+<br/>Non-Repudiation component removed from the TRC-STS module (not used).
+<br/>ATNA Database schema - MySQL BLOB(64KB) type replaced by LONGBLOB(up to 4GB).
+### Added:
+- [EHNCP-1952] - Transformation configuration not correct for PS - generalizedMedicineClass.
+
+### Changed
+- [EHNCP-1978] - ITI-38 audit message too long for OpenATNA's messageContent column.
+- [EHNCP-1977] - Requests are logged in PROD.
+- [EHNCP-1976] - eADC - XML Transformer issue NullPointerException.
+- [EHNCP-1958] - Serialization of ISM forms might not work on Windows OS.
+- [EHNCP-1942] - IP address returned by TRC-STS not coherent for Portugal.
+
+### Deprecated
+- [N/A].
+
+### Removed
+- [EHNCP-1975] - TRC-STS: Evidence Emitter dependency is not needed.
+
 ## [4.1.0] - 03-06-2020
 The OpenNCP 4.1.0 release is the CEF eHDSI Wave 3 HotFix version - available for the eHDSI 2020 Re-Test Event.
-<br/>This version is mainly improving the vulnerabilities frmo the JAR dependencies (Spring, Hibernate and SAML).
+<br/>This version is mainly improving the vulnerabilities from the JAR dependencies (Spring, Hibernate and SAML).
 <br/>CDA Display Tool improvements according the Formal Test Event feedback. 
 <br/>Web Services communication is using SOAP 1.2 between all the components.
 <br/>eHDSI Central Services (SMP Server) has been upgraded to 4.1.1-EC with Dynamic Discovery Client 1.11.
