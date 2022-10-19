@@ -81,7 +81,7 @@ export default {
         { text: 'Q4', begin: '10-01', end: '12-31' }
       ],
       year: null,
-      years: ['2020', '2021'],
+      years: [new Date().getFullYear()], // initially populate with current year as default
       headers: [
         { text: 'Service Type', value: 'serviceType' },
         { text: 'Direction', value: 'direction' },
@@ -114,6 +114,7 @@ export default {
     options: {
       handler () {
         this.getDataFromApi()
+        this.getYearsFromApi()
       }
     },
     page: 1,
@@ -167,6 +168,16 @@ export default {
             this.transactions = response.data.content
             this.totalTransactions = response.data.totalElements
             this.options.page = response.data.number + 1
+            this.loading = false
+          })
+      }
+    },
+    getYearsFromApi () {
+      if (this.loading) {
+        this.loading = true
+        axios
+          .get(process.env.VUE_APP_SERVER_URL + '/api/eadc/transactions/getYears').then((response) => {
+            this.years = response.data
             this.loading = false
           })
       }

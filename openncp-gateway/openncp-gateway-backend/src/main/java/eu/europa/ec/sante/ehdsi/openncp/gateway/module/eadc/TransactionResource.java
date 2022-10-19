@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.ehdsi.openncp.gateway.module.eadc;
 
-import eu.europa.ec.sante.ehdsi.openncp.gateway.module.atna.persistence.model.Error;
 import eu.europa.ec.sante.ehdsi.openncp.gateway.module.eadc.persistence.model.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -56,5 +56,13 @@ public class TransactionResource {
                 .contentLength(resource.contentLength())
                 .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
                 .body(resource);
+    }
+
+    @GetMapping(path = "/transactions/getYears")
+    public ResponseEntity<List<String>> getTransactionsYears() {
+        logger.info("[API] Retrieving Years");
+        List<String> years = new ArrayList<>();
+        years = transactionService.getYears();
+        return ResponseEntity.ok(years);
     }
 }
