@@ -92,7 +92,7 @@
                 ></v-date-picker>
               </v-menu>
             </v-col>
-            <v-col><v-btn block @click="searchDataFromApi"> Search </v-btn></v-col>
+            <v-col><v-btn block @click="searchDataFromApi(true)"> Search </v-btn></v-col>
           </v-row>
         </v-card-title>
         <v-data-table
@@ -205,7 +205,7 @@ export default {
     options: {
       handler () {
         if (this.filteredData) {
-          this.searchDataFromApi()
+          this.searchDataFromApi(false)
         } else {
           this.getDataFromApi()
         }
@@ -255,7 +255,7 @@ export default {
     }
   },
   methods: {
-    searchDataFromApi () {
+    searchDataFromApi (resetToFirstPage) {
       if (!this.loading) {
         this.loading = true
         this.apiCall().then((data) => {
@@ -264,6 +264,9 @@ export default {
           this.options.page = data.data.number + 1
           this.loading = false
           this.filteredData = true
+          if (resetToFirstPage) {
+            this.$set(this.options, 'page', 1)
+          }
         })
       }
     },
