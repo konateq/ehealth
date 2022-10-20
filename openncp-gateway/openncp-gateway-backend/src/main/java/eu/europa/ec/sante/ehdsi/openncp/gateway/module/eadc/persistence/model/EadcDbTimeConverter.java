@@ -11,7 +11,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 
 @Converter
 public class EadcDbTimeConverter implements AttributeConverter<Instant, String> {
@@ -39,12 +38,9 @@ public class EadcDbTimeConverter implements AttributeConverter<Instant, String> 
             ZonedDateTime timed = ZonedDateTime.parse(s, formatter);
             timed.format(formatter);
             return Instant.from(timed);
-        } catch (DateTimeParseException ex) {
+        } catch (RuntimeException ex) {
             logger.warn(ex.getMessage());
             return null;
-        } catch (RuntimeException ex) {
-            logger.error(ex.getMessage());
-            throw (ex);
         }
     }
 }
