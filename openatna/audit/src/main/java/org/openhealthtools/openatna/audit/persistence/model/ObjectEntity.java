@@ -1,10 +1,10 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
 import org.openhealthtools.openatna.audit.persistence.model.codes.ObjectIdTypeCodeEntity;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -38,8 +38,6 @@ public class ObjectEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -150,21 +148,19 @@ public class ObjectEntity extends PersistentEntity {
 
         ObjectEntity that = (ObjectEntity) o;
 
-        if (objectId != null ? !objectId.equals(that.objectId) : that.objectId != null) {
+        if (!Objects.equals(objectId, that.objectId)) {
             return false;
         }
-        if (objectName != null ? !objectName.equals(that.objectName) : that.objectName != null) {
+        if (!Objects.equals(objectName, that.objectName)) {
             return false;
         }
-        if (objectSensitivity != null ? !objectSensitivity.equals(that.objectSensitivity)
-                : that.objectSensitivity != null) {
+        if (!Objects.equals(objectSensitivity, that.objectSensitivity)) {
             return false;
         }
-        if (objectTypeCode != null ? !objectTypeCode.equals(that.objectTypeCode)
-                : that.objectTypeCode != null) {
+        if (!Objects.equals(objectTypeCode, that.objectTypeCode)) {
             return false;
         }
-        return objectTypeCodeRole != null ? objectTypeCodeRole.equals(that.objectTypeCodeRole) : that.objectTypeCodeRole == null;
+        return Objects.equals(objectTypeCodeRole, that.objectTypeCodeRole);
     }
 
     @Override

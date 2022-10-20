@@ -1,17 +1,8 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
-
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author Andrew Harrison
- * @version 1.0.0
- */
 @Entity
 @Table(name = "object_descriptions")
 public class ObjectDescriptionEntity extends PersistentEntity {
@@ -25,8 +16,6 @@ public class ObjectDescriptionEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -125,10 +114,10 @@ public class ObjectDescriptionEntity extends PersistentEntity {
 
         ObjectDescriptionEntity that = (ObjectDescriptionEntity) o;
 
-        if (accessionNumbers != null ? !accessionNumbers.equals(that.accessionNumbers) : that.accessionNumbers != null) {
+        if (!Objects.equals(accessionNumbers, that.accessionNumbers)) {
             return false;
         }
-        return mppsUids != null ? mppsUids.equals(that.mppsUids) : that.mppsUids == null;
+        return Objects.equals(mppsUids, that.mppsUids);
     }
 
     public String toString() {
