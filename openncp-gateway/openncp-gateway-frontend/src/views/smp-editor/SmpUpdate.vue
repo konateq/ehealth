@@ -168,7 +168,11 @@ export default {
           })
           this.showXml = false
           this.showSignedXml = false
-          this.uploaded = true
+          if (response.data.statusCode === 200 || response.data.statusCode === 201) {
+            this.uploaded = true
+            this.success('Upload is done ')
+          }
+          this.loading = false
         })
         .catch((err) => {
           this.error(

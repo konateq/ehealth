@@ -1,8 +1,11 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Objects;
 
 @Entity
 @Table(name = "errors")
@@ -55,6 +58,7 @@ public class ErrorEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public byte[] getPayload() {
         return payload;
     }
@@ -72,6 +76,7 @@ public class ErrorEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public byte[] getStackTrace() {
         return stackTrace;
     }
@@ -91,16 +96,16 @@ public class ErrorEntity extends PersistentEntity {
 
         ErrorEntity that = (ErrorEntity) o;
 
-        if (errorMessage != null ? !errorMessage.equals(that.errorMessage) : that.errorMessage != null) {
+        if (!Objects.equals(errorMessage, that.errorMessage)) {
             return false;
         }
-        if (errorTimestamp != null ? !errorTimestamp.equals(that.errorTimestamp) : that.errorTimestamp != null) {
+        if (!Objects.equals(errorTimestamp, that.errorTimestamp)) {
             return false;
         }
         if (!Arrays.equals(payload, that.payload)) {
             return false;
         }
-        if (sourceIp != null ? !sourceIp.equals(that.sourceIp) : that.sourceIp != null) {
+        if (!Objects.equals(sourceIp, that.sourceIp)) {
             return false;
         }
         return stackTrace != null ? Arrays.equals(stackTrace, that.stackTrace) : that.stackTrace == null;

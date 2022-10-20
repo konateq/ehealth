@@ -1,15 +1,8 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
-
 import javax.persistence.*;
+import java.util.Objects;
 
-/**
- * Class Description Here...
- *
- * @author Andrew Harrison
- * @version $Revision:$
- */
 @Entity
 @Table(name = "network_access_points")
 public class NetworkAccessPointEntity extends PersistentEntity {
@@ -31,8 +24,6 @@ public class NetworkAccessPointEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -77,10 +68,10 @@ public class NetworkAccessPointEntity extends PersistentEntity {
 
         NetworkAccessPointEntity that = (NetworkAccessPointEntity) o;
 
-        if (identifier != null ? !identifier.equals(that.identifier) : that.identifier != null) {
+        if (!Objects.equals(identifier, that.identifier)) {
             return false;
         }
-        return type != null ? type.equals(that.type) : that.type == null;
+        return Objects.equals(type, that.type);
     }
 
     @Override
