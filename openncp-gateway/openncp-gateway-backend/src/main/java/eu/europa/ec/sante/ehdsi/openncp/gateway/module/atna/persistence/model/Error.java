@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.ehdsi.openncp.gateway.module.atna.persistence.model;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Lob;
@@ -19,11 +21,13 @@ public class Error {
     private Instant errorTimestamp;
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     private byte[] payload = new byte[0];
 
     private String sourceIp;
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     private byte[] stackTrace = new byte[0];
 
     private String version;
