@@ -1,13 +1,10 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.Objects;
 
-/**
- * @author Andrew Harrison
- * @version 1.0.0
- */
 public class QueryEntity extends PersistentEntity {
 
     private Long id;
@@ -17,8 +14,6 @@ public class QueryEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -45,6 +40,7 @@ public class QueryEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public String getQuery() {
         return query;
     }
@@ -64,10 +60,10 @@ public class QueryEntity extends PersistentEntity {
 
         QueryEntity that = (QueryEntity) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) {
+        if (!Objects.equals(name, that.name)) {
             return false;
         }
-        return query != null ? query.equals(that.query) : that.query == null;
+        return Objects.equals(query, that.query);
     }
 
     @Override
