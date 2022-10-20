@@ -155,14 +155,18 @@ export default {
         })
     },
     getDataFromApi () {
+      const params = {
+        pageNumber: this.options.page - 1,
+        size: this.options.itemsPerPage
+      }
+      if (this.options.sortBy.length > 0) {
+        params.sort = this.options.sortBy[0] + ',' + (this.options.sortDesc[0] ? 'ASC' : 'DESC')
+      }
       if (!this.loading) {
         this.loading = true
         axios
           .get(process.env.VUE_APP_SERVER_URL + '/api/eadc/transactions', {
-            params: {
-              pageNumber: this.options.page - 1,
-              size: this.options.itemsPerPage
-            }
+            params: params
           }).then((response) => {
             this.transactions = response.data.content
             this.totalTransactions = response.data.totalElements
