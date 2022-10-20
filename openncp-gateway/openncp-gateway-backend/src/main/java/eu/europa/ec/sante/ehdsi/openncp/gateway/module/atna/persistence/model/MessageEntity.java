@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.ehdsi.openncp.gateway.module.atna.persistence.model;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -34,6 +36,7 @@ public class MessageEntity {
     private Set<MessageParticipantEntity> messageParticipants = new LinkedHashSet<>();
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     private byte[] messageContent = new byte[0];
 
     public Long getId() {

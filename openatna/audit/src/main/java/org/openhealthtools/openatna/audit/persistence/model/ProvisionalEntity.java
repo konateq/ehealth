@@ -1,13 +1,11 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
+import org.hibernate.annotations.Type;
+
 import javax.persistence.*;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-/**
- * @author Andrew Harrison
- * @version 1.0.0
- */
 @Entity
 @Table(name = "provisional_messages")
 public class ProvisionalEntity extends PersistentEntity {
@@ -19,8 +17,6 @@ public class ProvisionalEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -39,6 +35,7 @@ public class ProvisionalEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public byte[] getContent() {
         return content;
     }
@@ -62,12 +59,7 @@ public class ProvisionalEntity extends PersistentEntity {
     }
 
     public String toString() {
-        try {
-            return new String(content, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            assert (false);
-        }
-        return getClass().getName();
+        return new String(content, StandardCharsets.UTF_8);
     }
 
     @Override

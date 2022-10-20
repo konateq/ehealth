@@ -1,5 +1,6 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
+import org.hibernate.annotations.Type;
 import org.openhealthtools.openatna.audit.persistence.model.codes.EventIdCodeEntity;
 import org.openhealthtools.openatna.audit.persistence.model.codes.EventTypeCodeEntity;
 
@@ -145,6 +146,7 @@ public class MessageEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public byte[] getMessageContent() {
         return messageContent;
     }
