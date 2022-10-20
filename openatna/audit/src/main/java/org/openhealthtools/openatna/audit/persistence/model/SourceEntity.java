@@ -1,10 +1,10 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
 import org.openhealthtools.openatna.audit.persistence.model.codes.SourceCodeEntity;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -37,8 +37,6 @@ public class SourceEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -121,11 +119,10 @@ public class SourceEntity extends PersistentEntity {
 
         SourceEntity that = (SourceEntity) o;
 
-        if (enterpriseSiteId != null ? !enterpriseSiteId.equals(that.enterpriseSiteId)
-                : that.enterpriseSiteId != null) {
+        if (!Objects.equals(enterpriseSiteId, that.enterpriseSiteId)) {
             return false;
         }
-        return sourceId != null ? sourceId.equals(that.sourceId) : that.sourceId == null;
+        return Objects.equals(sourceId, that.sourceId);
     }
 
     @Override

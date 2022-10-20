@@ -7,6 +7,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,15 +33,16 @@ public class TransactionResource {
     @GetMapping(path = "/transactions")
     public ResponseEntity<Page<Transaction>> getTransactions(
             @RequestParam(defaultValue = "0") int pageNumber,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id,DESC") String[] sort) {
         logger.info("[API] Listing eADC Transactions");
-        Pageable pageable = PageRequest.of(pageNumber, size);
+        Pageable pageable = PageRequest.of(pageNumber, size, getSort(sort));
         Page<Transaction> page = transactionService.findTransactions(pageable);
         return ResponseEntity.ok(page);
     }
 
     @GetMapping(path = "/transactions/{id}")
-    public ResponseEntity<Transaction> getTransactions(@PathVariable("id")  String id) {
+    public ResponseEntity<Transaction> getTransactions(@PathVariable("id") String id) {
         logger.info("[API] Retrieving Transaction: '{}'", id);
         return ResponseEntity.ok(transactionService.getTransaction(id));
     }
@@ -57,6 +59,24 @@ public class TransactionResource {
                 .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
                 .body(resource);
     }
+
+    private Sort getSort(String[] sort) {
+        List<Sort.Order> orders = new ArrayList<>();
+
+        if (sort[0].contains(",")) {
+            // will sort more than 2 fields
+            // sortOrder="field, direction"
+            for (String sortOrder : sort) {
+                String[] _sort = sortOrder.split(",");
+                orders.add(new Sort.Order(Sort.Direction.fromString(_sort[1]), _sort[0]));
+            }
+        } else {
+            // sort=[field, direction]
+            orders.add(new Sort.Order(Sort.Direction.fromString(sort[1]), sort[0]));
+        }
+        return Sort.by(orders);
+    }
+
 
     @GetMapping(path = "/transactions/getYears")
     public ResponseEntity<List<String>> getTransactionsYears() {
