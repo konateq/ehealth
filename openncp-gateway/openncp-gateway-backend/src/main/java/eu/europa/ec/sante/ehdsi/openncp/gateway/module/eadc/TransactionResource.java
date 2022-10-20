@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.ehdsi.openncp.gateway.module.eadc;
 
-import eu.europa.ec.sante.ehdsi.openncp.gateway.module.atna.persistence.model.Error;
 import eu.europa.ec.sante.ehdsi.openncp.gateway.module.eadc.persistence.model.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,7 @@ public class TransactionResource {
     }
 
     @GetMapping(path = "/transactions/{id}")
-    public ResponseEntity<Transaction> getTransactions(@PathVariable("id")  String id) {
+    public ResponseEntity<Transaction> getTransactions(@PathVariable("id") String id) {
         logger.info("[API] Retrieving Transaction: '{}'", id);
         return ResponseEntity.ok(transactionService.getTransaction(id));
     }
