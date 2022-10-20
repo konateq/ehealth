@@ -31,4 +31,8 @@ public class TransactionService {
     return transactionRepository.findById(id)
                .orElseThrow(() -> new RuntimeException("Not Found"));
     }
+
+    public List<String> getYears() {
+        return transactionRepository.findAllYears();
+    }
 }

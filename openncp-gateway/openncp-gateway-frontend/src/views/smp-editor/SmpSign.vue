@@ -123,7 +123,7 @@ export default {
               response.data
             )
             .then((response) => {
-              if (response.data.statusCode === 200) {
+              if (response.data.statusCode === 200 || response.data.statusCode === 201) {
                 this.uploaded = true
                 this.success('Upload is done ')
               }

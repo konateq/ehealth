@@ -108,7 +108,6 @@
                     <xsl:for-each select="$participantPRS">
                         <tr>
                             <td>
-                                test
                                 <!-- show person's name and if exists organization name -->
                                 <xsl:if test="not(n1:associatedPerson/n1:name/@nullFlavor)">
                                     <xsl:value-of select="n1:associatedPerson/n1:name/n1:given"/>&#160;

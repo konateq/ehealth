@@ -1,10 +1,11 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -30,8 +31,6 @@ public class MessageObjectEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -50,6 +49,7 @@ public class MessageObjectEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public byte[] getObjectQuery() {
         return objectQuery;
     }
@@ -91,21 +91,16 @@ public class MessageObjectEntity extends PersistentEntity {
 
         MessageObjectEntity that = (MessageObjectEntity) o;
 
-        if (details != null ? !details.equals(that.details) : that.details != null) {
+        if (!Objects.equals(details, that.details)) {
             return false;
         }
-        if (object != null ? !object.equals(that.object) : that.object != null) {
+        if (!Objects.equals(object, that.object)) {
             return false;
         }
-        if (objectDataLifeCycle != null ? !objectDataLifeCycle.equals(that.objectDataLifeCycle)
-                : that.objectDataLifeCycle != null) {
+        if (!Objects.equals(objectDataLifeCycle, that.objectDataLifeCycle)) {
             return false;
         }
-        if (objectQuery != null ? !Arrays.equals(objectQuery, that.objectQuery) : that.objectQuery != null) {
-            return false;
-        }
-
-        return true;
+        return objectQuery != null ? Arrays.equals(objectQuery, that.objectQuery) : that.objectQuery == null;
     }
 
     @Override
@@ -124,7 +119,7 @@ public class MessageObjectEntity extends PersistentEntity {
                 ", data life cycle=" +
                 getObjectDataLifeCycle() +
                 ", query=" +
-                String.valueOf(getObjectQuery()) +
+                getObjectQuery() +
                 ", object=" +
                 getObject() +
                 ", details=" +
