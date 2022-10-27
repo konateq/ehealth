@@ -8,6 +8,7 @@ import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tr.com.srdc.epsos.util.Constants;
 
 import java.io.File;
 
@@ -17,6 +18,12 @@ public class GazelleConfiguration {
             + File.separatorChar + "gazelle.ehdsi.properties";
     private static final Logger logger = LoggerFactory.getLogger((GazelleConfiguration.class));
     private static GazelleConfiguration instance;
+
+    static {
+        System.setProperty("javax.net.ssl.trustStore", Constants.TRUSTSTORE_PATH);
+        System.setProperty("javax.net.ssl.trustStorePassword", Constants.TRUSTSTORE_PASSWORD);
+    }
+
     private Configuration configuration;
 
     private GazelleConfiguration() throws ConfigurationException {
@@ -45,7 +52,6 @@ public class GazelleConfiguration {
             try {
                 instance = new GazelleConfiguration();
             } catch (ConfigurationException ex) {
-                logger.error("ConfigurationException: '{}'", ex.getMessage(), ex);
                 throw new RuntimeException(ex.getMessage(), ex);
             }
         }
