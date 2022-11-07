@@ -3,10 +3,46 @@
 All notable changes to the <a href="https://ec.europa.eu/cefdigital/wiki/x/8CEZAg" rel="nofollow">CEF EHDSI project</a> will be documented in this file.<br/>
 This project adheres to <a href="http://semver.org/" rel="nofollow">Semantic Versioning</a>.
 
+## [5.2.7] - 07-11-2022
+The OpenNCP 5.2.7 is the Wave 5 Operation Ready HotFix release.
+This version is planned to be used as a bug fix version during the eHDSI Wave 5 Routine Operation as a recommended version.
+Detailed release note is available here: https://webgate.ec.europa.eu/fpfis/wikis/x/QQAyTg
+
+Main changes in this release are:<br/>
+<ul>
+<li>Apache Commons Text vulnerability resolved.</li>
+<li>OpenNCP Gateway (ATNA, eADC and SMP) improvements and bug fix on UI and backend.</li>
+<li>XPath Coded Elements list configuration file update (to be updated also into the custom configuration folder).</li>
+<li>OpenNCP Gazelle Validator: module truststore set to OpenNCP one instead of the CACert from the system.</li>
+<li>Audit message NullPointerException resolved during ISM fetch operation.</li>
+</ul>
+
+### Bug
+    [EHEALTH-8129] - TM code_element_list.xml: wrong XPath for Substitution flag in ePrescription.
+    [EHEALTH-8551] - OpenNCP Gateway doesn't support properly Oracle database LOB type.
+    [EHEALTH-8892] - Problem with OpenNCP version 5.2.5 openatna viewer
+    [EHEALTH-8923] - OpenNCP-Gateway - SMP-Editor: Delete dialog box is not closed after deletion of SMP file.
+    [EHEALTH-8924] - OpenNCP-Gateway - SMP-Editor: no feedback to user after SMP file upload.
+    [EHEALTH-8925] - OpenNCP-Gateway - EADC-Viewer: columns header doesn't change order of presentation.
+    [EHEALTH-8927] - OpenNCP-WS-Server fails to establish TLS connection to remote Gazelle validators.
+    [EHEALTH-9040] - Pagination issue with ATNA viewer.
+    [EHEALTH-9069] - [PS Extended header] Trailing text in extended patient header.
+    [EHEALTH-9116] - OpenNCP-Gateway: cannot export EADC from 2022 onwards (hardcoded values).
+    [EHEALTH-9142] - OpenATNA: issue while storing events information during ISM synchronizing.
+    [EHEALTH-9165] - Pagination in eADC generate exception if startDate or endDate fields are empty.
+
+### Task
+    [EHEALTH-9234] - Releasing OpenNCP 5.2.7.
+    [EHEALTH-8399] - The type of address (/addr/@use) is not properly displayed.
+
+### Improvement
+    [EHEALTH-8778] - OpenNCP Gateway Backend - Spring Security warning.
+    [EHEALTH-9239] - Apache Commons Text vulnerability.    
+
 ## [5.2.6] - 13-06-2022
 The OpenNCP 5.2.6 is the Wave 5 Operation Ready release.
 This version is planned to be used during the eHDSI Wave 5 Routine Operations.
-Detailed installation manual is available here: https://webgate.ec.europa.eu/fpfis/wikis/x/zwVGRw
+Detailed release note is available here: https://webgate.ec.europa.eu/fpfis/wikis/x/zwVGRw
 
 Main changes in this release are:<br/>
 <ul>
