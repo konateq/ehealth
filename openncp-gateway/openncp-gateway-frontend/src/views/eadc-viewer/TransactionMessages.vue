@@ -81,7 +81,7 @@ export default {
         { text: 'Q4', begin: '10-01', end: '12-31' }
       ],
       year: null,
-      years: ['2020', '2021'],
+      years: ['2020', '2021', '2022'],
       headers: [
         { text: 'Service Type', value: 'serviceType' },
         { text: 'Direction', value: 'direction' },
