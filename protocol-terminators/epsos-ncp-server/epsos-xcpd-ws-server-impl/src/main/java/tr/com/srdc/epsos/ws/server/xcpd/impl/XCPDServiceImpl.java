@@ -436,16 +436,24 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                                 String eName = element.getName().getLocalPart();
                                 if (StringUtils.equals("city", eName)) {
                                     AdxpCity ac = (AdxpCity) element.getValue();
-                                    patientDemographics.setCity(ac.getContent());
+                                    if (StringUtils.isNotBlank(ac.getContent())) {
+                                        patientDemographics.setCity(ac.getContent());
+                                    }
                                 } else if (StringUtils.equals("streetName", eName)) {
                                     AdxpStreetName asn = (AdxpStreetName) element.getValue();
-                                    patientDemographics.setStreetAddress(asn.getContent());
+                                    if (StringUtils.isNotBlank(asn.getContent())) {
+                                        patientDemographics.setStreetAddress(asn.getContent());
+                                    }
                                 } else if (StringUtils.equals("country", eName)) {
                                     AdxpCountry ac = (AdxpCountry) element.getValue();
-                                    patientDemographics.setCountry(ac.getContent());
+                                    if (StringUtils.isNotBlank(ac.getContent())) {
+                                        patientDemographics.setCountry(ac.getContent());
+                                    }
                                 } else if (StringUtils.equals("postalCode", eName)) {
                                     AdxpPostalCode apc = (AdxpPostalCode) element.getValue();
-                                    patientDemographics.setPostalCode(apc.getContent());
+                                    if (StringUtils.isNotBlank(apc.getContent())) {
+                                        patientDemographics.setPostalCode(apc.getContent());
+                                    }
                                 }
                             }
                         }
@@ -539,7 +547,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         outputMessage.setProcessingModeCode(objectFactory.createCS());
         outputMessage.getProcessingModeCode().setCode("T");
 
-        // Set Accept act code
+        // Set Accept Ack Code
         outputMessage.setAcceptAckCode(objectFactory.createCS());
         outputMessage.getAcceptAckCode().setCode("NE");
 
@@ -732,7 +740,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 // Preparing demographic query not allowed error
                 fillOutputMessage(outputMessage, "Queries are only available with patient identifiers", ERROR_DEMOGRAPHIC_QUERY_NOT_ALLOWED);
             }
-        } catch (MissingFieldException | InvalidFieldException | InsufficientRightsException | XSDValidationException e) {
+        } catch (MissingFieldException | InvalidFieldException | InsufficientRightsException |
+                 XSDValidationException e) {
 
             fillOutputMessage(outputMessage, e.getMessage(), ERROR_INSUFFICIENT_RIGHTS);
             logger.error(e.getMessage(), e);
