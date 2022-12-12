@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -24,7 +23,7 @@ public class ExportService {
 
     public final ZoneId zoneId = ZoneId.systemDefault();
 
-    private final String TEMPLATE_FILE = "eHDSI_KPIs-Reporting_template_V1.1.1.xlsx";
+    private final String TEMPLATE_FILE = "eHDSI_KPIs-Reporting_template_V1.2.xlsx";
 
     private final String SHEET_KPI_1_2 = "KPI-1.2";
     private final String SHEET_KPI_1_3 = "KPI-1.3";
@@ -76,7 +75,7 @@ public class ExportService {
 
     private void writeTransactions(Sheet sheet, List<Transaction> transactions) {
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY-MM-DD hh:mm:ss");
 
         int rowCount = 0;
         for (Transaction transaction : transactions) {
