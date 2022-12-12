@@ -48,23 +48,19 @@ public class CustomMessageRepositoryImpl extends QuerydslRepositorySupport imple
         QCode qCode = QCode.code;
 
 
-        JPQLQuery<Long> countQuery = from(qMessage).distinct()
+        JPQLQuery<Long> idQuery = from(qMessage)
                 .join(qMessage.messageParticipants, qMessageParticipant)
                 .join(qMessageParticipant.participant, qParticipant)
                 .join(qParticipant.participantTypes, qCode)
                 .select(qMessage.id)
                 .where(predicate);
 
-        long totalElements =  countQuery.fetchCount();
+        long totalElements =  idQuery.distinct().fetchCount();
 
-        JPQLQuery<MessageEntity> query =
-                from(qMessage).distinct()
-                        .join(qMessage.messageParticipants, qMessageParticipant)
-                        .join(qMessageParticipant.participant, qParticipant)
-                        .join(qParticipant.participantTypes, qCode)
-                        .where(predicate);
+        JPQLQuery<MessageEntity> messagesQuery =
+                from(qMessage).where(qMessage.id.in(idQuery));
 
-        List<MessageEntity> result = Objects.requireNonNull(getQuerydsl()).applyPagination(pageable, query).fetch();
+        List<MessageEntity> result = Objects.requireNonNull(getQuerydsl()).applyPagination(pageable, messagesQuery).fetch();
         return new PageImpl<>(result, pageable, totalElements);
     }
 

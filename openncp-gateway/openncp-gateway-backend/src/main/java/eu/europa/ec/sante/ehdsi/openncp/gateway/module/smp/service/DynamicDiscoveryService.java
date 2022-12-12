@@ -53,7 +53,7 @@ public class DynamicDiscoveryService {
 
     private final DynamicDiscoveryClient dynamicDiscoveryClient;
 
-    private DynamicDiscoveryService(DynamicDiscoveryClient dynamicDiscoveryClient) {
+    public DynamicDiscoveryService(DynamicDiscoveryClient dynamicDiscoveryClient) {
         this.dynamicDiscoveryClient = dynamicDiscoveryClient;
     }
 
@@ -112,7 +112,6 @@ public class DynamicDiscoveryService {
 
         try {
             String participantIdentifierValue = String.format(PARTICIPANT_IDENTIFIER_VALUE, countryCode);
-            String participantObjectID = "";
             LOGGER.info("[Gateway] Querying ISM for participant identifier {}", participantIdentifierValue);
             ParticipantIdentifier participantIdentifier = new ParticipantIdentifier(participantIdentifierValue, PARTICIPANT_IDENTIFIER_SCHEME);
             DocumentIdentifier documentIdentifier = new DocumentIdentifier(RegisteredService.EHEALTH_107.getUrn(), DOCUMENT_IDENTIFIER_SCHEME);
@@ -131,9 +130,6 @@ public class DynamicDiscoveryService {
                     if (!extensionTypes.isEmpty()) {
 
                         Document document = ((ElementNSImpl) extensionTypes.get(0).getAny()).getOwnerDocument();
-
-                        participantObjectID = XMLUtil.documentToString(document, true);
-
                         DOMSource source = new DOMSource(document.getElementsByTagNameNS(URN_EHDSI_ISM, "searchFields").item(0));
                         String outPath = APPLICATION_BASE_DIR + "InternationalSearch_" + StringUtils.upperCase(countryCode) + ".xml";
                         if (LOGGER.isDebugEnabled()) {
@@ -147,14 +143,11 @@ public class DynamicDiscoveryService {
             //  Audit variables
             URI smpURI = smpClient.getService().getMetadataLocator().lookup(participantIdentifier);
             URI serviceMetadataUri = smpClient.getService().getMetadataProvider().resolveServiceMetadata(smpURI, participantIdentifier, documentIdentifier);
-            byte[] encodedObjectID = participantObjectID.isEmpty() ? Base64.encodeBase64(serviceMetadataUri.toASCIIString().getBytes()) :
-                    Base64.encodeBase64(participantObjectID.getBytes());
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("[Gateway] SMP Query: '{}'", serviceMetadataUri.toASCIIString());
-            }
+            byte[] encodedObjectID = Base64.encodeBase64(serviceMetadataUri.toASCIIString().getBytes());
             AuditManager.handleDynamicDiscoveryQuery(smpURI.toASCIIString(), new String(encodedObjectID), null, null);
 
-        } catch (IOException | CertificateException | KeyStoreException | TechnicalException | TransformerException | NoSuchAlgorithmException e) {
+        } catch (IOException | CertificateException | KeyStoreException | TechnicalException | TransformerException |
+                 NoSuchAlgorithmException e) {
             //TODO: [Specification] Analyze if an audit message is required in case of error.
             throw new ConfigurationManagerException("An internal error occurred while retrieving the International Search Mask from " + countryCode, e);
         }

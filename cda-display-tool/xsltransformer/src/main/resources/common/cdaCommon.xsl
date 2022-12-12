@@ -84,7 +84,7 @@
             <xsl:when test="$address">
                 <xsl:if test="$address/@use">
                     <xsl:text> </xsl:text>
-                    <xsl:call-template name="translateTelecomCode">
+                    <xsl:call-template name="show-eHDSITelecomAddress">
                         <xsl:with-param name="code" select="$address/@use"/>
                     </xsl:call-template>
                     <xsl:text>:</xsl:text>

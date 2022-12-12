@@ -1,9 +1,10 @@
 package org.openhealthtools.openatna.audit.persistence.model;
 
-import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.util.Arrays;
+import java.util.Objects;
 
 @Entity
 @Table(name = "object_details")
@@ -26,8 +27,6 @@ public class ObjectDetailEntity extends PersistentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    //@GenericGenerator(name = "native", strategy = "native")
     public Long getId() {
         return id;
     }
@@ -57,6 +56,7 @@ public class ObjectDetailEntity extends PersistentEntity {
     }
 
     @Lob
+    @Type(type = "org.hibernate.type.BinaryType")
     public byte[] getValue() {
         return value;
     }
@@ -81,7 +81,7 @@ public class ObjectDetailEntity extends PersistentEntity {
 
         ObjectDetailEntity that = (ObjectDetailEntity) o;
 
-        if (type != null ? !type.equals(that.type) : that.type != null) {
+        if (!Objects.equals(type, that.type)) {
             return false;
         }
         return value != null ? Arrays.equals(value, that.value) : that.value == null;

@@ -102,6 +102,7 @@ export default {
         )
         .then((response) => {
           this.loading = false
+          this.dialogConfirm = false
           this.success('SMP File has been deleted')
           axios
             .get(
@@ -121,7 +122,6 @@ export default {
                 err.response.data.message
               )
             })
-          this.loading = true
         })
         .catch((err) => {
           this.error(
