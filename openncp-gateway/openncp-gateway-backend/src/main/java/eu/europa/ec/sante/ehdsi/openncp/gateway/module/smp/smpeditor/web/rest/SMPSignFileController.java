@@ -35,10 +35,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -276,13 +273,18 @@ public class SMPSignFileController {
             smpFileOps.setEndpointURI(endpoint.getEndpointURI());
 
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            Date cal = endpoint.getServiceActivationDate().getTime();
-            String formatted = format.format(cal);
-            Date cal2 = endpoint.getServiceExpirationDate().getTime();
-            String formatted2 = format.format(cal2.getTime());
-
-            smpFileOps.setServiceActivationDateS(formatted);
-            smpFileOps.setServiceExpirationDateS(formatted2);
+            Calendar serviceActivationDate = endpoint.getServiceActivationDate();
+            if (serviceActivationDate != null && serviceActivationDate.getTime() != null) {
+                smpFileOps.setServiceActivationDateS(format.format(serviceActivationDate.getTime()));
+            } else {
+                logger.error("Mandatory field ServiceActivationDate is not set");
+            }
+            Calendar serviceExpirationDate = endpoint.getServiceExpirationDate();
+            if (serviceExpirationDate != null && serviceExpirationDate.getTime() != null) {
+                smpFileOps.setServiceExpirationDateS(format.format(serviceExpirationDate.getTime()));
+            } else {
+                logger.error("Mandatory field serviceExpirationDate is not set");
+            }
             smpFileOps.setCertificateContent(subjectName);
             smpFileOps.setServiceDescription(endpoint.getServiceDescription());
             smpFileOps.setTechnicalContactUrl(endpoint.getTechnicalContactUrl());

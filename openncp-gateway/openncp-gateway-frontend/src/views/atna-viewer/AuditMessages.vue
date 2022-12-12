@@ -171,11 +171,15 @@ export default {
         }
       ],
       EventIdCodeItems: [
+        'EHDSI-91',
         'EHDSI-92',
+        'EHDSI-93',
         'EHDSI-94',
         'EHDSI-96',
+        'EHDSI-CF',
         'ITI-38',
         'ITI-39',
+        'ITI-40',
         'ITI-41',
         'ITI-55'
       ],
