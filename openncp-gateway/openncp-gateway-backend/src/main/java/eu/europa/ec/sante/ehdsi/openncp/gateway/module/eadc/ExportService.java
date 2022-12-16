@@ -83,25 +83,25 @@ public class ExportService {
             Row row = sheet.createRow(++rowCount);
 
             Cell cell = row.createCell(0);
-            cell.setCellValue(transaction.getHomeISO());
+            cell.setCellValue(transaction.getHomeISO() != null ? transaction.getHomeISO() : "");
 
             cell = row.createCell(1);
-            cell.setCellValue(transaction.getStartTime().atZone(zoneId).getYear());
+            cell.setCellValue(transaction.getStartTime() != null ? transaction.getStartTime().atZone(zoneId).getYear() : 0);
 
             cell = row.createCell(2);
-            cell.setCellValue(transaction.getStartTime().atZone(zoneId).get(IsoFields.QUARTER_OF_YEAR));
+            cell.setCellValue(transaction.getStartTime() != null ? transaction.getStartTime().atZone(zoneId).get(IsoFields.QUARTER_OF_YEAR) : 1);
 
             cell = row.createCell(3);
-            cell.setCellValue(transaction.getSndISO());
+            cell.setCellValue(transaction.getSndISO() != null ? transaction.getSndISO() : "");
 
             cell = row.createCell(4);
-            cell.setCellValue(transaction.getReceivingISO());
+            cell.setCellValue(transaction.getReceivingISO() != null ? transaction.getReceivingISO() : "");
 
             cell = row.createCell(5);
-            cell.setCellValue(formatter.format(transaction.getStartTime().atZone(zoneId)));
+            cell.setCellValue(transaction.getStartTime() != null ? formatter.format(transaction.getStartTime().atZone(zoneId)) : "");
 
             cell = row.createCell(6);
-            cell.setCellValue(formatter.format(transaction.getEndTime().atZone(zoneId)));
+            cell.setCellValue(transaction.getEndTime() != null ? formatter.format(transaction.getEndTime().atZone(zoneId)) : "");
 
             cell = row.createCell(7);
             switch (sheet.getSheetName()) {
