@@ -18,7 +18,6 @@ import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.v3.*;
 import org.joda.time.DateTime;
@@ -41,7 +40,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -268,26 +266,34 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         return result;
     }
 
-    private AD getAddress(PatientDemographics pd) {
-        // Adding the city
+    private AD getAddress(PatientDemographics patientDemographics) {
+
         var result = objectFactory.createAD();
-        var city = objectFactory.createAdxpCity();
-        city.setContent(pd.getCity());
-        result.getContent().add(objectFactory.createADCity(city));
+
+        // Adding the city
+        if (StringUtils.isNotBlank(patientDemographics.getCity())) {
+            var city = objectFactory.createAdxpCity();
+            city.setContent(StringUtils.strip(patientDemographics.getCity()));
+            result.getContent().add(objectFactory.createADCity(city));
+        }
 
         // Adding the postal code
-        var postal = objectFactory.createAdxpPostalCode();
-        postal.setContent(pd.getPostalCode());
-        result.getContent().add(objectFactory.createADPostalCode(postal));
+        if (StringUtils.isNotBlank(patientDemographics.getPostalCode())) {
+            var postal = objectFactory.createAdxpPostalCode();
+            postal.setContent(StringUtils.strip(patientDemographics.getPostalCode()));
+            result.getContent().add(objectFactory.createADPostalCode(postal));
+        }
 
         // Adding the address street line
-        var street = objectFactory.createAdxpStreetAddressLine();
-        street.setContent(pd.getStreetAddress());
-        result.getContent().add(objectFactory.createADStreetAddressLine(street));
+        if (StringUtils.isNotBlank(patientDemographics.getStreetAddress())) {
+            var street = objectFactory.createAdxpStreetAddressLine();
+            street.setContent(StringUtils.strip(patientDemographics.getStreetAddress()));
+            result.getContent().add(objectFactory.createADStreetAddressLine(street));
+        }
 
         // Adding the country
         var country = objectFactory.createAdxpCountry();
-        country.setContent(pd.getCountry());
+        country.setContent(patientDemographics.getCountry());
         result.getContent().add(objectFactory.createADCountry(country));
 
         return result;
@@ -437,22 +443,22 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                                 if (StringUtils.equals("city", eName)) {
                                     AdxpCity ac = (AdxpCity) element.getValue();
                                     if (StringUtils.isNotBlank(ac.getContent())) {
-                                        patientDemographics.setCity(ac.getContent());
+                                        patientDemographics.setCity(StringUtils.strip(ac.getContent()));
                                     }
                                 } else if (StringUtils.equals("streetName", eName)) {
                                     AdxpStreetName asn = (AdxpStreetName) element.getValue();
                                     if (StringUtils.isNotBlank(asn.getContent())) {
-                                        patientDemographics.setStreetAddress(asn.getContent());
+                                        patientDemographics.setStreetAddress(StringUtils.strip(asn.getContent()));
                                     }
                                 } else if (StringUtils.equals("country", eName)) {
                                     AdxpCountry ac = (AdxpCountry) element.getValue();
                                     if (StringUtils.isNotBlank(ac.getContent())) {
-                                        patientDemographics.setCountry(ac.getContent());
+                                        patientDemographics.setCountry(StringUtils.strip(ac.getContent()));
                                     }
                                 } else if (StringUtils.equals("postalCode", eName)) {
                                     AdxpPostalCode apc = (AdxpPostalCode) element.getValue();
                                     if (StringUtils.isNotBlank(apc.getContent())) {
-                                        patientDemographics.setPostalCode(apc.getContent());
+                                        patientDemographics.setPostalCode(StringUtils.strip(apc.getContent()));
                                     }
                                 }
                             }
@@ -755,7 +761,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         prpamt201306UV02QueryByParameter.setQueryId(inputQBP.getQueryId());
         prpamt201306UV02QueryByParameter.setStatusCode(inputQBP.getStatusCode());
         prpamt201306UV02QueryByParameter.setParameterList(inputQBP.getParameterList());
-        outputMessage.getControlActProcess().setQueryByParameter(objectFactory.createPRPAIN201306UV02MFMIMT700711UV01ControlActProcessQueryByParameter(prpamt201306UV02QueryByParameter));
+        outputMessage.getControlActProcess().setQueryByParameter(
+                objectFactory.createPRPAIN201306UV02MFMIMT700711UV01ControlActProcessQueryByParameter(prpamt201306UV02QueryByParameter));
 
         // Set sender of the input to receiver of the output
         var mccimt000300UV01Receiver = objectFactory.createMCCIMT000300UV01Receiver();
