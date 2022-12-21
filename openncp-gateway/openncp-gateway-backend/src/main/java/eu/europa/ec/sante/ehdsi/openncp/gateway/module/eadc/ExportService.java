@@ -75,7 +75,7 @@ public class ExportService {
 
     private void writeTransactions(Sheet sheet, List<Transaction> transactions) {
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY-MM-DD hh:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
 
         int rowCount = 0;
         for (Transaction transaction : transactions) {
