@@ -561,6 +561,9 @@
                                     <xsl:with-param name="code" select="'130'"/>
                                 </xsl:call-template>
                             </legend>
+                            <xsl:variable name="substitutionValue">
+                                <xsl:call-template name="pure-substitution-code"/>
+                            </xsl:variable>
                             <table class="ep_table">
                                 <tbody>
                                     <tr>
@@ -573,15 +576,10 @@
                                             </span>
                                         </th>
                                         <td colspan="2">
-                                            <xsl:variable name="substitutionValue">
-                                                <xsl:call-template name="pure-substitution-code"/>
-                                            </xsl:variable>
                                             <input type="checkbox" id="substituted_0" name="substituted_0" style="display:inline">
-                                                <xsl:choose>
-                                                    <xsl:when test="$substitutionValue !='Yes'">
-                                                        <xsl:attribute name="disabled"/>
-                                                    </xsl:when>
-                                                </xsl:choose>
+                                                <xsl:if test="$substitutionValue != 'Yes'">
+                                                    <xsl:attribute name="disabled"/>
+                                                </xsl:if>
                                             </input>
                                             <!--  Substitution help text:-->
                                             <xsl:call-template name="show-eHDSIDisplayLabel">
@@ -639,6 +637,9 @@
                                                     <xsl:value-of
                                                             select="n1:consumable/n1:manufacturedProduct/n1:manufacturedMaterial/epsos:asContent/epsos:containerPackagedMedicine/epsos:capacityQuantity/@value"/>
                                                 </xsl:attribute>
+                                                <xsl:if test="$substitutionValue != 'Yes'">
+                                                    <xsl:attribute name="disabled"/>
+                                                </xsl:if>
                                             </input>
                                             <xsl:call-template name="show-package">
                                                 <xsl:with-param name="medPackage"
@@ -671,6 +672,9 @@
                                                         <xsl:with-param name="supply" select="n1:entryRelationship[@typeCode='COMP']"/>
                                                     </xsl:call-template>
                                                 </xsl:attribute>
+                                                <xsl:if test="$substitutionValue != 'Yes'">
+                                                    <xsl:attribute name="disabled"/>
+                                                </xsl:if>
                                             </input>
                                         </td>
                                     </tr>
