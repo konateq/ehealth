@@ -3,6 +3,38 @@
 All notable changes to the <a href="https://ec.europa.eu/cefdigital/wiki/x/8CEZAg" rel="nofollow">CEF EHDSI project</a> will be documented in this file.<br/>
 This project adheres to <a href="http://semver.org/" rel="nofollow">Semantic Versioning</a>.
 
+## [5.2.8] - 05-01-2022
+The OpenNCP 5.2.8 is the Wave 5 Operation Ready HotFix release.
+This version is planned to be used as a bug fix version during the eHDSI Wave 5 Routine Operation as a recommended version.
+Detailed release note is available here: https://webgate.ec.europa.eu/fpfis/wikis/x/aAIvUg
+
+Main changes in this release are:<br/>
+<ul>
+<li>OpenNCP Gateway (SMP editor, eADC and ATNA modules) bug fixing.</li>
+<li>XCPD request and response alignment with IHE Technical Framework (removing empty XML tags).</li>
+<li>CDA DisplayTool: substitution checkbox support.</li>
+<li>OrCD test evidences bug fix.</li>
+</ul>
+
+### Bug
+    [EHEALTH-5702] - Patient ID is not the same in XCA List Response and CDA record target.
+    [EHEALTH-8928] - OpenATNA log shows IO error.
+    [EHEALTH-9190] - WebSecurityConfigurerAdapter is deprecated in Spring Boot 2.7.0.
+    [EHEALTH-9245] - OpenNCP Gateway- Export not possible when end date or start date is empty in eADC transaction table.
+    [EHEALTH-9246] - OpenNCP Gateway - In SMP Editor, it is not possible to sign a document.
+    [EHEALTH-9335] - OpenNCP-Gateway - ATNA Viewer: missing EventIDs in dropdown list.
+    [EHEALTH-9350] - IHE ITI Responses with empty elements (optional) should not be present into the XML.
+    [EHEALTH-9490] - Date format not ok in exported KPI file from OpenNCP gateway ATNA eADC.
+    [EHEALTH-9497] - eP - On CDA- Substitue checkbox not working.
+    [EHEALTH-9498] - OrCD - Pivot L1 getting generated for NCP B & NCP-A very delayed.
+
+### Task
+    [EHEALTH-9226] - eHDSI Monitoring Framework (KPIs) - implementation guides.
+    [EHEALTH-8500] - Investigation - Identify all all the CDA sequence element that doesn't render CDA Display Tool (except for : guardian, participant, ingredients).
+
+### Improvement
+    [EHEALTH-9292] - OpenNCP-Gateway - eADC Viewer export: years in the dropdown list are displayed in random order.
+
 ## [5.2.7] - 07-11-2022
 The OpenNCP 5.2.7 is the Wave 5 Operation Ready HotFix release.
 This version is planned to be used as a bug fix version during the eHDSI Wave 5 Routine Operation as a recommended version.
