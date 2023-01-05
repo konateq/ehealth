@@ -5,11 +5,11 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi</groupId>
         <artifactId>openncp</artifactId>
-        <version>5.2.8-SNAPSHOT</version>
+        <version>5.2.8</version>
     </parent>
 
     <artifactId>openncp-consent</artifactId>
-    <version>5.2.8-SNAPSHOT</version>
+    <version>5.2.8</version>
     <packaging>jar</packaging>
 
     <name>OpenNCP Consent Manager</name>
