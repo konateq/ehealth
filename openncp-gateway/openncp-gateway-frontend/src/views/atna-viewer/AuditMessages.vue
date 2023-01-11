@@ -275,15 +275,7 @@ export default {
       }
     },
     apiCall () {
-      let endDate
-      if (this.searchEventEndDate) {
-        endDate = new Date(this.searchEventEndDate).setHours(23, 59, 59, 999)
-        endDate = new Date(endDate)
-        endDate = endDate.toISOString()
-      } else {
-        endDate = ''
-      }
-      return axios.get(process.env.VUE_APP_SERVER_URL + '/api/atna/search_messages', {
+        return axios.get(process.env.VUE_APP_SERVER_URL + '/api/atna/search_messages', {
         params: {
           pageNumber: this.options.page - 1,
           size: this.options.itemsPerPage,
@@ -293,7 +285,9 @@ export default {
           searchEventStartDate: this.searchEventStartDate
             ? new Date(this.searchEventStartDate).toISOString()
             : '',
-          searchEventEndDate: endDate
+          searchEventEndDate: this.searchEventEndDate
+            ? new Date(this.searchEventEndDate).toISOString()
+            : ''
         }
       })
     },
