@@ -32,10 +32,7 @@ import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This class wraps the EADC invocation. As it gathers several aspects required to its proper usage, such as
@@ -285,7 +282,7 @@ public class EadcUtilWrapper {
      * @return String containing the assertion issuer's ISO country code
      */
     private static String extractSendingCountryIsoFromAssertion(Assertion idAssertion) {
-        return idAssertion.getIssuer().getValue().split(":")[2];
+        return idAssertion.getIssuer().getValue().toUpperCase().split(":")[2];
     }
 
     /**
