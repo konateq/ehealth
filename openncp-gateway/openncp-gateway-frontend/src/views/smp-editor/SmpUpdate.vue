@@ -27,21 +27,29 @@
         <v-col cols="6">
           <v-row v-for="item in fields" :key="item.id">
             <v-text-field
-              :label="item.name"
+              :label="item.name || item.id"
               v-model="dataset[item.id]"
               dense
               type="text"
               :mandatory="item.mandatory"
+              v-if="!item.isDate"
             >
               <template v-slot:prepend>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-icon v-on="on"> mdi-help-circle-outline </v-icon>
                   </template>
-                  I'm a tooltip
+                  {{ item.name || item.id }}
                 </v-tooltip>
               </template>
             </v-text-field>
+            <VueCtkDateTimePicker
+              v-model="dataset[item.id]"
+              v-label="item.name"
+              format="YYYY-MM-DD HH:mm"
+              dark
+              v-if="item.isDate"
+            />
           </v-row>
           <v-row>
             <v-btn color="blue" class="ma-2 white--text" @click="update">
@@ -104,8 +112,12 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import axios from 'axios'
 import _ from 'lodash'
+import VueCtkDateTimePicker from 'vue-ctk-date-time-picker'
+import 'vue-ctk-date-time-picker/dist/vue-ctk-date-time-picker.css'
+Vue.component('VueCtkDateTimePicker', VueCtkDateTimePicker)
 
 export default {
   data () {
@@ -149,7 +161,7 @@ export default {
       axios
         .post(
           process.env.VUE_APP_SERVER_URL +
-            '/api/smpeditor/updater/setSmpFileToUpdate',
+          '/api/smpeditor/updater/setSmpFileToUpdate',
           formData,
           {
             headers: {
@@ -159,8 +171,10 @@ export default {
         )
         .then((response) => {
           this.data = response.data
+          console.log('Data for file', response.data)
           this.fields = _.map(response.data.fields, (item, key) => {
             item.id = key
+            item.isDate = item.id.toLowerCase().indexOf('date') > -1
             this.dataset[item.id] = item.currValue
             return item
           }).filter((item) => {
@@ -168,7 +182,13 @@ export default {
           })
           this.showXml = false
           this.showSignedXml = false
-          if (response.data.statusCode === 200 || response.data.statusCode === 201) {
+
+          if (
+            response.status === 200 ||
+            response.status === 201 ||
+            response.data.statusCode === 200 ||
+            response.data.statusCode === 201
+          ) {
             this.uploaded = true
             this.success('Upload is done ')
           }
@@ -216,7 +236,7 @@ export default {
           axios
             .post(
               process.env.VUE_APP_SERVER_URL +
-                '/api/smpeditor/sign/generateSmpFileOpsData',
+              '/api/smpeditor/sign/generateSmpFileOpsData',
               response.data
             )
             .then((response) => {
@@ -275,7 +295,7 @@ export default {
       axios
         .post(
           process.env.VUE_APP_SERVER_URL +
-            '/api/smpeditor/uploader/fromSmpFileOps',
+          '/api/smpeditor/uploader/fromSmpFileOps',
           this.signedXml
         )
         .then((response) => {
@@ -312,5 +332,9 @@ export default {
 <style scoped>
 .wrapper {
   padding: 2rem;
+}
+
+.date-time-picker {
+  padding: 0 1rem 1rem 1rem;
 }
 </style>
