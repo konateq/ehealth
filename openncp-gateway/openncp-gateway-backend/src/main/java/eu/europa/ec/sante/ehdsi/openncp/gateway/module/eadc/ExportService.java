@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
+import java.util.Comparator;
 
 @Service
 public class ExportService {
@@ -50,18 +50,21 @@ public class ExportService {
                                 && t.getStartTime().compareTo(toDate.atStartOfDay(zoneId).toInstant()) < 0)
                 .collect(Collectors.toList());
 
+        List<Transaction> filteredTransactionsSortedAsc = filteredTransactions.stream().
+                sorted(Comparator.comparing(transaction -> transaction.getStartTime())).collect(Collectors.toList());
+
         ClassLoader classLoader = getClass().getClassLoader();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try (Workbook workbook = WorkbookFactory.create(Objects.requireNonNull(classLoader.getResource(TEMPLATE_FILE)).openStream())) {
 
-            writeTransactions(workbook.getSheet(SHEET_KPI_1_2), getTransactionsForKPI_1_2(filteredTransactions));
-            writeTransactions(workbook.getSheet(SHEET_KPI_1_3), getTransactionsForKPI_1_3(filteredTransactions));
-            writeTransactions(workbook.getSheet(SHEET_KPI_1_4), getTransactionsForKPI_1_4(filteredTransactions));
-            writeTransactions(workbook.getSheet(SHEET_KPI_1_5), getTransactionsForKPI_1_5(filteredTransactions));
-            writeTransactions(workbook.getSheet(SHEET_KPI_1_6), getTransactionsForKPI_1_6(filteredTransactions));
-            writeTransactions(workbook.getSheet(SHEET_KPI_1_7), getTransactionsForKPI_1_7(filteredTransactions));
+            writeTransactions(workbook.getSheet(SHEET_KPI_1_2), getTransactionsForKPI_1_2(filteredTransactionsSortedAsc));
+            writeTransactions(workbook.getSheet(SHEET_KPI_1_3), getTransactionsForKPI_1_3(filteredTransactionsSortedAsc));
+            writeTransactions(workbook.getSheet(SHEET_KPI_1_4), getTransactionsForKPI_1_4(filteredTransactionsSortedAsc));
+            writeTransactions(workbook.getSheet(SHEET_KPI_1_5), getTransactionsForKPI_1_5(filteredTransactionsSortedAsc));
+            writeTransactions(workbook.getSheet(SHEET_KPI_1_6), getTransactionsForKPI_1_6(filteredTransactionsSortedAsc));
+            writeTransactions(workbook.getSheet(SHEET_KPI_1_7), getTransactionsForKPI_1_7(filteredTransactionsSortedAsc));
 
             workbook.write(out);
             out.close();
