@@ -32,10 +32,7 @@ import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This class wraps the EADC invocation. As it gathers several aspects required to its proper usage, such as
@@ -128,7 +125,7 @@ public class EadcUtilWrapper {
         */
         transactionInfo.setSndMsgID(reqMsgContext != null ? getMessageID(reqMsgContext.getEnvelope()) : null);
         transactionInfo.setHomeHCID("");
-        transactionInfo.setHomeISO(Constants.COUNTRY_CODE);
+        transactionInfo.setHomeISO(Constants.COUNTRY_CODE.toUpperCase());
         transactionInfo.setHomeNCPOID(Constants.HOME_COMM_ID);
 
         //  TODO: Clarify values for this field according specifications and GDPR, current value set to "N/A GDPR"
@@ -138,7 +135,7 @@ public class EadcUtilWrapper {
                 extractAssertionInfo(getAssertion(reqMsgContext), "urn:oasis:names:tc:xspa:1.0:environment:locality") + " (" +
                         extractAssertionInfo(getAssertion(reqMsgContext), "urn:epsos:names:wp3.4:subject:healthcare-facility-type") + ")" : null);
         transactionInfo.setPOCID(reqMsgContext != null ? extractAssertionInfo(getAssertion(reqMsgContext), "urn:oasis:names:tc:xspa:1.0:subject:organization-id") : null);
-        transactionInfo.setReceivingISO(countryCodeA);
+        transactionInfo.setReceivingISO(countryCodeA != null ? countryCodeA.toUpperCase() : null);
         transactionInfo.setReceivingNCPOID(countryCodeA != null ? OidUtil.getHomeCommunityId(countryCodeA.toLowerCase()) : null);
 
         if (serviceClient != null && serviceClient.getOptions() != null && serviceClient.getOptions().getTo() != null && serviceClient.getOptions().getTo().getAddress() != null) {
@@ -285,7 +282,7 @@ public class EadcUtilWrapper {
      * @return String containing the assertion issuer's ISO country code
      */
     private static String extractSendingCountryIsoFromAssertion(Assertion idAssertion) {
-        return idAssertion.getIssuer().getValue().split(":")[2];
+        return idAssertion.getIssuer().getValue().toUpperCase().split(":")[2];
     }
 
     /**
