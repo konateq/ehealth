@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
-           targetNamespace="http://schemas.message.com/Message" xmlns:tns="http://schemas.message.com/Message">
-    <xs:complexType name="MessageBody">
-        <xs:sequence>
-            <xs:any minOccurs="0" maxOccurs="unbounded" namespace="##any"/>
-        </xs:sequence>
-    </xs:complexType>
-</xs:schema>
