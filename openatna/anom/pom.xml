@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi.openncp-openatna</groupId>
         <artifactId>openncp-openatna</artifactId>
-        <version>5.2.8</version>
+        <version>5.2.9-SNAPSHOT</version>
     </parent>
 
     <artifactId>openatna-anom</artifactId>

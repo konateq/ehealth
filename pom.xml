@@ -5,7 +5,7 @@
 
     <groupId>eu.europa.ec.sante.ehdsi</groupId>
     <artifactId>openncp</artifactId>
-    <version>5.2.8</version>
+    <version>5.2.9-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OpenNCP Reference Implementation</name>
@@ -39,7 +39,6 @@
         <module>assertion-validator</module>
         <module>cda-display-tool</module>
         <module>default-policy-manager</module>
-        <module>security-token-service</module>
         <module>trc-sts</module>
         <module>trc-sts-client</module>
         <module>tsam</module>
