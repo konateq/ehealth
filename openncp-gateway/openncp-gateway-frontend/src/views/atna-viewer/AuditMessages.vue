@@ -275,7 +275,7 @@ export default {
       }
     },
     apiCall () {
-        return axios.get(process.env.VUE_APP_SERVER_URL + '/api/atna/search_messages', {
+      return axios.get(process.env.VUE_APP_SERVER_URL + '/api/atna/search_messages', {
         params: {
           pageNumber: this.options.page - 1,
           size: this.options.itemsPerPage,
