@@ -737,7 +737,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.6"/>
                                     <id root="2.999.2.1.1"/>
                                     <!-- epSOSAdverseEventType -->
-                                    <code code="414285001" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="414285001" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-6"/></originalText>
                                     </code>
                                     <text><reference value="#obs-1"/></text>
@@ -750,7 +750,7 @@ Although being real choices for the different diseases and conditions, the selec
                                         <participantRole classCode="MANU">
                                             <playingEntity classCode="MMAT">
                                                 <!-- Allergy Agent -->
-                                                <code code="260176001" codeSystem="2.16.840.1.113883.6.96">
+                                                <code code="260176001" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                     <originalText><reference value="#code-7"/></originalText>
                                                 </code>
                                             </playingEntity>
@@ -762,12 +762,12 @@ Although being real choices for the different diseases and conditions, the selec
                                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                             <id root="2.999.2.1.1.1"/>
                                             <!-- observing a symptom -->
-                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96">
+                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#code-8"/></originalText>
                                             </code>
                                             <text><reference value="#obs-2"/></text>
                                             <!-- epSOSReactionAllergy -->
-                                            <value xsi:type="CD" code="43116000" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CD" code="43116000" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText>
                                                     <reference value="#val-2"/>
                                                 </originalText>
@@ -782,7 +782,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             <code code="SEV" codeSystem="2.16.840.1.113883.5.4"/>
                                             <text><reference value="#code-9"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96"/>
+                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31"/>
                                         </observation>
                                     </entryRelationship>
                                 </observation>
@@ -807,7 +807,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.6"/>
                                     <id root="2.999.2.2.1"/>
                                     <!-- epSOSAdverseEventType -->
-                                    <code code="235719002" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="235719002" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-10"/></originalText>
                                     </code>
                                     <text><reference value="#obs-3"/></text>
@@ -820,7 +820,7 @@ Although being real choices for the different diseases and conditions, the selec
                                         <participantRole classCode="MANU">
                                             <playingEntity classCode="MMAT">
                                                 <!-- Allergy Agent -->
-                                                <code code="47703008" codeSystem="2.16.840.1.113883.6.96">
+                                                <code code="47703008" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                     <originalText><reference value="#code-11"/></originalText>
                                                 </code>
                                             </playingEntity>
@@ -832,12 +832,12 @@ Although being real choices for the different diseases and conditions, the selec
                                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                             <id root="2.999.2.2.1.1"/>
                                             <!-- observing a symptom -->
-                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96">
+                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#code-12"/></originalText>
                                             </code>
                                             <text><reference value="#obs-4"/></text>
                                             <!-- epSOSReactionAllergy -->
-                                            <value xsi:type="CD" code="62315008" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CD" code="62315008" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#val-4"/></originalText>
                                             </value>
                                         </observation>
@@ -850,7 +850,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             <code code="SEV" codeSystem="2.16.840.1.113883.5.4"/>
                                             <text><reference value="#code-9"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96"/>
+                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31"/>
                                         </observation>
                                     </entryRelationship>
                                 </observation>
@@ -876,7 +876,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.6"/>
                                     <id root="2.999.2"/>
                                     <!-- epSOSAdverseEventType -->
-                                    <code code="416098002" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="416098002" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-14"/></originalText>
                                     </code>
                                     <text><reference value="#obs-5"/></text>
@@ -901,12 +901,12 @@ Although being real choices for the different diseases and conditions, the selec
                                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                             <id root="2.999"/>
                                             <!-- observing a symptom -->
-                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96">
+                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#code-16"/></originalText>
                                             </code>
                                             <text><reference value="#obs-6"/></text>
                                             <!-- epSOSReactionAllergy -->
-                                            <value xsi:type="CD" code="195967001" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CD" code="195967001" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#val-6"/></originalText>
                                             </value>
                                         </observation>
@@ -919,7 +919,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             <code code="SEV" codeSystem="2.16.840.1.113883.5.4"/>
                                             <text><reference value="#code-9"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96"/>
+                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31"/>
                                         </observation>
                                     </entryRelationship>
                                 </observation>
@@ -950,7 +950,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.6"/>
                                     <id root="2.999.2"/>
                                     <!-- epSOSAdverseEventType -->
-                                    <code code="419199007" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="419199007" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-18"/></originalText>
                                     </code>
                                     <text><reference value="#obs-7"/></text>
@@ -963,7 +963,7 @@ Although being real choices for the different diseases and conditions, the selec
                                         <participantRole classCode="MANU">
                                             <playingEntity classCode="MMAT">
                                                 <!-- Allergy Agent -->
-                                                <code code="111088007" codeSystem="2.16.840.1.113883.6.96">
+                                                <code code="111088007" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                     <originalText><reference value="#code-19"/></originalText>
                                                 </code>
                                             </playingEntity>
@@ -975,12 +975,12 @@ Although being real choices for the different diseases and conditions, the selec
                                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                             <id root="2.999"/>
                                             <!-- observing a symptom -->
-                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96">
+                                            <code code="418799008" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#code-20"/></originalText>
                                             </code>
                                             <text><reference value="#obs-8"/></text>
                                             <!-- epSOSReactionAllergy -->
-                                            <value xsi:type="CD" code="126485001" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CD" code="126485001" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText>
                                                     <reference value="#val-8"/>
                                                 </originalText>
@@ -995,7 +995,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             <code code="SEV" codeSystem="2.16.840.1.113883.5.4"/>
                                             <text><reference value="#code-9"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96"/>
+                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31"/>
                                         </observation>
                                     </entryRelationship>
                                 </observation>
@@ -1020,7 +1020,7 @@ Although being real choices for the different diseases and conditions, the selec
                         <procedure classCode="PROC" moodCode="EVN">
                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.26"/>
                             <id root="2.999.3.1"/>
-                            <code codeSystem="2.16.840.1.113883.6.96" code="64253000">
+                            <code codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31" code="64253000">
                                 <originalText><reference value="#code-22"/></originalText>
                             </code>
                             <text><reference value="#pro-1"/></text>
@@ -1032,7 +1032,7 @@ Although being real choices for the different diseases and conditions, the selec
                         <procedure classCode="PROC" moodCode="EVN">
                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.26"/>
                             <id root="2.999.3.2"/>
-                            <code codeSystem="2.16.840.1.113883.6.96" code="11466000">
+                            <code codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31" code="11466000">
                                 <originalText><reference value="#code-23"/></originalText>
                             </code>
                             <text><reference value="#pro-2"/></text>
@@ -1044,7 +1044,7 @@ Although being real choices for the different diseases and conditions, the selec
                         <procedure classCode="PROC" moodCode="EVN">
                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.26"/>
                             <id root="2.999.3.3"/>
-                            <code codeSystem="2.16.840.1.113883.6.96" code="13619001">
+                            <code codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31" code="13619001">
                                 <originalText><reference value="#code-24"/></originalText>
                             </code>
                             <text><reference value="#pro-3"/></text>
@@ -1091,7 +1091,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999.4.1.1"/>
-                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-27"/></originalText>
                                     </code>
                                     <text><reference value="#obs-9"/></text>
@@ -1112,7 +1112,7 @@ Although being real choices for the different diseases and conditions, the selec
                                                 <reference value="#pca-1"/>
                                             </text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CE" displayName="Active" code="55561003" codeSystem="2.16.840.1.113883.6.96"/>
+                                            <value xsi:type="CE" displayName="Active" code="55561003" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31"/>
                                         </observation>
                                     </entryRelationship>
                                     <entryRelationship typeCode="REFR">
@@ -1124,7 +1124,7 @@ Although being real choices for the different diseases and conditions, the selec
                                                 <reference value="#pca-1"/>
                                             </text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CE" code="21134002" displayName="Disability" codeSystem="2.16.840.1.113883.6.96"/>
+                                            <value xsi:type="CE" code="21134002" displayName="Disability" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31"/>
                                         </observation>
                                     </entryRelationship>
                                 </observation>
@@ -1147,7 +1147,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999.4.2.1"/>
-                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-29"/></originalText>
                                     </code>
                                     <text><reference value="#obs-10"/></text>
@@ -1178,7 +1178,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999.4.3.1"/>
-                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-31"/></originalText>
                                     </code>
                                     <text><reference value="#obs-11"/></text>
@@ -1209,7 +1209,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999.4.5.1"/>
-                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="404684003" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-33"/></originalText>
                                     </code>
                                     <text><reference value="#obs-12"/></text>
@@ -1239,7 +1239,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999.4.6.1"/>
-                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-35"/></originalText>
                                     </code>
                                     <text><reference value="#obs-13"/></text>
@@ -1257,7 +1257,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             <code code="SEV" codeSystem="2.16.840.1.113883.5.4" codeSystemName="ActCode"/>
                                             <text><reference value="#obs-14"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CD" code="24484000" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CD" code="24484000" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#val-14"/></originalText>
                                             </value>
                                         </observation>
@@ -1282,7 +1282,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999"/>
-                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-38"/></originalText>
                                     </code>
                                     <text><reference value="#obs-15"/></text>
@@ -1299,7 +1299,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             <code code="SEV" codeSystem="2.16.840.1.113883.5.4" codeSystemName="ActCode"/>
                                             <text><reference value="#obs-16"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CD" code="371924009" displayName="Moderate to severe" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#val-16"/></originalText>
                                             </value>
                                         </observation>
@@ -1333,7 +1333,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <participantRole classCode="MANU">
                                     <id root="2.999" extension="ABC-Device-ID"/>
                                     <playingDevice classCode="DEV" determinerCode="INSTANCE">
-                                        <code code="72506001" codeSystem="2.16.840.1.113883.6.96">
+                                        <code code="72506001" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                             <originalText><reference value="#code-41"/></originalText>
                                         </code>
                                     </playingDevice>
@@ -1380,7 +1380,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999"/>
-                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-44"/></originalText>
                                     </code>
                                     <text><reference value="#obs-17"/></text>
@@ -1402,7 +1402,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             </code>
                                             <text><reference value="#obs-18"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CE" code="765205004" codeSystem="2.16.840.1.113883.6.96">
+                                            <value xsi:type="CE" code="765205004" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                                 <originalText><reference value="#val-18"/></originalText>
                                             </value>
                                         </observation>
@@ -1427,7 +1427,7 @@ Although being real choices for the different diseases and conditions, the selec
                                 <observation classCode="OBS" moodCode="EVN">
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.7"/>
                                     <id root="2.999"/>
-                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96">
+                                    <code code="55607006" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                         <originalText><reference value="#code-47"/></originalText>
                                     </code>
                                     <text><reference value="#obs-19"/></text>
@@ -1449,7 +1449,7 @@ Although being real choices for the different diseases and conditions, the selec
                                             </code>
                                             <text><reference value="#obs-20"/></text>
                                             <statusCode code="completed"/>
-                                            <value xsi:type="CE" code="765205004" codeSystem="2.16.840.1.113883.6.96" >
+                                            <value xsi:type="CE" code="765205004" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31" >
                                                 <originalText><reference value="#val-20"/></originalText>
                                             </value>
                                         </observation>
@@ -1491,7 +1491,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.18"/>
                                     <templateId root="2.16.840.1.113883.10.20.1.53"/>
                                     <manufacturedMaterial>
-                                        <code code="34689006" codeSystem="2.16.840.1.113883.6.96">
+                                        <code code="34689006" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                             <originalText><reference value="#code-51"/></originalText>
                                         </code>
                                         <name>Engerix B (2294189)</name>
@@ -1515,7 +1515,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.18"/>
                                     <templateId root="2.16.840.1.113883.10.20.1.53"/>
                                     <manufacturedMaterial>
-                                        <code code="414005006" codeSystem="2.16.840.1.113883.6.96">
+                                        <code code="414005006" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                             <originalText><reference value="#code-53"/></originalText>
                                         </code>
                                         <name>Tetravac (2782480)</name>
@@ -1539,7 +1539,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.18"/>
                                     <templateId root="2.16.840.1.113883.10.20.1.53"/>
                                     <manufacturedMaterial>
-                                        <code code="333680004" codeSystem="2.16.840.1.113883.6.96">
+                                        <code code="333680004" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                             <originalText><reference value="#code-55"/></originalText>
                                         </code>
                                         <name>Hiberix (2751881)</name>
@@ -1563,7 +1563,7 @@ Although being real choices for the different diseases and conditions, the selec
                                     <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.18"/>
                                     <templateId root="2.16.840.1.113883.10.20.1.53"/>
                                     <manufacturedMaterial>
-                                        <code code="424519000" codeSystem="2.16.840.1.113883.6.96">
+                                        <code code="424519000" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                             <originalText><reference value="#code-57"/></originalText>
                                         </code>
                                         <name>Cervarix (5055173)</name>
@@ -1632,7 +1632,7 @@ Although being real choices for the different diseases and conditions, the selec
                             <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.13.4"/>
                             <templateId root="2.16.840.1.113883.10.20.1.33"/>
                             <id root="2.999.9.1"/>
-                            <code code="229819007" codeSystem="2.16.840.1.113883.6.96">
+                            <code code="229819007" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                 <originalText><reference value="#code-61"/></originalText>
                             </code>
                             <text><reference value="#obs-22"/></text>
@@ -1651,7 +1651,7 @@ Although being real choices for the different diseases and conditions, the selec
                             <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.13.4"/>
                             <templateId root="2.16.840.1.113883.10.20.1.33"/>
                             <id root="2.999.9.1"/>
-                            <code code="160573003" codeSystem="2.16.840.1.113883.6.96">
+                            <code code="160573003" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                 <originalText><reference value="#code-62"/></originalText>
                             </code>
                             <text><reference value="#obs-23"/></text>
@@ -1692,7 +1692,7 @@ Although being real choices for the different diseases and conditions, the selec
                             <templateId root="2.16.840.1.113883.10.20.1.32"/>
                             <templateId root="2.16.840.1.113883.10.20.1.35"/>
                             <id root="2.999.10.1"/>
-                            <code code="46680005" codeSystem="2.16.840.1.113883.6.96">
+                            <code code="46680005" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31">
                                 <originalText><reference value="#code-64"/></originalText>
                             </code>
                             <statusCode code="completed"/>
@@ -1756,7 +1756,7 @@ Although being real choices for the different diseases and conditions, the selec
                             <text><reference value="#obs-26"/></text>
                             <statusCode code="completed"/>
                             <effectiveTime value="20191122"/>
-                            <value xsi:type="CE" code="278147001" displayName="Blood group O Rh(D) positive" codeSystem="2.16.840.1.113883.6.96" />
+                            <value xsi:type="CE" code="278147001" displayName="Blood group O Rh(D) positive" codeSystem="2.16.840.1.113883.6.96" codeSystemVersion="2019-07-31" />
                         </observation>
                     </entry>
                 </section>
