@@ -54,17 +54,18 @@
                     clearable
                     readonly
                     :value="searchEventStartDate"
-                    label="Start Date"
+                    :label="searchEventStartDateLabel"
                     v-bind="attrs"
                     v-on="on"
                     @click:clear="searchEventStartDate = null"
                   ></v-text-field>
                 </template>
                 <v-spacer></v-spacer>
-                <v-date-picker
+                <!-- <v-date-picker
                   v-model="searchEventStartDate"
                   @change="searchStartDateMenu = false"
-                ></v-date-picker>
+                ></v-date-picker> -->
+                <input type="datetime-local" v-model="searchEventStartDate" />
               </v-menu>
             </v-col>
             <v-col>
@@ -78,18 +79,19 @@
                     :value="searchEventEndDate"
                     clearable
                     readonly
-                    label="End Date"
+                    :label="searchEventEndDateLabel"
                     v-bind="attrs"
                     v-on="on"
                     @click:clear="searchEventEndDate = null"
                   ></v-text-field>
                 </template>
                 <v-spacer></v-spacer>
-                <v-date-picker
+                <!-- <v-date-picker
                   :min="searchEventStartDate"
                   v-model="searchEventEndDate"
                   @change="searchEndDateMenu = false"
-                ></v-date-picker>
+                ></v-date-picker> -->
+                <input type="datetime-local" v-model="searchEventEndDate" />
               </v-menu>
             </v-col>
             <v-col><v-btn block @click="searchDataFromApi(true)"> Search </v-btn></v-col>
@@ -130,14 +132,14 @@ export default {
     return {
       headers: [
         { text: '#', value: 'id', sortable: false },
+        { text: 'Event ID Code', value: 'eventId', sortable: false },
+        { text: 'Event Type Codes', value: 'eventType', sortable: false },
         {
           text: 'Event Action Code',
           value: 'eventActionCode',
           sortable: false
         },
-        { text: 'Event ID Code', value: 'eventId', sortable: false },
-        { text: 'Event Type Codes', value: 'eventTypes', sortable: false },
-        { text: 'Event Date Time', value: 'eventDateTime', sortable: false },
+        { text: 'Event Date Time (UTC)', value: 'eventDateTime', sortable: false },
         {
           text: 'Event Outcome Indicator',
           value: 'eventOutcome',
@@ -146,12 +148,15 @@ export default {
         { value: 'actions', sortable: false }
       ],
       messages: [],
+      diffUTC: 0,
       totalMessages: 0,
       options: { page: 1, itemsPerPage: 10 },
       loading: false,
       filteredData: false,
       searchStartDateMenu: false,
       searchEndDateMenu: false,
+      searchEventStartDateLabel: '',
+      searchEventEndDateLabel: '',
       items: [
         {
           text: 'ATNA Viewer',
@@ -193,17 +198,12 @@ export default {
   },
   mounted () {
     // this.getDataFromApi()
-    console.log(this.$router, this.$router.options.history.state.back)
-    /*
-    this.$store.commit('searchAtnaOpts', {
-
-      searchEventId: null,
-      activeParticipantId: null,
-      activeTypeCode: null,
-      searchEventStartDate: null,
-      searchEventEndDate: null
-    })
-    */
+    const d = new Date()
+    const a = d.getUTCHours()
+    const b = d.getHours()
+    const c = b - a
+    this.searchEventStartDateLabel = 'Start Date (UTC ' + (c >= 0 ? '+' : '') + c + 'h)'
+    this.searchEventEndDateLabel = 'End Date (UTC ' + (c >= 0 ? '+' : '') + c + 'h)'
   },
   watch: {
     options: {
@@ -310,3 +310,12 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+input[type=datetime-local] {
+  color: white;
+  font-size: 0.9rem;
+  background-color: #333;
+  padding: 5px 10px;
+}
+</style>
