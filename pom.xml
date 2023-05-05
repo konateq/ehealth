@@ -55,9 +55,9 @@
     </modules>
 
     <scm>
-        <connection>scm:git:https://citnet.tech.ec.europa.eu/CITnet/stash/scm/ehealth/ehealth.git</connection>
+        <connection>scm:git:https://code.europa.eu/ehdsi/ehealth.git</connection>
         <tag>HEAD</tag>
-        <url>https://citnet.tech.ec.europa.eu/CITnet/stash/projects/ehealth/repos/ehealth/browse</url>
+        <url>https://code.europa.eu/ehdsi/ehealth</url>
     </scm>
     <issueManagement>
         <system>JIRA</system>
@@ -66,12 +66,12 @@
     <ciManagement/>
     <distributionManagement>
         <repository>
-            <id>CITnet-releases</id>
-            <url>https://citnet.tech.ec.europa.eu/CITnet/nexus/repository/sanco/</url>
+            <id>gitlab-maven</id>
+            <url>https://code.europa.eu/api/v4/projects/347/packages/maven</url>
         </repository>
         <snapshotRepository>
-            <id>CITnet-snapshots</id>
-            <url>https://citnet.tech.ec.europa.eu/CITnet/nexus/repository/sanco-snapshots/</url>
+            <id>gitlab-maven</id>
+            <url>https://code.europa.eu/api/v4/projects/347/packages/maven</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -357,6 +357,34 @@
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
+            <id>gitlab-maven</id>
+            <url>https://code.europa.eu/api/v4/projects/347/packages/maven</url>
+        </repository>
+        <repository>
+            <id>cef-digital-digit-releases</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery/</url>
+        </repository>
+        <repository>
+            <id>cef-digital-digit-snapshots</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery-snapshots/</url>
+        </repository>
+        <repository>
+            <id>maven2-repository.jboss.org</id>
+            <name>JBoss Maven Repository</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+        </repository>
+        <repository>
+            <id>openSamlRep</id>
+            <name>Official OpenSaml Repository</name>
+            <url>https://build.shibboleth.net/nexus/content/repositories/releases/</url>
+        </repository>
+    </repositories>
+    <!--repositories>
+        <repository>
+            <id>Central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
             <id>CITnet-releases</id>
             <url>https://citnet.tech.ec.europa.eu/CITnet/nexus/repository/sanco/</url>
         </repository>
@@ -394,7 +422,7 @@
             <name>Official OpenSaml Repository</name>
             <url>https://build.shibboleth.net/nexus/content/repositories/releases/</url>
         </repository>
-    </repositories>
+    </repositories-->
 
     <build>
         <pluginManagement>
