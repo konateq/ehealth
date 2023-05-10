@@ -50,7 +50,7 @@
                 <configuration>
                     <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
                     <packagingExcludes>
-                        WEB-INF/lib/slf4j-simple-1.7.30.jar,
+                        WEB-INF/lib/slf4j-simple-1.7.30.jar
 <!--                        WEB-INF/lib/swagger-annotations-1.5.20.jar,-->
 <!--                        WEB-INF/lib/swagger-models-1.5.20.jar-->
                     </packagingExcludes>
