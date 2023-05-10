@@ -9,7 +9,7 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi.openncp-openatna</groupId>
         <artifactId>openncp-openatna</artifactId>
-        <version>5.2.9-SNAPSHOT</version>
+        <version>5.2.9</version>
     </parent>
 
     <artifactId>openatna-audit</artifactId>
