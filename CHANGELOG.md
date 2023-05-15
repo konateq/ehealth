@@ -3,7 +3,34 @@
 All notable changes to the <a href="https://ec.europa.eu/cefdigital/wiki/x/8CEZAg" rel="nofollow">CEF EHDSI project</a> will be documented in this file.<br/>
 This project adheres to <a href="http://semver.org/" rel="nofollow">Semantic Versioning</a>.
 
-## [5.2.8] - 05-01-2022
+## [5.2.9] - 09-05-2023
+The OpenNCP 5.2.8 is the Wave 5 Operation Ready HotFix release.
+This version is planned to be used as a bug fix version during the eHDSI Wave 5 Routine Operation as a recommended version.
+Detailed release note is available here: https://webgate.ec.europa.eu/fpfis/wikis/x/gQGQWg
+
+Main changes in this release are:<br/>
+<ul>
+<li>OpenNCP Gateway improvements: ATNA filtering and eADC KPIs handling</li>
+<li>OpenNCP JAR dependencies upgrade based on Owasp vulnerabilities</li>
+<li>SAML HCP authentication method updated list</li>
+<li>Databases drivers versions upgrade (MySQL, MariDB, PostgreSQL)</li>
+</ul>
+
+### Bug
+    [EHEALTH-9536] - OpenNCP Gateway ATNA Viewer - Filtering on Time doesn't work as expected.
+    [EHEALTH-9549] - Security Manager accepts an AuthN method which is not allowed in eHDSI.
+    [EHEALTH-9867] - Exported KPIs have their timestamp modified to be no later than 12:59:59.
+
+### Task
+    [EHEALTH-9912] - Releasing OpenNCP 5.2.9.
+
+### Improvement
+    [EHEALTH-8503] - Cosmetic issues - OpenNCP-Gateway ATNA-Viewer main page lacks functionality.
+    [EHEALTH-9641] - OpenNCP-Gateway: "SMP File Update" UI needs improvement.
+    [EHEALTH-9860] - Country codes should be uppercased before persistence in eADC.
+    [EHEALTH-9864] - Exported KPI data should be sorted by date/time.
+
+## [5.2.8] - 05-01-2023
 The OpenNCP 5.2.8 is the Wave 5 Operation Ready HotFix release.
 This version is planned to be used as a bug fix version during the eHDSI Wave 5 Routine Operation as a recommended version.
 Detailed release note is available here: https://webgate.ec.europa.eu/fpfis/wikis/x/aAIvUg
