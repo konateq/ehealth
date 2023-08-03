@@ -36,7 +36,7 @@ public class AssertionHelper {
             for (Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        return attribute.getAttributeValues().get(0).getDOM().getTextContent();
+                        return attribute.getAttributeValues().get(0).getDOM().getTextContent().trim();
                     } else {
                         String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
                         throw new MissingFieldException(errorMessage);
