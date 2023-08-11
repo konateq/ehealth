@@ -20,6 +20,9 @@ import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.namespace.QName;
 import java.time.Duration;
@@ -428,8 +431,7 @@ public class SamlTRCIssuer {
             auditDataMap.put("pointOfCareID", "No Organization ID - POC information");
         }
 
-        String hrRole = ((XSString) AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xacml:2.0:subject:role").getAttributeValues().get(0)).getValue();
+        String hrRole = getHRRoleFromAssertion(hcpIdentityAssertion);
 
         auditDataMap.put("humanRequestorRole", hrRole);
 
@@ -444,6 +446,28 @@ public class SamlTRCIssuer {
         }
 
         return trc;
+    }
+
+    /** TODO Duplicated code. Also present in Helper.java */
+    private String getHRRoleFromAssertion(Assertion assertion) {
+        for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
+            if (StringUtils.equals(attribute.getName(), "urn:oasis:names:tc:xacml:2.0:subject:role")) {
+                NodeList nodeList = attribute.getAttributeValues().get(0).getDOM().getChildNodes();
+                for (int i=0; i<nodeList.getLength(); i++) {
+                    Node node = nodeList.item(i);
+                    if ("Role".equals(node.getNodeName())) {
+                        NamedNodeMap attributes = node.getAttributes();
+                        for (int j=0; j<attributes.getLength(); j++) {
+                            Node attributeValue = attributes.item(j);
+                            if ("displayName".equals(attributeValue.getNodeName())) {
+                                return attributeValue.getNodeValue();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -583,11 +607,6 @@ public class SamlTRCIssuer {
     public String getHRRole() {
 
         return auditDataMap.get("humanRequestorRole");
-    }
-
-    public String getFunctionalRole() {
-
-        return auditDataMap.get("humanRequesterFunctionalRole");
     }
 
     /**

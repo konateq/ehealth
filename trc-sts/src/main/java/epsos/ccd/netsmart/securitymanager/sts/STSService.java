@@ -117,7 +117,7 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
 
             sslCommonName = HTTPUtil.getSubjectDN(false);
             sendTRCAuditMessage(samlTRCIssuer.getPointOfCare(), samlTRCIssuer.getHumanRequestorNameId(),
-                    samlTRCIssuer.getHumanRequestorSubjectId(), samlTRCIssuer.getFunctionalRole(), patientID,
+                    samlTRCIssuer.getHumanRequestorSubjectId(), samlTRCIssuer.getHRRole(), patientID,
                     samlTRCIssuer.getFacilityType(), trc.getID(), sslCommonName, messageId,
                     strReqHeader.getBytes(StandardCharsets.UTF_8), getMessageIdFromHeader(response.getSOAPHeader()),
                     strRespHeader.getBytes(StandardCharsets.UTF_8));
