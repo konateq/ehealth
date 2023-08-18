@@ -797,14 +797,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
         return returnDoc;
     }
 
-    private String getLocation(String location) {
-
-        //TODO: to be reviewed in the future linked with JIRA EHNCP-1131.
-        //  String location = ConfigurationManagerFactory.getConfigurationManager()
-        //      .getEndpointUrl(Constants.COUNTRY_CODE.toLowerCase(Locale.ENGLISH), RegisteredService.PATIENT_SERVICE);
-        return StringUtils.isBlank(location)?  Constants.OID_PREFIX + Constants.HOME_COMM_ID : location;
-    }
-
     private void retrieveDocumentSetBuilder(RetrieveDocumentSetRequestType request, SOAPHeader soapHeader,
                                             EventLog eventLog, OMElement omElement) throws Exception {
 
@@ -907,9 +899,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 logger.error("NIException: '{}'", e.getMessage(), e);
                 RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList,
                         e.getOpenncpErrorCode(),
-                        e.getOpenncpErrorCode().getCodeSystem()+"|"
-                                +e.getOpenncpErrorCode().getCode()+"|"
-                                +e.getOpenncpErrorCode().getDescription(),
+                        e.getOpenncpErrorCode().getDescription(),
                         e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 failure = true;
                 break processLabel;

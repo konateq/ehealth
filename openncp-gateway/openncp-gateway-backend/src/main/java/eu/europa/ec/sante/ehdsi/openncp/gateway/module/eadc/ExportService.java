@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.IsoFields;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 public class ExportService {
 
-    public final ZoneId zoneId = ZoneId.systemDefault();
+    public final ZoneId zoneId = ZoneId.from(ZoneOffset.UTC);
 
     private final String TEMPLATE_FILE = "eHDSI_KPIs-Reporting_template_V1.1.1.xlsx";
 
