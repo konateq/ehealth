@@ -597,6 +597,10 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
             noMatchException.setOpenncpErrorCode(OpenNCPErrorCode.ERROR_EP_NOT_FOUND);
             throw noMatchException;
         }
+        if (StringUtils.equals(searchCriteria.getCriteriaValue(Criteria.PATIENT_ID), "1-9998^^^&2.16.17.710.850.1000.990.1.1000&ISO")) {
+            throw new NIException(OpenNCPErrorCode.ERROR_EP_GENERIC, "Possible temporary unavailability of the service.");
+        }
+
         List<DocumentAssociation<EPDocumentMetaData>> metaDatas = new ArrayList<>();
         for (DocumentAssociation<EPDocumentMetaData> documentAssociation : epDocumentMetaDatas) {
             if (documentAssociation.getXMLDocumentMetaData() != null
