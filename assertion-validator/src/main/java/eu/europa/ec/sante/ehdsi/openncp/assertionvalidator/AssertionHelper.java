@@ -22,6 +22,14 @@ public class AssertionHelper {
     private AssertionHelper() {
     }
 
+    private static String safeTrimAttributeValue(String value)
+    {
+        if(value != null) {
+            return value.trim();
+        }
+        return value;
+    }
+
     /**
      * Get attribute value from assertion.
      *
@@ -36,7 +44,7 @@ public class AssertionHelper {
             for (Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        return attribute.getAttributeValues().get(0).getDOM().getTextContent().trim();
+                        return safeTrimAttributeValue(attribute.getAttributeValues().get(0).getDOM().getTextContent());
                     } else {
                         String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
                         throw new MissingFieldException(errorMessage);
@@ -93,9 +101,8 @@ public class AssertionHelper {
             for (Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        //return attribute.getAttributeValues().get(0).getDOM().getTextContent();
-                        return attribute.getAttributeValues().get(0).getDOM().getElementsByTagName("PurposeOfUse")
-                                .item(0).getAttributes().getNamedItem("code").getTextContent();
+                        return safeTrimAttributeValue(attribute.getAttributeValues().get(0).getDOM().getElementsByTagName("PurposeOfUse")
+                                .item(0).getAttributes().getNamedItem("code").getTextContent());
                     } else {
                         String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
                         throw new MissingFieldException(errorMessage);
@@ -113,9 +120,8 @@ public class AssertionHelper {
             for (Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        //return attribute.getAttributeValues().get(0).getDOM().getTextContent();
-                        return attribute.getAttributeValues().get(0).getDOM().getElementsByTagName("Role")
-                                .item(0).getAttributes().getNamedItem("code").getTextContent();
+                        return safeTrimAttributeValue(attribute.getAttributeValues().get(0).getDOM().getElementsByTagName("Role")
+                                .item(0).getAttributes().getNamedItem("code").getTextContent());
                     } else {
                         String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
                         throw new MissingFieldException(errorMessage);
@@ -133,9 +139,8 @@ public class AssertionHelper {
             for (Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        //return attribute.getAttributeValues().get(0).getDOM().getTextContent();
-                        return attribute.getAttributeValues().get(0).getDOM().getElementsByTagName("Role")
-                                .item(0).getAttributes().getNamedItem("displayName").getTextContent();
+                        return safeTrimAttributeValue(attribute.getAttributeValues().get(0).getDOM().getElementsByTagName("Role")
+                                .item(0).getAttributes().getNamedItem("displayName").getTextContent());
                     } else {
                         String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
                         throw new MissingFieldException(errorMessage);
