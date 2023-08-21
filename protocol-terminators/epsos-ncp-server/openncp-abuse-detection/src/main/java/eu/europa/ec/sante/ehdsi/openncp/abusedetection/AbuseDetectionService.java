@@ -31,10 +31,7 @@ import javax.xml.bind.JAXBException;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,17 +77,19 @@ public class AbuseDetectionService implements Job {
 
             try {
                 String query;
-                if (lastIdAnalyzed < 0) { // If no lastId is available it starts to analyze records from n days back
+                // If no lastId is available it starts to analyze records from n days back
+                if (lastIdAnalyzed < 0) {
                     long lastFileTimeAnalyzed = LocalDateTime.now().minusDays(NUM_DAYS_LOOK_BACK).toDate().toInstant().toEpochMilli();
-                    LocalDateTime dt = new LocalDateTime(lastFileTimeAnalyzed, DateTimeZone.forTimeZone(TimeZone.getDefault()));
+                    LocalDateTime localDateTime = new LocalDateTime(lastFileTimeAnalyzed, DateTimeZone.forTimeZone(TimeZone.getDefault()));
                     DateTimeFormatter dtf = DateTimeFormat.forPattern(AbuseDetectionService.PATTERN);
-                    String lastDateTimeFileAnalyzed = dt.toString(dtf);
+                    String lastDateTimeFileAnalyzed = localDateTime.toString(dtf);
                     query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
                             "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
                             "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
                             "and eventDateTime > '" + lastDateTimeFileAnalyzed + "' order by " +
                             "eventDateTime ASC;";
-                } else { // fetch only new records to be analyzed
+                } else {
+                    // fetch only new records to be analyzed
                     query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
                             "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
                             "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
@@ -144,12 +143,18 @@ public class AbuseDetectionService implements Job {
         try (Connection sqlConnection = dbConnect(AbuseDetectionService.JDBC_OPEN_ATNA);
              Statement stmt = sqlConnection.createStatement()) {
 
-            ResultSet rs = stmt.executeQuery(sqlSelect);
-            while (rs.next()) {
+            ResultSet resultSet = stmt.executeQuery(sqlSelect);
+            while (resultSet.next()) {
                 MessagesRecord record = new MessagesRecord();
-                record.setId(rs.getLong("id"));
-                record.setXml(rs.getString("messageContent"));
-                record.setEventDateTime(rs.getTimestamp("eventDateTime").toLocalDateTime());
+                //record.setId(resultSet.getLong("id"));
+                //record.setXml(resultSet.getString("messageContent"));
+                //record.setEventDateTime(resultSet.getTimestamp("eventDateTime").toLocalDateTime());
+                record.setId(resultSet.getLong("id"));
+                //record.setXml(rs.getString("messageContent"));
+                // FIX Invalid column type: getString/getNString not implemented for class oracle.jdbc.driver.T4CBlobAccessor
+                Blob messageContent = resultSet.getBlob("messageContent");
+                record.setXml(new String(messageContent.getBytes(1L, (int) messageContent.length())));
+                record.setEventDateTime(resultSet.getTimestamp("eventDateTime").toLocalDateTime());
 
                 if (record.getXml().startsWith("<?xml")) {
                     listXmlRecords.add(record);
@@ -202,7 +207,7 @@ public class AbuseDetectionService implements Job {
                     "'" + datetime + "',\n" +
                     "'" + eventStartDate + "',\n" +
                     "'" + eventEndDate + "'" +
-                    ");";
+                    ")"; // FIX ORA-00933: SQL command not properly ended
             try {
                 this.runSqlScript(sqlInsertStatementError);
             } catch (Exception e) {
@@ -221,7 +226,7 @@ public class AbuseDetectionService implements Job {
                 "DESCRIPTION = '" + StringUtils.replace(description, "'", "''") + "' AND " +
                 "TYPE = '" + StringUtils.replace(type, "'", "''") + "' AND " +
                 "EVENT_START_DATE = '" + eventStartDate + "' AND " +
-                "EVENT_END_DATE = '" + eventEndDate + "';";
+                "EVENT_END_DATE = '" + eventEndDate + "'"; // FIX ORA-00933: SQL command not properly ended
 
         int recordCount = 0;
         try (Connection sqlConnection = dbConnect(AbuseDetectionService.JDBC_EHNCP_PROPERTY);
