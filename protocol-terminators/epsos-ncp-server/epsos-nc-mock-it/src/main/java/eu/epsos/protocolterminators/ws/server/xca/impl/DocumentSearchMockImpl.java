@@ -380,6 +380,12 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
     }
 
     private long getFileSize(String xmlFilename) throws IOException {
+        // Temporarily return a fixed size, max size of biggest resource.
+        // In the future instead of accessing the war resources it would be better to
+        // access the mock files from an external folder in openncp-configuration
+        return 512 * 1024;
+
+        /*
         var classLoader = getClass().getClassLoader();
         InputStream is = classLoader.getResourceAsStream(xmlFilename);
         var tempFile = new File("temp.xml");
@@ -387,6 +393,7 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
         long bytes = tempFile.length();
         tempFile.delete();
         return bytes;
+        */
     }
 
     private String getHash(String xmlFilename) throws IOException {
