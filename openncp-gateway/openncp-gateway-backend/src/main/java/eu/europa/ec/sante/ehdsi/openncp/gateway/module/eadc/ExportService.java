@@ -80,7 +80,7 @@ public class ExportService {
 
     private void writeTransactions(Sheet sheet, List<Transaction> transactions) {
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssZ");
 
         int rowCount = 0;
         for (Transaction transaction : transactions) {
@@ -103,10 +103,12 @@ public class ExportService {
             cell.setCellValue(transaction.getReceivingISO() != null ? transaction.getReceivingISO() : "");
 
             cell = row.createCell(5);
-            cell.setCellValue(transaction.getStartTime() != null ? formatter.format(transaction.getStartTime().atZone(zoneId)) : "");
+            //cell.setCellValue(transaction.getStartTime() != null ? formatter.format(transaction.getStartTime().atZone(zoneId)) : "");
+            cell.setCellValue(transaction.getStartTime() != null ? DateTimeFormatter.ISO_INSTANT.format(transaction.getStartTime().atZone(zoneId)) : "");
 
             cell = row.createCell(6);
-            cell.setCellValue(transaction.getEndTime() != null ? formatter.format(transaction.getEndTime().atZone(zoneId)) : "");
+            //cell.setCellValue(transaction.getEndTime() != null ? formatter.format(transaction.getEndTime().atZone(zoneId)) : "");
+            cell.setCellValue(transaction.getEndTime() != null ? DateTimeFormatter.ISO_INSTANT.format(transaction.getEndTime().atZone(zoneId)) : "");
 
             cell = row.createCell(7);
             switch (sheet.getSheetName()) {
