@@ -690,7 +690,9 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 }
             } catch (NIException e) {
                 var stackTraceLines = e.getStackTrace();
-                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
+                var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                var errorCode = e.getOpenncpErrorCode();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, errorCode, codeContext,
                         String.valueOf(stackTraceLines[0]), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             }
@@ -896,11 +898,11 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         .addPatientId(fullPatientId)
                         .add(Criteria.REPOSITORY_ID, repositoryId));
             } catch (NIException e) {
-                logger.error("NIException: '{}'", e.getMessage(), e);
-                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList,
-                        e.getOpenncpErrorCode(),
-                        e.getOpenncpErrorCode().getDescription(),
-                        e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                var stackTraceLines = e.getStackTrace();
+                var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                var errorCode = e.getOpenncpErrorCode();
+                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, errorCode, codeContext,
+                        String.valueOf(stackTraceLines[0]), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 failure = true;
                 break processLabel;
             }

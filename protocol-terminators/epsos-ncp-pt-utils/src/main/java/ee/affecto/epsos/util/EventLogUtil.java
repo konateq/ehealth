@@ -3,6 +3,7 @@ package ee.affecto.epsos.util;
 import epsos.ccd.gnomon.auditmanager.*;
 import eu.epsos.util.xdr.XDRConstants;
 import eu.europa.ec.sante.ehdsi.constant.ClassCode;
+import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.AssertionConstants;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -23,6 +24,9 @@ import org.hl7.v3.PRPAIN201306UV02;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.http.HTTPUtil;
 import tr.com.srdc.epsos.util.http.IPUtil;
@@ -373,6 +377,23 @@ public class EventLogUtil {
             attributeValue = attribute.getAttributeValues().get(0).getDOM().getTextContent();
         }
         return attributeValue;
+    }
+
+    public static String getRoleId(Attribute attribute) {
+        NodeList nodeList = attribute.getAttributeValues().get(0).getDOM().getChildNodes();
+        for (int i=0; i<nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if ("Role".equals(node.getNodeName())) {
+                NamedNodeMap attributes = node.getAttributes();
+                for (int j=0; j<attributes.getLength(); j++) {
+                    Node attributeValue = attributes.item(j);
+                    if ("displayName".equals(attributeValue.getNodeName())) {
+                        return attributeValue.getNodeValue();
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

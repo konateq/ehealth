@@ -9,6 +9,8 @@ import org.opensaml.saml.saml2.core.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.transform.dom.DOMSource;
@@ -108,10 +110,37 @@ public class Helper {
     }
 
     public static String getRoleID(Element soapHeader) {
-        String result = getXSPAAttributeByName(soapHeader, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE, false);
-        if (result == null) {
-            return "N/A";
+        String result = null;
+        Assertion assertion;
+
+        try {
+            assertion = getHCPAssertion(soapHeader);
+            if (assertion == null) {
+                return null;
+            }
+            for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
+                if (StringUtils.equals(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE)) {
+                    NodeList nodeList = attribute.getAttributeValues().get(0).getDOM().getChildNodes();
+                    for (int i=0; i<nodeList.getLength(); i++) {
+                        Node node = nodeList.item(i);
+                        if ("Role".equals(node.getNodeName())) {
+                            NamedNodeMap attributes = node.getAttributes();
+                            for (int j=0; j<attributes.getLength(); j++) {
+                                Node attributeValue = attributes.item(j);
+                                if ("displayName".equals(attributeValue.getNodeName())) {
+                                    result = attributeValue.getNodeValue();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            String assertionType = "HCP";
+            logger.error("RoleID not found in '{}' assertion", assertionType);
+            logger.debug("Exception: '{}'", e.getMessage(), e);
         }
+
         return result;
     }
 
