@@ -85,14 +85,10 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
         logger.debug("HCP Identity Assertion XSPA Structural Role: '{}'", structuralRole);
 
         if (XSPARole.containsCode(structuralRole)) {
-
             if (structuralRole.equals(XSPARoleDeprecated.CLERICAL_ADMINISTRATIVE.toString())) {
-
                 OnBehalfOfValidator(assertion, classCode);
             }
-            //XSPAFunctionalRoleValidator(assertion, classCode);
         } else {
-
             logger.error("XSPA Role 'urn:oasis:names:tc:xacml:2.0:subject:role' attribute in assertion should be one of the authorized value!");
             throw new InvalidFieldException(OpenNCPErrorCode.ERROR_HPI_INSUFFICIENT_INFORMATION, "The user role is invalid. It shall be one of authorized value!");
         }

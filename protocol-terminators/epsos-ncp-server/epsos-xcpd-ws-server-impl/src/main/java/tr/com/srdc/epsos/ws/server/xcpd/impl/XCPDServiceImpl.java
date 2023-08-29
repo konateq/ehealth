@@ -354,10 +354,14 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     }
 
     private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context) {
-        fillOutputMessage(outputMessage, xcpdErrorCode, openncpErrorCode, context, "AE");
+        fillOutputMessage(outputMessage, xcpdErrorCode, openncpErrorCode, context, "AE", "");
     }
 
-    private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context, String code) {
+    private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context, String location) {
+        fillOutputMessage(outputMessage, xcpdErrorCode, openncpErrorCode, context, "AE", location);
+    }
+
+    private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context, String code, String locationText) {
 
         // Set queryAck/statusCode and queryAck/queryResponseCode
         outputMessage.getControlActProcess().getQueryAck().setStatusCode(objectFactory.createCS());
@@ -380,10 +384,12 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             acknowledgementDetail.setCode(codeCE);
 
             acknowledgementDetail.setText(objectFactory.createED());
-            acknowledgementDetail.getText().setContent(openncpErrorCode.getDescription());
+            //acknowledgementDetail.getText().setContent(openncpErrorCode.getDescription());
+            acknowledgementDetail.getText().setContent(context);
 
             ST location = objectFactory.createST();
-            location.setContent(context);
+            //location.setContent(context);
+            location.setContent(locationText);
             acknowledgementDetail.getLocation().add(location);
 
             acknowledgement.getAcknowledgementDetail().add(acknowledgementDetail);
@@ -595,7 +601,9 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
             List<PRPAMT201306UV02LivingSubjectId> livingSubjectIds = inputQBP.getParameterList().getLivingSubjectId();
             if (!receiverHomeCommID.equals(Constants.HOME_COMM_ID)) {
-                fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_GENERIC, "Receiver has wrong Home Community ID.");
+
+                fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_GENERIC, "Receiver has wrong Home Community ID.",
+                        Thread.currentThread().getStackTrace()[1].getClassName() + ": (" + Thread.currentThread().getStackTrace()[1].getLineNumber() + ")");
             } else if (!livingSubjectIds.isEmpty()) {
                 var stringBuilderNRO = new StringBuilder();
                 List<PatientId> patientIdList = new ArrayList<>();
@@ -681,7 +689,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 if (demographicsList.isEmpty()) {
                     // Preparing answer not available error
 
-                    fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_NO_MATCH, "No patient found.", "NF");
+                    fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_NO_MATCH, "No patient found.", "NF",
+                            Thread.currentThread().getStackTrace()[1].getClassName() + ": (" + Thread.currentThread().getStackTrace()[1].getLineNumber() + ")");
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";
@@ -720,7 +729,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                     }
                     if (!demographicsList.isEmpty()) {
                         // There are patient data to be sent, OK
-                        fillOutputMessage(outputMessage, null, null, null, "OK");
+                        fillOutputMessage(outputMessage, null, null, null, "OK",
+                                Thread.currentThread().getStackTrace()[1].getClassName() + ": (" + Thread.currentThread().getStackTrace()[1].getLineNumber() + ")");
                     } else {
                         // No patient data can be sent to Country B.
                         fillOutputMessage(outputMessage,
@@ -728,25 +738,28 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                                 OpenNCPErrorCode.ERROR_PI_GENERIC,
                                 " : Either the security policy of country A or a privacy " +
                                         "policy of the patient (that was given in country A) does not allow the requested operation " +
-                                        "to be performed by the HCP .");
+                                        "to be performed by the HCP .",
+                                Thread.currentThread().getStackTrace()[1].getClassName() + ": (" + Thread.currentThread().getStackTrace()[1].getLineNumber() + ")");
                         outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AE");
                     }
                 }
             } else {
                 // Preparing demographic query not allowed error
-                fillOutputMessage(outputMessage, XCPDErrorCode.DemographicsQueryNotAllowed, OpenNCPErrorCode.ERROR_PI_GENERIC, "Queries are only available with patient identifiers");
+                fillOutputMessage(outputMessage, XCPDErrorCode.DemographicsQueryNotAllowed, OpenNCPErrorCode.ERROR_PI_GENERIC, "Queries are only available with patient identifiers",
+                        Thread.currentThread().getStackTrace()[1].getClassName() + ": (" + Thread.currentThread().getStackTrace()[1].getLineNumber() + ")");
             }
         } catch (OpenNCPErrorCodeException e) {
-
-            fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage());
+            fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage(),
+                    Arrays.stream(e.getStackTrace()).findFirst().get().toString());
             logger.error(e.getMessage(), e);
         } catch (XCPDNIException e) {
-
-            fillOutputMessage(outputMessage, e.getXcpdErrorCode(), e.getOpenncpErrorCode(), e.getMessage());
+            var stackTraceLines = e.getStackTrace();
+            var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+            fillOutputMessage(outputMessage, e.getXcpdErrorCode(), e.getOpenncpErrorCode(), codeContext, String.valueOf(stackTraceLines[0]));
             logger.error(e.getMessage(), e);
         } catch (Exception e) {
-
-            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_GENERIC, e.getMessage());
+            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_GENERIC, e.getMessage(),
+                    Arrays.stream(e.getStackTrace()).findFirst().get().toString());
             logger.error(e.getMessage(), e);
         }
         // Set queryByParameter
