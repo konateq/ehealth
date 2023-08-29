@@ -56,6 +56,7 @@ public class AbuseDetectionService implements Job {
     private static long lastIdAnalyzed = -1;
     private final Logger logger = LoggerFactory.getLogger(AbuseDetectionService.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
+    private static String databaseProduct = "";
 
     public AbuseDetectionService() {
     }
@@ -75,6 +76,10 @@ public class AbuseDetectionService implements Job {
             logger.info("AbuseDetectionService Job paused");
             scheduler.pauseJob(jobExecutionContext.getJobDetail().getKey());
 
+            if(databaseProduct.isEmpty()) {
+                retrieveDbProperties();
+            }
+
             try {
                 String query;
                 // If no lastId is available it starts to analyze records from n days back
@@ -83,17 +88,33 @@ public class AbuseDetectionService implements Job {
                     LocalDateTime localDateTime = new LocalDateTime(lastFileTimeAnalyzed, DateTimeZone.forTimeZone(TimeZone.getDefault()));
                     DateTimeFormatter dtf = DateTimeFormat.forPattern(AbuseDetectionService.PATTERN);
                     String lastDateTimeFileAnalyzed = localDateTime.toString(dtf);
-                    query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
-                            "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
-                            "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
-                            "and eventDateTime > '" + lastDateTimeFileAnalyzed + "' order by " +
-                            "eventDateTime ASC;";
+
+                    if("oracle".equals(databaseProduct)) {
+                        query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
+                                "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
+                                "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
+                                "and eventDateTime > '" + lastDateTimeFileAnalyzed + "' order by " +
+                                "eventDateTime ASC";
+                    } else {
+                        query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
+                                "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
+                                "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
+                                "and eventDateTime > '" + lastDateTimeFileAnalyzed + "' order by " +
+                                "eventDateTime ASC;";
+                    }
                 } else {
                     // fetch only new records to be analyzed
-                    query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
-                            "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
-                            "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
-                            "and messages.id > " + lastIdAnalyzed + " order by id ASC;";
+                    if("oracle".equals(databaseProduct)) {
+                        query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
+                                "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
+                                "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
+                                "and messages.id > " + lastIdAnalyzed + " order by id ASC";
+                    } else {
+                        query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
+                                "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
+                                "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41')" +
+                                "and messages.id > " + lastIdAnalyzed + " order by id ASC;";
+                    }
                 }
 
                 List<MessagesRecord> records = retrieveAuditEvents(query);
@@ -134,6 +155,20 @@ public class AbuseDetectionService implements Job {
         Context envContext = (Context) initContext.lookup("java:/comp/env");
         DataSource ds = (DataSource) envContext.lookup(dsName);
         return ds.getConnection();
+    }
+
+    private void retrieveDbProperties()
+    {
+        try (Connection sqlConnection = dbConnect(AbuseDetectionService.JDBC_EHNCP_PROPERTY);
+             Statement stmt = sqlConnection.createStatement()) {
+
+            databaseProduct = sqlConnection.getMetaData().getDatabaseProductName().toLowerCase();
+        } catch (Exception exception) {
+            if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
+                loggerClinical.error("Cannot detect database type");
+            }
+
+        }
     }
 
     private List<MessagesRecord> retrieveAuditEvents(String sqlSelect) throws Exception {
@@ -195,19 +230,37 @@ public class AbuseDetectionService implements Job {
         String eventEndDate = eventEnd.getRequestDateTime().toString(PATTERN);
 
         if (anomalyNotPresent(eventDescription, type, eventStartDate, eventEndDate)) {
-            String sqlInsertStatementError = "INSERT INTO EHNCP_ANOMALY( " +
-                    "DESCRIPTION, " +
-                    "TYPE, " +
-                    "EVENT_DATE, " +
-                    "EVENT_START_DATE, " +
-                    "EVENT_END_DATE)" +
-                    "VALUES (" +
-                    "'" + StringUtils.replace(eventDescription, "'", "''") + "',\n" +
-                    "'" + StringUtils.replace(type, "'", "''") + "',\n" +
-                    "'" + datetime + "',\n" +
-                    "'" + eventStartDate + "',\n" +
-                    "'" + eventEndDate + "'" +
-                    ")"; // FIX ORA-00933: SQL command not properly ended
+            String sqlInsertStatementError;
+
+            if("oracle".equals(databaseProduct)) {
+                sqlInsertStatementError = "INSERT INTO EHNCP_ANOMALY( " +
+                        "DESCRIPTION, " +
+                        "TYPE, " +
+                        "EVENT_DATE, " +
+                        "EVENT_START_DATE, " +
+                        "EVENT_END_DATE)" +
+                        "VALUES (" +
+                        "'" + StringUtils.replace(eventDescription, "'", "''") + "',\n" +
+                        "'" + StringUtils.replace(type, "'", "''") + "',\n" +
+                        "'" + datetime + "',\n" +
+                        "'" + eventStartDate + "',\n" +
+                        "'" + eventEndDate + "'" +
+                        ")"; // FIX ORA-00933: SQL command not properly ended
+            } else {
+                sqlInsertStatementError = "INSERT INTO EHNCP_ANOMALY( " +
+                        "DESCRIPTION, " +
+                        "TYPE, " +
+                        "EVENT_DATE, " +
+                        "EVENT_START_DATE, " +
+                        "EVENT_END_DATE)" +
+                        "VALUES (" +
+                        "'" + StringUtils.replace(eventDescription, "'", "''") + "',\n" +
+                        "'" + StringUtils.replace(type, "'", "''") + "',\n" +
+                        "'" + datetime + "',\n" +
+                        "'" + eventStartDate + "',\n" +
+                        "'" + eventEndDate + "'" +
+                        ");";
+            }
             try {
                 this.runSqlScript(sqlInsertStatementError);
             } catch (Exception e) {
@@ -221,20 +274,29 @@ public class AbuseDetectionService implements Job {
     }
 
     private boolean anomalyNotPresent(String description, String type, String eventStartDate, String eventEndDate) {
-
-        String sqlSelect = "SELECT id FROM EHNCP_ANOMALY WHERE " +
-                "DESCRIPTION = '" + StringUtils.replace(description, "'", "''") + "' AND " +
-                "TYPE = '" + StringUtils.replace(type, "'", "''") + "' AND " +
-                "EVENT_START_DATE = '" + eventStartDate + "' AND " +
-                "EVENT_END_DATE = '" + eventEndDate + "'"; // FIX ORA-00933: SQL command not properly ended
-
         int recordCount = 0;
         try (Connection sqlConnection = dbConnect(AbuseDetectionService.JDBC_EHNCP_PROPERTY);
              Statement stmt = sqlConnection.createStatement()) {
-            ResultSet rs = stmt.executeQuery(sqlSelect);
-            while (rs.next()) {
-                recordCount++;
-            }
+                String sqlSelect = "";
+
+                if("oracle".equals(databaseProduct)) {
+                    sqlSelect = "SELECT id FROM EHNCP_ANOMALY WHERE " +
+                            "DESCRIPTION = '" + StringUtils.replace(description, "'", "''") + "' AND " +
+                            "TYPE = '" + StringUtils.replace(type, "'", "''") + "' AND " +
+                            "EVENT_START_DATE = '" + eventStartDate + "' AND " +
+                            "EVENT_END_DATE = '" + eventEndDate + "'"; // FIX ORA-00933: SQL command not properly ended
+                } else {
+                    sqlSelect = "SELECT id FROM EHNCP_ANOMALY WHERE " +
+                            "DESCRIPTION = '" + StringUtils.replace(description, "'", "''") + "' AND " +
+                            "TYPE = '" + StringUtils.replace(type, "'", "''") + "' AND " +
+                            "EVENT_START_DATE = '" + eventStartDate + "' AND " +
+                            "EVENT_END_DATE = '" + eventEndDate + "'";
+                }
+
+                ResultSet rs = stmt.executeQuery(sqlSelect);
+                while (rs.next()) {
+                    recordCount++;
+                }
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
