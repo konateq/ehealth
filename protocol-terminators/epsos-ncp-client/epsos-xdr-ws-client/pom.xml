@@ -18,6 +18,11 @@
     <dependencies>
         <dependency>
             <groupId>eu.europa.ec.sante.ehdsi</groupId>
+            <artifactId>translations-and-mappings</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.sante.ehdsi</groupId>
             <artifactId>openncp-ncp-commons</artifactId>
             <version>${project.version}</version>
         </dependency>
