@@ -35,10 +35,6 @@
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.sante.ehdsi</groupId>
-            <artifactId>openncp-transformation-manager</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>eu.europa.ec.sante.ehdsi</groupId>
             <artifactId>openncp-gazelle-validation</artifactId>
         </dependency>
         <dependency>

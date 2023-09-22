@@ -96,11 +96,6 @@
             </dependency>
             <dependency>
                 <groupId>eu.europa.ec.sante.ehdsi</groupId>
-                <artifactId>openncp-transformation-manager</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>eu.europa.ec.sante.ehdsi</groupId>
                 <artifactId>openncp-util</artifactId>
                 <version>${project.version}</version>
             </dependency>

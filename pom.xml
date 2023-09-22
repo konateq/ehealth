@@ -43,7 +43,8 @@
         <module>trc-sts-client</module>
         <module>tsam</module>
         <module>tsam-sync</module>
-        <module>transformation-manager</module>
+        <module>translations-and-mappings</module>
+        <module>translations-and-mappings-ws</module>
         <module>eadc</module>
         <module>consent-manager</module>
         <module>protocol-terminators</module>
