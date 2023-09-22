@@ -1,22 +1,38 @@
 package eu.epsos.pt.transformation;
 
-import epsos.ccd.posam.tm.response.TMResponseStructure;
-import epsos.ccd.posam.tm.service.ITransformationService;
-import eu.europa.ec.sante.ehdsi.constant.error.ITMTSAMError;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.epsos.exceptions.DocumentTransformationException;
-import eu.europa.ec.sante.ehdsi.constant.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.ehdsi.constant.error.ITMTSAMError;
 import eu.europa.ec.sante.ehdsi.constant.error.IheErrorCode;
+import eu.europa.ec.sante.ehdsi.constant.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.ehdsi.openncp.configmanager.ConfigurationManagerFactory;
+import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import org.apache.axis2.util.XMLUtils;
+import org.apache.commons.io.Charsets;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.XMLUtil;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -35,88 +51,97 @@ public final class TMServices {
     /**
      * Encapsulates the TM usage, by accepting the document to translate, and the selected language.
      *
-     * @param document the document to translate, in a byte array form.
-     * @param language the language of NPC-B, where the document is being translated.
+     * @param byteArray the document to translate, in a byte array form.
+     * @param languageCode the language of NPC-B, where the document is being translated.
      * @return a translated document.
      * @throws DocumentTransformationException If the transformation of the CDA document producing an error not listed
      *                                         into the known potential error codes.
      */
-    public static byte[] transformDocument(byte[] document, String language) throws DocumentTransformationException {
+    public static byte[] transformDocument(byte[] byteArray, String languageCode) throws DocumentTransformationException {
+        TMResponseStructure tmResponse = null;
+        try(CloseableHttpClient httpclient = HttpClients.createDefault()){
+            LOGGER.debug("TM - TRANSLATION START.");
+            var mapper = new ObjectMapper();
+            var node = mapper.createObjectNode();
+            var pivotCDA = byteToDocument(byteArray);
+            node.put("pivotCDA", getStringFromDocument(pivotCDA));
+            node.put("targetLanguageCode", languageCode);
+            var jsonString = node.toString();
+            var entity = new StringEntity(jsonString, HTTP.UTF_8);
+            entity.setContentType(ContentType.APPLICATION_JSON.getMimeType());
+            var translationsAndMappingsUrl = ConfigurationManagerFactory.getConfigurationManager().getProperty("TRANSLATIONS_AND_MAPPINGS_WS_URL");
+            LOGGER.info("Translations and Mappings WS URL: '{}'", translationsAndMappingsUrl);
+            var postRequest = new HttpPost(translationsAndMappingsUrl + "/transcode");
+            postRequest.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+            postRequest.setEntity(entity);
+            try (CloseableHttpResponse response = httpclient.execute(postRequest)) {
+                LOGGER.debug("HTTP statusCode : " + response.getStatusLine().getStatusCode());
 
-        ITransformationService transformationService;
-        Document resultDoc;
-        TMResponseStructure tmResponse;
-        byte[] result;
+                var responseEntity = response.getEntity();
+                var encodingHeader = responseEntity.getContentEncoding();
+                var encoding = encodingHeader == null ? StandardCharsets.UTF_8 :
+                        Charsets.toCharset(encodingHeader.getValue());
 
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tm.xml");
-        transformationService = (ITransformationService) applicationContext.getBean(ITransformationService.class.getName());
+                var json = EntityUtils.toString(responseEntity, encoding);
+                tmResponse = mapper.readValue(json, TMResponseStructure.class);
 
-        resultDoc = byteToDocument(document);
-
-        LOGGER.debug("STARTING TRANSLATING DOCUMENT TO: '{}'", language);
-        //  Perform the translation, according to specified language.
-        tmResponse = transformationService.translate(resultDoc, language);
-
-        //  If the translation process fails, an exception is thrown.
-        if (!tmResponse.isStatusSuccess()) {
-            throw new DocumentTransformationException(OpenNCPErrorCode.ERROR_GENERIC,
-                    Constants.SERVER_IP,"( " + IheErrorCode.XDSRepositoryError.getCode() + "): + An error has occurred during document translation, please check the following errors:\n"
-                    + processErrors(tmResponse.getErrors()));
-        }
-        try {
-            //  Obtain the translated document in the Document type format, only if translation succeeds.
-            resultDoc = tmResponse.getResponseCDA();
-            //  Obtains a byte array from the translation result.
-            result = XMLUtils.toOM(resultDoc.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                var resultDoc = tmResponse.getResponseCDA();
+                LOGGER.debug("TM - TRANSLATION STOP");
+                return XMLUtils.toOM(resultDoc.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+            }
         } catch (Exception ex) {
-            throw new DocumentTransformationException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), ex.getMessage());
+            if (tmResponse != null && !tmResponse.isStatusSuccess()) {
+                throw new DocumentTransformationException(OpenNCPErrorCode.ERROR_GENERIC,
+                        Constants.SERVER_IP,"( " + IheErrorCode.XDSRepositoryError.getCode() + "): + An error has occurred during document translation, please check the following errors:\n"
+                        + processErrors(tmResponse.getErrors()));
+            } else {
+                throw new DocumentTransformationException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), ex.getMessage());
+            }
         }
-
-        LOGGER.debug("TRANSLATION SUCCESSFULLY ENDED.");
-        //  Return the Document as a byte array.
-        return result;
     }
 
     /**
      * Encapsulates the TM usage, by accepting the document to translate and transcode to the pivot format.
      *
-     * @param document the "friendly" document to translate/transcode, in a byte array form.
+     * @param byteArray the "friendly" document to translate/transcode, in a byte array form.
      * @return pivot document.
      * @throws DocumentTransformationException If the transformation of the CDA document producing an error not listed
      *                                         into the known potential error codes.
      */
-    public static byte[] transformDocument(byte[] document) throws DocumentTransformationException {
+    public static byte[] transformDocument(byte[] byteArray) throws DocumentTransformationException {
+        TMResponseStructure tmResponse = null;
+        try(CloseableHttpClient httpclient = HttpClients.createDefault()){
+            LOGGER.debug("TM - TRANSCODING START.");
+            var mapper = new ObjectMapper();
+            var node = mapper.createObjectNode();
+            var cdaFriendly = byteToDocument(byteArray);
+            node.put("friendlyCDA", getStringFromDocument(cdaFriendly));
+            var jsonString = node.toString();
+            var entity = new StringEntity(jsonString, HTTP.UTF_8);
+            entity.setContentType(ContentType.APPLICATION_JSON.getMimeType());
+            var translationsAndMappingsUrl = ConfigurationManagerFactory.getConfigurationManager().getProperty("TRANSLATIONS_AND_MAPPINGS_WS_URL");
+            LOGGER.info("Translations and Mappings WS URL: '{}'", translationsAndMappingsUrl);
+            var postRequest = new HttpPost(translationsAndMappingsUrl + "/transcode");
+            postRequest.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+            postRequest.setEntity(entity);
+            try (CloseableHttpResponse response = httpclient.execute(postRequest)) {
+                LOGGER.debug("HTTP statusCode : " + response.getStatusLine().getStatusCode());
 
-        ITransformationService transformationService;
-        Document resultDoc;
-        TMResponseStructure tmResponse;
-        byte[] result;
+                var responseEntity = response.getEntity();
+                var encodingHeader = responseEntity.getContentEncoding();
+                var encoding = encodingHeader == null ? StandardCharsets.UTF_8 :
+                        Charsets.toCharset(encodingHeader.getValue());
 
-        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tm.xml");
-        transformationService = (ITransformationService) applicationContext.getBean(ITransformationService.class.getName());
+                var json = EntityUtils.toString(responseEntity, encoding);
+                tmResponse = mapper.readValue(json, TMResponseStructure.class);
 
-        resultDoc = byteToDocument(document);
-
-        LOGGER.debug("STARTING TRANSLATING DOCUMENT TO PIVOT.");
-        //  Perform the translation into pivot.
-        tmResponse = transformationService.toEpSOSPivot(resultDoc);
-
-        //  If the translation process fails, an exception is thrown.
-        if (!tmResponse.isStatusSuccess()) {
-            processErrors(tmResponse.getErrors());
-            throw new DocumentTransformationException(OpenNCPErrorCode.ERROR_GENERIC,"DOCUMENT TRANSLATION FAILED.", "DOCUMENT TRANSLATION FAILED.");
-        }
-        try {
-            //  Obtain the translated document in the Document type format, only if translation succeeds.
-            resultDoc = tmResponse.getResponseCDA();
-            //  Obtains a byte array from the translation result.
-            result = XMLUtils.toOM(resultDoc.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                var resultDoc = tmResponse.getResponseCDA();
+                LOGGER.debug("TM - TRANSCODING STOP");
+                return XMLUtils.toOM(resultDoc.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+            }
         } catch (Exception ex) {
             throw new DocumentTransformationException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), ex.getMessage());
         }
-        LOGGER.debug("TRANSLATION SUCCESSFULLY ENDED.");
-        //  Return the Document as a byte array.
-        return result;
     }
 
     /**
@@ -155,5 +180,25 @@ public final class TMServices {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    private static String getStringFromDocument(Document doc)
+    {
+        try
+        {
+            DOMSource domSource = new DOMSource(doc);
+            StringWriter writer = new StringWriter();
+            StreamResult result = new StreamResult(writer);
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.transform(domSource, result);
+            return writer.toString();
+        }
+        catch(TransformerException ex)
+        {
+            ex.printStackTrace();
+            return null;
+        }
     }
 }
