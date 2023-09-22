@@ -3,7 +3,8 @@ package tr.com.srdc.epsos.ws.xdr.client;
 import ee.affecto.epsos.util.EventLogClientUtil;
 import eu.epsos.exceptions.DocumentTransformationException;
 import eu.epsos.exceptions.XDRException;
-import eu.epsos.pt.ws.client.xdr.transformation.TMServices;
+import eu.epsos.pt.transformation.DomUtils;
+import eu.epsos.pt.transformation.TranslationsAndMappingsClient;
 import eu.epsos.util.IheConstants;
 import eu.epsos.util.xca.XCAConstants;
 import eu.epsos.util.xdr.XDRConstants;
@@ -13,10 +14,12 @@ import eu.europa.ec.sante.ehdsi.gazelle.validation.OpenNCPValidation;
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.RegisteredService;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.DynamicDiscoveryService;
 import eu.europa.ec.sante.ehdsi.constant.assertion.AssertionEnum;
+import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.*;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.apache.axis2.addressing.EndpointReference;
+import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
@@ -133,7 +136,9 @@ public class XDSbRepositoryServiceInvoker {
                 OpenNCPValidation.validateCdaDocument(request.getCda(), NcpSide.NCP_B, docClassCode, false);
             }
             if (!docClassCode.equals(ClassCode.EDD_CLASSCODE)) {
-                byte[] transformedCda = TMServices.transformDocument(cdaBytes);
+                TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.transcode(DomUtils.byteToDocument(cdaBytes));
+                org.w3c.dom.Document domDocument = tmResponseStructure.getResponseCDA();
+                byte[] transformedCda = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                 xdrDocument.setValue(transformedCda);
             } else {
                 xdrDocument.setValue(cdaBytes);

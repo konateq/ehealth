@@ -1,4 +1,4 @@
-package tr.com.srdc.epsos.ws.server.xca.impl;
+package eu.epsos.pt.transformation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.epsos.exceptions.DocumentTransformationException;

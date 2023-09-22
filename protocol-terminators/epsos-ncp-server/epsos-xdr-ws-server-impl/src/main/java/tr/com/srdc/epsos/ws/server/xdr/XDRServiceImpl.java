@@ -9,7 +9,8 @@ import eu.epsos.protocolterminators.ws.server.exception.NoConsentException;
 import eu.epsos.protocolterminators.ws.server.xdr.DocumentProcessingException;
 import eu.epsos.protocolterminators.ws.server.xdr.DocumentSubmitInterface;
 import eu.epsos.protocolterminators.ws.server.xdr.XDRServiceInterface;
-import eu.epsos.pt.transformation.TMServices;
+import eu.epsos.pt.transformation.DomUtils;
+import eu.epsos.pt.transformation.TranslationsAndMappingsClient;
 import eu.epsos.util.EvidenceUtils;
 import eu.epsos.util.IheConstants;
 import eu.epsos.util.xdr.XDRConstants;
@@ -26,6 +27,7 @@ import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.ehdsi.openncp.model.DiscardDispenseDetails;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.RegistryErrorSeverity;
+import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import fi.kela.se.epsos.data.model.DocumentFactory;
@@ -375,7 +377,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
         String discardDate = "";
 
         try {
-            org.w3c.dom.Document domDocument = TMServices.byteToDocument(request.getDocument().get(0).getValue());
+            org.w3c.dom.Document domDocument = DomUtils.byteToDocument(request.getDocument().get(0).getValue());
             EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
             documentId = getDocumentId(epsosDocument.getDocument());
             // Evidence for call to NI for XDR submit (dispensation)
@@ -533,6 +535,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                 Document doc = request.getDocument().get(i);
                 String documentId = "";
                 byte[] docBytes = doc.getValue();
+                org.w3c.dom.Document domDocument = null;
                 try {
 
                     //  Validate CDA epSOS Pivot.
@@ -542,7 +545,9 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     }
 
                     //  Reset the response document to a translated version.
-                    docBytes = TMServices.transformDocument(docBytes, Constants.LANGUAGE_CODE);
+                    TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(docBytes), Constants.LANGUAGE_CODE);
+                    domDocument = tmResponseStructure.getResponseCDA();
+                    docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
 
                     // Validate CDA epSOS Pivot
                     if (OpenNCPValidation.isValidationEnable()) {
@@ -554,7 +559,6 @@ public class XDRServiceImpl implements XDRServiceInterface {
                 }
 
                 try {
-                    org.w3c.dom.Document domDocument = TMServices.byteToDocument(docBytes);
                     EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
                     // Evidence for call to NI for XDR submit (dispensation)
                     // Joao: here we have a Document, so we can generate the mandatory NRO
@@ -716,8 +720,11 @@ public class XDRServiceImpl implements XDRServiceInterface {
                             NcpSide.NCP_A, obtainClassCode(request), true);
                 }
 
+
                 //Resets the response document to a translated version.
-                docBytes = TMServices.transformDocument(docBytes, Constants.LANGUAGE_CODE);
+                TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.transcode(DomUtils.byteToDocument(docBytes));
+                org.w3c.dom.Document domDocument = tmResponseStructure.getResponseCDA();
+                docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
 
                 /* Validate CDA epSOS Pivot */
                 if (OpenNCPValidation.isValidationEnable()) {
@@ -731,7 +738,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                 logger.error(null, ex);
             }
             try {
-                org.w3c.dom.Document domDocument = TMServices.byteToDocument(docBytes);
+                org.w3c.dom.Document domDocument = DomUtils.byteToDocument(docBytes);
                 EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.CONSENT_CLASSCODE, domDocument);
 
                 // Evidence for call to NI for XDR submit (patient consent)
@@ -844,7 +851,10 @@ public class XDRServiceImpl implements XDRServiceInterface {
                             NcpSide.NCP_A, obtainClassCode(request), true);
                 }
 
-                String documentString = new String(TMServices.transformDocument(doc.getValue(), Constants.LANGUAGE_CODE), StandardCharsets.UTF_8);
+                TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(doc.getValue()), Constants.LANGUAGE_CODE);
+                org.w3c.dom.Document cdaDocument = tmResponseStructure.getResponseCDA();
+                byte[] docBytes = XMLUtils.toOM(cdaDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                String documentString = new String(docBytes, StandardCharsets.UTF_8);
 
                 /* Validate CDA epSOS Pivot */
                 if (OpenNCPValidation.isValidationEnable()) {
