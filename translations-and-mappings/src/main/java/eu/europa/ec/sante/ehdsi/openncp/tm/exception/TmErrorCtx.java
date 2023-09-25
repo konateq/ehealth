@@ -8,11 +8,11 @@ public class TmErrorCtx implements ITMTSAMError {
     /**
      * Exception code
      */
-    private final String code;
+    private String code;
     /**
      * Exception description (issue - is English description/constant enough ?)
      */
-    private final String description;
+    private String description;
 
     private String context;
 
@@ -27,6 +27,8 @@ public class TmErrorCtx implements ITMTSAMError {
         this.description = error.getDescription();
         this.context=ctx;
     }
+
+    public TmErrorCtx() {}
 
     /**
      *
