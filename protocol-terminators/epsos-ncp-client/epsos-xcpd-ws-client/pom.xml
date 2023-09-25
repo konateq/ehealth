@@ -5,7 +5,7 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi.openncp-protocol-terminators</groupId>
         <artifactId>openncp-ncp-client</artifactId>
-        <version>6.3.2-SNAPSHOT</version>
+        <version>6.4.0-SNAPSHOT</version>
     </parent>
 
     <groupId>eu.europa.ec.sante.ehdsi.openncp-protocol-terminators.openncp-ncp-client</groupId>
