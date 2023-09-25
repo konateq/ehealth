@@ -2,11 +2,11 @@ package tr.com.srdc.epsos.ws.server.xca.impl;
 
 import epsos.ccd.gnomon.auditmanager.*;
 import epsos.ccd.netsmart.securitymanager.exceptions.SMgrException;
-import epsos.ccd.posam.tm.response.TMResponseStructure;
-import epsos.ccd.posam.tm.service.ITransformationService;
+import eu.epsos.exceptions.DocumentTransformationException;
 import eu.epsos.protocolterminators.ws.server.exception.NIException;
 import eu.epsos.protocolterminators.ws.server.xca.DocumentSearchInterface;
 import eu.epsos.protocolterminators.ws.server.xca.XCAServiceInterface;
+import eu.epsos.pt.transformation.TranslationsAndMappingsClient;
 import eu.epsos.util.EvidenceUtils;
 import eu.epsos.util.xca.XCAConstants;
 import eu.epsos.util.xdr.XDRConstants;
@@ -23,6 +23,7 @@ import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.exceptions.OpenNCPErr
 import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.RegistryErrorSeverity;
+import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import eu.europa.ec.sante.ehdsi.openncp.util.UUIDHelper;
@@ -48,7 +49,6 @@ import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.http.MediaType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -86,7 +86,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
 
     private final Logger logger = LoggerFactory.getLogger(XCAServiceImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
-    private final ITransformationService transformationService;
     private final OMFactory omFactory;
     private final oasis.names.tc.ebxml_regrep.xsd.query._3.ObjectFactory ofQuery;
     private final oasis.names.tc.ebxml_regrep.xsd.rim._3.ObjectFactory ofRim;
@@ -116,9 +115,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
         ofRim = new oasis.names.tc.ebxml_regrep.xsd.rim._3.ObjectFactory();
 
         omFactory = OMAbstractFactory.getOMFactory();
-
-        var applicationContext = new ClassPathXmlApplicationContext("ctx_tm.xml");
-        transformationService = (ITransformationService) applicationContext.getBean(ITransformationService.class.getName());
     }
 
     private static String trimDocumentEntryPatientId(String patientId) {
@@ -147,14 +143,17 @@ public class XCAServiceImpl implements XCAServiceInterface {
             case EP_CLASSCODE:
                 eventLog.setEventType(EventType.ORDER_SERVICE_LIST);
                 eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_LIST);
+                eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
                 break;
             case PS_CLASSCODE:
                 eventLog.setEventType(EventType.PATIENT_SERVICE_LIST);
                 eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_LIST);
+                eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
                 break;
             case MRO_CLASSCODE:
                 eventLog.setEventType(EventType.MRO_LIST);
                 eventLog.setEI_TransactionName(TransactionName.MRO_SERVICE_LIST);
+                eventLog.setEI_EventActionCode(EventActionCode.READ);
                 break;
             case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
             case ORCD_LABORATORY_RESULTS_CLASSCODE:
@@ -162,13 +161,13 @@ public class XCAServiceImpl implements XCAServiceInterface {
             case ORCD_MEDICAL_IMAGES_CLASSCODE:
                 eventLog.setEventType(EventType.ORCD_SERVICE_LIST);
                 eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_LIST);
+                eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
                 break;
             default:
                 logger.warn("No event identification information found!");
                 //  TODO: Analyzing if some specific codes are needed in this situation
                 break;
         }
-        eventLog.setEI_EventActionCode(EventActionCode.READ);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.setPS_ParticipantObjectID(getDocumentEntryPatientId(request));
 
@@ -250,14 +249,17 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 case EP_CLASSCODE:
                     eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
                     eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
+                    eventLog.setEI_EventActionCode(EventActionCode.READ);
                     break;
                 case PS_CLASSCODE:
                     eventLog.setEventType(EventType.PATIENT_SERVICE_RETRIEVE);
                     eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_RETRIEVE);
+                    eventLog.setEI_EventActionCode(EventActionCode.READ);
                     break;
                 case MRO_CLASSCODE:
                     eventLog.setEventType(EventType.MRO_RETRIEVE);
                     eventLog.setEI_TransactionName(TransactionName.MRO_SERVICE_RETRIEVE);
+                    eventLog.setEI_EventActionCode(EventActionCode.READ);
                     break;
                 case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
                 case ORCD_LABORATORY_RESULTS_CLASSCODE:
@@ -265,14 +267,15 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 case ORCD_MEDICAL_IMAGES_CLASSCODE:
                     eventLog.setEventType(EventType.ORCD_SERVICE_RETRIEVE);
                     eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_RETRIEVE);
+                    eventLog.setEI_EventActionCode(EventActionCode.READ);
                     break;
                 default:
                     logger.warn("No event identification information found!");
                     //  TODO: Analyzing if some specific codes are needed in this situation
+                    eventLog.setEI_EventActionCode(EventActionCode.READ);
                     break;
             }
         }
-        eventLog.setEI_EventActionCode(EventActionCode.READ);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.getEventTargetParticipantObjectIds().add(request.getDocumentRequest().get(0).getDocumentUniqueId());
 
@@ -690,9 +693,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 }
             } catch (NIException e) {
                 var stackTraceLines = e.getStackTrace();
-                var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
-                var errorCode = e.getOpenncpErrorCode();
-                RegistryErrorUtils.addErrorMessage(registryErrorList, errorCode, codeContext,
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
                         String.valueOf(stackTraceLines[0]), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             }
@@ -741,7 +742,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
     }
 
     private Document transformDocument(Document doc, OMElement registryErrorList, OMElement registryResponseElement,
-                                       boolean isTranscode, EventLog eventLog) {
+                                       boolean isTranscode, EventLog eventLog) throws DocumentTransformationException {
 
         logger.debug("Transforming document, isTranscode: '{}' - Event Type: '{}'", isTranscode, eventLog.getEventType());
         if (eventLog.getReqM_ParticipantObjectDetail() != null) {
@@ -763,12 +764,11 @@ public class XCAServiceImpl implements XCAServiceInterface {
             String operationType;
             if (isTranscode) {
                 operationType = "toEpSOSPivot";
-                logger.debug("Transforming document to epSOS pivot...");
-                tmResponse = transformationService.toEpSOSPivot(doc);
+                tmResponse = TranslationsAndMappingsClient.transcode(doc);
             } else {
                 operationType = "translate";
                 logger.debug("Translating document to '{}'", Constants.LANGUAGE_CODE);
-                tmResponse = transformationService.translate(doc, Constants.LANGUAGE_CODE);
+                tmResponse = TranslationsAndMappingsClient.translate(doc, Constants.LANGUAGE_CODE);
             }
 
             OMNamespace ns = registryResponseElement.getNamespace();
@@ -898,11 +898,11 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         .addPatientId(fullPatientId)
                         .add(Criteria.REPOSITORY_ID, repositoryId));
             } catch (NIException e) {
-                var stackTraceLines = e.getStackTrace();
-                var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
-                var errorCode = e.getOpenncpErrorCode();
-                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, errorCode, codeContext,
-                        String.valueOf(stackTraceLines[0]), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                logger.error("NIException: '{}'", e.getMessage(), e);
+                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList,
+                        e.getOpenncpErrorCode(),
+                        e.getOpenncpErrorCode().getDescription(),
+                        e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 failure = true;
                 break processLabel;
             }
