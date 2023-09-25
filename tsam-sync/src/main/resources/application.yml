@@ -18,3 +18,12 @@ tsam-sync:
     backup: true
   pageable:
     default-page-size: 250
+datasource-ehealth-properties:
+  host: 127.0.0.1
+  port: 3306
+  username: username
+  password: password
+  database: ehealth_properties
+  dialect: org.hibernate.dialect.MySQL8Dialect
+  driver: com.mysql.cj.jdbc.Driver
+  timezone: Europe/Brussels
