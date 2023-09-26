@@ -1,7 +1,7 @@
-package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.service;
+package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.service;
 
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Property;
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository.PropertyRepository;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.PropertyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,11 +1,12 @@
 package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.config;
 
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -17,10 +18,10 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Configuration
-@Primary
-@EnableJpaRepositories("eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository")
-@ConfigurationProperties(prefix = "tsam-sync.datasource")
-public class DataSourceProperties {
+@EnableJpaRepositories("eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2")
+@EntityScan(basePackageClasses = {Property.class})
+@ConfigurationProperties(prefix = "tsam-sync.datasource-ehealth-properties")
+public class DataSourceEHealthProperties {
 
     private String host;
 
@@ -76,18 +77,16 @@ public class DataSourceProperties {
     private Environment env;
 
     @Bean
-    @Primary
-    @ConfigurationProperties(prefix = "spring.datasource.datasource1")
-    public DataSource firstDataSource(){
+    @ConfigurationProperties(prefix = "spring.datasource.datasource2")
+    public DataSource secondDataSource(){
         return DataSourceBuilder.create().build();
     }
 
     @Bean
-    @Primary
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory(){
+    public LocalContainerEntityManagerFactoryBean secondEntityManager(){
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(firstDataSource());
-        em.setPackagesToScan("eu.europa.ec.sante.ehdsi.openncp.tsam.sync");
+        em.setDataSource(secondDataSource());
+        em.setPackagesToScan(new String[]{"eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2"});
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -98,12 +97,10 @@ public class DataSourceProperties {
         return em;
     }
 
-    @Primary
     @Bean
-    public PlatformTransactionManager firstPlatformTransactionManager(){
+    public PlatformTransactionManager secondPlatformTransactionManager(){
         JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+        transactionManager.setEntityManagerFactory(secondEntityManager().getObject());
         return  transactionManager;
     }
-
 }

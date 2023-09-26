@@ -8,8 +8,9 @@ import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.cts.CtsClient;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.db.DatabaseTool;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Concept;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Designation;
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Property;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.ValueSetVersion;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.service.PropertyService;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository.*;
 import eu.europa.ec.sante.ehdsi.termservice.web.rest.model.sync.ValueSetCatalogModel;
 import eu.europa.ec.sante.ehdsi.termservice.web.rest.model.sync.ValueSetVersionModel;
@@ -76,7 +77,6 @@ public class TsamSyncManager {
     public void synchronize() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-
         logger.info("Authenticating user '{}'", ctsProperties.getUsername());
         ctsClient.authenticate();
         logger.info("User '{}' authenticated successfully to the Central Terminology Services ({})", ctsProperties.getUsername(), ctsProperties.getUrl());
