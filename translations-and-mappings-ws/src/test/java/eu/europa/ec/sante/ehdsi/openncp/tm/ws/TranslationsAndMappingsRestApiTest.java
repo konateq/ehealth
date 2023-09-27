@@ -1,17 +1,13 @@
 package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TMException;
 import org.apache.commons.io.Charsets;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +19,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -31,14 +26,13 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class TranslationsAndMappingsRestApiTest {
 
     @Test
     public void testLanguages() throws IOException {
-        final var httpClient = new DefaultHttpClient();
+        final var httpClient = HttpClientBuilder.create().build();
         final var httpGet = new HttpGet("http://localhost:9080/translations-and-mappings-ws/languages");
 
         var response = httpClient.execute(httpGet);
@@ -54,7 +48,7 @@ public class TranslationsAndMappingsRestApiTest {
 
     @Test
     public void testTranslate() throws IOException, TMException {
-        final DefaultHttpClient httpClient = new DefaultHttpClient();
+        final var httpClient = HttpClientBuilder.create().build();
         try
         {
             //Define a postRequest request
