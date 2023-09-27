@@ -38,7 +38,7 @@ public class TranslationsAndMappingsController {
 
     @GetMapping("/languages")
     public Set<String> retrieveAvailableTranslationLanguages() {
-        logger.error("Entering retrieveAvailableTranslationLanguages() method");
+        logger.info("Entering retrieveAvailableTranslationLanguages() method");
         Property property = propertyService.getProperty(AVAILABLE_TRANSLATION_LANGUAGES_PROPERTY_KEY);
         var availableLanguageCodes = new HashSet<String>();
         StringTokenizer st = new StringTokenizer(property.getValue(), ",");
