@@ -6,7 +6,7 @@
     <parent>
         <artifactId>openncp</artifactId>
         <groupId>eu.europa.ec.sante.ehdsi</groupId>
-        <version>6.3.2-SNAPSHOT</version>
+        <version>6.4.0</version>
     </parent>
 
     <artifactId>openncp-protocol-terminators</artifactId>
@@ -92,11 +92,6 @@
             <dependency>
                 <groupId>eu.europa.ec.sante.ehdsi</groupId>
                 <artifactId>openncp-terminology-service-access-manager</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>eu.europa.ec.sante.ehdsi</groupId>
-                <artifactId>openncp-transformation-manager</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

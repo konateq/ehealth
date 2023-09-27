@@ -21,6 +21,8 @@ public class TSAMErrorCtx implements ITMTSAMError {
         this.context = ctx;
     }
 
+    public TSAMErrorCtx() {}
+
     public String getCode() {
         return code;
     }

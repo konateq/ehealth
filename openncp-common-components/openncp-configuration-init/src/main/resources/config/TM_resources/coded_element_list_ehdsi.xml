@@ -493,25 +493,6 @@
         <valueSetVersion />
         <targetLanguageCode />
     </codedElement>
-    <!-- Dispensation - Timing event -->
-    <codedElement>
-        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/effectiveTime[@type='EIVL_TS']/event</elementPath>
-        <usage>
-            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
-            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
-            <ePrescriptionCDAl3>O</ePrescriptionCDAl3>
-            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
-            <eDispensationCDAl3>NA</eDispensationCDAl3>
-            <HCERDocCDAl3>NA</HCERDocCDAl3>
-            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
-            <MRODocCDAl3>NA</MRODocCDAl3>
-            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
-        </usage>
-        <!-- eHDSITimingEvent -->
-        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.41</valueSet>
-        <valueSetVersion />
-        <targetLanguageCode />
-    </codedElement>
     <!-- Medication Summary - Timing event -->
     <codedElement>
         <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.4']/effectiveTime[@type='EIVL_TS']/event</elementPath>
@@ -551,7 +532,7 @@
         <valueSetVersion />
         <targetLanguageCode />
     </codedElement>
-    <!-- Prescription - Medicinal product package -->
+    <!-- Prescription - Medicinal product package - Level 1 -->
     <codedElement>
         <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/formCode</elementPath>
         <usage>
@@ -567,12 +548,105 @@
         </usage>
         <!-- eHDSIPackage -->
         <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
-        <!-- eHDSIDoseForm -->
-        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.2</valueSet>
         <valueSetVersion />
         <targetLanguageCode />
     </codedElement>
-    <!-- Dispensation - Medicinal product package -->
+    <!-- Prescription - Medicinal product package - Level 2 -->
+    <codedElement>
+        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>RNFA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>NA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Prescription - Medicinal product package - Level 3 -->
+    <codedElement>
+        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>RNFA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>NA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Prescription Medicinal product part - Medicinal product package - Level 1 -->
+    <codedElement>
+        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/part/partProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>RNFA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>NA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Prescription Medicinal product part - Medicinal product package - Level 2 -->
+    <codedElement>
+        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/part/partProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>RNFA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>NA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Prescription Medicinal product part - Medicinal product package - Level 3 -->
+    <codedElement>
+        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/part/partProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>RNFA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>NA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Dispensation - Medicinal product package - Level 1 -->
     <codedElement>
         <elementPath>//entry/supply[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.3']/product/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/formCode</elementPath>
         <usage>
@@ -588,14 +662,107 @@
         </usage>
         <!-- eHDSIPackage -->
         <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
-        <!-- eHDSIDoseForm -->
-        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.2</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Dispensation - Medicinal product package - Level 2 -->
+    <codedElement>
+        <elementPath>//entry/supply[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.3']/product/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>NA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>RNFA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Dispensation - Medicinal product package - Level 3 -->
+    <codedElement>
+        <elementPath>//entry/supply[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.3']/product/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>NA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>RNFA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>NA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Dispensation Medicinal product part - Medicinal product package - Level 1 -->
+    <codedElement>
+        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.2']/consumable/manufacturedProduct/manufacturedMaterial/part/partProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>NA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>RNFA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Dispensation Medicinal product part - Medicinal product package - Level 2 -->
+    <codedElement>
+        <elementPath>//entry/supply[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.3']/product/manufacturedProduct/manufacturedMaterial/part/partProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>NA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>RNFA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
+        <valueSetVersion />
+        <targetLanguageCode />
+    </codedElement>
+    <!-- Dispensation Medicinal product part - Medicinal product package - Level 3 -->
+    <codedElement>
+        <elementPath>//entry/supply[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.3']/product/manufacturedProduct/manufacturedMaterial/part/partProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/asContent/containerPackagedProduct/formCode</elementPath>
+        <usage>
+            <patientSummaryCDAl3>NA</patientSummaryCDAl3>
+            <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
+            <ePrescriptionCDAl3>NA</ePrescriptionCDAl3>
+            <ePrescriptionCDAl1pdf>NA</ePrescriptionCDAl1pdf>
+            <eDispensationCDAl3>RNFA</eDispensationCDAl3>
+            <HCERDocCDAl3>NA</HCERDocCDAl3>
+            <HCERDocCDAl1pdf>NA</HCERDocCDAl1pdf>
+            <MRODocCDAl3>NA</MRODocCDAl3>
+            <MRODocCDAl1pdf>NA</MRODocCDAl1pdf>
+        </usage>
+        <!-- eHDSIPackage -->
+        <valueSet>1.3.6.1.4.1.12559.11.10.1.3.1.42.3</valueSet>
         <valueSetVersion />
         <targetLanguageCode />
     </codedElement>
     <!-- Medication Summary - Medicinal product package -->
     <codedElement>
-        <elementPath>//entry/substanceAdministration[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.4']/consumable/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/formCode</elementPath>
+        <elementPath>//entry/supply[templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.3']/product/manufacturedProduct/manufacturedMaterial/asContent/containerPackagedProduct/formCode</elementPath>
         <usage>
             <patientSummaryCDAl3>O</patientSummaryCDAl3>
             <patientSummaryCDAl1pdf>NA</patientSummaryCDAl1pdf>
