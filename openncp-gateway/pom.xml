@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi</groupId>
         <artifactId>openncp</artifactId>
-        <version>6.4.0-SNAPSHOT</version>
+        <version>6.4.0</version>
     </parent>
 
     <artifactId>openncp-gateway</artifactId>

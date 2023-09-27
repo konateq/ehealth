@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi</groupId>
         <artifactId>openncp-protocol-terminators</artifactId>
-        <version>6.4.0-SNAPSHOT</version>
+        <version>6.4.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -82,7 +82,7 @@
         <dependency>
             <groupId>eu.europa.ec.sante.ehdsi.openncp-openatna</groupId>
             <artifactId>openatna-audit</artifactId>
-            <version>6.4.0-SNAPSHOT</version>
+            <version>6.4.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
