@@ -18,7 +18,11 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Configuration
-@EnableJpaRepositories("eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2")
+@EnableJpaRepositories(
+        entityManagerFactoryRef = "secondEntityManager",
+        transactionManagerRef = "secondPlatformTransactionManager",
+        basePackages = {"eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository"}
+)
 @EntityScan(basePackageClasses = {Property.class})
 @ConfigurationProperties(prefix = "tsam-sync.datasource-ehealth-properties")
 public class DataSourceEHealthProperties {
@@ -82,7 +86,7 @@ public class DataSourceEHealthProperties {
         return DataSourceBuilder.create().build();
     }
 
-    @Bean
+    @Bean("secondEntityManager")
     public LocalContainerEntityManagerFactoryBean secondEntityManager(){
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(secondDataSource());
@@ -97,7 +101,7 @@ public class DataSourceEHealthProperties {
         return em;
     }
 
-    @Bean
+    @Bean(name = "secondPlatformTransactionManager")
     public PlatformTransactionManager secondPlatformTransactionManager(){
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(secondEntityManager().getObject());

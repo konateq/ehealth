@@ -11,6 +11,7 @@ public class Mapping {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name="transcoding_association_id")
     private Long transcodingAssociationId = 1L;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
@@ -25,6 +26,7 @@ public class Mapping {
 
     private String status;
 
+    @Column(name = "status_date")
     private LocalDateTime statusDate;
 
     public Long getId() {

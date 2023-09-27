@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "EHNCP_PROPERTY")
+@Table(name = "ehncp_property")
 public class Property {
 
     @Id

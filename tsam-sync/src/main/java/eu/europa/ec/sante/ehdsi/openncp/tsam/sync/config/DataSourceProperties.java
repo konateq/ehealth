@@ -1,8 +1,15 @@
 package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.config;
 
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.CodeSystem;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.CodeSystemVersion;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Concept;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy;
+import org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -19,6 +26,7 @@ import java.util.HashMap;
 @Configuration
 @Primary
 @EnableJpaRepositories("eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository")
+@EntityScan(basePackageClasses = {CodeSystem.class, CodeSystemVersion.class, Concept.class})
 @ConfigurationProperties(prefix = "tsam-sync.datasource")
 public class DataSourceProperties {
 
@@ -87,20 +95,22 @@ public class DataSourceProperties {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(){
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(firstDataSource());
-        em.setPackagesToScan("eu.europa.ec.sante.ehdsi.openncp.tsam.sync");
+        em.setPackagesToScan("eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2dll.auto", env.getProperty("hibernate.hbm2dll.auto"));
         properties.put("hibernate.dialect", env.getProperty("hibernate.dialect"));
+        properties.put("hibernate.physical_naming_strategy", SpringPhysicalNamingStrategy.class.getName());
+        properties.put("hibernate.implicit_naming_strategy", SpringImplicitNamingStrategy.class.getName());
         em.setJpaPropertyMap(properties);
         return em;
     }
 
     @Primary
     @Bean
-    public PlatformTransactionManager firstPlatformTransactionManager(){
+    public PlatformTransactionManager transactionManager(){
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
         return  transactionManager;

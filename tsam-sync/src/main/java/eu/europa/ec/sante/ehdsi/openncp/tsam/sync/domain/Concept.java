@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "CODE_SYSTEM_CONCEPT")
+@Table(name = "code_system_concept")
 @SuppressWarnings("unused")
 public class Concept {
 
@@ -20,6 +20,7 @@ public class Concept {
 
     private String status;
 
+    @Column(name = "status_date")
     private LocalDateTime statusDate;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)

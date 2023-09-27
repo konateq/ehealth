@@ -93,7 +93,7 @@ public class TsamSyncManager {
                 logger.info("Starting database backup process");
                 String date = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
                 date = StringUtils.replace(date, ":", "-");
-                databaseTool.backup("backup_" + date + ".sql");
+                //databaseTool.backup("backup_" + date + ".sql");
                 logger.info("Database backup operation completed");
             } else {
                 logger.warn("Database backup is disabled (Property 'tsam-sync.database.backup' is set to 'false')");

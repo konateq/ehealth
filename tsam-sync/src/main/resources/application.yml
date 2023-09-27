@@ -17,6 +17,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
 tsam-sync:
   database:
     backup: true
@@ -28,3 +32,8 @@ tsam-sync:
     username: username
     password: password
     database: ehealth_properties
+  datasource:
+    dialect: org.hibernate.dialect.MySQL8Dialect
+    driver: com.mysql.cj.jdbc.Driver
+    timezone: Europe/Brussels
+

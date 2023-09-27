@@ -5,23 +5,28 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+@Entity(name = "code_system_version")
 public class CodeSystemVersion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "local_name")
     private String localName;
 
+    @Column(name = "effective_date")
     private LocalDateTime effectiveDate;
 
+    @Column(name = "release_date")
     private LocalDateTime releaseDate;
 
     private String status;
 
+    @Column(name = "status_date")
     private LocalDateTime statusDate;
 
     private String description;
@@ -30,6 +35,8 @@ public class CodeSystemVersion {
 
     private String source;
 
+
+    @Column(name = "previous_version_id")
     private Long previousVersionId;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
