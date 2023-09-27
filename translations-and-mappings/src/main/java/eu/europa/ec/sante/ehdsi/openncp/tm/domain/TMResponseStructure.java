@@ -258,11 +258,11 @@ public class TMResponseStructure implements TMConstants {
         sb.append("TMResponseStructure.toString() BEGIN : ").append(NEWLINE);
         sb.append(STATUS).append(COLON).append(status).append(NEWLINE);
         sb.append(ERRORS).append(COLON).append(NEWLINE);
-        for (ITMTSAMError tmError : errors) {
+        for (ITMTSAMError tmError : getErrors()) {
             sb.append(tmError.toString()).append(NEWLINE);
         }
         sb.append(WARNINGS).append(COLON).append(NEWLINE);
-        for (ITMTSAMError tmError : warnings) {
+        for (ITMTSAMError tmError : getWarnings()) {
             sb.append(tmError.toString()).append(NEWLINE);
         }
         sb.append("TMResponseStructure.toString() END");
