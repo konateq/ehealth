@@ -6,7 +6,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.converter.ConceptConverter;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.converter.ValueSetVersionConverter;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.cts.CtsClient;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.*;
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.model.Property;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.service.PropertyService;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository.*;
 import eu.europa.ec.sante.ehdsi.termservice.web.rest.model.sync.*;

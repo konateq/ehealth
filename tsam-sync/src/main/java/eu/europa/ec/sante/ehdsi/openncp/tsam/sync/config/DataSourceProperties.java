@@ -3,7 +3,6 @@ package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.config;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.CodeSystem;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.CodeSystemVersion;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Concept;
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;

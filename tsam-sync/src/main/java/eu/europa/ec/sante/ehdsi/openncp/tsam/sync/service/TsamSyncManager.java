@@ -8,7 +8,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.cts.CtsClient;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.db.DatabaseTool;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Concept;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.Designation;
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.model.Property;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain.ValueSetVersion;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.service.PropertyService;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository.*;
@@ -126,13 +126,18 @@ public class TsamSyncManager {
                     concepts.forEach(concept -> concept.addValueSetVersion(valueSetVersion));
                     for (Concept concept : concepts) {
                         numberOfMapping += concept.getMappings().size();
-                        if(property != null && StringUtils.isNotBlank(property.getValue())){
-                            String[] split = property.getValue().split(",");
-                            languagesAvailable = Arrays.stream(split).collect(Collectors.toList());
-                            for(Designation designation : concept.getDesignations()){
-                                if(!languagesAvailable.contains(designation.getLanguageCode())){
-                                    languagesAvailable.add(designation.getLanguageCode());
-                                }
+                        if(property == null){
+                            property = new Property(AVAILABLE_TRANSLATION_LANGUAGES_PROPERTY_KEY, "");
+                        }
+                        if(property.getValue() == null){
+                            property.setValue("");
+                        }
+
+                        String[] split = property.getValue().split(",");
+                        languagesAvailable = Arrays.stream(split).collect(Collectors.toList());
+                        for(Designation designation : concept.getDesignations()){
+                            if(!languagesAvailable.contains(designation.getLanguageCode())){
+                                languagesAvailable.add(designation.getLanguageCode());
                             }
                         }
                     }

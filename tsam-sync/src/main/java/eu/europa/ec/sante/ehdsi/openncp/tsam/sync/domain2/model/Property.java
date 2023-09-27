@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository;
+package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "ehncp_property")
+@Table(name = "EHNCP_PROPERTY")
 public class Property {
 
     @Id

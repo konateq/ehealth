@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.config;
 
-import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.repository.Property;
+import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.model.Property;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -90,7 +90,7 @@ public class DataSourceEHealthProperties {
     public LocalContainerEntityManagerFactoryBean secondEntityManager(){
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(secondDataSource());
-        em.setPackagesToScan(new String[]{"eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2"});
+        em.setPackagesToScan(new String[]{"eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain2.model"});
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
