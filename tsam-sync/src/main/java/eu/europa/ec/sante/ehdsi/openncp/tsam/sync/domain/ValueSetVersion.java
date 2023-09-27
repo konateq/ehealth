@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+@Entity(name = "value_set_version")
 @SuppressWarnings("unused")
 public class ValueSetVersion {
 
@@ -16,12 +16,15 @@ public class ValueSetVersion {
     @Column(name = "VERSION_NAME")
     private String name;
 
+    @Column(name = "effective_date")
     private LocalDateTime effectiveDate;
 
+    @Column(name = "release_date")
     private LocalDateTime releaseDate;
 
     private String status;
 
+    @Column(name = "status_date")
     private LocalDateTime statusDate;
 
     private String description;

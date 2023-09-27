@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domain;
+package eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domainehealthproperty.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

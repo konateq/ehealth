@@ -14,14 +14,17 @@ public class Designation {
 
     private String designation;
 
+    @Column(name = "language_code")
     private String languageCode;
 
     private String type;
 
+    @Column(name = "is_preferred")
     private Boolean isPreferred;
 
     private String status;
 
+    @Column(name = "status_date")
     private LocalDateTime statusDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
