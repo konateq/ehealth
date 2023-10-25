@@ -14,7 +14,6 @@ import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TMException;
 import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TmErrorCtx;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.ITransformationService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.util.*;
-import eu.europa.ec.sante.ehdsi.openncp.tm.util.util.*;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import org.apache.commons.lang3.StringUtils;

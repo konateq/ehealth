@@ -82,6 +82,4 @@ public class TranslationsAndMappingsController {
         logger.info("Transcoding CDA document into PIVOT");
         return ResponseEntity.ok(transformationService.transcode(friendlyCDA));
     }
-
-
 }
