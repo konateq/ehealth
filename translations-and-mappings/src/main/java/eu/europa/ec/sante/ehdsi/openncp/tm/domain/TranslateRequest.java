@@ -4,14 +4,14 @@ import org.w3c.dom.Document;
 
 public class TranslateRequest {
 
-    private Document pivotCDA;
+    private String pivotCDA;
     private String targetLanguageCode;
 
-    public Document getPivotCDA() {
+    public String getPivotCDA() {
         return pivotCDA;
     }
 
-    public void setPivotCDA(Document pivotCDA) {
+    public void setPivotCDA(String pivotCDA) {
         this.pivotCDA = pivotCDA;
     }
 

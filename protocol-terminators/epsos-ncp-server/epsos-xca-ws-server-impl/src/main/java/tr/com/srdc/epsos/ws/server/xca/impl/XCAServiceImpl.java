@@ -24,6 +24,7 @@ import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import eu.europa.ec.sante.ehdsi.openncp.util.UUIDHelper;
@@ -788,7 +789,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
             }
 
-            returnDoc = tmResponse.getResponseCDA();
+            returnDoc = Base64Util.decode(tmResponse.getResponseCDA());
             if (registryErrorList.getChildElements().hasNext()) {
                 registryResponseElement.addChild(registryErrorList);
             }

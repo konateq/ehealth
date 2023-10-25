@@ -1,8 +1,9 @@
-package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
+package eu.europa.ec.sante.ehdsi.openncp.tm.util.ws;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TMException;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import org.apache.commons.io.Charsets;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 public class TranslationsAndMappingsRestApiTest {
 
@@ -66,8 +68,8 @@ public class TranslationsAndMappingsRestApiTest {
             node.put("pivotCDA", getStringFromDocument(document));
             node.put("targetLanguageCode", languageCode);
             String jsonString = node.toString();
-            System.out.println(jsonString);
-            var entity = new StringEntity(jsonString, StandardCharsets.UTF_8);
+            String base64EncodedPayload = Base64.getEncoder().encodeToString(jsonString.getBytes());
+            var entity = new StringEntity(base64EncodedPayload, StandardCharsets.UTF_8);
             entity.setContentType("application/json");
             postRequest.setEntity(entity);
 
@@ -95,7 +97,7 @@ public class TranslationsAndMappingsRestApiTest {
             Assert.assertEquals("success", tmResponseStructure.getStatus());
 
             var responseDocument = tmResponseStructure.getResponseCDA();
-            System.out.println(getStringFromDocument(responseDocument));
+            System.out.println(getStringFromDocument(Base64Util.decode(responseDocument)));
         }
         finally
         {
@@ -146,4 +148,5 @@ public class TranslationsAndMappingsRestApiTest {
             return null;
         }
     }
+
 }
