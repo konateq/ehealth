@@ -15,6 +15,7 @@ import eu.europa.ec.sante.ehdsi.openncp.configmanager.RegisteredService;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.DynamicDiscoveryService;
 import eu.europa.ec.sante.ehdsi.constant.assertion.AssertionEnum;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.*;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
@@ -137,8 +138,8 @@ public class XDSbRepositoryServiceInvoker {
             }
             if (!docClassCode.equals(ClassCode.EDD_CLASSCODE)) {
                 TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.transcode(DomUtils.byteToDocument(cdaBytes));
-                org.w3c.dom.Document domDocument = tmResponseStructure.getResponseCDA();
-                byte[] transformedCda = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                var base64EncodedDocument = tmResponseStructure.getResponseCDA();
+                byte[] transformedCda = XMLUtils.toOM(Base64Util.decode(base64EncodedDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                 xdrDocument.setValue(transformedCda);
             } else {
                 xdrDocument.setValue(cdaBytes);

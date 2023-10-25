@@ -14,6 +14,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TMException;
 import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TmErrorCtx;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.ITransformationService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.util.*;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.util.*;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import org.apache.commons.lang3.StringUtils;
@@ -194,7 +195,7 @@ public class TransformationService implements ITransformationService, TMConstant
                     if (result == null || !result.isValid()) {
                         status = STATUS_FAILURE;
                         warnings.add(TMError.WARNING_OUTPUT_SCHEMATRON_VALIDATION_FAILED);
-                        responseStructure = new TMResponseStructure(finalDoc, status, errors, warnings);
+                        responseStructure = new TMResponseStructure(Base64Util.encode(finalDoc), status, errors, warnings);
                         logger.error("Schematron validation error, result document is invalid!");
                         if (logger.isErrorEnabled() && result != null) {
                             logger.error(result.toString());
@@ -206,7 +207,8 @@ public class TransformationService implements ITransformationService, TMConstant
                 }
 
                 // create & fill TMResponseStructure
-                responseStructure = new TMResponseStructure(finalDoc, status, errors, warnings);
+                var base64Document = Base64.getEncoder().encode(XmlUtil.doc2bytes(finalDoc));
+                responseStructure = new TMResponseStructure(Base64Util.encode(finalDoc), status, errors, warnings);
                 if (logger.isDebugEnabled()) {
                     logger.debug("TM result:\n{}", responseStructure);
                 }
@@ -217,7 +219,7 @@ public class TransformationService implements ITransformationService, TMConstant
             logger.error("TMException: '{}'\nReason: '{}'", e.getMessage(), e.getReason().toString(), e);
             status = STATUS_FAILURE;
             errors.add(e.getReason());
-            responseStructure = new TMResponseStructure(inputDocument, status, errors, warnings);
+            responseStructure = new TMResponseStructure(Base64Util.encode(inputDocument), status, errors, warnings);
 
         } catch (Exception e) {
 
@@ -225,7 +227,7 @@ public class TransformationService implements ITransformationService, TMConstant
             logger.error("Exception: '{}'", e.getMessage(), e);
             status = STATUS_FAILURE;
             errors.add(TMError.ERROR_PROCESSING_ERROR);
-            responseStructure = new TMResponseStructure(inputDocument, status, errors, warnings);
+            responseStructure = new TMResponseStructure(Base64Util.encode(inputDocument), status, errors, warnings);
             logger.error("Exception: TM Error Code: '{}'", TMError.ERROR_PROCESSING_ERROR, e);
         }
 
@@ -647,7 +649,7 @@ public class TransformationService implements ITransformationService, TMConstant
                         responseStructure.getStatus().equals(STATUS_SUCCESS) ? EventOutcomeIndicator.FULL_SUCCESS : EventOutcomeIndicator.PERMANENT_FAILURE,
                         HTTPUtil.getSubjectDN(false),
                         getOIDFromDocument(responseStructure.getDocument()),
-                        getOIDFromDocument(responseStructure.getResponseCDA()),
+                        getOIDFromDocument(responseStructure.getDocument()),
                         Constants.UUID_PREFIX + responseStructure.getRequestId(),
                         securityHeader.getBytes(StandardCharsets.UTF_8),
                         Constants.UUID_PREFIX + responseStructure.getRequestId(),

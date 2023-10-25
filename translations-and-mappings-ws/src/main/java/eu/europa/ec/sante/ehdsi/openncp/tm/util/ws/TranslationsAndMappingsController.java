@@ -1,11 +1,13 @@
-package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
+package eu.europa.ec.sante.ehdsi.openncp.tm.util.ws;
 
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
-import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranslateRequest;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranscodeRequest;
+import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranslateRequest;
 import eu.europa.ec.sante.ehdsi.openncp.tm.persistence.model.Property;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.ITransformationService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.PropertyService;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.ws.exception.TranslationsAndMappingsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -55,7 +57,12 @@ public class TranslationsAndMappingsController {
 
     public ResponseEntity<TMResponseStructure> translateDocument(@RequestBody TranslateRequest translateRequest) {
         logger.info("Entering translateDocument() method");
-        Document pivotCDA = translateRequest.getPivotCDA();
+        Document pivotCDA = null;
+        try {
+            pivotCDA = Base64Util.decode(translateRequest.getPivotCDA());
+        } catch (Exception e) {
+            ResponseEntity.badRequest().body(TranslationsAndMappingsException.BASE64_DOM_DECODING_EXCEPTION.getMessage());
+        }
         String targetLanguageCode = translateRequest.getTargetLanguageCode();
         logger.info("Translating CDA document in language [{}]", targetLanguageCode);
         return ResponseEntity.ok(transformationService.translate(pivotCDA, targetLanguageCode));
@@ -66,8 +73,15 @@ public class TranslationsAndMappingsController {
 
     public ResponseEntity<TMResponseStructure> transcodeDocument(@RequestBody TranscodeRequest transcodeRequest) {
         logger.info("Entering transcodeDocument() method");
-        Document friendlyCDA = transcodeRequest.getFriendlyCDA();
+        Document friendlyCDA = null;
+        try {
+            friendlyCDA = Base64Util.decode(transcodeRequest.getFriendlyCDA());
+        } catch (Exception e) {
+            ResponseEntity.badRequest().body(TranslationsAndMappingsException.BASE64_DOM_DECODING_EXCEPTION.getMessage());
+        }
         logger.info("Transcoding CDA document into PIVOT");
         return ResponseEntity.ok(transformationService.transcode(friendlyCDA));
     }
+
+
 }
