@@ -143,6 +143,7 @@
         <saxon-he.version>10.6</saxon-he.version>
         <servlet-api.version>3.1.0</servlet-api.version>
         <slf4j.version>1.7.36</slf4j.version>
+        <springfox.version>2.9.2</springfox.version>
         <spring-boot.version>2.7.11</spring-boot.version>
         <spring.version>5.3.27</spring.version>
         <spring-tx.version>5.3.27</spring-tx.version>
@@ -343,6 +344,32 @@
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-impl</artifactId>
                 <version>${jaxb-impl.version}</version>
+            </dependency>
+            <!-- swagger for api documentation and rest client generation -->
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>slf4j-api</artifactId>
+                        <groupId>org.slf4j</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.mapstruct</groupId>
+                        <artifactId>mapstruct</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger-ui</artifactId>
+                <version>${springfox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-data-rest</artifactId>
+                <version>${springfox.version}</version>
             </dependency>
             <!-- Test Dependencies -->
             <dependency>
