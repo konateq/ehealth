@@ -206,7 +206,6 @@ public class TransformationService implements ITransformationService, TMConstant
                 }
 
                 // create & fill TMResponseStructure
-                var base64Document = Base64.getEncoder().encode(XmlUtil.doc2bytes(finalDoc));
                 responseStructure = new TMResponseStructure(Base64Util.encode(finalDoc), status, errors, warnings);
                 if (logger.isDebugEnabled()) {
                     logger.debug("TM result:\n{}", responseStructure);

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.ehdsi.openncp.tm.util.ws;
+package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
@@ -65,11 +65,10 @@ public class TranslationsAndMappingsRestApiTest {
 
             var mapper = new ObjectMapper();
             var node = mapper.createObjectNode();
-            node.put("pivotCDA", getStringFromDocument(document));
+            node.put("pivotCDA", Base64Util.encode(document));
             node.put("targetLanguageCode", languageCode);
             String jsonString = node.toString();
-            String base64EncodedPayload = Base64.getEncoder().encodeToString(jsonString.getBytes());
-            var entity = new StringEntity(base64EncodedPayload, StandardCharsets.UTF_8);
+            var entity = new StringEntity(jsonString, StandardCharsets.UTF_8);
             entity.setContentType("application/json");
             postRequest.setEntity(entity);
 
@@ -89,6 +88,8 @@ public class TranslationsAndMappingsRestApiTest {
 
             // use org.apache.http.util.EntityUtils to read json as string
             var json = EntityUtils.toString(responseEntity, encoding);
+
+            System.out.println(json);
 
             var tmResponseStructure = mapper.readValue(json, TMResponseStructure.class);
 

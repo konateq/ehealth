@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.ehdsi.openncp.tm.util.ws;
+package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranscodeRequest;
@@ -7,7 +7,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tm.persistence.model.Property;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.ITransformationService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.PropertyService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
-import eu.europa.ec.sante.ehdsi.openncp.tm.util.ws.exception.TranslationsAndMappingsException;
+import eu.europa.ec.sante.ehdsi.openncp.tm.ws.exception.TranslationsAndMappingsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;

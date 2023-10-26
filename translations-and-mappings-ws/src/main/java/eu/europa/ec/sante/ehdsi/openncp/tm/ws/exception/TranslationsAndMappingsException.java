@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.ehdsi.openncp.tm.util.ws.exception;
+package eu.europa.ec.sante.ehdsi.openncp.tm.ws.exception;
 
 public enum TranslationsAndMappingsException {
 
