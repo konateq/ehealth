@@ -100,13 +100,18 @@ public class TsamSyncManager {
             }
 
             // Cleaning current LTR Database.
+            logger.info("Cleaning current LTR Database");
+
+            logger.info("Cleaning Mappings");
             mappingRepository.deleteAll();
+            logger.info("Cleaning ValueSets");
             valueSetRepository.deleteAll();
+            logger.info("Cleaning CodeSystems");
             codeSystemRepository.deleteAll();
 
             logger.info("Starting value sets synchronization");
             int index = 1;
-
+            Property property = null;
             for (ValueSetVersionModel valueSetVersionModel : catalogue.getValueSetVersions()) {
 
                 ValueSetVersion valueSetVersion = valueSetVersionRepository.save(
@@ -115,7 +120,6 @@ public class TsamSyncManager {
                 int page = 0;
                 int total = 0;
                 int numberOfMapping = 0;
-                Property property = propertyService.getProperty(AVAILABLE_TRANSLATION_LANGUAGES_PROPERTY_KEY);
                 List<String> languagesAvailable = null;
                 while (hasNext || page == 0) {
                     List<Concept> concepts = ctsClient.fetchConcepts(valueSetVersionModel.getValueSet().getId(),
@@ -126,25 +130,25 @@ public class TsamSyncManager {
                     concepts.forEach(concept -> concept.addValueSetVersion(valueSetVersion));
                     for (Concept concept : concepts) {
                         numberOfMapping += concept.getMappings().size();
-                        if(property == null){
+                        if (property == null) {
                             property = new Property(AVAILABLE_TRANSLATION_LANGUAGES_PROPERTY_KEY, "");
                         }
-                        if(property.getValue() == null){
+                        if (property.getValue() == null) {
                             property.setValue("");
                         }
 
                         String[] split = property.getValue().split(",");
                         languagesAvailable = Arrays.stream(split).collect(Collectors.toList());
-                        for(Designation designation : concept.getDesignations()){
-                            if(!languagesAvailable.contains(designation.getLanguageCode())){
+                        for (Designation designation : concept.getDesignations()) {
+                            if (!languagesAvailable.contains(designation.getLanguageCode())) {
                                 languagesAvailable.add(designation.getLanguageCode());
                             }
                         }
                     }
                     conceptRepository.saveAll(concepts);
-                    if(languagesAvailable != null){
+                    if (languagesAvailable != null) {
                         property.setValue(String.join(",", languagesAvailable));
-                        if(StringUtils.isNotBlank(property.getValue()) && property.getValue().charAt(0)==','){
+                        if (StringUtils.isNotBlank(property.getValue()) && property.getValue().charAt(0) == ',') {
                             property.setValue(property.getValue().substring(1));
                         }
                         propertyService.save(property);

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.w3c.dom.Document;
 
+import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -34,6 +35,11 @@ public class TranslationsAndMappingsController {
     public TranslationsAndMappingsController(PropertyService propertyService, ITransformationService transformationService) {
         this.propertyService = propertyService;
         this.transformationService = transformationService;
+    }
+
+    @PostConstruct
+    public void propertiesInit() {
+        logger.info("propertiesInit");
     }
 
     @GetMapping("/languages")

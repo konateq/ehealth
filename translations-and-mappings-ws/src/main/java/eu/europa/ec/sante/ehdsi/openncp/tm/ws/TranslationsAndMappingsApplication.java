@@ -2,11 +2,11 @@ package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(scanBasePackages = {"eu.europa.ec.sante.ehdsi.openncp.tm"})
 public class TranslationsAndMappingsApplication extends SpringBootServletInitializer {
@@ -16,4 +16,14 @@ public class TranslationsAndMappingsApplication extends SpringBootServletInitial
     public static void main(String... args) {
         SpringApplication.run(TranslationsAndMappingsApplication.class, args);
     }
+
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+        //return configureApplication(builder);
+        return builder;
+    }
+
+    //private static SpringApplicationBuilder configureApplication(SpringApplicationBuilder builder) {
+    //  return builder.sources(TranslationsAndMappingsApplication.class).bannerMode(Banner.Mode.OFF);
+    //}
 }

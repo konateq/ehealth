@@ -54,6 +54,8 @@ public class TransformationService implements ITransformationService, TMConstant
 
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
 
+    private final ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tsam.xml");
+
     private HashMap<String, String> level1Type;
     private HashMap<String, String> level3Type;
 
@@ -347,7 +349,7 @@ public class TransformationService implements ITransformationService, TMConstant
                                    List<ITMTSAMError> warnings, String cdaDocumentType, boolean isTranscode) {
 
         //TODO: Check is an attribute shall/can also be translated anr/or transcoded like the XML element.
-        logger.info("Processing Document '{}' to target Language: '{}' Transcoding: '{}", cdaDocumentType, targetLanguageCode, isTranscode);
+        logger.info("Processing Document '{}' to target Language: '{}' Transcoding: '{}'", cdaDocumentType, targetLanguageCode, isTranscode);
         boolean processingOK = true;
         // hashMap for ID of referencedValues and transcoded/translated DisplayNames
         HashMap<String, String> hmReffId_DisplayName = new HashMap<>();
@@ -457,7 +459,10 @@ public class TransformationService implements ITransformationService, TMConstant
                     isProcessingSuccesful = (isTranscode ?
                             transcodeElement(originalElement, document, hmReffId_DisplayName, null, null, errors, warnings) :
                             translateElement(originalElement, document, targetLanguageCode, hmReffId_DisplayName, null, null, errors, warnings));
-                    return (isProcessingSuccesful ? STATUS_SUCCESS : STATUS_FAILURE);
+                    if(!isProcessingSuccesful) {
+                        processingOK = false;
+                        logger.error("Required coded element was not translated");
+                    }
                 }
             }
         }
@@ -522,7 +527,6 @@ public class TransformationService implements ITransformationService, TMConstant
             // looking for a nested translation element
             Node oldTranslationElement = findOldTranslation(originalElement);
 
-            final ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tsam.xml");
             ITerminologyService tsamApi = (ITerminologyService) applicationContext.getBean(ITerminologyService.class.getName());
 
             TSAMResponseStructure tsamResponse = isTranscode ? tsamApi.getEpSOSConceptByCode(codedElement)

@@ -14,6 +14,18 @@
         </property>
     </bean>
 
+    <bean id="codedElementList" class="eu.europa.ec.sante.ehdsi.openncp.tm.util.CodedElementList" factory-method="getInstance">
+        <property name="configurableElementIdentification">
+            <value>${tm.codedelementlist.enabled}</value>
+        </property>
+        <property name="codedElementListOverride">
+            <value>${tm.codedelementlist.overridden}</value>
+        </property>
+        <property name="codedElementListPath">
+            <value>${EPSOS_PROPS_PATH}${tm.codedelementlist.path}</value>
+        </property>
+    </bean>
+
     <bean id="tsamConfig" class="epsos.ccd.posam.tsam.util.TsamConfiguration">
         <property name="translationLang" value="${translationLanguage}"/>
         <property name="transcodingLang" value="${transcodingLanguage}"/>
