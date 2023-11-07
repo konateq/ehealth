@@ -12,15 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.Document;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.io.Serializable;
+import java.util.*;
 
 @RestController
 public class TranslationsAndMappingsController {
@@ -52,6 +48,20 @@ public class TranslationsAndMappingsController {
         return availableLanguageCodes;
     }
 
+    @GetMapping("translate-value-set")
+    public ResponseEntity retrieveValueSet(@RequestParam String oid, String targetLanguage){
+        Map<String, String> codeSystem = transformationService.translateValueSet(oid, targetLanguage);
+        var codeSystemSet = new HashSet<String>();
+        List<DesignationAndCode> designationAndCodes = new ArrayList<>();
+        codeSystem.forEach((s, s2) -> {
+            DesignationAndCode designationAndCode = new DesignationAndCode();
+            designationAndCode.code = s;
+            designationAndCode.designation = s2;
+            designationAndCodes.add(designationAndCode);
+        });
+        return ResponseEntity.ok(designationAndCodes);
+    }
+
     @PostMapping(value = "/translate", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
 
@@ -81,5 +91,22 @@ public class TranslationsAndMappingsController {
         }
         logger.info("Transcoding CDA document into PIVOT");
         return ResponseEntity.ok(transformationService.transcode(friendlyCDA));
+    }
+
+    class DesignationAndCode implements Serializable {
+        private String code;
+        private String designation;
+        public String getCode() {
+            return code;
+        }
+        public void setCode(String code) {
+            this.code = code;
+        }
+        public String getDesignation() {
+            return designation;
+        }
+        public void setDesignation(String designation) {
+            this.designation = designation;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.ehdsi.openncp.tm.service.impl;
 
 import epsos.ccd.gnomon.auditmanager.*;
+import epsos.ccd.posam.tsam.response.RetrievedConcept;
 import epsos.ccd.posam.tsam.response.TSAMResponseStructure;
 import epsos.ccd.posam.tsam.service.ITerminologyService;
 import epsos.ccd.posam.tsam.util.CodedElement;
@@ -36,6 +37,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.XMLConstants;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TransformationService implements ITransformationService, TMConstants {
@@ -99,6 +101,20 @@ public class TransformationService implements ITransformationService, TMConstant
         logger.info("Transformation of CDA executed in: '{}ms'", watch.getTotalTimeMillis());
         logger.info("Transcoding OpenNCP CDA Document [END]");
         return responseStructure;
+    }
+
+    @Override
+    public Map<String, String> translateValueSet(String oid, String targetLanguage) {
+        final ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tsam.xml");
+        ITerminologyService tsamApi = (ITerminologyService) applicationContext.getBean(ITerminologyService.class.getName());
+        List<RetrievedConcept> valueSetConcepts = tsamApi.getValueSetConcepts(oid, null, targetLanguage);
+        Map<String, String> designationAndCode = new HashMap<>();
+        List<String> collect = valueSetConcepts.stream()
+                .map(retrievedConcept -> retrievedConcept.getDesignation())
+                .collect(Collectors.toList());
+        valueSetConcepts.forEach(retrievedConcept ->
+                designationAndCode.put(retrievedConcept.getCode(), retrievedConcept.getDesignation()));
+        return designationAndCode;
     }
 
     private TMResponseStructure process(Document inputDocument, String targetLanguageCode, boolean isTranscode) {

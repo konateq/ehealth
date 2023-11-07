@@ -3,6 +3,9 @@ package eu.europa.ec.sante.ehdsi.openncp.tm.service;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import org.w3c.dom.Document;
 
+import java.util.List;
+import java.util.Map;
+
 public interface ITransformationService {
 
     /**
@@ -88,4 +91,6 @@ public interface ITransformationService {
      * including possible errors and warning.
      */
     TMResponseStructure transcode(Document friendlyCDA);
+
+    Map<String, String> translateValueSet(String oid, String targetLanguage);
 }
