@@ -101,8 +101,10 @@ public class EventLogUtil {
         // Set Participant Object: Error Message
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
 
-            String error = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
-            eventLog.setEM_ParticipantObjectID(error);
+            var acknowledgementDetail = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0);
+            var errorCode = acknowledgementDetail.getCode().getCode();
+            var error = acknowledgementDetail.getText().getContent();
+            eventLog.setEM_ParticipantObjectID(errorCode);
             eventLog.setEM_ParticipantObjectDetail(error.getBytes());
         }
     }
