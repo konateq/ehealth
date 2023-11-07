@@ -2,6 +2,7 @@ package eu.europa.ec.sante.ehdsi.openncp.tm.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-public class CodedElementList implements TMConstants {
+public class CodedElementList implements InitializingBean, TMConstants {
 
     private static final String XML_CODED_ELEMENT_LIST = "coded_element_list_ehdsi.xml";
 
@@ -109,7 +110,8 @@ public class CodedElementList implements TMConstants {
      * This method allows the bean instance to perform validation of its overall configuration and final initialization
      * of the Transformation Manager.
      */
-    public void afterPropertiesSet() {
+    @Override
+    public void afterPropertiesSet() throws Exception {
 
         // Read xml file (coded_element_list_ehdsi.xml)
         if (configurableElementIdentification && !isInitialized) {
@@ -195,7 +197,11 @@ public class CodedElementList implements TMConstants {
             isInitialized = true;
 
         } else {
-            logger.warn("[TM] Configurable Coded Element List NOT used");
+            if(isInitialized) {
+                logger.warn("[TM] Configurable Coded Element List already initialized");
+            } else {
+                logger.warn("[TM] Configurable Coded Element List NOT used");
+            }
         }
     }
 
