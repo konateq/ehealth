@@ -17,7 +17,7 @@ class AbuseDetectionServiceTest {
         LocalDateTime dtNow = new LocalDateTime(DateTimeZone.forTimeZone(TimeZone.getDefault()));
         LocalDateTime dtBeforeOneHour = dtNow.minusHours(1);
         LocalDateTime dtBeforeOneDay = dtNow.minusDays(1);
-        LocalDateTime dtBeforeOneMonth = dtNow.minusMonths(1);
+        LocalDateTime dtBeforeOneMonth = dtNow.minusDays(30);
 
         assertEquals (ab.getElapsedSecondsBetweenDateTime(dtBeforeOneHour, dtNow), 3600);
         assertEquals(ab.getElapsedSecondsBetweenDateTime(dtBeforeOneDay, dtNow), 86400);
