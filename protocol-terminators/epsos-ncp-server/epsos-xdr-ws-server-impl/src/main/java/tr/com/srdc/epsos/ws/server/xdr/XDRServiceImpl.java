@@ -28,6 +28,7 @@ import eu.europa.ec.sante.ehdsi.openncp.model.DiscardDispenseDetails;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import fi.kela.se.epsos.data.model.DocumentFactory;
@@ -546,7 +547,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
                     //  Reset the response document to a translated version.
                     TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(docBytes), Constants.LANGUAGE_CODE);
-                    domDocument = tmResponseStructure.getResponseCDA();
+                    domDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
                     docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
 
                     // Validate CDA epSOS Pivot
@@ -723,7 +724,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
                 //Resets the response document to a translated version.
                 TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.transcode(DomUtils.byteToDocument(docBytes));
-                org.w3c.dom.Document domDocument = tmResponseStructure.getResponseCDA();
+                org.w3c.dom.Document domDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
                 docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
 
                 /* Validate CDA epSOS Pivot */
@@ -852,7 +853,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                 }
 
                 TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(doc.getValue()), Constants.LANGUAGE_CODE);
-                org.w3c.dom.Document cdaDocument = tmResponseStructure.getResponseCDA();
+                org.w3c.dom.Document cdaDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
                 byte[] docBytes = XMLUtils.toOM(cdaDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                 String documentString = new String(docBytes, StandardCharsets.UTF_8);
 

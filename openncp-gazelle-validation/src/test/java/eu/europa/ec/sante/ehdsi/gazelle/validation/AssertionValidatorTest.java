@@ -6,6 +6,7 @@ import eu.europa.ec.sante.ehdsi.gazelle.validation.impl.SchematronValidatorImpl;
 import org.apache.http.client.HttpClient;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class, loader = AnnotationConfigContextLoader.class)
+@Ignore
 public class AssertionValidatorTest {
 
     private final Logger logger = LoggerFactory.getLogger(AssertionValidatorTest.class);

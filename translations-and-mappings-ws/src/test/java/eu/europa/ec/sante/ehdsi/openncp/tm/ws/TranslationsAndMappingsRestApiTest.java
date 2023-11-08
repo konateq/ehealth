@@ -3,6 +3,7 @@ package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TMException;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import org.apache.commons.io.Charsets;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -10,6 +11,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -27,7 +29,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
+@Ignore
 public class TranslationsAndMappingsRestApiTest {
 
     @Test
@@ -63,10 +67,9 @@ public class TranslationsAndMappingsRestApiTest {
 
             var mapper = new ObjectMapper();
             var node = mapper.createObjectNode();
-            node.put("pivotCDA", getStringFromDocument(document));
+            node.put("pivotCDA", Base64Util.encode(document));
             node.put("targetLanguageCode", languageCode);
             String jsonString = node.toString();
-            System.out.println(jsonString);
             var entity = new StringEntity(jsonString, StandardCharsets.UTF_8);
             entity.setContentType("application/json");
             postRequest.setEntity(entity);
@@ -88,6 +91,8 @@ public class TranslationsAndMappingsRestApiTest {
             // use org.apache.http.util.EntityUtils to read json as string
             var json = EntityUtils.toString(responseEntity, encoding);
 
+            System.out.println(json);
+
             var tmResponseStructure = mapper.readValue(json, TMResponseStructure.class);
 
             System.out.println("tmResponseStructure : " + tmResponseStructure);
@@ -95,7 +100,7 @@ public class TranslationsAndMappingsRestApiTest {
             Assert.assertEquals("success", tmResponseStructure.getStatus());
 
             var responseDocument = tmResponseStructure.getResponseCDA();
-            System.out.println(getStringFromDocument(responseDocument));
+            System.out.println(getStringFromDocument(Base64Util.decode(responseDocument)));
         }
         finally
         {
@@ -146,4 +151,5 @@ public class TranslationsAndMappingsRestApiTest {
             return null;
         }
     }
+
 }

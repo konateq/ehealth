@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.ehdsi.openncp.tm.service.impl;
 
 import epsos.ccd.gnomon.auditmanager.*;
+import epsos.ccd.posam.tsam.response.RetrievedConcept;
 import epsos.ccd.posam.tsam.response.TSAMResponseStructure;
 import epsos.ccd.posam.tsam.service.ITerminologyService;
 import epsos.ccd.posam.tsam.util.CodedElement;
@@ -17,6 +18,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tm.util.*;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.r4.model.ValueSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.XMLConstants;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TransformationService implements ITransformationService, TMConstants {
@@ -53,6 +56,8 @@ public class TransformationService implements ITransformationService, TMConstant
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
+
+    private final ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tsam.xml");
 
     private HashMap<String, String> level1Type;
     private HashMap<String, String> level3Type;
@@ -99,6 +104,32 @@ public class TransformationService implements ITransformationService, TMConstant
         logger.info("Transformation of CDA executed in: '{}ms'", watch.getTotalTimeMillis());
         logger.info("Transcoding OpenNCP CDA Document [END]");
         return responseStructure;
+    }
+
+    @Override
+    public ValueSet translateValueSet(String oid, String targetLanguage) {
+        ITerminologyService tsamApi = (ITerminologyService) applicationContext.getBean(ITerminologyService.class.getName());
+        List<RetrievedConcept> valueSetConcepts = tsamApi.getValueSetConcepts(oid, null, targetLanguage);
+        List<String> collect = valueSetConcepts.stream()
+                .map(retrievedConcept -> retrievedConcept.getDesignation())
+                .collect(Collectors.toList());
+        var valueSet = new ValueSet();
+        valueSet.setId(oid);
+        ValueSet.ConceptSetComponent conceptSetComponent = new ValueSet.ConceptSetComponent();
+        valueSetConcepts.forEach(retrievedConcept ->
+                conceptSetComponent.addConcept(buildConcept(retrievedConcept.getCode(), retrievedConcept.getDesignation(), targetLanguage)));
+        valueSet.getCompose().addInclude(conceptSetComponent);
+        return valueSet;
+    }
+
+    private ValueSet.ConceptReferenceComponent buildConcept(String code, String designation, String targetLanguage) {
+        var conceptReferenceComponent = new ValueSet.ConceptReferenceComponent();
+        conceptReferenceComponent.setCode(code);
+        var conceptReferenceDesignationComponent = new ValueSet.ConceptReferenceDesignationComponent();
+        conceptReferenceDesignationComponent.setLanguage(targetLanguage);
+        conceptReferenceDesignationComponent.setValue(designation);
+        conceptReferenceComponent.addDesignation(conceptReferenceDesignationComponent);
+        return conceptReferenceComponent;
     }
 
     private TMResponseStructure process(Document inputDocument, String targetLanguageCode, boolean isTranscode) {
@@ -194,7 +225,7 @@ public class TransformationService implements ITransformationService, TMConstant
                     if (result == null || !result.isValid()) {
                         status = STATUS_FAILURE;
                         warnings.add(TMError.WARNING_OUTPUT_SCHEMATRON_VALIDATION_FAILED);
-                        responseStructure = new TMResponseStructure(finalDoc, status, errors, warnings);
+                        responseStructure = new TMResponseStructure(Base64Util.encode(finalDoc), status, errors, warnings);
                         logger.error("Schematron validation error, result document is invalid!");
                         if (logger.isErrorEnabled() && result != null) {
                             logger.error(result.toString());
@@ -206,7 +237,7 @@ public class TransformationService implements ITransformationService, TMConstant
                 }
 
                 // create & fill TMResponseStructure
-                responseStructure = new TMResponseStructure(finalDoc, status, errors, warnings);
+                responseStructure = new TMResponseStructure(Base64Util.encode(finalDoc), status, errors, warnings);
                 if (logger.isDebugEnabled()) {
                     logger.debug("TM result:\n{}", responseStructure);
                 }
@@ -217,7 +248,7 @@ public class TransformationService implements ITransformationService, TMConstant
             logger.error("TMException: '{}'\nReason: '{}'", e.getMessage(), e.getReason().toString(), e);
             status = STATUS_FAILURE;
             errors.add(e.getReason());
-            responseStructure = new TMResponseStructure(inputDocument, status, errors, warnings);
+            responseStructure = new TMResponseStructure(Base64Util.encode(inputDocument), status, errors, warnings);
 
         } catch (Exception e) {
 
@@ -225,7 +256,7 @@ public class TransformationService implements ITransformationService, TMConstant
             logger.error("Exception: '{}'", e.getMessage(), e);
             status = STATUS_FAILURE;
             errors.add(TMError.ERROR_PROCESSING_ERROR);
-            responseStructure = new TMResponseStructure(inputDocument, status, errors, warnings);
+            responseStructure = new TMResponseStructure(Base64Util.encode(inputDocument), status, errors, warnings);
             logger.error("Exception: TM Error Code: '{}'", TMError.ERROR_PROCESSING_ERROR, e);
         }
 
@@ -347,7 +378,7 @@ public class TransformationService implements ITransformationService, TMConstant
                                    List<ITMTSAMError> warnings, String cdaDocumentType, boolean isTranscode) {
 
         //TODO: Check is an attribute shall/can also be translated anr/or transcoded like the XML element.
-        logger.info("Processing Document '{}' to target Language: '{}' Transcoding: '{}", cdaDocumentType, targetLanguageCode, isTranscode);
+        logger.info("Processing Document '{}' to target Language: '{}' Transcoding: '{}'", cdaDocumentType, targetLanguageCode, isTranscode);
         boolean processingOK = true;
         // hashMap for ID of referencedValues and transcoded/translated DisplayNames
         HashMap<String, String> hmReffId_DisplayName = new HashMap<>();
@@ -457,7 +488,10 @@ public class TransformationService implements ITransformationService, TMConstant
                     isProcessingSuccesful = (isTranscode ?
                             transcodeElement(originalElement, document, hmReffId_DisplayName, null, null, errors, warnings) :
                             translateElement(originalElement, document, targetLanguageCode, hmReffId_DisplayName, null, null, errors, warnings));
-                    return (isProcessingSuccesful ? STATUS_SUCCESS : STATUS_FAILURE);
+                    if(!isProcessingSuccesful) {
+                        processingOK = false;
+                        logger.error("Required coded element was not translated");
+                    }
                 }
             }
         }
@@ -522,7 +556,6 @@ public class TransformationService implements ITransformationService, TMConstant
             // looking for a nested translation element
             Node oldTranslationElement = findOldTranslation(originalElement);
 
-            final ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tsam.xml");
             ITerminologyService tsamApi = (ITerminologyService) applicationContext.getBean(ITerminologyService.class.getName());
 
             TSAMResponseStructure tsamResponse = isTranscode ? tsamApi.getEpSOSConceptByCode(codedElement)
@@ -647,7 +680,7 @@ public class TransformationService implements ITransformationService, TMConstant
                         responseStructure.getStatus().equals(STATUS_SUCCESS) ? EventOutcomeIndicator.FULL_SUCCESS : EventOutcomeIndicator.PERMANENT_FAILURE,
                         HTTPUtil.getSubjectDN(false),
                         getOIDFromDocument(responseStructure.getDocument()),
-                        getOIDFromDocument(responseStructure.getResponseCDA()),
+                        getOIDFromDocument(responseStructure.getDocument()),
                         Constants.UUID_PREFIX + responseStructure.getRequestId(),
                         securityHeader.getBytes(StandardCharsets.UTF_8),
                         Constants.UUID_PREFIX + responseStructure.getRequestId(),

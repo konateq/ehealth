@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.ehdsi.openncp.tm.service;
 
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import org.hl7.fhir.r4.model.ValueSet;
 import org.w3c.dom.Document;
 
 public interface ITransformationService {
@@ -88,4 +89,6 @@ public interface ITransformationService {
      * including possible errors and warning.
      */
     TMResponseStructure transcode(Document friendlyCDA);
+
+    ValueSet translateValueSet(String oid, String targetLanguage);
 }

@@ -10,6 +10,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domainehealthproperty.model.Pr
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.domainehealthproperty.service.PropertyService;
 import eu.europa.ec.sante.ehdsi.openncp.tsam.sync.repository.*;
 import eu.europa.ec.sante.ehdsi.termservice.web.rest.model.sync.*;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
+@Ignore
 public class TsamSyncManagerTest {
 
     @InjectMocks

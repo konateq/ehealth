@@ -24,6 +24,7 @@ import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import eu.europa.ec.sante.ehdsi.openncp.util.UUIDHelper;
@@ -684,18 +685,18 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         responseStatus = AdhocQueryResponseStatus.SUCCESS;
                         break;
                 }
-
+            } catch (NIException e) {
+                var stackTraceLines = e.getStackTrace();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
+                        String.valueOf(stackTraceLines[0]), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                responseStatus = AdhocQueryResponseStatus.FAILURE;
+            } finally {
                 try {
                     prepareEventLogForQuery(eventLog, request, response, shElement, classCodeValue);
                 } catch (Exception e) {
                     logger.error("Prepare Audit log failed: '{}'", e.getMessage(), e);
                     // Is this fatal?
                 }
-            } catch (NIException e) {
-                var stackTraceLines = e.getStackTrace();
-                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
-                        String.valueOf(stackTraceLines[0]), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-                responseStatus = AdhocQueryResponseStatus.FAILURE;
             }
         }
 
@@ -788,7 +789,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
             }
 
-            returnDoc = tmResponse.getResponseCDA();
+            returnDoc = Base64Util.decode(tmResponse.getResponseCDA());
             if (registryErrorList.getChildElements().hasNext()) {
                 registryResponseElement.addChild(registryErrorList);
             }

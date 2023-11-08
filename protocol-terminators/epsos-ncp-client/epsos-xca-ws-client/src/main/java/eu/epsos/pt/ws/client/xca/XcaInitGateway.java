@@ -3,7 +3,6 @@ package eu.epsos.pt.ws.client.xca;
 import ee.affecto.epsos.util.EventLogClientUtil;
 import eu.epsos.dts.xds.AdhocQueryRequestCreator;
 import eu.epsos.dts.xds.AdhocQueryResponseConverter;
-import eu.epsos.exceptions.DocumentTransformationException;
 import eu.epsos.exceptions.XCAException;
 import eu.epsos.pt.transformation.DomUtils;
 import eu.epsos.pt.transformation.TranslationsAndMappingsClient;
@@ -15,7 +14,7 @@ import eu.epsos.validation.datamodel.common.NcpSide;
 import eu.europa.ec.sante.ehdsi.gazelle.validation.OpenNCPValidation;
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.RegisteredService;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.DynamicDiscoveryService;
-import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import eu.europa.ec.sante.ehdsi.constant.assertion.AssertionEnum;
@@ -31,7 +30,6 @@ import org.apache.axis2.util.XMLUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 import tr.com.srdc.epsos.data.model.FilterParams;
 import tr.com.srdc.epsos.data.model.GenericDocumentCode;
 import tr.com.srdc.epsos.data.model.PatientId;
@@ -41,7 +39,6 @@ import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.ws.xca.client.RespondingGateway_ServiceStub;
 import tr.com.srdc.epsos.ws.xca.client.retrieve.RetrieveDocumentSetRequestTypeCreator;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -201,7 +198,7 @@ public class XcaInitGateway {
 
                     var tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(pivotDocument), targetLanguage);
                     var domDocument = tmResponseStructure.getResponseCDA();
-                    byte[] translatedCDA = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                    byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                     queryResponse.getDocumentResponse().get(0).setDocument(translatedCDA);
                 }
 

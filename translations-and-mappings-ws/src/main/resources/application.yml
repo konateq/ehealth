@@ -28,3 +28,14 @@ spring:
 server:
   error:
     include-message: always
+app:
+  name: translations and mappings ws
+  api:
+    title: Translations and mappings Webservice
+    version: @project.version@-@timestamp@
+    description: Translations and mappings Webservice
+    base-package: eu.europa.ec.sante.ehdsi.openncp.tm.ws
+    contact-name: eHealth DSI Support
+    contact-email: sante-ehealth-dsi-support@ec.europa.eu
+    swagger:
+      enable: true

@@ -5,6 +5,7 @@ import eu.europa.ec.sante.ehdsi.constant.error.TMError;
 import eu.europa.ec.sante.ehdsi.constant.error.ITMTSAMError;
 import eu.europa.ec.sante.ehdsi.openncp.tm.exception.TMException;
 import eu.europa.ec.sante.ehdsi.openncp.tm.util.TMConstants;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -42,12 +43,12 @@ public class TMResponseStructure implements TMConstants {
     /**
      * Target / response CDA document.
      * Options are:
-     * <li>transcoded CDA pivot document</li>
+     * <li>transcoded CDA pivot document as Base64 encoded String</li>
      * <li>translated CDA document</li>
      * <li>CDA unstructured document with embedded pdf file</li>
      * <li>In case of ERROR original/input CDA document</li>
      */
-    private Document responseCDA;
+    private String responseCDA;
 
     /**
      * List of TM Errors
@@ -66,7 +67,7 @@ public class TMResponseStructure implements TMConstants {
 
     public TMResponseStructure() {}
 
-    public TMResponseStructure(Document responseCDA, String status, List<ITMTSAMError> errors, List<ITMTSAMError> warnings) {
+    public TMResponseStructure(String responseCDA, String status, List<ITMTSAMError> errors, List<ITMTSAMError> warnings) {
         this.requestId = UUID.randomUUID().toString();
         this.responseCDA = responseCDA;
         this.errors = errors;
@@ -94,7 +95,7 @@ public class TMResponseStructure implements TMConstants {
             root.appendChild(document.createElement("responseStatus"));
 
             Node responseElement = document.getElementsByTagName(RESPONSE_ELEMENT).item(0);
-            Node tempNode = document.importNode(this.responseCDA.getDocumentElement(), true);
+            Node tempNode = document.importNode(Base64Util.decode(this.responseCDA).getDocumentElement(), true);
             responseElement.appendChild(tempNode);
 
             // write status/ errors/ warnings into responseStatus
@@ -164,11 +165,11 @@ public class TMResponseStructure implements TMConstants {
      * <li>translated CDA document</li>
      * <li>CDA unstructured document with embedded pdf file</li>
      */
-    public Document getResponseCDA() {
+    public String getResponseCDA() {
         return responseCDA;
     }
 
-    public void setResponseCDA(Document responseCDA) {
+    public void setResponseCDA(String responseCDA) {
         this.responseCDA = responseCDA;
     }
 

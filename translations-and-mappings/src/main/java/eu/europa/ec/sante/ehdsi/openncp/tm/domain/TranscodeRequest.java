@@ -4,13 +4,13 @@ import org.w3c.dom.Document;
 
 public class TranscodeRequest {
 
-    private Document friendlyCDA;
+    private String friendlyCDA;
 
-    public Document getFriendlyCDA() {
+    public String getFriendlyCDA() {
         return friendlyCDA;
     }
 
-    public void setFriendlyCDA(Document friendlyCDA) {
+    public void setFriendlyCDA(String friendlyCDA) {
         this.friendlyCDA = friendlyCDA;
     }
 }
