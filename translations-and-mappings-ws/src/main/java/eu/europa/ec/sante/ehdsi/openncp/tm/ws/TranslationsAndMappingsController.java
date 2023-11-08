@@ -21,7 +21,6 @@ import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.io.Serializable;
 import java.util.*;
 
 @RestController
@@ -101,22 +100,5 @@ public class TranslationsAndMappingsController {
         }
         logger.info("Transcoding CDA document into PIVOT");
         return ResponseEntity.ok(transformationService.transcode(friendlyCDA));
-    }
-
-    class DesignationAndCode implements Serializable {
-        private String code;
-        private String designation;
-        public String getCode() {
-            return code;
-        }
-        public void setCode(String code) {
-            this.code = code;
-        }
-        public String getDesignation() {
-            return designation;
-        }
-        public void setDesignation(String designation) {
-            this.designation = designation;
-        }
     }
 }
