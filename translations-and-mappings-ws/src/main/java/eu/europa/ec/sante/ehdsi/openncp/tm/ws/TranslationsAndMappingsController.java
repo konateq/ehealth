@@ -2,6 +2,7 @@ package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import eu.europa.ec.sante.ehdsi.constant.error.TMError;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranscodeRequest;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranslateRequest;
@@ -9,7 +10,6 @@ import eu.europa.ec.sante.ehdsi.openncp.tm.persistence.model.Property;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.ITransformationService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.service.PropertyService;
 import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
-import eu.europa.ec.sante.ehdsi.openncp.tm.ws.exception.TranslationsAndMappingsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -80,7 +80,9 @@ public class TranslationsAndMappingsController {
         try {
             pivotCDA = Base64Util.decode(translateRequest.getPivotCDA());
         } catch (Exception e) {
-            ResponseEntity.badRequest().body(TranslationsAndMappingsException.BASE64_DOM_DECODING_EXCEPTION.getMessage());
+            TMResponseStructure tmResponseStructure = new TMResponseStructure();
+            tmResponseStructure.setErrors(Collections.singletonList(TMError.BASE64_DOM_DECODING_EXCEPTION));
+            return ResponseEntity.badRequest().body(tmResponseStructure);
         }
         String targetLanguageCode = translateRequest.getTargetLanguageCode();
         logger.info("Translating CDA document in language [{}]", targetLanguageCode);
@@ -96,7 +98,9 @@ public class TranslationsAndMappingsController {
         try {
             friendlyCDA = Base64Util.decode(transcodeRequest.getFriendlyCDA());
         } catch (Exception e) {
-            ResponseEntity.badRequest().body(TranslationsAndMappingsException.BASE64_DOM_DECODING_EXCEPTION.getMessage());
+            TMResponseStructure tmResponseStructure = new TMResponseStructure();
+            tmResponseStructure.setErrors(Collections.singletonList(TMError.BASE64_DOM_DECODING_EXCEPTION));
+            return ResponseEntity.badRequest().body(tmResponseStructure);
         }
         logger.info("Transcoding CDA document into PIVOT");
         return ResponseEntity.ok(transformationService.transcode(friendlyCDA));

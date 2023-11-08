@@ -86,6 +86,8 @@ public enum TMError implements ITMTSAMError, ErrorCode {
      */
     ERROR_REQUIRED_CODED_ELEMENT_NOT_TRANSLATED("4512", "Required coded element was not translated"),
 
+    BASE64_DOM_DECODING_EXCEPTION("4513", "Problem with decoding Base64 String to DOM Document"),
+
     // WARNINGS
     WARNING_INPUT_XSD_VALIDATION_FAILED("2401", "XSD validation of input document failed"),
 

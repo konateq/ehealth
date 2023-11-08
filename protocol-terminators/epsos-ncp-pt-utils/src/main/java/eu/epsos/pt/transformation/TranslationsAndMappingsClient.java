@@ -5,6 +5,7 @@ import eu.epsos.exceptions.DocumentTransformationException;
 import eu.europa.ec.sante.ehdsi.constant.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.ConfigurationManagerFactory;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
+import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import org.apache.commons.io.Charsets;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -35,7 +36,7 @@ public class TranslationsAndMappingsClient {
             LOGGER.debug("TM - TRANSLATION START.");
             var mapper = new ObjectMapper();
             var node = mapper.createObjectNode();
-            node.put("pivotCDA", getStringFromDocument(cdaPivot));
+            node.put("pivotCDA", Base64Util.encode(cdaPivot));
             node.put("targetLanguageCode", targetLanguage);
             var jsonString = node.toString();
             var entity = new StringEntity(jsonString, HTTP.UTF_8);
@@ -67,7 +68,7 @@ public class TranslationsAndMappingsClient {
             LOGGER.debug("TM - TRANSCODING START.");
             var mapper = new ObjectMapper();
             var node = mapper.createObjectNode();
-            node.put("friendlyCDA", getStringFromDocument(cdaFriendly));
+            node.put("friendlyCDA", Base64Util.encode(cdaFriendly));
             var jsonString = node.toString();
             var entity = new StringEntity(jsonString, HTTP.UTF_8);
             entity.setContentType(ContentType.APPLICATION_JSON.getMimeType());
@@ -93,16 +94,6 @@ public class TranslationsAndMappingsClient {
         }
     }
 
-    private static String getStringFromDocument(Document doc) throws TransformerException {
-        var domSource = new DOMSource(doc);
-        var writer = new StringWriter();
-        var result = new StreamResult(writer);
-        var tf = TransformerFactory.newInstance();
-        var transformer = tf.newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.transform(domSource, result);
-        return writer.toString();
-    }
 
     private static String getTranslationsAndMappingsWsUrl() {
         var translationsAndMappingsUrl = ConfigurationManagerFactory.getConfigurationManager().getProperty("TRANSLATIONS_AND_MAPPINGS_WS_URL");
