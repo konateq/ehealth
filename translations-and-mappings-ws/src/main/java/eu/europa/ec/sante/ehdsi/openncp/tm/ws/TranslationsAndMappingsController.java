@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.ehdsi.openncp.tm.ws;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranscodeRequest;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TranslateRequest;
@@ -57,18 +59,17 @@ public class TranslationsAndMappingsController {
         return availableLanguageCodes;
     }
 
-    @GetMapping("translate-value-set")
+    @GetMapping(value = "/translateVS", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity retrieveValueSet(@RequestParam String oid, String targetLanguage){
-        Map<String, String> codeSystem = transformationService.translateValueSet(oid, targetLanguage);
-        var codeSystemSet = new HashSet<String>();
-        List<DesignationAndCode> designationAndCodes = new ArrayList<>();
-        codeSystem.forEach((s, s2) -> {
-            DesignationAndCode designationAndCode = new DesignationAndCode();
-            designationAndCode.code = s;
-            designationAndCode.designation = s2;
-            designationAndCodes.add(designationAndCode);
-        });
-        return ResponseEntity.ok(designationAndCodes);
+        var valueSet = transformationService.translateValueSet(oid, targetLanguage);
+
+        //Create a FHIR context
+        FhirContext ctx = FhirContext.forR4();
+
+        //Instantiate a new parser
+        IParser parser = ctx.newJsonParser();
+
+        return ResponseEntity.ok(Base64.getEncoder().encodeToString(parser.encodeResourceToString(valueSet).getBytes()));
     }
 
     @PostMapping(value = "/translate", consumes = MediaType.APPLICATION_JSON_VALUE,

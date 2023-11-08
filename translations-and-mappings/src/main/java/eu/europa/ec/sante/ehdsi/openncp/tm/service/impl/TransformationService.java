@@ -18,6 +18,7 @@ import eu.europa.ec.sante.ehdsi.openncp.tm.util.*;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.r4.model.ValueSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,17 +107,29 @@ public class TransformationService implements ITransformationService, TMConstant
     }
 
     @Override
-    public Map<String, String> translateValueSet(String oid, String targetLanguage) {
-        final ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("ctx_tsam.xml");
+    public ValueSet translateValueSet(String oid, String targetLanguage) {
         ITerminologyService tsamApi = (ITerminologyService) applicationContext.getBean(ITerminologyService.class.getName());
         List<RetrievedConcept> valueSetConcepts = tsamApi.getValueSetConcepts(oid, null, targetLanguage);
-        Map<String, String> designationAndCode = new HashMap<>();
         List<String> collect = valueSetConcepts.stream()
                 .map(retrievedConcept -> retrievedConcept.getDesignation())
                 .collect(Collectors.toList());
+        var valueSet = new ValueSet();
+        valueSet.setId(oid);
+        ValueSet.ConceptSetComponent conceptSetComponent = new ValueSet.ConceptSetComponent();
         valueSetConcepts.forEach(retrievedConcept ->
-                designationAndCode.put(retrievedConcept.getCode(), retrievedConcept.getDesignation()));
-        return designationAndCode;
+                conceptSetComponent.addConcept(buildConcept(retrievedConcept.getCode(), retrievedConcept.getDesignation(), targetLanguage)));
+        valueSet.getCompose().addInclude(conceptSetComponent);
+        return valueSet;
+    }
+
+    private ValueSet.ConceptReferenceComponent buildConcept(String code, String designation, String targetLanguage) {
+        var conceptReferenceComponent = new ValueSet.ConceptReferenceComponent();
+        conceptReferenceComponent.setCode(code);
+        var conceptReferenceDesignationComponent = new ValueSet.ConceptReferenceDesignationComponent();
+        conceptReferenceDesignationComponent.setLanguage(targetLanguage);
+        conceptReferenceDesignationComponent.setValue(designation);
+        conceptReferenceComponent.addDesignation(conceptReferenceDesignationComponent);
+        return conceptReferenceComponent;
     }
 
     private TMResponseStructure process(Document inputDocument, String targetLanguageCode, boolean isTranscode) {

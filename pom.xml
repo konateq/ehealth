@@ -114,6 +114,7 @@
         <guava.version>31.0.1-jre</guava.version>
         <ibatis-sqlmap.version>2.3.4.726</ibatis-sqlmap.version>
         <itextpdf.version>7.2.2</itextpdf.version>
+        <hapi.fhir.version>6.8.3</hapi.fhir.version>
         <h2database.version>2.1.214</h2database.version>
         <herasaf-xacml.version>1.0.4.RELEASE</herasaf-xacml.version>
         <hibernate.version>5.6.15.Final</hibernate.version>
@@ -349,6 +350,16 @@
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-impl</artifactId>
                 <version>${jaxb-impl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ca.uhn.hapi.fhir</groupId>
+                <artifactId>hapi-fhir-base</artifactId>
+                <version>${hapi.fhir.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ca.uhn.hapi.fhir</groupId>
+                <artifactId>hapi-fhir-structures-r4</artifactId>
+                <version>${hapi.fhir.version}</version>
             </dependency>
             <!-- swagger for api documentation and rest client generation -->
             <dependency>
