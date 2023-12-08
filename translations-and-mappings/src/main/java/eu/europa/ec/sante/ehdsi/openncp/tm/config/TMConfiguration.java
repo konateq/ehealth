@@ -5,7 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 @Configuration
-@PropertySource("classpath:tm.properties")
+//@PropertySource("classpath:tm.properties")
+@PropertySource("file:${EPSOS_PROPS_PATH}tm.properties")
 public class TMConfiguration {
 
     @Value("${tm.audittrail.facility}")
@@ -77,19 +78,19 @@ public class TMConfiguration {
     @Value( "${tm.schematron.path.scannedDocument.pivot}" )
     private String scannedDocPivotPath;
 
-    @Value( "60591-5" )
+    @Value( "${tm.documenttype.patientsummary}" )  // LOINC codes could also be hardcoded as it is unlikely they will change - 60591-5
     private String patientSummaryCode;
 
-    @Value( "57833-6" )
+    @Value( "${tm.documenttype.eprescription}" )  // LOINC codes could also be hardcoded as it is unlikely they will change - 57833-6
     private String ePrescriptionCode;
 
-    @Value("56445-0")
+    @Value("${tm.documenttype.edispensation}") // LOINC codes could also be hardcoded as it is unlikely they will change - 60593-1
     private String eDispensationCode;
 
-    @Value( "34133-9" )
+    @Value( "${tm.documenttype.hcer}" ) // LOINC codes could also be hardcoded as it is unlikely they will change - 34133-9
     private String hcerCode;
 
-    @Value( "56445-0" )
+    @Value( "${tm.documenttype.mro}" ) // LOINC codes could also be hardcoded as it is unlikely they will change - 56445-0
     private String mroCode;
 
     public boolean isSchematronValidationEnabled() {
