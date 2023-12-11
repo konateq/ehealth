@@ -5,7 +5,7 @@
     <parent>
         <artifactId>openncp-protocol-terminators</artifactId>
         <groupId>eu.europa.ec.sante.ehdsi</groupId>
-        <version>6.5.0</version>
+        <version>6.5.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
