@@ -4,6 +4,9 @@ logging:
     eu.europa.ec.sante.ehdsi.openncp: info
     org.hibernate: warn
 spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   servlet:
     multipart:
       max-request-size: 10MB
@@ -32,7 +35,10 @@ app:
   name: translations and mappings ws
   api:
     title: Translations and mappings Webservice
-    version: @project.version@-@timestamp@
+    ##https://stackoverflow.com/questions/38983934/cannot-get-maven-project-version-property-in-a-spring-application-with-value
+    ##https://stackoverflow.com/questions/19109912/yaml-do-i-need-quotes-for-strings-in-yaml
+    ##version: ${project.version}-${timestamp}
+    version: ''@project.version@-@timestamp@'
     description: Translations and mappings Webservice
     base-package: eu.europa.ec.sante.ehdsi.openncp.tm.ws
     contact-name: eHealth DSI Support
