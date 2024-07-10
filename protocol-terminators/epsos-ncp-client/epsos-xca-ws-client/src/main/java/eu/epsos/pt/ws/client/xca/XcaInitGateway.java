@@ -251,7 +251,8 @@ public class XcaInitGateway {
                     // (Needs to be revised according to new error communication strategy to the portal).
                     if (StringUtils.equals(ERROR_SEVERITY_ERROR,severity)
                             || errorCode.equals(OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getCode())
-                            || errorCode.equals(OpenNCPErrorCode.ERROR_PS_NOT_FOUND.getCode())) {
+                            || errorCode.equals(OpenNCPErrorCode.ERROR_PS_NOT_FOUND.getCode())
+                            || errorCode.equals(OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE.getCode())) {
                         msg.append(errorCode).append(" ").append(codeContext).append(" ").append(value);
                         hasError = true;
                     }
