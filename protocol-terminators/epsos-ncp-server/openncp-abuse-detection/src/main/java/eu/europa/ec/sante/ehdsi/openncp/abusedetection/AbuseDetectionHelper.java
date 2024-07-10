@@ -31,7 +31,7 @@ public class AbuseDetectionHelper implements ApplicationContextAware {
             try {
                 scheduler.shutdown(true);
             } catch (SchedulerException e) {
-                LOGGER.warn("Stopping AbuseDetectionServiceFactory Service: " + e.getMessage());
+                LOGGER.warn("Stopping AbuseDetectionServiceFactory Service: {}", e.getMessage());
             }
         }
     }
@@ -98,5 +98,5 @@ public class AbuseDetectionHelper implements ApplicationContextAware {
 
     public static ApplicationContext getApplicationContext() {
         return applicationContext;
-    }    
+    }
 }
