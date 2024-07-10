@@ -540,14 +540,14 @@ public class XCAServiceImpl implements XCAServiceInterface {
                                 DocumentFactory.createSearchCriteria().addPatientId(fullPatientId));
 
                         if (prescriptions == null) {
-                            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE,
-                                    OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE.getDescription(), "",
-                                    RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
+                            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_EP_NOT_FOUND,
+                                    OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getDescription(), "",
+                                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                             responseStatus = AdhocQueryResponseStatus.FAILURE;
                         } else if (prescriptions.isEmpty()) {
                             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_EP_NOT_FOUND,
                                     OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getDescription(), "",
-                                    RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
+                                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                             responseStatus = AdhocQueryResponseStatus.FAILURE;
                         } else {
                             // Multiple prescriptions mean multiple PDF and XML files, multiple ExtrinsicObjects and associations
