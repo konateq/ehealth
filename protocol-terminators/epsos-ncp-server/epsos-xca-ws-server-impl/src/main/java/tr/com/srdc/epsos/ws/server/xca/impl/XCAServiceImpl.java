@@ -538,15 +538,14 @@ public class XCAServiceImpl implements XCAServiceInterface {
                     case EP_CLASSCODE:
                         List<DocumentAssociation<EPDocumentMetaData>> prescriptions = documentSearchService.getEPDocumentList(
                                 DocumentFactory.createSearchCriteria().addPatientId(fullPatientId));
-
                         if (prescriptions == null) {
-                            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_EP_NOT_FOUND,
-                                    OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getDescription(), "",
-                                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE,
+                                    OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE.getDescription(), getLocation(),
+                                    RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
                             responseStatus = AdhocQueryResponseStatus.FAILURE;
                         } else if (prescriptions.isEmpty()) {
                             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_EP_NOT_FOUND,
-                                    OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getDescription(), "",
+                                    OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getDescription(), getLocation(),
                                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                             responseStatus = AdhocQueryResponseStatus.FAILURE;
                         } else {
@@ -704,6 +703,16 @@ public class XCAServiceImpl implements XCAServiceInterface {
             response.setRegistryErrorList(registryErrorList);
         }
         response.setStatus(responseStatus);
+    }
+
+    private String getLocation() {
+        String location;
+        Throwable t = new Throwable();
+        location = t.getStackTrace()[1].getClassName() +"."+
+                t.getStackTrace()[1].getMethodName() + "(" +
+                t.getStackTrace()[1].getFileName() + ":" +
+                t.getStackTrace()[1].getLineNumber() + ")";
+        return location;
     }
 
     private List<OrCDDocumentMetaData> getOrCDDocumentMetaDataList(ClassCode classCode, SearchCriteria searchCriteria)
