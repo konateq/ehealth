@@ -83,6 +83,7 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
 
         // Start Date for eADC
         Date startTime = new Date();
+        Date endTime = new Date();
 
         try {
             //  Identification of the TLS Common Name of the client.
@@ -163,11 +164,12 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
                     eadcError = err;
                     throw new RuntimeException(err);
                 }
+                endTime = new Date();
                 newMsgContext.setEnvelope(envelope);
                 newMsgContext.getOptions().setMessageId(randomUUID);
 
                 EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, null, startTime,
-                        new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
+                        endTime, Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                         ServiceType.PATIENT_IDENTIFICATION_RESPONSE);
             }
         } catch (Exception e) {
@@ -177,7 +179,7 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
         } finally {
             if(!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, null, startTime,
-                        new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
+                        endTime, Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                         ServiceType.PATIENT_IDENTIFICATION_RESPONSE, eadcError);
                 eadcError = "";
             }

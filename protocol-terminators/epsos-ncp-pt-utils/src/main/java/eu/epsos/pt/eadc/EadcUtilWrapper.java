@@ -191,6 +191,9 @@ public class EadcUtilWrapper {
         transactionInfo.setAuthenticationLevel(reqMsgContext != null ? extractAuthenticationMethodFromAssertion(getAssertion(reqMsgContext)) : null);
         transactionInfo.setDirection(direction != null ? direction.toString() : null);
         transactionInfo.setStartTime(startTime != null ? getDateAsRFC822String(startTime) : null);
+        if(endTime == null) {
+            endTime = new Date();
+        }
         transactionInfo.setEndTime(endTime != null ? getDateAsRFC822String(endTime) : null);
         transactionInfo.setDuration(endTime != null && startTime != null ? String.valueOf(endTime.getTime() - startTime.getTime()) : null);
         transactionInfo.setHomeAddress(EventLogClientUtil.getSourceGatewayIdentifier());
