@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool.exceptions;
+package eu.europa.ec.sante.openncp.core.client.connector.display.cda.exceptions;
 
 public class TerminologyFileNotFoundException extends Exception {
 

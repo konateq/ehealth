@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool.exceptions;
+package eu.europa.ec.sante.openncp.core.client.connector.display.cda.exceptions;
 
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;

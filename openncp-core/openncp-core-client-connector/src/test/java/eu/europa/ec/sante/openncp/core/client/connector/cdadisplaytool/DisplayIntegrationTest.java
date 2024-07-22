@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool;
 
+import eu.europa.ec.sante.openncp.core.client.connector.display.cda.CdaXSLTransformer;
 import junit.framework.TestCase;
 import org.junit.BeforeClass;
 import org.junit.Ignore;

@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool;
 
 import eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool.util.HtmlValidator;
 import eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool.util.PdfValidator;
+import eu.europa.ec.sante.openncp.core.client.connector.display.cda.CdaXSLTransformer;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

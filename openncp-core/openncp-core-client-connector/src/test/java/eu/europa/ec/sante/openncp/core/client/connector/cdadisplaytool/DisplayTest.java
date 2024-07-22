@@ -1,7 +1,8 @@
 package eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool;
 
-import eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool.exceptions.TerminologyFileNotFoundException;
-import eu.europa.ec.sante.openncp.core.client.connector.cdadisplaytool.exceptions.UITransformationException;
+import eu.europa.ec.sante.openncp.core.client.connector.display.cda.CdaXSLTransformer;
+import eu.europa.ec.sante.openncp.core.client.connector.display.cda.exceptions.TerminologyFileNotFoundException;
+import eu.europa.ec.sante.openncp.core.client.connector.display.cda.exceptions.UITransformationException;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
