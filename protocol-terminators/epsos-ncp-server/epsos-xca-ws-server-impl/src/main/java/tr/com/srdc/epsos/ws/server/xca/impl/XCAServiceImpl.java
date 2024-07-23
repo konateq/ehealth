@@ -1199,7 +1199,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                     openNCPErrorCode = OpenNCPErrorCode.ERROR_DOCUMENT_NOT_FOUND;
                     break;
             }
-            RegistryErrorUtils.addErrorMessage(registryErrorList, openNCPErrorCode, openNCPErrorCode.getDescription(), e,
+            RegistryErrorUtils.addErrorMessage(registryErrorList, openNCPErrorCode, openNCPErrorCode.getDescription(),
                     RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
         }
         adhocQueryResponse.setRegistryErrorList(registryErrorList);
