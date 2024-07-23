@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:n1="urn:hl7-org:v3"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+>
 
     <xsl:variable name="currentProblemsSectionCode"
                   select="'11450-4'"/>
@@ -91,18 +91,21 @@
                                                     </th>
                                                     <th>
                                                         <!-- Diagnosis Assertion Status Header -->
-                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                                                        <xsl:text>Diagnosis Assertion Status</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'199'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                     <th>
                                                         <!-- Related Health Professional Header -->
-                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                                                        <xsl:text>Related Health Professional</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'200'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                     <th>
                                                         <!-- Related External Resource Header -->
-                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                                                        <xsl:text>Related External Resource</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'201'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                 </tr>
                                                 <xsl:call-template name="generalProblems"/>
@@ -127,8 +130,9 @@
         <tr>
             <th class="subtitle" colspan="5">
                 <!-- Rare Diseases -->
-                <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                <xsl:text>Rare Diseases</xsl:text>
+                <xsl:call-template name="show-eHDSIDisplayLabel">
+                    <xsl:with-param name="code" select="'198'"/>
+                </xsl:call-template>
             </th>
         </tr>
         <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="rarediseases"/>
