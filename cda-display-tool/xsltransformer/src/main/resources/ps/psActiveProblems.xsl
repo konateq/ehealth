@@ -91,25 +91,35 @@
                                                     </th>
                                                     <th>
                                                         <!-- Diagnosis Assertion Status Header -->
-                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
-                                                            <xsl:with-param name="code" select="'199'"/>
-                                                        </xsl:call-template>
+                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
+                                                        <xsl:text>Diagnosis Assertion Status</xsl:text>
                                                     </th>
                                                     <th>
                                                         <!-- Related Health Professional Header -->
-                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
-                                                            <xsl:with-param name="code" select="'200'"/>
-                                                        </xsl:call-template>
+                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
+                                                        <xsl:text>Related Health Professional</xsl:text>
                                                     </th>
                                                     <th>
                                                         <!-- Related External Resource Header -->
-                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
-                                                            <xsl:with-param name="code" select="'201'"/>
-                                                        </xsl:call-template>
+                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
+                                                        <xsl:text>Related External Resource</xsl:text>
                                                     </th>
                                                 </tr>
-                                                <xsl:call-template name="generalProblems"/>
-                                                <xsl:call-template name="rareDiseasesForActiveProblems"/>
+                                                <!-- Active Problems -->
+                                                <xsl:apply-templates
+                                                        select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.2']"
+                                                        mode="activeProblems"/>
+                                                <!-- Rare Diseases -->
+                                                <tr>
+                                                    <th class="subtitle" colspan="5">
+                                                        <!-- Rare Diseases -->
+                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
+                                                        <xsl:text>Rare Diseases</xsl:text>
+                                                    </th>
+                                                </tr>
+                                                <xsl:apply-templates
+                                                        select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']"
+                                                        mode="rarediseases"/>
                                             </xsl:otherwise>
                                         </xsl:choose>
                                     </tbody>
@@ -122,22 +132,6 @@
         </div>
     </xsl:template>
 
-    <xsl:template name="generalProblems">
-        <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.2']" mode="activeProblems"/>
-    </xsl:template>
-
-    <xsl:template name="rareDiseasesForActiveProblems">
-        <tr>
-            <th class="subtitle" colspan="5">
-                <!-- Rare Diseases -->
-                <xsl:call-template name="show-eHDSIDisplayLabel">
-                    <xsl:with-param name="code" select="'198'"/>
-                </xsl:call-template>
-            </th>
-        </tr>
-        <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="rarediseases"/>
-    </xsl:template>
-
     <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="rarediseases">
 
         <xsl:variable name="problemCondition"
@@ -147,7 +141,16 @@
         <xsl:variable name="diagnosisAssertionStatus"
                       select="../n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:templateId[@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.49']/../n1:value"/>
         <xsl:choose>
-            <xsl:when test="not(@nullFlavor)">
+            <xsl:when test="@nullFlavor and not(@nullFlavor='OTH')">
+                <tr>
+                    <td colspan="5">
+                        <xsl:call-template name="show-eHDSINullFlavor">
+                            <xsl:with-param name="code" select="./@nullFlavor"/>
+                        </xsl:call-template>
+                    </td>
+                </tr>
+            </xsl:when>
+            <xsl:otherwise>
                 <tr>
                     <td>
                         <!-- Active Problem -->
@@ -198,15 +201,6 @@
                         </xsl:for-each>
                     </td>
                 </tr>
-            </xsl:when>
-            <xsl:otherwise>
-                <tr>
-                    <td colspan="5">
-                        <xsl:call-template name="show-eHDSINullFlavor">
-                            <xsl:with-param name="code" select="./@nullFlavor"/>
-                        </xsl:call-template>
-                    </td>
-                </tr>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
@@ -220,7 +214,16 @@
         <xsl:variable name="diagnosisAssertionStatus"
                       select="../n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:templateId[@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.49']/../n1:value"/>
         <xsl:choose>
-            <xsl:when test="not(@nullFlavor)">
+            <xsl:when test="@nullFlavor and not(@nullFlavor='OTH')">
+                <tr>
+                    <td colspan="5">
+                        <xsl:call-template name="show-eHDSINullFlavor">
+                            <xsl:with-param name="code" select="./@nullFlavor"/>
+                        </xsl:call-template>
+                    </td>
+                </tr>
+            </xsl:when>
+            <xsl:otherwise>
                 <tr>
                     <td>
                         <!-- Active Problem -->
@@ -269,15 +272,6 @@
                         <xsl:for-each select="../n1:reference[@typeCode='REFR']">
                             <xsl:apply-templates select="n1:externalDocument"/>
                         </xsl:for-each>
-                    </td>
-                </tr>
-            </xsl:when>
-            <xsl:otherwise>
-                <tr>
-                    <td colspan="5">
-                        <xsl:call-template name="show-eHDSINullFlavor">
-                            <xsl:with-param name="code" select="./@nullFlavor"/>
-                        </xsl:call-template>
                     </td>
                 </tr>
             </xsl:otherwise>
