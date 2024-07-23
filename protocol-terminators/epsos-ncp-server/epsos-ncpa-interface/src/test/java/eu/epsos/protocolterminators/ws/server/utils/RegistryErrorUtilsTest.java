@@ -4,17 +4,18 @@ import eu.epsos.protocolterminators.ws.server.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.constant.error.OpenNCPErrorCode;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
+import org.junit.Assert;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 public class RegistryErrorUtilsTest {
 
     @Test
     public void testAddErrorMessage() {
         try {
-            String nullString = null;
+            final String nullString = null;
             nullString.length();
-        } catch(Exception e) {
+        } catch (final Exception e) {
             final RegistryErrorList registryErrorList = new RegistryErrorList();
             final OpenNCPErrorCode ERROR_GENERIC = OpenNCPErrorCode.ERROR_GENERIC;
             final String codeContext = "It isn't possible to call the length() method on a null object";
