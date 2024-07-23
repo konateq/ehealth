@@ -91,18 +91,21 @@
                                                     </th>
                                                     <th>
                                                         <!-- Diagnosis Assertion Status Header -->
-                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                                                        <xsl:text>Diagnosis Assertion Status</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'199'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                     <th>
                                                         <!-- Related Health Professional Header -->
-                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                                                        <xsl:text>Related Health Professional</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'200'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                     <th>
                                                         <!-- Related External Resource Header -->
-                                                        <!-- TODO Add concept to eHDSIDisplayLabel Value Set -->
-                                                        <xsl:text>Related External Resource</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'201'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                 </tr>
                                                 <!-- Active Problems -->
