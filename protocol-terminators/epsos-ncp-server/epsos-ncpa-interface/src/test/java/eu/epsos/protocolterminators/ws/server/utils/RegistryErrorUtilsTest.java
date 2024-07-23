@@ -1,0 +1,31 @@
+package eu.epsos.protocolterminators.ws.server.utils;
+
+import eu.epsos.protocolterminators.ws.server.common.RegistryErrorSeverity;
+import eu.europa.ec.sante.ehdsi.constant.error.OpenNCPErrorCode;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class RegistryErrorUtilsTest {
+
+    @Test
+    public void testAddErrorMessage() {
+        try {
+            String nullString = null;
+            nullString.length();
+        } catch(Exception e) {
+            final RegistryErrorList registryErrorList = new RegistryErrorList();
+            final OpenNCPErrorCode ERROR_GENERIC = OpenNCPErrorCode.ERROR_GENERIC;
+            final String codeContext = "It isn't possible to call the length() method on a null object";
+            final RegistryErrorSeverity registryErrorSeverity = RegistryErrorSeverity.ERROR_SEVERITY_ERROR;
+            RegistryErrorUtils.addErrorMessage(registryErrorList, ERROR_GENERIC, codeContext, e, registryErrorSeverity);
+            Assert.assertEquals(1, registryErrorList.getRegistryError().size());
+            final RegistryError registryError = registryErrorList.getRegistryError().get(0);
+            Assert.assertEquals(ERROR_GENERIC.getCode(), registryError.getErrorCode());
+            Assert.assertNotNull(registryError.getLocation());
+            Assert.assertEquals(codeContext, registryError.getCodeContext());
+            Assert.assertEquals(registryErrorSeverity.getText(), registryError.getSeverity());
+        }
+    }
+}
