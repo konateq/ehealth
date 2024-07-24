@@ -3,10 +3,10 @@ package tr.com.srdc.epsos.ws.server.xdr;
 import epsos.ccd.gnomon.auditmanager.*;
 import epsos.ccd.netsmart.securitymanager.exceptions.SMgrException;
 import eu.epsos.exceptions.DocumentTransformationException;
-import eu.epsos.protocolterminators.ws.server.utils.RegistryErrorUtils;
+import eu.epsos.protocolterminators.ws.server.common.RegistryErrorSeverity;
 import eu.epsos.protocolterminators.ws.server.exception.NIException;
-import eu.epsos.protocolterminators.ws.server.exception.NationalInfrastructureException;
 import eu.epsos.protocolterminators.ws.server.exception.NoConsentException;
+import eu.epsos.protocolterminators.ws.server.utils.RegistryErrorUtils;
 import eu.epsos.protocolterminators.ws.server.xdr.DocumentProcessingException;
 import eu.epsos.protocolterminators.ws.server.xdr.DocumentSubmitInterface;
 import eu.epsos.protocolterminators.ws.server.xdr.XDRServiceInterface;
@@ -27,7 +27,6 @@ import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.exceptions.OpenNCPErr
 import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.ehdsi.openncp.model.DiscardDispenseDetails;
 import eu.europa.ec.sante.ehdsi.openncp.pt.common.AdhocQueryResponseStatus;
-import eu.epsos.protocolterminators.ws.server.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.openncp.tm.domain.TMResponseStructure;
 import eu.europa.ec.sante.ehdsi.openncp.tm.util.Base64Util;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
@@ -59,7 +58,10 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Objects;
+import java.util.ServiceLoader;
 
 public class XDRServiceImpl implements XDRServiceInterface {
 
@@ -81,12 +83,12 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
     public XDRServiceImpl() {
 
-        ServiceLoader<DocumentSubmitInterface> serviceLoader = ServiceLoader.load(DocumentSubmitInterface.class);
+        final ServiceLoader<DocumentSubmitInterface> serviceLoader = ServiceLoader.load(DocumentSubmitInterface.class);
         try {
             logger.info("Loading National implementation of DocumentSubmitInterface...");
             documentSubmitService = serviceLoader.iterator().next();
             logger.info("Successfully loaded documentSubmitService");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("Failed to load implementation of documentSubmitService: " + e.getMessage(), e);
             throw e;
         }
@@ -238,9 +240,9 @@ public class XDRServiceImpl implements XDRServiceInterface {
         return patientId;
     }
 
-    private String getPatientId(ProvideAndRegisterDocumentSetRequestType request) {
+    private String getPatientId(final ProvideAndRegisterDocumentSetRequestType request) {
 
-        String patientId = getDocumentEntryPatientId(request);
+        final String patientId = getDocumentEntryPatientId(request);
         return patientId.substring(0, patientId.indexOf("^^^"));
     }
 
@@ -440,7 +442,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
         }
         String countryCode = "";
         final String distinguishedName = eventLog.getSC_UserID();
-        int cIndex = distinguishedName.indexOf("C=");
+        final int cIndex = distinguishedName.indexOf("C=");
 
         if (cIndex > 0) {
             countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
@@ -480,6 +482,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
             for (int i = 0; i < request.getDocument().size(); i++) {
 
                 final ProvideAndRegisterDocumentSetRequestType.Document doc = request.getDocument().get(i);
+                String documentId = StringUtils.EMPTY;
                 byte[] docBytes = doc.getValue();
                 org.w3c.dom.Document domDocument = null;
                 try {
@@ -518,11 +521,11 @@ public class XDRServiceImpl implements XDRServiceInterface {
                                 EventType.DISPENSATION_SERVICE_INITIALIZE.getIheCode(), new DateTime(),
                                 EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
                                 Objects.requireNonNull(Helper.getTRCAssertion(shElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         logger.error(ExceptionUtils.getStackTrace(e));
                     }
                     // Call to National Connector
-                    final String documentId = getDocumentId(epsosDocument.getDocument());
+                    documentId = getDocumentId(epsosDocument.getDocument());
                     documentSubmitService.submitDispensation(epsosDocument);
 
                     // Evidence for response from NI for XDR submit (dispensation)
@@ -573,8 +576,8 @@ public class XDRServiceImpl implements XDRServiceInterface {
      * @return
      * @throws Exception
      */
-    public RegistryResponseType saveDocument(ProvideAndRegisterDocumentSetRequestType request, SOAPHeader soapHeader,
-                                             EventLog eventLog) throws Exception {
+    public RegistryResponseType saveDocument(final ProvideAndRegisterDocumentSetRequestType request, final SOAPHeader soapHeader,
+                                             final EventLog eventLog) throws Exception {
 
         logger.info("[WS] XDR Service: Save Document");
         // Traverse all ExtrinsicObjects
@@ -583,11 +586,11 @@ public class XDRServiceImpl implements XDRServiceInterface {
             if (!(request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable().get(i).getValue() instanceof ExtrinsicObjectType)) {
                 continue;
             }
-            ExtrinsicObjectType extrinsicObject = (ExtrinsicObjectType) request.getSubmitObjectsRequest().getRegistryObjectList()
+            final ExtrinsicObjectType extrinsicObject = (ExtrinsicObjectType) request.getSubmitObjectsRequest().getRegistryObjectList()
                     .getIdentifiable().get(i).getValue();
 
             // Traverse all Classification blocks in the ExtrinsicObject selected
-            for (ClassificationType classification : extrinsicObject.getClassification()) {
+            for (final ClassificationType classification : extrinsicObject.getClassification()) {
 
                 logger.debug("[WS] XDR Service: Classification: '{}'-'{}'", classification.getClassificationScheme(), classification.getNodeRepresentation());
                 if (StringUtils.equals(classification.getClassificationScheme(), IheConstants.FORMAT_CODE_SCHEME)) {
@@ -609,7 +612,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
         return reportDocumentTypeError(request);
     }
 
-    protected String validateXDRHeader(Element sh, ClassCode classCode) throws MissingFieldException, InvalidFieldException,
+    protected String validateXDRHeader(final Element sh, final ClassCode classCode) throws MissingFieldException, InvalidFieldException,
             SMgrException, InsufficientRightsException {
 
         return SAML2Validator.validateXDRHeader(sh, classCode);
@@ -621,24 +624,24 @@ public class XDRServiceImpl implements XDRServiceInterface {
      * @param eventLog
      * @return
      */
-    public RegistryResponseType saveHCER(ProvideAndRegisterDocumentSetRequestType request, SOAPHeader sh, EventLog
+    public RegistryResponseType saveHCER(final ProvideAndRegisterDocumentSetRequestType request, final SOAPHeader sh, final EventLog
             eventLog) {
 
-        RegistryResponseType response = new RegistryResponseType();
+        final RegistryResponseType response = new RegistryResponseType();
         String sigCountryCode = null;
 
         Element shElement = null;
         try {
             shElement = XMLUtils.toDOM(sh);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("Exception: '{}'", e.getMessage(), e);
         }
         documentSubmitService.setSOAPHeader(shElement);
 
-        RegistryErrorList rel = ofRs.createRegistryErrorList();
+        final RegistryErrorList rel = ofRs.createRegistryErrorList();
         try {
             sigCountryCode = validateXDRHeader(shElement, ClassCode.HCER_CLASSCODE);
-        } catch (OpenNCPErrorCodeException e) {
+        } catch (final OpenNCPErrorCodeException e) {
             logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
                     rel,
@@ -646,7 +649,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     e.getMessage(),
                     e,
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (SMgrException e) {
+        } catch (final SMgrException e) {
             logger.error("SMgrException: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
                     rel,
@@ -656,7 +659,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
 
-        String fullPatientId = getDocumentEntryPatientId(request);
+        final String fullPatientId = getDocumentEntryPatientId(request);
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
             loggerClinical.info("Received a HCER document for patient: '{}'", fullPatientId);
         }
@@ -665,7 +668,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
          * the consent document.
          */
         for (int i = 0; i < request.getDocument().size(); i++) {
-            Document doc = request.getDocument().get(i);
+            final Document doc = request.getDocument().get(i);
 
             try {
                 /* Validate CDA epSOS Pivot */
@@ -674,10 +677,10 @@ public class XDRServiceImpl implements XDRServiceInterface {
                             NcpSide.NCP_A, obtainClassCode(request), true);
                 }
 
-                TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(doc.getValue()), Constants.LANGUAGE_CODE);
-                org.w3c.dom.Document cdaDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
-                byte[] docBytes = XMLUtils.toOM(cdaDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
-                String documentString = new String(docBytes, StandardCharsets.UTF_8);
+                final TMResponseStructure tmResponseStructure = TranslationsAndMappingsClient.translate(DomUtils.byteToDocument(doc.getValue()), Constants.LANGUAGE_CODE);
+                final org.w3c.dom.Document cdaDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
+                final byte[] docBytes = XMLUtils.toOM(cdaDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                final String documentString = new String(docBytes, StandardCharsets.UTF_8);
 
 
                 /* Validate CDA epSOS Pivot */
@@ -685,10 +688,10 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     OpenNCPValidation.validateCdaDocument(documentString, NcpSide.NCP_A, obtainClassCode(request), true);
                 }
 
-                org.w3c.dom.Document domDocument = XMLUtil.parseContent(documentString);
-                EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.HCER_CLASSCODE, domDocument);
+                final org.w3c.dom.Document domDocument = XMLUtil.parseContent(documentString);
+                final EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.HCER_CLASSCODE, domDocument);
                 documentSubmitService.submitHCER(epsosDocument);
-            } catch (DocumentProcessingException e) {
+            } catch (final DocumentProcessingException e) {
                 logger.error("DocumentProcessingException: '{}'", e.getMessage(), e);
                 RegistryErrorUtils.addErrorMessage(
                         rel,
@@ -696,7 +699,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                         e.getMessage(),
                         e,
                         RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-            } catch (DocumentTransformationException e) {
+            } catch (final DocumentTransformationException e) {
                 logger.error("DocumentTransformationException: '{}'", e.getMessage(), e);
                 RegistryErrorUtils.addErrorMessage(
                         rel,
@@ -704,7 +707,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                         e.getMessage(),
                         e,
                         RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 logger.error("Exception: '{}'", e.getMessage(), e);
                 RegistryErrorUtils.addErrorMessage(
                         rel,
@@ -724,13 +727,13 @@ public class XDRServiceImpl implements XDRServiceInterface {
         return response;
     }
 
-    public RegistryResponseType reportDocumentTypeError(ProvideAndRegisterDocumentSetRequestType request) {
+    public RegistryResponseType reportDocumentTypeError(final ProvideAndRegisterDocumentSetRequestType request) {
 
-        RegistryResponseType response = new RegistryResponseType();
+        final RegistryResponseType response = new RegistryResponseType();
 
         response.setRegistryErrorList(new RegistryErrorList());
 
-        RegistryError error = new RegistryError();
+        final RegistryError error = new RegistryError();
         error.setErrorCode(OpenNCPErrorCode.ERROR_UNKNOWN_SIGNIFIER.getCode());
         error.setCodeContext("Unknown document");
         response.getRegistryErrorList().getRegistryError().add(error);
