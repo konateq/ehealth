@@ -41,51 +41,52 @@ services:
     restart: "no"
     networks:
       - openncp-network-7-1-1
-
-  #  openncp-tsam-sync:
-  #    container_name: "openncp-tsam-sync"
-  #    env_file: .env
-  #    environment:
-  #      DB_HOST: ${DB_HOST}
-  #      DB_INTERNAL_PORT: ${DB_INTERNAL_PORT}
-  #      DB_USER: ${DB_ROOT_USER}
-  #      DRIVER_CLASS_NAME: ${DRIVER_CLASS_NAME}
-  #      DB_PASSWORD: ${DB_ROOT_PASSWORD}
-  #      DB_ACTIVE_PROFILE: ${DB_ACTIVE_PROFILE}
-  #    build:
-  #      context: ../../ehealth/openncp-docker
-  #      dockerfile: openncp-tsam-sync/Dockerfile
-  #    depends_on:
-  #      mysql:
-  #        condition: service_healthy
-  #      openncp-configuration-utility:
-  #        condition: service_completed_successfully
-  #    networks:
-  #      - openncp-network-7-1-1
-  #  openncp-tsam-exporter:
-  #    container_name: "openncp-tsam-exporter"
-  #    env_file: .env
-  #    environment:
-  #      DB_HOST: ${DB_HOST}
-  #      DB_INTERNAL_PORT: ${DB_INTERNAL_PORT}
-  #      DB_USER: ${DB_ROOT_USER}
-  #      DRIVER_CLASS_NAME: ${DRIVER_CLASS_NAME}
-  #      DB_PASSWORD: ${DB_ROOT_PASSWORD}
-  #      DB_ACTIVE_PROFILE: ${DB_ACTIVE_PROFILE}
-  #    build:
-  #      context: ../../ehealth/openncp-docker
-  #      dockerfile: openncp-tsam-exporter/Dockerfile
-  #    depends_on:
-  #      mysql:
-  #        condition: service_healthy
-  #      openncp-configuration-utility:
-  #        condition: service_completed_successfully
-  #      openncp-tsam-sync:
-  #        condition: service_completed_successfully
-  #    volumes:
-  #      - tsam-exporter-data:/opt/openncp-configuration/EpsosRepository
-  #    networks:
-  #      - openncp-network-7-1-1
+  openncp-tsam-sync:
+    container_name: "openncp-tsam-sync"
+    env_file: .env
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_INTERNAL_PORT: ${DB_INTERNAL_PORT}
+      DB_USER: ${DB_ROOT_USER}
+      DRIVER_CLASS_NAME: ${DRIVER_CLASS_NAME}
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_ACTIVE_PROFILE: ${DB_ACTIVE_PROFILE}
+    build:
+      context: ../../ehealth/openncp-docker
+      dockerfile: openncp-tsam-sync/Dockerfile
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      openncp-configuration-utility:
+        condition: service_completed_successfully
+    networks:
+      - openncp-network-7-1-1
+  openncp-tsam-exporter:
+    container_name: "openncp-tsam-exporter"
+    env_file: .env
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_INTERNAL_PORT: ${DB_INTERNAL_PORT}
+      DB_USER: ${DB_ROOT_USER}
+      DRIVER_CLASS_NAME: ${DRIVER_CLASS_NAME}
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_ACTIVE_PROFILE: ${DB_ACTIVE_PROFILE}
+    build:
+      context: ../../ehealth/openncp-docker
+      dockerfile: openncp-tsam-exporter/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      openncp-configuration-utility:
+        condition: service_completed_successfully
+      openncp-tsam-sync:
+        condition: service_completed_successfully
+    restart: "no"
+    volumes:
+      - tsam-exporter-data:/opt/openncp-configuration/EpsosRepository
+    networks:
+      - openncp-network-7-1-1
   tomcat_node_a:
     build:
       context: ../../ehealth/openncp-docker
