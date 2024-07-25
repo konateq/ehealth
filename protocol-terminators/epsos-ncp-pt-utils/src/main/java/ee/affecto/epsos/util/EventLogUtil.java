@@ -59,6 +59,7 @@ public class EventLogUtil {
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
 
             String detail = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
+            String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
             if (detail.startsWith("(")) {
                 String code = detail.substring(1, 5);
                 if (code.equals("1102")) {
@@ -67,9 +68,9 @@ public class EventLogUtil {
                     eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
                 }
             } else {
-                eventLog.setEM_ParticipantObjectID("0");
                 eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
             }
+            eventLog.setEM_ParticipantObjectID(errorCode);
             eventLog.setEM_ParticipantObjectDetail(detail.getBytes());
         } else {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
@@ -98,7 +99,9 @@ public class EventLogUtil {
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
 
             String error = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
-            eventLog.setEM_ParticipantObjectID(error);
+            String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
+
+            eventLog.setEM_ParticipantObjectID(errorCode);
             eventLog.setEM_ParticipantObjectDetail(error.getBytes());
         }
 

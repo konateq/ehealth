@@ -689,6 +689,9 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {
                 try {
+                    if (!registryErrorList.getRegistryError().isEmpty()) {
+                        response.setRegistryErrorList(registryErrorList);
+                    }
                     prepareEventLogForQuery(eventLog, request, response, shElement, classCodeValue);
                 } catch (final Exception e) {
                     logger.error("Prepare Audit log failed: '{}'", e.getMessage(), e);
