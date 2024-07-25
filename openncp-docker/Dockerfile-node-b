@@ -7,6 +7,9 @@ COPY /target/classes/lib /usr/local/tomcat/lib/
 COPY ncp_b/tomcat-config-entrypoint.sh /usr/local/tomcat/bin/
 COPY ncp_b/config /usr/local/tomcat/conf/
 
+ENV EPSOS_PROPS_PATH=/opt/openncp-configuration/
+COPY openncp-configuration/ $EPSOS_PROPS_PATH
+
 # needed because else we get the error:
 # failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process:
 # exec: "tomcat-config-entrypoint.sh": executable file not found in $PATH: unknown
@@ -14,14 +17,11 @@ RUN chmod 777 /usr/local/tomcat/bin/tomcat-config-entrypoint.sh
 
 RUN groupadd -g 1000 tomcat && \
   useradd -r -u 1000 -g tomcat tomcat && \
-  chown -R tomcat:tomcat /usr/local/tomcat/bin /usr/local/tomcat/webapps /usr/local/tomcat/conf /usr/local/tomcat/logs
+  chown -R tomcat:tomcat /usr/local/tomcat/bin /usr/local/tomcat/webapps /usr/local/tomcat/conf /usr/local/tomcat/logs $EPSOS_PROPS_PATH
 
 
 # needed to be able to install additional packages
 RUN apt-get update && apt-get -qq -y install gettext socat
-
-
-ENV EPSOS_PROPS_PATH=/opt/openncp-configuration/
 
 ENTRYPOINT ["tomcat-config-entrypoint.sh"]
 
