@@ -53,6 +53,7 @@
         <module>openncp-gateway</module>
         <module>openncp-gazelle-validation</module>
         <module>openncp-ncp-commons</module>
+        <module>openncp-docker</module>
     </modules>
 
     <scm>
