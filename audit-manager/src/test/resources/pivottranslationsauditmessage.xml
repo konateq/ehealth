@@ -3,8 +3,10 @@
         <EventID csd-code="110112" codeSystemName="DCM" displayName="ncpTransformationMgr::Translate" originalText="Query"/>
         <EventTypeCode csd-code="EHDSI-94" codeSystemName="IHE Transactions" displayName="ncpTransformationMgr::Translate" originalText="ncpTransformationMgr::Translate"/>
     </EventIdentification>
-    <ActiveParticipant UserID="ncp.lu.ehealth.testa.eu" AlternativeUserID="ncp.lu.ehealth.testa.eu" UserIsRequestor="false" NetworkAccessPointID="192.168.34.64" NetworkAccessPointTypeCode="2">
-        <RoleIDCode csd-code="ServiceProvider" codeSystemName="eHealth DSI" displayName="Service Provider" originalText="Service Provider"/>
+    <ActiveParticipant UserID="ncp.lu.ehealth.testa.eu" AlternativeUserID="ncp.lu.ehealth.testa.eu"
+                       UserIsRequestor="true" NetworkAccessPointID="192.168.34.64" NetworkAccessPointTypeCode="2">
+        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="Service Consumer"
+                    originalText="Service Consumer"/>
     </ActiveParticipant>
     <AuditSourceIdentification AuditEnterpriseSiteID="LU-1" AuditSourceID="LU-1">
         <AuditSourceTypeCode csd-code="4"/>
