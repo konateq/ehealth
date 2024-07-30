@@ -24,7 +24,7 @@ public class PivotTranslationAuditMessageBuilder extends AbstractAuditMessageBui
                     eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
 
             addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
-                    "Service Consumer", eventLog.getTargetip());
+                    AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getTargetip());
         } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }

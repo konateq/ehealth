@@ -5,8 +5,8 @@
     </EventIdentification>
     <ActiveParticipant UserID="ncp.lu.ehealth.testa.eu" AlternativeUserID="ncp.lu.ehealth.testa.eu"
                        UserIsRequestor="true" NetworkAccessPointID="192.168.34.64" NetworkAccessPointTypeCode="2">
-        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="Service Consumer"
-                    originalText="Service Consumer"/>
+        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer"
+                    originalText="eHealth DSI Service Consumer"/>
     </ActiveParticipant>
     <AuditSourceIdentification AuditEnterpriseSiteID="LU-1" AuditSourceID="LU-1">
         <AuditSourceTypeCode csd-code="4"/>

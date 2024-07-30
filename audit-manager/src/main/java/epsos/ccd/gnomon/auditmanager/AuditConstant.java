@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.ehdsi.openncp.audit;
+package epsos.ccd.gnomon.auditmanager;
 
 public class AuditConstant {
 
