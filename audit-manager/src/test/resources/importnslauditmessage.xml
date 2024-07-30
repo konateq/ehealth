@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AuditMessage>
+    <EventIdentification EventActionCode="E" EventDateTime="2024-07-17T09:53:20.920+02:00" EventOutcomeIndicator="0">
+        <EventID csd-code="110112" codeSystemName="DCM" displayName="ncpConfigurationManager::ImportNSL" originalText="Query"/>
+        <EventTypeCode csd-code="EHDSI-93" codeSystemName="IHE Transactions" displayName="ncpConfigurationManager::ImportNSL" originalText="ncpConfigurationManager::ImportNSL"/>
+    </EventIdentification>
+    <ActiveParticipant UserID="Service Consumer" AlternativeUserID="Service Consumer" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
+        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer"
+                    originalText="eHealth DSI Service Consumer"/>
+    </ActiveParticipant>
+    <ActiveParticipant UserID="Service Provider" AlternativeUserID="Service Provider" UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
+        <RoleIDCode csd-code="ServiceProvider" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Provider"
+                    originalText="eHealth DSI Service Provider"/>
+    </ActiveParticipant>
+    <AuditSourceIdentification AuditEnterpriseSiteID="42" AuditSourceID="42">
+        <AuditSourceTypeCode csd-code="4"/>
+    </AuditSourceIdentification>
+    <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="2">
+        <ParticipantObjectIDTypeCode csd-code="NSL" codeSystemName="eHealth DSI Security" displayName="Trusted Service List" originalText="Trusted Service List"/>
+    </ParticipantObjectIdentification>
+</AuditMessage>
