@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.XMLStructure;
@@ -39,10 +42,7 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
+import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -132,6 +132,24 @@ public class SignatureManager {
             }
             var certificateValidator = new CertificateValidator(keyManager.getTrustStore());
             certificateValidator.validateCertificate(cert);
+
+            final TrustManagerFactory trustManagerFactory;
+            try {
+                trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+            } catch (final NoSuchAlgorithmException e) {
+                throw new RuntimeException("Could not create the trust manager factory", e);
+            }
+
+            try {
+                trustManagerFactory.init(keyManager.getTrustStore());
+            } catch (final KeyStoreException e) {
+                throw new RuntimeException("Could not initialize the truststore", e);
+            }
+
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+            X509TrustManager x509TrustManager = (X509TrustManager) trustManagers[0];
+
+            x509TrustManager.checkClientTrusted(certificates.toArray(new X509Certificate[0]), "RSA");
         } catch (CertificateException ex) {
             logger.error(null, ex);
         }
