@@ -1,38 +1,41 @@
 package epsos.ccd.gnomon.auditmanager.auditmessagebuilders;
 
+import epsos.ccd.gnomon.auditmanager.AuditConstant;
 import epsos.ccd.gnomon.auditmanager.EventLog;
 import epsos.ccd.gnomon.auditmanager.EventType;
 import epsos.ccd.gnomon.auditmanager.eventidentification.EventIDBuilder;
 import epsos.ccd.gnomon.auditmanager.eventidentification.EventIdentificationContentsBuilder;
 import epsos.ccd.gnomon.auditmanager.eventidentification.EventTypeCodeBuilder;
 import eu.epsos.validation.datamodel.common.NcpSide;
-import eu.europa.ec.sante.ehdsi.openncp.audit.AuditConstant;
 import net.RFC3881.*;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public abstract class AbstractAuditMessageBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAuditMessageBuilder.class);
+    private static final String SMP_QUERY = "SMP::Query";
+    private static final String SMP_PUSH = "SMP::Push";
+    private static final String SMP = "SMP";
 
-    protected AuditMessage addParticipantObject(AuditMessage auditMessage, String participantId, Short participantCode,
-                                              Short participantRole, String participantName, String PS_ObjectCode, String PS_ObjectCodeName,
-                                              String PS_ObjectCodeValue, String PS_originalText,
-                                              String PS_getQueryByParameterPayload, String PS_getHciIdentifierPayload) {
+    protected AuditMessage addParticipantObject(final AuditMessage auditMessage, final String participantId, final Short participantCode,
+                                                final Short participantRole, final String participantName, final String PS_ObjectCode, final String PS_ObjectCodeName,
+                                                final String PS_ObjectCodeValue, final String PS_originalText,
+                                                final String PS_getQueryByParameterPayload, final String PS_getHciIdentifierPayload) {
 
-        var participantObjectIdentification = new ParticipantObjectIdentificationContents();
+        final ParticipantObjectIdentificationContents participantObjectIdentification = new ParticipantObjectIdentificationContents();
         participantObjectIdentification.setParticipantObjectID(participantId);
         participantObjectIdentification.setParticipantObjectTypeCode(participantCode.toString());
         participantObjectIdentification.setParticipantObjectTypeCodeRole(participantRole.toString());
 
-        ParticipantObjectIDTypeCode codedValue = new ParticipantObjectIDTypeCode();
+        final ParticipantObjectIDTypeCode codedValue = new ParticipantObjectIDTypeCode();
         codedValue.setCsdCode(PS_ObjectCode);
         codedValue.setCodeSystemName(PS_ObjectCodeName);
         codedValue.setDisplayName(PS_ObjectCodeValue);
@@ -40,26 +43,17 @@ public abstract class AbstractAuditMessageBuilder {
 
         // SystemObject and Query
         if(participantCode == 2 && (participantRole == 3 || participantRole == 24)) {
-            ParticipantObjectDetail participantObjectDetail = new ParticipantObjectDetail();
-            // 'ihe:homeCommunityID' or 'Repository Unique Id'
-            participantObjectDetail.setType("ihe:homeCommunityID");
-            try {
-                if (StringUtils.isNotBlank(PS_getHciIdentifierPayload)) {
-                    participantObjectDetail.setValue(PS_getHciIdentifierPayload.getBytes("UTF-8"));
-                }
-            } catch (UnsupportedEncodingException e) {
-                participantObjectDetail.setValue(new byte[]{2});
-                LOGGER.debug("Error addParticipantObject() - participantObjectDetail: '{}'", e.getMessage());
+
+            if (StringUtils.isNotBlank(PS_getHciIdentifierPayload)) {
+                // 'ihe:homeCommunityID' or 'Repository Unique Id'
+                final ParticipantObjectDetail participantObjectDetail = new ParticipantObjectDetail();
+                participantObjectDetail.setType("ihe:homeCommunityID");
+                participantObjectDetail.setValue(PS_getHciIdentifierPayload.getBytes(StandardCharsets.UTF_8));
+                participantObjectIdentification.getParticipantObjectDetail().add(participantObjectDetail);
             }
-            try {
-                if (StringUtils.isNotBlank(PS_getQueryByParameterPayload)) {
-                    participantObjectIdentification.setParticipantObjectQuery(PS_getQueryByParameterPayload.getBytes("UTF-8"));
-                }
-            } catch (UnsupportedEncodingException e) {
-                participantObjectIdentification.setParticipantObjectQuery(new byte[]{2});
-                LOGGER.debug("Error addParticipantObject() - participantObjectIdentification: '{}'", e.getMessage());
+            if (StringUtils.isNotBlank(PS_getQueryByParameterPayload)) {
+                participantObjectIdentification.setParticipantObjectQuery(PS_getQueryByParameterPayload.getBytes(StandardCharsets.UTF_8));
             }
-            participantObjectIdentification.getParticipantObjectDetail().add(participantObjectDetail);
         }
 
         participantObjectIdentification.setParticipantObjectIDTypeCode(codedValue);
@@ -67,33 +61,41 @@ public abstract class AbstractAuditMessageBuilder {
         return auditMessage;
     }
 
-    protected AuditMessage createAuditTrailForHCPAssurance(EventLog eventLog) {
+    protected AuditMessage createAuditTrailForHCPAssurance(final EventLog eventLog) {
 
         AuditMessage message = null;
         try {
-            ObjectFactory of = new ObjectFactory();
+            final ObjectFactory of = new ObjectFactory();
             message = of.createAuditMessage();
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
                     eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
-            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), false,
-                    "1.3.6.1.4.1.12559.11.10.1.3.2.2.2");
+            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), getUserIsRequestor(eventLog),
+                    "1.3.6.1.4.1.12559.11.10.1.3.2.2.2", eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                    false);
+                    getUserIsRequestor(eventLog), eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
-                    AuditConstant.CODE_SYSTEM_EHDSI, "Service Consumer"); // eventLog.getSourceip()
+                    AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME); // eventLog.getSourceip()
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
-                    AuditConstant.CODE_SYSTEM_EHDSI, "Service Provider"); // eventLog.getTargetip()
+                    AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME); // eventLog.getTargetip()
             addAuditSource(message, eventLog.getAS_AuditSourceId());
             addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("1"),
-                    "Patient", "2", AuditConstant.DICOM, "Patient Number",
+                    "Patient", "2", AuditConstant.RFC3881, "Patient Number",
                     "Cross Gateway Patient Discovery", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
                     Short.valueOf("3"), "9", "errormsg");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
         return message;
+    }
+
+    private boolean getUserIsRequestor(final EventLog eventLog) {
+        if (eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_INITIALIZE) || eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_DISCARD)) {
+            return !eventLog.getNcpSide().equals(NcpSide.NCP_B);
+        } else {
+            return eventLog.getNcpSide().equals(NcpSide.NCP_B);
+        }
     }
 
     /**
@@ -105,20 +107,19 @@ public abstract class AbstractAuditMessageBuilder {
      * @param displayName
      * @return
      */
-    protected AuditMessage addService(AuditMessage auditMessage, String userId, boolean userIsRequester, String code,
-                                    String codeSystem, String displayName) {
+    protected AuditMessage addService(final AuditMessage auditMessage, final String userId, final boolean userIsRequester, final String code,
+                                      final String codeSystem, final String displayName) {
 
-        InetAddressValidator validator = InetAddressValidator.getInstance();
         if (StringUtils.isBlank(userId)) {
             LOGGER.warn("No Service, as this is Service Consumer");
             throw new IllegalArgumentException("Both ServiceConsumer User ID and ServiceProvider User ID must exist!");
         } else {
-            ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
+            final ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
             activeParticipant.setUserID(userId);
             activeParticipant.setAlternativeUserID(userId);
             activeParticipant.setUserIsRequestor(userIsRequester);
 
-            RoleIDCode serviceConsumerRoleId = new RoleIDCode();
+            final RoleIDCode serviceConsumerRoleId = new RoleIDCode();
             serviceConsumerRoleId.setCsdCode(code);
             serviceConsumerRoleId.setCodeSystemName(codeSystem);
             serviceConsumerRoleId.setDisplayName(displayName);
@@ -139,26 +140,21 @@ public abstract class AbstractAuditMessageBuilder {
      * @param ipAddress
      * @return
      */
-    protected AuditMessage addService(AuditMessage auditMessage, String userId, boolean userIsRequester, String code,
-                                    String codeSystem, String displayName, String ipAddress) {
+    protected AuditMessage addService(final AuditMessage auditMessage, final String userId, final boolean userIsRequester, final String code,
+                                      final String codeSystem, final String displayName, final String ipAddress) {
 
-        InetAddressValidator validator = InetAddressValidator.getInstance();
         if (StringUtils.isBlank(userId)) {
             LOGGER.warn("No Service, as this is Service Consumer");
             throw new IllegalArgumentException("Both ServiceConsumer User ID and ServiceProvider User ID must exist!");
         } else {
-            ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
+            final ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
             activeParticipant.setNetworkAccessPointID(ipAddress);
-            if (validator.isValidInet4Address(ipAddress) || validator.isValidInet6Address(ipAddress)) {
-                activeParticipant.setNetworkAccessPointTypeCode("2");
-            } else {
-                activeParticipant.setNetworkAccessPointTypeCode("1");
-            }
+            activeParticipant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
             activeParticipant.setUserID(userId);
             activeParticipant.setAlternativeUserID(userId);
             activeParticipant.setUserIsRequestor(userIsRequester);
 
-            RoleIDCode serviceConsumerRoleId = new RoleIDCode();
+            final RoleIDCode serviceConsumerRoleId = new RoleIDCode();
             serviceConsumerRoleId.setCsdCode(code);
             serviceConsumerRoleId.setCodeSystemName(codeSystem);
             serviceConsumerRoleId.setDisplayName(displayName);
@@ -177,32 +173,32 @@ public abstract class AbstractAuditMessageBuilder {
      * @param codeSystem
      * @return
      */
-    protected AuditMessage addPointOfCare(AuditMessage message, String userId, String roleId, boolean userIsRequester, String codeSystem) {
+    protected AuditMessage addPointOfCare(final AuditMessage message, final String userId, final String roleId, final boolean userIsRequester, final String codeSystem, final String ipAddress) {
 
         if (StringUtils.isBlank(userId)) {
-            //LOGGER.debug("This is service provider and doesn't need Point of Care");
-            ActiveParticipantContents participant = new ActiveParticipantContents();
+            // This is service provider and doesn't need Point of Care
+            final ActiveParticipantContents participant = new ActiveParticipantContents();
             participant.setUserID("SP");
             participant.setAlternativeUserID("SP");
-            participant.setNetworkAccessPointID("127.0.0.1");
-            participant.setNetworkAccessPointTypeCode("1");
+            participant.setNetworkAccessPointID(ipAddress);
+            participant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
             participant.setUserIsRequestor(userIsRequester);
 
-            RoleIDCode codedValue = new RoleIDCode();
+            final RoleIDCode codedValue = new RoleIDCode();
             codedValue.setCsdCode("110152");
             codedValue.setCodeSystemName("DCM");
             codedValue.setOriginalText(codeSystem); // Should be "Destination Role ID"
             participant.getRoleIDCode().add(codedValue);
             message.getActiveParticipant().add(participant);
-        } else {//ActiveParticipantType   participant2 = new ActiveParticipantType();//participant2.setNetworkAccessPointID();
-            ActiveParticipantContents participant = new ActiveParticipantContents();
+        } else {
+            final ActiveParticipantContents participant = new ActiveParticipantContents();
             participant.setUserID(userId);
             participant.setAlternativeUserID(userId);
-            participant.setNetworkAccessPointID("127.0.0.1");
-            participant.setNetworkAccessPointTypeCode("1");
+            participant.setNetworkAccessPointID(ipAddress);
+            participant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
             participant.setUserIsRequestor(userIsRequester);
 
-            RoleIDCode codedValue = new RoleIDCode();
+            final RoleIDCode codedValue = new RoleIDCode();
             codedValue.setCsdCode("110152");
             codedValue.setCodeSystemName("DCM");
             codedValue.setOriginalText(codeSystem); // Should be "Destination Role ID"
@@ -210,6 +206,11 @@ public abstract class AbstractAuditMessageBuilder {
             message.getActiveParticipant().add(participant);
         }
         return message;
+    }
+
+    private String getNetworkAccessPointTypeCode(final String networkAccessPoint) {
+        final InetAddressValidator validator = InetAddressValidator.getInstance();
+        return (validator.isValidInet4Address(networkAccessPoint) || validator.isValidInet6Address(networkAccessPoint)) ? "2" : "1";
     }
 
     /**
@@ -222,27 +223,27 @@ public abstract class AbstractAuditMessageBuilder {
      * @param errorMessageQualifier
      * @return
      */
-    AuditMessage addError(AuditMessage auditMessage, String errorMessagePartObjectId, byte[] errorMessagePartObjectDetail,
-                          Short errorMessageCode, Short errorMessageCodeRole, String errorMessageTypeCode,
-                          String errorMessageQualifier) {
+    AuditMessage addError(final AuditMessage auditMessage, final String errorMessagePartObjectId, final byte[] errorMessagePartObjectDetail,
+                          final Short errorMessageCode, final Short errorMessageCodeRole, final String errorMessageTypeCode,
+                          final String errorMessageQualifier) {
 
         // Error Message handling for audit purpose
         if (StringUtils.isNotBlank(errorMessagePartObjectId)) {
 
             LOGGER.debug("Error Message Participant ID is: '{}'", errorMessagePartObjectId);
-            ParticipantObjectIDTypeCode codedValueType = new ParticipantObjectIDTypeCode();
+            final ParticipantObjectIDTypeCode codedValueType = new ParticipantObjectIDTypeCode();
             codedValueType.setCsdCode(errorMessageTypeCode);
             codedValueType.setOriginalText("error message");
             codedValueType.setCodeSystemName("eHealth DSI Security");
 
-            ParticipantObjectIdentificationContents participantObjectIdentificationType = new ParticipantObjectIdentificationContents();
+            final ParticipantObjectIdentificationContents participantObjectIdentificationType = new ParticipantObjectIdentificationContents();
             participantObjectIdentificationType.setParticipantObjectID(errorMessagePartObjectId);
             participantObjectIdentificationType.setParticipantObjectTypeCode(errorMessageCode.toString());
             participantObjectIdentificationType.setParticipantObjectTypeCodeRole(errorMessageCodeRole.toString());
             participantObjectIdentificationType.setParticipantObjectIDTypeCode(codedValueType);
 
             if (errorMessagePartObjectDetail != null) {
-                ParticipantObjectDetail typeValuePairType = new ParticipantObjectDetail();
+                final ParticipantObjectDetail typeValuePairType = new ParticipantObjectDetail();
                 typeValuePairType.setType(errorMessageQualifier);
                 typeValuePairType.setValue(errorMessagePartObjectDetail);
                 participantObjectIdentificationType.getParticipantObjectDetail().add(typeValuePairType);
@@ -263,20 +264,20 @@ public abstract class AbstractAuditMessageBuilder {
      * @param userIsRequester
      * @return
      */
-    AuditMessage addHumanRequestor(AuditMessage auditMessage, String userId, String alternativeUserID,
-                                   String roleId, boolean userIsRequester) {
+    AuditMessage addHumanRequestor(final AuditMessage auditMessage, final String userId, final String alternativeUserID,
+                                   final String roleId, final boolean userIsRequester, final String ipAddress) {
 
-        ActiveParticipantContents humanRequester = new ActiveParticipantContents();
+        final ActiveParticipantContents humanRequester = new ActiveParticipantContents();
         humanRequester.setUserID(userId);
         humanRequester.setAlternativeUserID(alternativeUserID);
-        humanRequester.setNetworkAccessPointID("127.0.0.1");
-        humanRequester.setNetworkAccessPointTypeCode("2");
+        humanRequester.setNetworkAccessPointID(ipAddress);
+        humanRequester.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
         humanRequester.setUserIsRequestor(userIsRequester);
 
-        RoleIDCode humanRequesterRoleId = new RoleIDCode();
+        final RoleIDCode humanRequesterRoleId = new RoleIDCode();
         humanRequesterRoleId.setCsdCode("110153");
         humanRequesterRoleId.setOriginalText(roleId);
-        humanRequesterRoleId.setCodeSystemName("DCM");
+        humanRequesterRoleId.setCodeSystemName(AuditConstant.DICOM);
         humanRequesterRoleId.setOriginalText("Source Role ID");
 
         humanRequester.getRoleIDCode().add(humanRequesterRoleId);
@@ -294,13 +295,13 @@ public abstract class AbstractAuditMessageBuilder {
      * @param ncpSide
      * @return
      */
-    AuditMessage addEventIdentification(AuditMessage auditMessage,
-                                        EventType eventType,
-                                        String transactionName,
-                                        String eventActionCode,
-                                        XMLGregorianCalendar eventDateTime,
-                                        BigInteger eventOutcomeIndicator,
-                                        NcpSide ncpSide) {
+    AuditMessage addEventIdentification(final AuditMessage auditMessage,
+                                        final EventType eventType,
+                                        final String transactionName,
+                                        final String eventActionCode,
+                                        final XMLGregorianCalendar eventDateTime,
+                                        final BigInteger eventOutcomeIndicator,
+                                        final NcpSide ncpSide) {
 
         final EventID eventID = buildEventID(eventType, ncpSide, transactionName);
 
@@ -334,19 +335,19 @@ public abstract class AbstractAuditMessageBuilder {
      * @param objectDataLifeCycle
      * @return
      */
-    AuditMessage addEventTarget(AuditMessage auditMessage, List<String> eventTargetObjectId, Short typeCode,
-                                        Short typeCodeRole, String errorMessageCode, String action, Short objectDataLifeCycle,
-                                        String EM_CodeSystemName, String EM_DisplayName) {
+    AuditMessage addEventTarget(final AuditMessage auditMessage, final List<String> eventTargetObjectId, final Short typeCode,
+                                final Short typeCodeRole, final String errorMessageCode, final String action, final Short objectDataLifeCycle,
+                                final String EM_CodeSystemName, final String EM_DisplayName) {
 
         LOGGER.debug("AuditMessage addEventTarget('{}','{}','{}','{}','{}','{}','{}')", auditMessage, eventTargetObjectId,
                 typeCode, typeCodeRole, errorMessageCode, action, objectDataLifeCycle);
-        for (String eventTargetId : eventTargetObjectId) {
+        for (final String eventTargetId : eventTargetObjectId) {
 
-            ParticipantObjectIdentificationContents em = new ParticipantObjectIdentificationContents();
+            final ParticipantObjectIdentificationContents em = new ParticipantObjectIdentificationContents();
             em.setParticipantObjectID(eventTargetId);
             em.setParticipantObjectTypeCode(typeCode.toString());
             em.setParticipantObjectTypeCodeRole(typeCodeRole.toString());
-            ParticipantObjectIDTypeCode errorMessageCodedValueType = new ParticipantObjectIDTypeCode();
+            final ParticipantObjectIDTypeCode errorMessageCodedValueType = new ParticipantObjectIDTypeCode();
             errorMessageCodedValueType.setCsdCode(errorMessageCode);
             errorMessageCodedValueType.setCodeSystemName(EM_CodeSystemName);
             errorMessageCodedValueType.setOriginalText(EM_DisplayName);
@@ -370,21 +371,21 @@ public abstract class AbstractAuditMessageBuilder {
      * @param EM_DisplayName
      * @return
      */
-    AuditMessage addEventTarget(AuditMessage auditMessage, List<String> eventTargetObjectId, Short objectTypeCode,
-                                        Short objectDataLifeCycle, String EM_Code, String EM_CodeSystemName, String EM_DisplayName) {
+    AuditMessage addEventTarget(final AuditMessage auditMessage, final List<String> eventTargetObjectId, final Short objectTypeCode,
+                                final Short objectDataLifeCycle, final String EM_Code, final String EM_CodeSystemName, final String EM_DisplayName) {
 
         LOGGER.debug("AuditMessage addEventTarget('{}','{}','{}','{}','{}','{}','{}')", auditMessage, eventTargetObjectId,
                 objectTypeCode, objectDataLifeCycle, EM_Code, EM_CodeSystemName, EM_DisplayName);
 
-        for (String eventTargetId : eventTargetObjectId) {
+        for (final String eventTargetId : eventTargetObjectId) {
 
-            ParticipantObjectIdentificationContents eventTarget = new ParticipantObjectIdentificationContents();
+            final ParticipantObjectIdentificationContents eventTarget = new ParticipantObjectIdentificationContents();
             eventTarget.setParticipantObjectID(eventTargetId);
             eventTarget.setParticipantObjectTypeCode(objectTypeCode.toString());
             if (objectDataLifeCycle != null) {
                 eventTarget.setParticipantObjectDataLifeCycle(objectDataLifeCycle.toString());
             }
-            ParticipantObjectIDTypeCode eventTargetDescription = new ParticipantObjectIDTypeCode();
+            final ParticipantObjectIDTypeCode eventTargetDescription = new ParticipantObjectIDTypeCode();
             eventTargetDescription.setCsdCode(EM_Code);
             eventTargetDescription.setCodeSystemName(EM_CodeSystemName);
             eventTargetDescription.setDisplayName(EM_DisplayName);
@@ -395,46 +396,48 @@ public abstract class AbstractAuditMessageBuilder {
         return auditMessage;
     }
 
-    private EventTypeCode buildEventTypeCode(EventType eventType) {
+    private EventTypeCode buildEventTypeCode(final EventType eventType) {
         EventTypeCode eventTypeCode = null;
         switch (eventType) {
             case SMP_QUERY:
                 eventTypeCode = new EventTypeCodeBuilder()
                         .codeSystemName(eventType.getCode())
-                        .csdCode("SMP")
-                        .displayName("SMP::Query")
-                        .originalText("SMP::Query")
+                        .csdCode(SMP)
+                        .displayName(SMP_QUERY)
+                        .originalText(SMP_QUERY)
                         .build();
                 break;
             case SMP_PUSH:
                 eventTypeCode = new EventTypeCodeBuilder()
                         .codeSystemName(eventType.getCode())
-                        .csdCode("SMP")
-                        .displayName("SMP::Push")
-                        .originalText("SMP::Query")
+                        .csdCode(SMP)
+                        .displayName(SMP_PUSH)
+                        .originalText(SMP_PUSH)
                         .build();
+                break;
+            default:
                 break;
         }
         return eventTypeCode;
     }
 
-    private EventID buildEventID(EventType eventType, NcpSide ncpSide, String transactionName) {
-        EventID eventID;
+    private EventID buildEventID(final EventType eventType, final NcpSide ncpSide, final String transactionName) {
+        final EventID eventID;
         switch (eventType) {
             case SMP_QUERY:
                 eventID = new EventIDBuilder()
                         .codeSystemName("EHDSI-193")
-                        .csdCode("SMP")
-                        .displayName("SMP::Query")
-                        .originalText("SMP::Query")
+                        .csdCode(SMP)
+                        .displayName(SMP_QUERY)
+                        .originalText(SMP_QUERY)
                         .build();
                 break;
             case SMP_PUSH:
                 eventID = new EventIDBuilder()
                         .codeSystemName("EHDSI-194")
-                        .csdCode("SMP")
-                        .displayName("SMP::Push")
-                        .originalText("SMP::Push")
+                        .csdCode(SMP)
+                        .displayName(SMP_PUSH)
+                        .originalText(SMP_PUSH)
                         .build();
                 break;
             default:
@@ -453,13 +456,13 @@ public abstract class AbstractAuditMessageBuilder {
      * @param auditSource
      * @return
      */
-    AuditMessage addAuditSource(AuditMessage auditMessage, String auditSource) {
+    AuditMessage addAuditSource(final AuditMessage auditMessage, final String auditSource) {
 
-        AuditSourceIdentificationContents auditSourceIdentification = new AuditSourceIdentificationContents();
+        final AuditSourceIdentificationContents auditSourceIdentification = new AuditSourceIdentificationContents();
         auditSourceIdentification.setAuditSourceID(auditSource);
         auditSourceIdentification.setAuditEnterpriseSiteID(auditSource);
         /*
-        attribute code {
+        attribute code
             "1" |                 ## End-user display device, diagnostic device
             "2" |                 ## Data acquisition device or instrument
             "3" |                 ## Web Server process or thread
@@ -469,9 +472,9 @@ public abstract class AbstractAuditMessageBuilder {
             "7" |                 ## ISO level 1-3 network component
             "8" |                 ## ISO level 4-6 operating software
             "9" |                 ## other
-            token },              ## other values are allowed if a codeSystemName is present
+            token                 ## other values are allowed if a codeSystemName is present
         */
-        AuditSourceTypeCode auditTypeSource = new AuditSourceTypeCode();
+        final AuditSourceTypeCode auditTypeSource = new AuditSourceTypeCode();
         auditTypeSource.setCsdCode("4");
         auditSourceIdentification.getAuditSourceTypeCode().add(auditTypeSource);
 
@@ -479,7 +482,7 @@ public abstract class AbstractAuditMessageBuilder {
         return auditMessage;
     }
 
-    private String getOriginalText(NcpSide ncpSide, EventType eventType) {
+    private String getOriginalText(final NcpSide ncpSide, final EventType eventType) {
         switch (eventType) {
             case PATIENT_SERVICE_RETRIEVE:
             case ORDER_SERVICE_RETRIEVE:
@@ -493,7 +496,7 @@ public abstract class AbstractAuditMessageBuilder {
         }
     }
 
-    private String getCsdCode(NcpSide ncpSide, EventType eventType) {
+    private String getCsdCode(final NcpSide ncpSide, final EventType eventType) {
         switch (eventType) {
             case PATIENT_SERVICE_RETRIEVE:
             case ORDER_SERVICE_RETRIEVE:

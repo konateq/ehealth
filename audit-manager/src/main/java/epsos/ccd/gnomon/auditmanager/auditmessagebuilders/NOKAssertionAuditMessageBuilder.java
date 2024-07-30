@@ -13,10 +13,10 @@ public class NOKAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
     private static final Logger LOGGER = LoggerFactory.getLogger(NOKAssertionAuditMessageBuilder.class);
 
     @Override
-    public AuditMessage build(EventLog eventLog) {
+    public AuditMessage build(final EventLog eventLog) {
         AuditMessage message = null;
         try {
-            ObjectFactory of = new ObjectFactory();
+            final ObjectFactory of = new ObjectFactory();
             message = of.createAuditMessage();
             // Audit Source
             addAuditSource(message, eventLog.getAS_AuditSourceId());
@@ -25,18 +25,18 @@ public class NOKAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
                     eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             // Point Of Care
             addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), true,
-                    "1.3.6.1.4.1.12559.11.10.1.3.2.2.2");
+                    "1.3.6.1.4.1.12559.11.10.1.3.2.2.2", eventLog.getSourceip());
             // Human Requestor
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                    true);
-            addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI, "Service Consumer",
+                    true, eventLog.getSourceip());
+            addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME,
                     eventLog.getSourceip());
-            addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI, "Service Provider",
+            addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
                     eventLog.getTargetip());
             addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("10"), "Guarantor",
-                    "7", AuditConstant.DICOM, "Guarantor Number",
+                    "7", AuditConstant.RFC3881, "Guarantor Number",
                     "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
         if (message != null) {
