@@ -73,7 +73,7 @@ public abstract class AbstractAuditMessageBuilder {
             addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), getUserIsRequestor(eventLog),
                     "1.3.6.1.4.1.12559.11.10.1.3.2.2.2", eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                    getUserIsRequestor(eventLog), eventLog.getSourceip());
+                    false, eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME); // eventLog.getSourceip()
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
@@ -272,7 +272,7 @@ public abstract class AbstractAuditMessageBuilder {
         humanRequester.setAlternativeUserID(alternativeUserID);
         humanRequester.setNetworkAccessPointID(ipAddress);
         humanRequester.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
-        humanRequester.setUserIsRequestor(userIsRequester);
+        humanRequester.setUserIsRequestor(Boolean.FALSE);
 
         final RoleIDCode humanRequesterRoleId = new RoleIDCode();
         humanRequesterRoleId.setCsdCode("110153");
