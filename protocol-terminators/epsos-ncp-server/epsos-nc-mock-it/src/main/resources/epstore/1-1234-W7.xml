@@ -10,21 +10,29 @@
     <languageCode code="fi-FI" />
     <setId root="1.2.246.10.11535721.93.2009.15721892033029812" />
     <recordTarget contextControlCode="OP" typeCode="RCT">
-        <patientRole classCode="PAT">
-            <id extension="1-1234-W7" root="2.16.17.710.850.1000.990.1.1000" />
+        <patientRole>
+            <!-- Primary Patient Identifier -->
+            <id extension="1-1234-W7" root="2.16.17.710.850.1000.990.1.1000"/>
             <addr>
-                <country>FI</country>
+                <streetAddressLine>Breydelstraat 4</streetAddressLine>
+                <postalCode>1040</postalCode>
+                <city>Brussels</city>
+                <country>BE</country>
             </addr>
-            <telecom nullFlavor="NI" />
-            <patient classCode="PSN" determinerCode="INSTANCE">
+            <telecom value="tel:0080067891011" use="H"/>
+            <telecom value="mailto:robert.schuman@ec.europa.eu"/>
+            <patient>
                 <name>
-                    <given qualifier="CL">Katriina</given>
-                    <given>Kastehelmi</given>
-                    <family>Kukko</family>
+                    <family>Schuman</family>
+                    <given>Robert</given>
                 </name>
-                <administrativeGenderCode code="F" displayName="Female" codeSystem="2.16.840.1.113883.5.1"/>
-                <birthTime value="20000101" />
-                <languageCommunication nullFlavor="NI" />
+                <administrativeGenderCode code="M" codeSystem="2.16.840.1.113883.5.1" displayName="Male"
+                                          codeSystemName="AdministrativeGender"/>
+                <birthTime value="18860629"/>
+                <!-- patient's language -->
+                <languageCommunication>
+                    <languageCode code="nl-BE"/>
+                </languageCommunication>
             </patient>
         </patientRole>
     </recordTarget>
@@ -135,6 +143,7 @@
                             <templateId root="1.3.6.1.4.1.12559.11.10.1.3.1.3.2" />
                             <templateId root="1.3.6.1.4.1.19376.1.5.3.1.4.7.1" />
                             <id extension="3000.1.1" root="2.16.17.710.850.1000.990.1" />
+                            <code code="DRUG" codeSystem="2.16.840.1.113883.5.4" displayName="Drug therapy"/>
                             <text><reference value="#eP_as_text"/></text>
                             <statusCode code="active" />
                             <effectiveTime xsi:type="IVL_TS">
@@ -195,7 +204,8 @@
                             <entryRelationship inversionInd="true" typeCode="SUBJ">
                                 <observation classCode="OBS" moodCode="EVN">
                                     <code code="SUBST" codeSystem="2.16.840.1.113883.5.6"/>
-                                    <value code="N" codeSystem="2.16.840.1.113883.5.1070" xsi:type="CE" />
+                                    <value code="N" codeSystem="2.16.840.1.113883.5.1070" xsi:type="CE"
+                                           displayName="none"/>
                                 </observation>
                             </entryRelationship>
                             <entryRelationship inversionInd="true" typeCode="SUBJ">
