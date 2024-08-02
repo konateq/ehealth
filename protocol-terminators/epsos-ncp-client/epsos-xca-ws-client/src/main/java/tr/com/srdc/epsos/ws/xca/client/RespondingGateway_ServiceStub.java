@@ -423,12 +423,12 @@ public class RespondingGateway_ServiceStub extends Stub {
 
                     /* add the new message context to the new operation client */
                     newOperationClient.addMessageContext(newMessageContext);
-                    /* we retry the request */
-                    newOperationClient.execute(true);
                     /* we need to reset the previous variables with the new content, to be used later */
                     _operationClient = newOperationClient;
                     _messageContext = newMessageContext;
                     env = newEnv;
+                    /* we retry the request */
+                    newOperationClient.execute(true);
                     LOGGER.debug("Successfully retried the request! Proceeding with the normal workflow...");
                 } else {
                     /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
@@ -811,12 +811,12 @@ public class RespondingGateway_ServiceStub extends Stub {
 
                     /* add the new message context to the new operation client */
                     newOperationClient.addMessageContext(newMessageContext);
-                    /* we retry the request */
-                    newOperationClient.execute(true);
                     /* we need to reset the previous variables with the new content, to be used later */
                     _operationClient = newOperationClient;
                     _messageContext = newMessageContext;
                     env = newEnv;
+                    /* we retry the request */
+                    newOperationClient.execute(true);
                     LOGGER.debug("Successfully retried the request! Proceeding with the normal workflow...");
                 } else {
                     /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
