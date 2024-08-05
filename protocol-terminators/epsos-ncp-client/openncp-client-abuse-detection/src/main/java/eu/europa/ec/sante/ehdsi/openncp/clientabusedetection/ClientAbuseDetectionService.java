@@ -375,8 +375,11 @@ public class ClientAbuseDetectionService implements Job {
 
                 boolean evtPresent = false;
                 AbuseTransactionType transactionType = AbuseTransactionType.TRANSACTION_UNKNOWN;
+
                 if (StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode()) &&
+                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getCsdCode()) &&
+                        StringUtils.equals("XCPD::CrossGatewayPatientDiscovery",
+                                EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheTransactionName())  &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -385,7 +388,9 @@ public class ClientAbuseDetectionService implements Job {
                     transactionType = AbuseTransactionType.XCPD_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_LIST.getIheCode()) &&
+                        EventType.PATIENT_SERVICE_LIST.getCsdCode()) &&
+                        StringUtils.equals("XCA::CrossGatewayQuery",
+                                EventType.PATIENT_SERVICE_LIST.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -397,8 +402,10 @@ public class ClientAbuseDetectionService implements Job {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode()) &&
+                if (!evtPresent && /*StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.PATIENT_SERVICE_RETRIEVE.getCsdCode()) &&*/  // csdCode for this event is 110107 on client and 110106 on server, so there would be an ambiguity
+                        StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.PATIENT_SERVICE_RETRIEVE.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -411,7 +418,9 @@ public class ClientAbuseDetectionService implements Job {
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_LIST.getIheCode()) &&
+                        EventType.ORDER_SERVICE_LIST.getCsdCode()) &&
+                        StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.ORDER_SERVICE_LIST.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -423,8 +432,10 @@ public class ClientAbuseDetectionService implements Job {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode()) &&
+                if (!evtPresent && /*StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.PATIENT_SERVICE_RETRIEVE.getCsdCode()) &&*/ // csdCode for this event is 110107 on client and 110106 on server, so there would be an ambiguity
+                        StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.ORDER_SERVICE_RETRIEVE.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -437,7 +448,9 @@ public class ClientAbuseDetectionService implements Job {
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.DISPENSATION_SERVICE_INITIALIZE.getIheCode()) &&
+                        EventType.DISPENSATION_SERVICE_INITIALIZE.getCsdCode()) &&
+                        StringUtils.equals("XDR::ProvideandRegisterDocumentSet-b",
+                                EventType.DISPENSATION_SERVICE_INITIALIZE.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -450,7 +463,9 @@ public class ClientAbuseDetectionService implements Job {
                     transactionType = AbuseTransactionType.XDR_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.ORCD_SERVICE_LIST.getIheCode()) &&
+                        EventType.ORCD_SERVICE_LIST.getCsdCode()) &&
+                        StringUtils.equals("XCA::CrossGatewayQuery",
+                                EventType.ORCD_SERVICE_LIST.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -460,6 +475,8 @@ public class ClientAbuseDetectionService implements Job {
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
                         EventType.ORCD_SERVICE_RETRIEVE.getIheCode()) &&
+                        StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.ORCD_SERVICE_RETRIEVE.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),

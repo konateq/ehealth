@@ -176,7 +176,7 @@ public class CodedElementList implements InitializingBean, TMConstants {
                                 mrol1 = addItem(docTypeElement, codedElement, mrol1);
                                 break;
                             default:
-                                logger.warn("[TM] Clinical Document type not supported by eHDSI");
+                                logger.warn("[TM] Clinical Document type not supported by eHDSI : {}", docTypeElement.getNodeName());
                                 break;
                         }
                     }
