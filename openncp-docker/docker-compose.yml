@@ -257,6 +257,59 @@ services:
       LOGGING_LEVEL_ROOT: DEBUG
     networks:
       - openncp-network-7-1-1
+  openncp-gateway-backend:
+    build:
+      context: ../../ehealth/openncp-docker
+      dockerfile: Dockerfile-gateway-backend
+    env_file:
+      - ./openncp-gateway/openncp-gateway-backend/gateway.database.env
+      - ./openncp-gateway/openncp-gateway-backend/gateway.env
+    ports:
+      - "${NCP_GATEWAY_BACKEND_CONNECTOR_PORT}:${NCP_GATEWAY_BACKEND_CONNECTOR_PORT}"
+      - "${NCP_GATEWAY_BACKEND_CONNECTOR_SECURE_PORT}:${NCP_GATEWAY_BACKEND_CONNECTOR_SECURE_PORT}"
+      - "8000:8000"
+      - "5002:5002"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    dns:
+      - 8.8.8.8
+    depends_on:
+      mysql:
+        condition: service_healthy
+      openncp-configuration-utility:
+        condition: service_completed_successfully
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SPRING_CONFIG_ADDITIONAL-LOCATION: file:/opt/config/application-docker.yml
+      CATALINA_OPTS: "
+          -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties
+          -Dfile.encoding=UTF-8
+          -Xdebug -agentlib:jdwp=transport=dt_socket,address=0.0.0.0:5002,server=y,suspend=n"
+      JAVA_OPTS: "
+          -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties
+          -Dfile.encoding=UTF-8
+          -Dtls_key_alias=${TLS_KEY_ALIAS}
+          -Dtls_keystore_pwd=${TLS_KEYSTORE_PWD}
+          -Dtls_keystore_path=${TLS_KEYSTORE_PATH}
+          -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
+          -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
+      LOGGING_LEVEL_ROOT: DEBUG
+    networks:
+      - openncp-network-7-1-1
+  openncp-gateway-frontend:
+    depends_on:
+      openncp-gateway-backend:
+        condition: service_started
+    build:
+      context: ../
+      dockerfile: ./openncp-docker/Dockerfile-gateway-frontend
+      args:
+        GATEWAY_BACKEND_URL: ${GATEWAY_BACKEND_URL}
+    ports:
+      - "${NCP_GATEWAY_FRONTEND_CONNECTOR_PORT}:8080"
+    networks:
+      - openncp-network-7-1-1
+
 volumes:
   db-data:
   tsam-exporter-data:
