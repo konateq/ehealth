@@ -58,10 +58,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Objects;
-import java.util.ServiceLoader;
+import java.util.*;
 
 public class XDRServiceImpl implements XDRServiceInterface {
 
@@ -149,7 +146,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
         eventLog.setHR_AlternativeUserID(Helper.getAlternateUserID(soapHeader));
         eventLog.setHR_RoleID(Helper.getRoleID(soapHeader));
         eventLog.setSP_UserID(HTTPUtil.getSubjectDN(true));
-        eventLog.setPT_ParticipantObjectID(getDocumentEntryPatientId(request));
+        eventLog.setPT_ParticipantObjectIDs(Collections.singletonList(getDocumentEntryPatientId(request)));
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 
         if (response.getRegistryErrorList() != null) {
@@ -204,7 +201,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
         eventLog.setHR_AlternativeUserID(Helper.getAlternateUserID(sh));
         eventLog.setHR_RoleID(Helper.getRoleID(sh));
         eventLog.setSP_UserID(HTTPUtil.getSubjectDN(true));
-        eventLog.setPT_ParticipantObjectID(getDocumentEntryPatientId(request));
+        eventLog.setPT_ParticipantObjectIDs(Collections.singletonList(getDocumentEntryPatientId(request)));
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 
         if (response.getRegistryErrorList() != null) {

@@ -24,6 +24,7 @@ import tr.com.srdc.epsos.util.http.IPUtil;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -148,7 +149,7 @@ public class EventLogClientUtil {
         for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
-                    eventLog.setPT_ParticipantObjectID(EventLogUtil.getAttributeValue(attribute));
+                    eventLog.setPT_ParticipantObjectIDs(Collections.singletonList(EventLogUtil.getAttributeValue(attribute)));
                     break;
                 }
             }

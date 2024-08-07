@@ -17,13 +17,10 @@ import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.kernel.http.HTTPConstants;
 import org.apache.axis2.transport.http.TransportHeaders;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.v3.II;
-import org.hl7.v3.PRPAIN201305UV02;
-import org.hl7.v3.PRPAIN201306UV02;
+import org.hl7.v3.*;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.http.HTTPUtil;
 import tr.com.srdc.epsos.util.http.IPUtil;
 
@@ -49,7 +46,7 @@ public class EventLogUtil {
      * @param request
      * @param response
      */
-    public static void prepareXCPDCommonLog(EventLog eventLog, MessageContext msgContext, PRPAIN201305UV02 request, PRPAIN201306UV02 response) {
+    public static void prepareXCPDCommonLog(final EventLog eventLog, final MessageContext msgContext, final PRPAIN201305UV02 request, final PRPAIN201306UV02 response) {
 
         // Set Event Identification
         eventLog.setEventType(EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
@@ -58,10 +55,10 @@ public class EventLogUtil {
 
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
 
-            String detail = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
-            String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
+            final String detail = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
+            final String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
             if (detail.startsWith("(")) {
-                String code = detail.substring(1, 5);
+                final String code = detail.substring(1, 5);
                 if (code.equals("1102")) {
                     eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
                 } else {
@@ -77,29 +74,23 @@ public class EventLogUtil {
         }
         // Patient Source is not written, because HCP assurance audit does not include patient mapping information
         // Set Participant Object: Patient Target
-        String patientId = "";
+        final List<String> patientIds = new ArrayList<>();
         if (!response.getControlActProcess().getSubject().isEmpty()) {
-
-            II instanceIdentifier = response.getControlActProcess().getSubject().get(0).getRegistrationEvent()
-                    .getSubject1().getPatient().getId().get(0);
-            if (instanceIdentifier.getExtension() != null && instanceIdentifier.getRoot() != null) {
-                patientId = instanceIdentifier.getExtension() + "^^^&" + instanceIdentifier.getRoot() + "&ISO";
+            for (final PRPAIN201306UV02MFMIMT700711UV01Subject1 subject1 : response.getControlActProcess().getSubject()) {
+                patientIds.add(getParticipantObjectID(subject1.getRegistrationEvent().getSubject1().getPatient().getId().get(0)));
             }
         } else {
-            // TODO: To be reviewed - No Patient details return then audit message is reporting Patient search criteria
-            II instanceIdentifier = response.getControlActProcess().getQueryByParameter().getValue().getParameterList()
-                    .getLivingSubjectId().get(0).getValue().get(0);
-            if (instanceIdentifier.getExtension() != null && instanceIdentifier.getRoot() != null) {
-                patientId = instanceIdentifier.getExtension() + "^^^&" + instanceIdentifier.getRoot() + "&ISO";
+            for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : response.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
+                patientIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
             }
         }
-        eventLog.setPT_ParticipantObjectID(patientId);
+        eventLog.setPT_ParticipantObjectIDs(patientIds);
 
         // Set Participant Object: Error Message
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
 
-            String error = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
-            String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
+            final String error = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
+            final String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
 
             eventLog.setEM_ParticipantObjectID(errorCode);
             eventLog.setEM_ParticipantObjectDetail(error.getBytes());
@@ -117,7 +108,7 @@ public class EventLogUtil {
      * @param response
      * @param classCode
      */
-    public static void prepareXCACommonLogQuery(EventLog eventLog, MessageContext msgContext, AdhocQueryRequest request, AdhocQueryResponse response, ClassCode classCode) {
+    public static void prepareXCACommonLogQuery(final EventLog eventLog, final MessageContext msgContext, final AdhocQueryRequest request, final AdhocQueryResponse response, final ClassCode classCode) {
 
         switch (classCode) {
             case PS_CLASSCODE:
@@ -140,19 +131,19 @@ public class EventLogUtil {
                 break;
         }
 
-        eventLog.setPT_ParticipantObjectID(getDocumentEntryPatientId(request));
+        eventLog.setPT_ParticipantObjectIDs(getDocumentEntryPatientId(request));
 
         if (response.getRegistryObjectList() != null) {
 
-            List<String> documentIds = new ArrayList<>();
-            List<JAXBElement<? extends IdentifiableType>> registryObjectList = response.getRegistryObjectList().getIdentifiable();
-            for (JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
+            final List<String> documentIds = new ArrayList<>();
+            final List<JAXBElement<? extends IdentifiableType>> registryObjectList = response.getRegistryObjectList().getIdentifiable();
+            for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
 
                 if (!(identifiable.getValue() instanceof ExtrinsicObjectType)) {
                     continue;
                 }
-                ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
-                for (ExternalIdentifierType eit : eot.getExternalIdentifier()) {
+                final ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
+                for (final ExternalIdentifierType eit : eot.getExternalIdentifier()) {
 
                     if (eit.getIdentificationScheme().equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME)) {
                         documentIds.add(eit.getValue());
@@ -167,7 +158,7 @@ public class EventLogUtil {
         if (response.getRegistryObjectList() == null) {
 
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
-            for (SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
+            for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
                 if (org.apache.commons.lang.StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                     String documentType = slotType1.getValueList().getValue().get(0);
                     documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "('");
@@ -181,7 +172,7 @@ public class EventLogUtil {
         } else {
 
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
-            for (SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
+            for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
                 if (org.apache.commons.lang.StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                     String documentType = slotType1.getValueList().getValue().get(0);
                     documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "('");
@@ -193,7 +184,7 @@ public class EventLogUtil {
 
         if (response.getRegistryErrorList() != null) {
 
-            RegistryError re = response.getRegistryErrorList().getRegistryError().get(0);
+            final RegistryError re = response.getRegistryErrorList().getRegistryError().get(0);
             eventLog.setEM_ParticipantObjectID(re.getErrorCode());
             eventLog.setEM_ParticipantObjectDetail(re.getCodeContext() == null ? null : re.getCodeContext().getBytes());
         }
@@ -209,7 +200,7 @@ public class EventLogUtil {
      * @param response
      * @param classCode
      */
-    public static void prepareXCACommonLogRetrieve(EventLog eventLog, MessageContext msgContext, RetrieveDocumentSetRequestType request, RetrieveDocumentSetResponseType response, ClassCode classCode) {
+    public static void prepareXCACommonLogRetrieve(final EventLog eventLog, final MessageContext msgContext, final RetrieveDocumentSetRequestType request, final RetrieveDocumentSetResponseType response, final ClassCode classCode) {
 
         switch (classCode) {
             case PS_CLASSCODE:
@@ -246,7 +237,7 @@ public class EventLogUtil {
         if (response.getRegistryResponse().getRegistryErrorList() != null && response.getRegistryResponse().getRegistryErrorList().getRegistryError() != null
                 && !response.getRegistryResponse().getRegistryErrorList().getRegistryError().isEmpty()) {
 
-            RegistryError re = response.getRegistryResponse().getRegistryErrorList().getRegistryError().get(0);
+            final RegistryError re = response.getRegistryResponse().getRegistryErrorList().getRegistryError().get(0);
             // TODO A.R. on TSAM errors currently errorCode=null, codeContext=null - maybe faulty XCA server implementation?
             // What exactly we should log on partial success? Originally was codeContext, but is value OK?
             eventLog.setEM_ParticipantObjectID(re.getErrorCode());
@@ -261,44 +252,44 @@ public class EventLogUtil {
         extractHCIIdentifierFromHeader(eventLog, msgContext);
     }
 
-    public static void extractXcpdQueryByParamFromHeader(EventLog eventLog, MessageContext msgContext, String elem1, String elem2, String elem3) {
+    public static void extractXcpdQueryByParamFromHeader(final EventLog eventLog, final MessageContext msgContext, final String elem1, final String elem2, final String elem3) {
         if(msgContext.getEnvelope().getBody().getChildrenWithLocalName(elem1).hasNext()) {
-            OMElement elem_PRPA_IN201305UV02 = msgContext.getEnvelope().getBody().getChildrenWithLocalName(elem1).next();
+            final OMElement elem_PRPA_IN201305UV02 = msgContext.getEnvelope().getBody().getChildrenWithLocalName(elem1).next();
             if(elem_PRPA_IN201305UV02.getChildrenWithLocalName(elem2).hasNext()){
-                OMElement elem_controlActProcess = elem_PRPA_IN201305UV02.getChildrenWithLocalName(elem2).next();
+                final OMElement elem_controlActProcess = elem_PRPA_IN201305UV02.getChildrenWithLocalName(elem2).next();
                 if(elem_controlActProcess.getChildrenWithLocalName(elem3).hasNext()) {
-                    OMElement elem_qBP = elem_controlActProcess.getChildrenWithLocalName(elem3).next();
+                    final OMElement elem_qBP = elem_controlActProcess.getChildrenWithLocalName(elem3).next();
                     eventLog.setQueryByParameter(elem_qBP.toString());
                 }
             }
         }
     }
 
-    public static void extractQueryByParamFromHeader(EventLog eventLog, MessageContext msgContext, String elem1, String elem2, String elem3) {
+    public static void extractQueryByParamFromHeader(final EventLog eventLog, final MessageContext msgContext, final String elem1, final String elem2, final String elem3) {
         if(msgContext.getEnvelope().getBody().getChildrenWithLocalName("AdhocQueryRequest").hasNext()) {
-            OMElement elem_AdhocQueryRequest = msgContext.getEnvelope().getBody().getChildrenWithLocalName("AdhocQueryRequest").next();
+            final OMElement elem_AdhocQueryRequest = msgContext.getEnvelope().getBody().getChildrenWithLocalName("AdhocQueryRequest").next();
             if(elem_AdhocQueryRequest.getChildrenWithLocalName("AdhocQuery").hasNext()){
-                OMElement elem_AdhocQuery = elem_AdhocQueryRequest.getChildrenWithLocalName("AdhocQuery").next();
+                final OMElement elem_AdhocQuery = elem_AdhocQueryRequest.getChildrenWithLocalName("AdhocQuery").next();
                 elem_AdhocQuery.getAttributeValue(QName.valueOf("id"));
                 eventLog.setQueryByParameter(elem_AdhocQuery.toString());
             }
         }
     }
 
-    public static void extractHCIIdentifierFromHeader(EventLog eventLog, MessageContext msgContext) {
+    public static void extractHCIIdentifierFromHeader(final EventLog eventLog, final MessageContext msgContext) {
         if(msgContext.getEnvelope().getHeader().getChildrenWithLocalName("Security").hasNext()) {
-            OMElement elemSecurity = msgContext.getEnvelope().getHeader().getChildrenWithLocalName("Security").next();
-            for (Iterator<OMElement> itSecurity = elemSecurity.getChildElements(); itSecurity.hasNext(); ) {
-                OMElement elemAssertion = itSecurity.next();
-                for (Iterator<OMElement> it = elemAssertion.getChildElements(); it.hasNext(); ) {
-                    OMElement elem = it.next();
+            final OMElement elemSecurity = msgContext.getEnvelope().getHeader().getChildrenWithLocalName("Security").next();
+            for (final Iterator<OMElement> itSecurity = elemSecurity.getChildElements(); itSecurity.hasNext(); ) {
+                final OMElement elemAssertion = itSecurity.next();
+                for (final Iterator<OMElement> it = elemAssertion.getChildElements(); it.hasNext(); ) {
+                    final OMElement elem = it.next();
                     if("AttributeStatement".equals(elem.getLocalName())) {
-                        for (Iterator<OMElement> itAttribute = elem.getChildElements(); itAttribute.hasNext(); ) {
-                            OMElement elemAttribute = itAttribute.next();
-                            String attrib = elemAttribute.getAttributeValue(new QName("FriendlyName"));
+                        for (final Iterator<OMElement> itAttribute = elem.getChildElements(); itAttribute.hasNext(); ) {
+                            final OMElement elemAttribute = itAttribute.next();
+                            final String attrib = elemAttribute.getAttributeValue(new QName("FriendlyName"));
                             if("HCI Identifier".equals(attrib)) {
-                                Iterator<OMElement> elemAttributeValue = elemAttribute.getChildrenWithLocalName("AttributeValue");
-                                OMElement elemAttributeValueText = elemAttributeValue.next();
+                                final Iterator<OMElement> elemAttributeValue = elemAttribute.getChildrenWithLocalName("AttributeValue");
+                                final OMElement elemAttributeValueText = elemAttributeValue.next();
                                 eventLog.setHciIdentifier(elemAttributeValueText.getText());
                                 break;
                             }
@@ -314,7 +305,7 @@ public class EventLogUtil {
      * @param request
      * @param registryErrorList
      */
-    public static void prepareXDRCommonLog(EventLog eventLog, ProvideAndRegisterDocumentSetRequestType request, RegistryErrorList registryErrorList) {
+    public static void prepareXDRCommonLog(final EventLog eventLog, final ProvideAndRegisterDocumentSetRequestType request, final RegistryErrorList registryErrorList) {
 
         String id = null;
         String classCode = null;
@@ -324,13 +315,13 @@ public class EventLogUtil {
         String documentUniqueId = "N/A";
         String discardId = "N/A";
 
-        List<JAXBElement<? extends IdentifiableType>> registryObjectList = request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable();
+        final List<JAXBElement<? extends IdentifiableType>> registryObjectList = request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable();
         if (registryObjectList != null) {
-            for (JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
+            for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
 
                 if (identifiable.getValue() instanceof ExtrinsicObjectType) {
 
-                    for (ExternalIdentifierType identifierType : ((ExtrinsicObjectType) identifiable.getValue()).getExternalIdentifier()) {
+                    for (final ExternalIdentifierType identifierType : ((ExtrinsicObjectType) identifiable.getValue()).getExternalIdentifier()) {
 
                         if (StringUtils.equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME, identifierType.getIdentificationScheme())) {
 
@@ -338,8 +329,8 @@ public class EventLogUtil {
                         }
                     }
                 } else if (identifiable.getValue() instanceof RegistryPackageType) {
-                    RegistryPackageType registryPackageType = (RegistryPackageType) identifiable.getValue();
-                    for (ExternalIdentifierType externalIdentifier : registryPackageType.getExternalIdentifier()) {
+                    final RegistryPackageType registryPackageType = (RegistryPackageType) identifiable.getValue();
+                    for (final ExternalIdentifierType externalIdentifier : registryPackageType.getExternalIdentifier()) {
                         if (StringUtils.equals(externalIdentifier.getIdentificationScheme(), "urn:uuid:96fdda7c-d067-4183-912e-bf5ee74998a8")) {
                             discardId = externalIdentifier.getValue();
                         }
@@ -348,9 +339,9 @@ public class EventLogUtil {
                 } else if (!(identifiable.getValue() instanceof ExtrinsicObjectType)) {
                     continue;
                 }
-                ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
+                final ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
                 id = eot.getId();
-                for (ClassificationType classif : eot.getClassification()) {
+                for (final ClassificationType classif : eot.getClassification()) {
                     switch (classif.getClassificationScheme()) {
                         case XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_SCHEME:
                             classCode = classif.getNodeRepresentation();
@@ -363,7 +354,7 @@ public class EventLogUtil {
                             break;
                     }
                 }
-                for (ExternalIdentifierType externalIdentifier : eot.getExternalIdentifier()) {
+                for (final ExternalIdentifierType externalIdentifier : eot.getExternalIdentifier()) {
                     if (externalIdentifier.getIdentificationScheme().equals("urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427")) {
                         patientId = externalIdentifier.getValue();
                     }
@@ -392,7 +383,7 @@ public class EventLogUtil {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
         } else {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
-            RegistryError registryError = registryErrorList.getRegistryError().get(0);
+            final RegistryError registryError = registryErrorList.getRegistryError().get(0);
             eventLog.setEM_ParticipantObjectID(registryError.getErrorCode());
             eventLog.setEM_ParticipantObjectDetail(registryError.getCodeContext().getBytes());
         }
@@ -402,9 +393,9 @@ public class EventLogUtil {
      * @param envelope
      * @return
      */
-    public static String getMessageID(SOAPEnvelope envelope) {
+    public static String getMessageID(final SOAPEnvelope envelope) {
 
-        Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
+        final Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
         if (it.hasNext()) {
             return it.next().getText();
         } else {
@@ -412,7 +403,7 @@ public class EventLogUtil {
         }
     }
 
-    public static String getAttributeValue(Attribute attribute) {
+    public static String getAttributeValue(final Attribute attribute) {
 
         String attributeValue = null;
         if (!attribute.getAttributeValues().isEmpty()) {
@@ -427,27 +418,28 @@ public class EventLogUtil {
      * @param request
      * @return
      */
-    private static String getDocumentEntryPatientId(AdhocQueryRequest request) {
+    private static List<String> getDocumentEntryPatientId(final AdhocQueryRequest request) {
 
-        for (SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
+        final List<String> patientIds = new ArrayList<>();
+        for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
             if (slotType1.getName().equals("$XDSDocumentEntryPatientId")) {
                 String patientId = slotType1.getValueList().getValue().get(0);
                 patientId = patientId.substring(1, patientId.length() - 1);
-                return patientId;
+                patientIds.add(patientId);
             }
         }
-        return "$XDSDocumentEntryPatientId Not Found!";
+        return patientIds;
     }
 
     /**
      * @param message
      * @return
      */
-    private static boolean isUUIDValid(String message) {
+    private static boolean isUUIDValid(final String message) {
         try {
             UUID.fromString(message);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             return false;
         }
     }
@@ -456,10 +448,10 @@ public class EventLogUtil {
      * @param messageContext - JAXWS Axis2 MessageContext used by the request.
      * @return
      */
-    public static String getSourceGatewayIdentifier(MessageContext messageContext) {
+    public static String getSourceGatewayIdentifier(final MessageContext messageContext) {
 
-        TransportHeaders headers = (TransportHeaders) messageContext.getProperty(MessageContext.TRANSPORT_HEADERS);
-        String headerClientIp = headers.get("X-Forwarded-For");
+        final TransportHeaders headers = (TransportHeaders) messageContext.getProperty(MessageContext.TRANSPORT_HEADERS);
+        final String headerClientIp = headers.get("X-Forwarded-For");
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("--> X-Forwarded-For Address: '{}'", headerClientIp);
             LOGGER.debug("--> Remote Address: '{}'", messageContext.getProperty(MessageContext.REMOTE_ADDR));
@@ -472,9 +464,9 @@ public class EventLogUtil {
                 return headerClientIp;
             }
         }
-        String clientIp = (String) messageContext.getProperty(MessageContext.REMOTE_ADDR);
+        final String clientIp = (String) messageContext.getProperty(MessageContext.REMOTE_ADDR);
         if (IPUtil.isLocalLoopbackIp(clientIp)) {
-            HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
+            final HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
             LOGGER.debug("Client Server Name: '{}'", servletRequest.getServerName());
             return servletRequest.getServerName();
         } else {
@@ -487,9 +479,13 @@ public class EventLogUtil {
         return IPUtil.getPrivateServerIp();
     }
 
-    public static String getClientCommonName(MessageContext messageContext) {
+    public static String getClientCommonName(final MessageContext messageContext) {
 
-        HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
+        final HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
         return HTTPUtil.getClientCertificate(servletRequest);
+    }
+
+    private static String getParticipantObjectID(final II id) {
+        return id.getExtension() + "^^^&" + id.getRoot() + "&ISO";
     }
 }

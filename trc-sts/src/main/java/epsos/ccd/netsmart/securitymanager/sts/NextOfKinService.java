@@ -116,8 +116,8 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
 
             sslCommonName = HTTPUtil.getSubjectDN(false);
             sendNOKAuditMessage(samlNextOfKinIssuer.getPointOfCare(), samlNextOfKinIssuer.getHumanRequestorNameId(),
-                    samlNextOfKinIssuer.getHumanRequestorSubjectId(), samlNextOfKinIssuer.getFunctionalRole(), nextOfKinDetail.getLivingSubjectIds().get(0),
-                    samlNextOfKinIssuer.getFacilityType(), nextOfKinAssertion.getID(), sslCommonName, messageId,
+                    samlNextOfKinIssuer.getHumanRequestorSubjectId(), samlNextOfKinIssuer.getFunctionalRole(),
+                    nextOfKinDetail.getLivingSubjectIds(), samlNextOfKinIssuer.getFacilityType(), nextOfKinAssertion.getID(), sslCommonName, messageId,
                     strReqHeader.getBytes(StandardCharsets.UTF_8), getMessageIdFromHeader(response.getSOAPHeader()),
                     strRespHeader.getBytes(StandardCharsets.UTF_8));
 
@@ -129,7 +129,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
     }
 
     private void sendNOKAuditMessage(String pointOfCareID, String humanRequestorNameID, String humanRequestorSubjectID,
-                                     String humanRequestorRole, String nokID, String facilityType, String assertionId,
+                                     String humanRequestorRole, final List<String> nokIDs, String facilityType, String assertionId,
                                      String certificateCommonName, String reqMid, byte[] reqSecHeader, String resMid, byte[] resSecHeader) {
 
         var auditService = AuditServiceFactory.getInstance();
@@ -146,7 +146,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
                 date, EventOutcomeIndicator.FULL_SUCCESS, pointOfCareID, facilityType, humanRequestorNameID,
                 humanRequestorRole, humanRequestorSubjectID, certificateCommonName, trcCommonName,
                 ConfigurationManagerFactory.getConfigurationManager().getProperty("COUNTRY_PRINCIPAL_SUBDIVISION"),
-                nokID, Constants.UUID_PREFIX + assertionId, reqMid, reqSecHeader, resMid, resSecHeader,
+                nokIDs, Constants.UUID_PREFIX + assertionId, reqMid, reqSecHeader, resMid, resSecHeader,
                 IPUtil.isLocalLoopbackIp(sourceGateway) ? serverName : sourceGateway, STSUtils.getSTSServerIP(), NcpSide.NCP_B);
 
         eventLogNOKA.setEventType(EventType.NOK_ASSERTION);
