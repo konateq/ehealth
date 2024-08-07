@@ -4,6 +4,7 @@ import epsos.ccd.gnomon.auditmanager.EventLog;
 import eu.europa.ec.sante.ehdsi.openncp.audit.AuditConstant;
 import net.RFC3881.AuditMessage;
 import net.RFC3881.ObjectFactory;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
     public AuditMessage build(final EventLog eventLog) {
         final AuditMessage message;
         // If patient id mapping has occurred (there is a patient source ID), use patient mapping audit scheme
-        if (eventLog.getPS_ParticipantObjectID() != null) {
+        if (CollectionUtils.isNotEmpty(eventLog.getPS_ParticipantObjectIDs())) {
             message = createAuditTrailForPatientMapping(eventLog);
         } else {
             message = createAuditTrailForHCPAssurance(eventLog);
@@ -46,12 +47,16 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
             addService(message, eventLog.getSP_UserID(), false, "MasterPatientIndex", AuditConstant.CODE_SYSTEM_EHDSI,
                     "Master Patient Index", eventLog.getTargetip());
             addAuditSource(message, eventLog.getAS_AuditSourceId());
-            addParticipantObject(message, eventLog.getPS_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("1"),
-                    "PatientSource", "2", AuditConstant.DICOM, "Patient Number",
-                    "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
-            addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("1"),
-                    "PatientTarget", "2", AuditConstant.DICOM, "Patient Number",
-                    "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            for (final String psParticipantObjectID : eventLog.getPS_ParticipantObjectIDs()) {
+                addParticipantObject(message, psParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
+                        "PatientSource", "2", AuditConstant.DICOM, "Patient Number",
+                        "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            }
+            for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
+                addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
+                        "PatientTarget", "2", AuditConstant.DICOM, "Patient Number",
+                        "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
                     Short.valueOf("3"), "9", "errormsg");
             if (LOGGER.isDebugEnabled()) {

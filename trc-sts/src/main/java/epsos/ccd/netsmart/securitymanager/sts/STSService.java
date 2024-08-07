@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 @ServiceMode(value = Mode.MESSAGE)
 @WebServiceProvider(targetNamespace = "https://ehdsi.eu/", serviceName = "SecurityTokenService", portName = "ISecurityTokenService_Port")
@@ -42,16 +43,16 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
     private final Logger logger = LoggerFactory.getLogger(STSService.class);
 
     @Override
-    public SOAPMessage invoke(SOAPMessage source) {
+    public SOAPMessage invoke(final SOAPMessage source) {
 
         log(source);
 
-        SOAPBody body;
-        SOAPHeader header;
+        final SOAPBody body;
+        final SOAPHeader header;
         try {
             body = source.getSOAPBody();
             header = source.getSOAPHeader();
-        } catch (SOAPException ex) {
+        } catch (final SOAPException ex) {
             throw new WebServiceException("Cannot get Soap Message Parts", ex);
         }
 
@@ -62,49 +63,49 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
             if (!SAML20_TOKEN_URN.equals(getRequestedToken(body))) {
                 throw new WebServiceException("Only SAML2.0 Tokens are Issued");
             }
-        } catch (WSTrustException ex) {
+        } catch (final WSTrustException ex) {
             throw new WebServiceException(ex);
         }
 
         try {
             // these calls are both getters and checkers of message.
             // So we call them first
-            String purposeOfUse = STSUtils.getPurposeOfUse(body);
-            String dispensationPinCode = STSUtils.getDispensationPinCode(body);
-            String prescriptionId = STSUtils.getPrescriptionId(body);
-            String patientID = getPatientID(body);
-            String messageId = getMessageIdFromHeader(header);
+            final String purposeOfUse = STSUtils.getPurposeOfUse(body);
+            final String dispensationPinCode = STSUtils.getDispensationPinCode(body);
+            final String prescriptionId = STSUtils.getPrescriptionId(body);
+            final List<String> patientIDs = getPatientIDs(body);
+            final String messageId = getMessageIdFromHeader(header);
 
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
+            final DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
 
             // The response TRC Assertion Issuer.
-            var samlTRCIssuer = new SamlTRCIssuer();
-            var hcpIdAssertion = getIdAssertionFromHeader(header);
+            final var samlTRCIssuer = new SamlTRCIssuer();
+            final var hcpIdAssertion = getIdAssertionFromHeader(header);
             if (hcpIdAssertion != null) {
                 logger.info("hcpIdAssertion: '{}'", hcpIdAssertion.getID());
                 if (hcpIdAssertion.getIssueInstant() != null) {
                     logger.info("hcpIdAssertion Issue Instant: '{}'", hcpIdAssertion.getIssueInstant());
                 }
             }
-            Assertion trc = samlTRCIssuer.issueTrcToken(hcpIdAssertion, patientID, purposeOfUse, dispensationPinCode, prescriptionId, null);
+            final Assertion trc = samlTRCIssuer.issueTrcToken(hcpIdAssertion, patientIDs.get(0), purposeOfUse, dispensationPinCode, prescriptionId, null);
             if (hcpIdAssertion != null) {
                 logger.info("HCP Assertion Date: '{}' TRC Assertion Date: '{}' -- '{}'",
                         hcpIdAssertion.getIssueInstant().atZone(ZoneId.of("UTC")),
                         trc.getIssueInstant().atZone(ZoneId.of("UTC")), trc.getAuthnStatements().isEmpty());
             }
 
-            Document signedDoc = builder.newDocument();
-            var marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+            final Document signedDoc = builder.newDocument();
+            final var marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
             marshallerFactory.getMarshaller(trc).marshall(trc, signedDoc);
 
-            SOAPMessage response = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL).createMessage();
+            final SOAPMessage response = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL).createMessage();
             response.getSOAPBody().addDocument(STSUtils.createRSTRC(signedDoc));
             createResponseHeader(response.getSOAPHeader(), messageId);
 
-            var strRespHeader = STSUtils.domElementToString(response.getSOAPHeader());
-            var strReqHeader = STSUtils.domElementToString(header);
+            final var strRespHeader = STSUtils.domElementToString(response.getSOAPHeader());
+            final var strReqHeader = STSUtils.domElementToString(header);
 
             String sslCommonName;
             if (context.getUserPrincipal() != null) {
@@ -117,7 +118,7 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
 
             sslCommonName = HTTPUtil.getSubjectDN(false);
             sendTRCAuditMessage(samlTRCIssuer.getPointOfCare(), samlTRCIssuer.getHumanRequestorNameId(),
-                    samlTRCIssuer.getHumanRequestorSubjectId(), samlTRCIssuer.getFunctionalRole(), patientID,
+                    samlTRCIssuer.getHumanRequestorSubjectId(), samlTRCIssuer.getFunctionalRole(), patientIDs,
                     samlTRCIssuer.getFacilityType(), trc.getID(), sslCommonName, messageId,
                     strReqHeader.getBytes(StandardCharsets.UTF_8), getMessageIdFromHeader(response.getSOAPHeader()),
                     strRespHeader.getBytes(StandardCharsets.UTF_8));
@@ -125,37 +126,38 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
             log(response);
             return response;
 
-        } catch (SOAPException | WSTrustException | MarshallingException | SMgrException | ParserConfigurationException ex) {
+        } catch (final SOAPException | WSTrustException | MarshallingException | SMgrException |
+                       ParserConfigurationException ex) {
             throw new WebServiceException(ex);
         }
     }
 
-    private void sendTRCAuditMessage(String pointOfCareID, String humanRequestorNameID, String humanRequestorSubjectID,
-                                     String humanRequestorRole, String patientID, String facilityType, String assertionId,
-                                     String certificateCommonName, String reqMid, byte[] reqSecHeader, String resMid, byte[] resSecHeader) {
+    private void sendTRCAuditMessage(final String pointOfCareID, final String humanRequestorNameID, final String humanRequestorSubjectID,
+                                     final String humanRequestorRole, final List<String> patientIDs, final String facilityType, final String assertionId,
+                                     final String certificateCommonName, final String reqMid, final byte[] reqSecHeader, final String resMid, final byte[] resSecHeader) {
 
-        var auditService = AuditServiceFactory.getInstance();
-        var gregorianCalendar = new GregorianCalendar();
+        final var auditService = AuditServiceFactory.getInstance();
+        final var gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.setTime(new Date());
         XMLGregorianCalendar date2 = null;
         try {
             date2 = DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar);
-        } catch (DatatypeConfigurationException ex) {
+        } catch (final DatatypeConfigurationException ex) {
             logger.error("DatatypeConfigurationException: '{}'", ex.getMessage(), ex);
         }
-        String trcCommonName = HTTPUtil.getTlsCertificateCommonName(ConfigurationManagerFactory.getConfigurationManager().getProperty("secman.sts.url"));
-        String sourceGateway = getClientIP();
+        final String trcCommonName = HTTPUtil.getTlsCertificateCommonName(ConfigurationManagerFactory.getConfigurationManager().getProperty("secman.sts.url"));
+        final String sourceGateway = getClientIP();
         logger.info("STS Client IP: '{}'", sourceGateway);
-        var messageContext = context.getMessageContext();
-        HttpServletRequest servletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
-        String serverName = servletRequest.getServerName();
+        final var messageContext = context.getMessageContext();
+        final HttpServletRequest servletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
+        final String serverName = servletRequest.getServerName();
 
         //TODO: Review Audit Trail specification - Identifying SC and SP as value of CN from TLS certificate.
-        EventLog eventLogTRCA = EventLog.createEventLogTRCA(TransactionName.TRC_ASSERTION, EventActionCode.EXECUTE,
+        final EventLog eventLogTRCA = EventLog.createEventLogTRCA(TransactionName.TRC_ASSERTION, EventActionCode.EXECUTE,
                 date2, EventOutcomeIndicator.FULL_SUCCESS, pointOfCareID, facilityType, humanRequestorNameID,
                 humanRequestorRole, humanRequestorSubjectID, certificateCommonName, trcCommonName,
                 ConfigurationManagerFactory.getConfigurationManager().getProperty("COUNTRY_PRINCIPAL_SUBDIVISION"),
-                patientID, Constants.UUID_PREFIX + assertionId, reqMid, reqSecHeader, resMid, resSecHeader,
+                patientIDs, Constants.UUID_PREFIX + assertionId, reqMid, reqSecHeader, resMid, resSecHeader,
                 IPUtil.isLocalLoopbackIp(sourceGateway) ? serverName : sourceGateway, STSUtils.getSTSServerIP(), NcpSide.NCP_B);
 
         eventLogTRCA.setEventType(EventType.TRC_ASSERTION);

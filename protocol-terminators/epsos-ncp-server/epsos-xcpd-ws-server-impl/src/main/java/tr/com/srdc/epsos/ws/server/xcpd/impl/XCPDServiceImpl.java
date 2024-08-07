@@ -50,7 +50,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     static {
         try {
             DATATYPE_FACTORY = DatatypeFactory.newInstance();
-        } catch (DatatypeConfigurationException e) {
+        } catch (final DatatypeConfigurationException e) {
             throw new IllegalArgumentException();
         }
     }
@@ -63,29 +63,29 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     public XCPDServiceImpl() {
 
         objectFactory = new ObjectFactory();
-        ServiceLoader<PatientSearchInterface> serviceLoader = ServiceLoader.load(PatientSearchInterface.class);
+        final ServiceLoader<PatientSearchInterface> serviceLoader = ServiceLoader.load(PatientSearchInterface.class);
         try {
             logger.info("Loading National implementation of PatientSearchInterface...");
             patientSearchService = serviceLoader.iterator().next();
             logger.info("Successfully loaded PatientSearchService");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("Failed to load implementation of PatientSearchService: " + e.getMessage(), e);
             throw e;
         }
     }
 
-    private String getParticipantObjectID(II id) {
+    private String getParticipantObjectID(final II id) {
         return id.getExtension() + "^^^&" + id.getRoot() + "&ISO";
     }
 
-    public void prepareEventLog(EventLog eventLog, PRPAIN201305UV02 inputMessage, PRPAIN201306UV02 outputMessage, Element soapHeader) {
+    public void prepareEventLog(final EventLog eventLog, final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final Element soapHeader) {
 
         logger.info("[XCPD Service] Preparing Event Log: '{}'", eventLog.getEventType());
         eventLog.setEventType(EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
         eventLog.setEI_TransactionName(TransactionName.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
-        String userIdAlias = Helper.getAssertionsSPProvidedId(soapHeader);
+        final String userIdAlias = Helper.getAssertionsSPProvidedId(soapHeader);
         eventLog.setHR_UserID(StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "" + "<" + Helper.getUserID(soapHeader)
                 + "@" + Helper.getAssertionsIssuer(soapHeader) + ">");
         eventLog.setHR_AlternativeUserID(Helper.getAlternateUserID(soapHeader));
@@ -95,37 +95,27 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         eventLog.setPC_RoleID(Helper.getPC_RoleID(soapHeader));
         eventLog.setSP_UserID(HTTPUtil.getSubjectDN(true));
 
-        //TODO: Update audit with Patient ID returned
-        II sourceII;
-        II targetII;
-        if (!inputMessage.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId().isEmpty()) {
-
-            sourceII = inputMessage.getControlActProcess().getQueryByParameter().getValue().getParameterList()
-                    .getLivingSubjectId().get(0).getValue().get(0);
-            if (!CollectionUtils.isEmpty(outputMessage.getControlActProcess().getSubject())) {
-                targetII = outputMessage.getControlActProcess().getSubject().get(0).getRegistrationEvent().getSubject1()
-                        .getPatient().getId().get(0);
-            } else {
-                // TODO: To be reviewed - No Patient details return then audit message is reporting Patient search criteria
-                targetII = sourceII;
-            }
-        } else {
-            sourceII = new II();
-            targetII = new II();
+        // Update audit with Patient ID returned
+        final ArrayList<String> requestParticipantObjectIds = new ArrayList<>();
+        for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : inputMessage.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
+            requestParticipantObjectIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
         }
-        eventLog.setPT_ParticipantObjectID(getParticipantObjectID(targetII));
+        final ArrayList<String> responseParticipantObjectIds = new ArrayList<>();
+        for (final PRPAIN201306UV02MFMIMT700711UV01Subject1 subject1 : outputMessage.getControlActProcess().getSubject()) {
+            responseParticipantObjectIds.add(getParticipantObjectID(subject1.getRegistrationEvent().getSubject1().getPatient().getId().get(0)));
+        }
+        eventLog.setPT_ParticipantObjectIDs(CollectionUtils.isNotEmpty(responseParticipantObjectIds) ? responseParticipantObjectIds : requestParticipantObjectIds);
 
-        // TODO: Check if patient id mapping has occurred, prepare event log for patient audit mapping in this case
-        if (!sourceII.getRoot().equals(targetII.getRoot()) || !sourceII.getExtension().equals(targetII.getExtension())) {
+        // Check if patient id mapping has occurred, prepare event log for patient audit mapping in this case
+        if (!CollectionUtils.isEqualCollection(responseParticipantObjectIds, requestParticipantObjectIds)) {
             logger.warn("Patient Source and Target are different: Identifier has been mapped, Patient Mapping audit scheme might be used");
-            //  eventLog.setPS_ParticipantObjectID(getParticipantObjectID(sourceII));
         }
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
         if (!outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
-            String detail = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
+            final String detail = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
             final String errorCode = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
             if (detail.startsWith("(")) {
-                var code = detail.substring(1, 5);
+                final var code = detail.substring(1, 5);
                 if (StringUtils.equals(code, "1102")) {
                     eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
                 } else {
@@ -141,16 +131,16 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         }
     }
 
-    public PRPAIN201306UV02 queryPatient(PRPAIN201305UV02 request, SOAPHeader soapHeader, EventLog eventLog) throws Exception {
+    public PRPAIN201306UV02 queryPatient(final PRPAIN201305UV02 request, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
 
-        var response = objectFactory.createPRPAIN201306UV02();
+        final var response = objectFactory.createPRPAIN201306UV02();
         pRPAIN201306UV02Builder(request, response, soapHeader, eventLog);
         return response;
     }
 
-    private PRPAIN201306UV02MFMIMT700711UV01Subject1 getSubjectByPatientDemographic(PatientDemographics patientDemographics) {
+    private PRPAIN201306UV02MFMIMT700711UV01Subject1 getSubjectByPatientDemographic(final PatientDemographics patientDemographics) {
 
-        var response = objectFactory.createPRPAIN201306UV02MFMIMT700711UV01Subject1();
+        final var response = objectFactory.createPRPAIN201306UV02MFMIMT700711UV01Subject1();
         response.getTypeCode().add("SUBJ");
 
         // Set registrationEvent
@@ -184,7 +174,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         response.getRegistrationEvent().getSubject1().getPatient().getStatusCode().setCode("active");
 
         // Set registrationEvent/Subject/Patient/patientPerson
-        var prpamt201310UV02Person = objectFactory.createPRPAMT201310UV02Person();
+        final var prpamt201310UV02Person = objectFactory.createPRPAMT201310UV02Person();
         prpamt201310UV02Person.getClassCode().add("PSN");
         prpamt201310UV02Person.setDeterminerCode("INSTANCE");
         prpamt201310UV02Person.setAdministrativeGenderCode(getAdministrativeCode(patientDemographics));
@@ -212,7 +202,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         response.getRegistrationEvent().getSubject1().getPatient().getSubjectOf1().get(0).getQueryMatchObservation()
                 .getCode().setCodeSystem("2.16.840.1.113883.1.11.19914");
 
-        var matchInt = objectFactory.createINT();
+        final var matchInt = objectFactory.createINT();
         matchInt.setValue(BigInteger.valueOf(100));
         response.getRegistrationEvent().getSubject1().getPatient().getSubjectOf1().get(0).getQueryMatchObservation()
                 .setValue(matchInt);
@@ -237,58 +227,58 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         return response;
     }
 
-    private CE getAdministrativeCode(PatientDemographics pd) {
-        var result = objectFactory.createCE();
+    private CE getAdministrativeCode(final PatientDemographics pd) {
+        final var result = objectFactory.createCE();
         result.setCode(pd.getAdministrativeGender().toString());
         return result;
     }
 
-    private TS getBirthTime(PatientDemographics pd) {
-        var result = objectFactory.createTS();
-        var date = pd.getBirthDate();
-        var dateFormat = new SimpleDateFormat("yyyyMMdd");
+    private TS getBirthTime(final PatientDemographics pd) {
+        final var result = objectFactory.createTS();
+        final var date = pd.getBirthDate();
+        final var dateFormat = new SimpleDateFormat("yyyyMMdd");
         result.setValue(dateFormat.format(date));
         return result;
     }
 
-    private PN getName(PatientDemographics pd) {
-        var result = objectFactory.createPN();
-        var enFamily = objectFactory.createEnFamily();
+    private PN getName(final PatientDemographics pd) {
+        final var result = objectFactory.createPN();
+        final var enFamily = objectFactory.createEnFamily();
         enFamily.setContent(pd.getFamilyName());
         result.getContent().add(objectFactory.createENFamily(enFamily));
 
-        var enGiven = objectFactory.createEnGiven();
+        final var enGiven = objectFactory.createEnGiven();
         enGiven.setContent(pd.getGivenName());
         result.getContent().add(objectFactory.createENGiven(enGiven));
         return result;
     }
 
-    private AD getAddress(PatientDemographics patientDemographics) {
+    private AD getAddress(final PatientDemographics patientDemographics) {
 
-        var result = objectFactory.createAD();
+        final var result = objectFactory.createAD();
         // Adding the city
         if (StringUtils.isNotBlank(patientDemographics.getCity())) {
-            var city = objectFactory.createAdxpCity();
+            final var city = objectFactory.createAdxpCity();
             city.setContent(StringUtils.strip(patientDemographics.getCity()));
             result.getContent().add(objectFactory.createADCity(city));
         }
 
         // Adding the postal code
         if (StringUtils.isNotBlank(patientDemographics.getPostalCode())) {
-            var postal = objectFactory.createAdxpPostalCode();
+            final var postal = objectFactory.createAdxpPostalCode();
             postal.setContent(StringUtils.strip(patientDemographics.getPostalCode()));
             result.getContent().add(objectFactory.createADPostalCode(postal));
         }
 
         // Adding the address street line
         if (StringUtils.isNotBlank(patientDemographics.getStreetAddress())) {
-            var street = objectFactory.createAdxpStreetAddressLine();
+            final var street = objectFactory.createAdxpStreetAddressLine();
             street.setContent(StringUtils.strip(patientDemographics.getStreetAddress()));
             result.getContent().add(objectFactory.createADStreetAddressLine(street));
         }
 
         // Adding the country
-        var country = objectFactory.createAdxpCountry();
+        final var country = objectFactory.createAdxpCountry();
         country.setContent(patientDemographics.getCountry());
         result.getContent().add(objectFactory.createADCountry(country));
 
@@ -298,9 +288,9 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     /**
      * Prepares a reasonOf element according to error type
      */
-    private MFMIMT700711UV01Reason getReasonOfElement(XCPDErrorCode xcpdErrorCode) {
+    private MFMIMT700711UV01Reason getReasonOfElement(final XCPDErrorCode xcpdErrorCode) {
 
-        var mfmimt700711UV01Reason = objectFactory.createMFMIMT700711UV01Reason();
+        final var mfmimt700711UV01Reason = objectFactory.createMFMIMT700711UV01Reason();
         mfmimt700711UV01Reason.setTypeCode("RSON");
 
         // Set detectedIssueEvent
@@ -315,37 +305,37 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
         if (xcpdErrorCode == XCPDErrorCode.DemographicsQueryNotAllowed) {
             // Set detectedIssueEvent/triggerFor
-            MCAIMT900001UV01Requires mcaimt900001UV01Requires = objectFactory.createMCAIMT900001UV01Requires();
+            final MCAIMT900001UV01Requires mcaimt900001UV01Requires = objectFactory.createMCAIMT900001UV01Requires();
             mfmimt700711UV01Reason.getDetectedIssueEvent().getTriggerFor().add(mcaimt900001UV01Requires);
             mcaimt900001UV01Requires.getTypeCode().add("TRIG");
 
             // Set detectedIssueEvent/triggerFor/actOrRequired
-            MCAIMT900001UV01ActOrderRequired mcaimt900001UV01ActOrderRequired = objectFactory.createMCAIMT900001UV01ActOrderRequired();
+            final MCAIMT900001UV01ActOrderRequired mcaimt900001UV01ActOrderRequired = objectFactory.createMCAIMT900001UV01ActOrderRequired();
 
             mcaimt900001UV01Requires.setActOrderRequired(mcaimt900001UV01ActOrderRequired);
             mcaimt900001UV01ActOrderRequired.getClassCode().add("ACT");
             mcaimt900001UV01ActOrderRequired.getMoodCode().add("RQO");
 
             // Set detectedIssueEvent/triggerFor/actOrRequired/code
-            CE ce = objectFactory.createCE();
+            final CE ce = objectFactory.createCE();
             mcaimt900001UV01ActOrderRequired.setCode(ce);
             ce.setCode(xcpdErrorCode.getCode());
             ce.setCodeSystem(xcpdErrorCode.getCodeSystem());
         } else if (xcpdErrorCode == XCPDErrorCode.InsufficientRights
                 || xcpdErrorCode == XCPDErrorCode.AnswerNotAvailable) {
             // Set detectedIssueEvent/mitigatedBy
-            MCAIMT900001UV01SourceOf mcaimt900001UV01SourceOf = objectFactory.createMCAIMT900001UV01SourceOf();
+            final MCAIMT900001UV01SourceOf mcaimt900001UV01SourceOf = objectFactory.createMCAIMT900001UV01SourceOf();
             mfmimt700711UV01Reason.getDetectedIssueEvent().getMitigatedBy().add(mcaimt900001UV01SourceOf);
             mcaimt900001UV01SourceOf.setTypeCode(ActRelationshipMitigates.MITGT);
 
             // Set detectedIssueEvent/mitigatedBy/detectedIssueManagement
-            MCAIMT900001UV01DetectedIssueManagement mcaimt900001UV01DetectedIssueManagement = objectFactory.createMCAIMT900001UV01DetectedIssueManagement();
+            final MCAIMT900001UV01DetectedIssueManagement mcaimt900001UV01DetectedIssueManagement = objectFactory.createMCAIMT900001UV01DetectedIssueManagement();
             mcaimt900001UV01SourceOf.setDetectedIssueManagement(mcaimt900001UV01DetectedIssueManagement);
             mcaimt900001UV01DetectedIssueManagement.getClassCode().add("ACT");
             mcaimt900001UV01DetectedIssueManagement.setMoodCode(XActMoodDefEvn.EVN);
 
             // Set detectedIssueEvent/mitigatedBy/detectedIssueManagement/code
-            CD cd = objectFactory.createCD();
+            final CD cd = objectFactory.createCD();
             cd.setCode(xcpdErrorCode.getCode());
             cd.setCodeSystem(xcpdErrorCode.getCodeSystem());
             mcaimt900001UV01DetectedIssueManagement.setCode(cd);
@@ -353,15 +343,15 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         return mfmimt700711UV01Reason;
     }
 
-    private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context) {
+    private void fillOutputMessage(final PRPAIN201306UV02 outputMessage, final XCPDErrorCode xcpdErrorCode, final OpenNCPErrorCode openncpErrorCode, final String context) {
         fillOutputMessage(outputMessage, xcpdErrorCode, openncpErrorCode, context, "AE", "");
     }
 
-    private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context, String location) {
+    private void fillOutputMessage(final PRPAIN201306UV02 outputMessage, final XCPDErrorCode xcpdErrorCode, final OpenNCPErrorCode openncpErrorCode, final String context, final String location) {
         fillOutputMessage(outputMessage, xcpdErrorCode, openncpErrorCode, context, "AE", location);
     }
 
-    private void fillOutputMessage(PRPAIN201306UV02 outputMessage, XCPDErrorCode xcpdErrorCode, OpenNCPErrorCode openncpErrorCode, String context, String code, String locationText) {
+    private void fillOutputMessage(final PRPAIN201306UV02 outputMessage, final XCPDErrorCode xcpdErrorCode, final OpenNCPErrorCode openncpErrorCode, final String context, final String code, final String locationText) {
 
         // Set queryAck/statusCode and queryAck/queryResponseCode
         outputMessage.getControlActProcess().getQueryAck().setStatusCode(objectFactory.createCS());
@@ -376,10 +366,10 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         if (openncpErrorCode != null) {
             logger.error(context);
             // Set acknowledgement/acknowledgementDetail
-            MCCIMT000300UV01Acknowledgement acknowledgement = outputMessage.getAcknowledgement().get(0);
-            MCCIMT000300UV01AcknowledgementDetail acknowledgementDetail = objectFactory.createMCCIMT000300UV01AcknowledgementDetail();
+            final MCCIMT000300UV01Acknowledgement acknowledgement = outputMessage.getAcknowledgement().get(0);
+            final MCCIMT000300UV01AcknowledgementDetail acknowledgementDetail = objectFactory.createMCCIMT000300UV01AcknowledgementDetail();
 
-            CE codeCE = objectFactory.createCE();
+            final CE codeCE = objectFactory.createCE();
             codeCE.setCode(openncpErrorCode.getCode());
             acknowledgementDetail.setCode(codeCE);
 
@@ -387,7 +377,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             //acknowledgementDetail.getText().setContent(openncpErrorCode.getDescription());
             acknowledgementDetail.getText().setContent(context);
 
-            ST location = objectFactory.createST();
+            final ST location = objectFactory.createST();
             //location.setContent(context);
             location.setContent(locationText);
             acknowledgementDetail.getLocation().add(location);
@@ -397,101 +387,101 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         }
     }
 
-    private PatientDemographics parsePRPAIN201305UV02toPatientDemographics(PRPAIN201305UV02 inputMessage) {
+    private PatientDemographics parsePRPAIN201305UV02toPatientDemographics(final PRPAIN201305UV02 inputMessage) {
 
-        var patientDemographics = new PatientDemographics();
-        PRPAIN201305UV02QUQIMT021001UV01ControlActProcess cap = inputMessage.getControlActProcess();
+        final var patientDemographics = new PatientDemographics();
+        final PRPAIN201305UV02QUQIMT021001UV01ControlActProcess cap = inputMessage.getControlActProcess();
 
         if (cap != null) {
-            PRPAMT201306UV02QueryByParameter queryByParameter = cap.getQueryByParameter().getValue();
+            final PRPAMT201306UV02QueryByParameter queryByParameter = cap.getQueryByParameter().getValue();
             if (queryByParameter != null) {
-                PRPAMT201306UV02ParameterList pl = queryByParameter.getParameterList();
+                final PRPAMT201306UV02ParameterList pl = queryByParameter.getParameterList();
 
                 // Administrative gender
                 try {
-                    List<PRPAMT201306UV02LivingSubjectAdministrativeGender> genders = pl.getLivingSubjectAdministrativeGender();
+                    final List<PRPAMT201306UV02LivingSubjectAdministrativeGender> genders = pl.getLivingSubjectAdministrativeGender();
                     if (genders != null && !genders.isEmpty()) {
-                        PRPAMT201306UV02LivingSubjectAdministrativeGender gender = genders.get(0);
+                        final PRPAMT201306UV02LivingSubjectAdministrativeGender gender = genders.get(0);
                         patientDemographics.setAdministrativeGender(PatientDemographics.Gender.parseGender(gender.getValue().get(0).getCode()));
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.warn("Unable to parse administrative gender", e);
                 }
 
                 // BirthDate
                 try {
-                    List<PRPAMT201306UV02LivingSubjectBirthTime> bds = pl.getLivingSubjectBirthTime();
+                    final List<PRPAMT201306UV02LivingSubjectBirthTime> bds = pl.getLivingSubjectBirthTime();
                     if (bds != null && !bds.isEmpty()) {
-                        PRPAMT201306UV02LivingSubjectBirthTime bd = bds.get(0);
-                        String sbd = bd.getValue().get(0).getValue();
+                        final PRPAMT201306UV02LivingSubjectBirthTime bd = bds.get(0);
+                        final String sbd = bd.getValue().get(0).getValue();
                         patientDemographics.setBirthDate(DateUtil.parseDateFromString(sbd, "yyyyMMdd"));
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.warn("Unable to parse birthDate", e);
                 }
 
                 // City, street name, country, postal code
                 try {
-                    List<PRPAMT201306UV02PatientAddress> pas = pl.getPatientAddress();
+                    final List<PRPAMT201306UV02PatientAddress> pas = pl.getPatientAddress();
                     if (pas != null && !pas.isEmpty()) {
-                        PRPAMT201306UV02PatientAddress pa = pas.get(0);
-                        List<Serializable> content = pa.getValue().get(0).getContent();
-                        for (Serializable s : content) {
+                        final PRPAMT201306UV02PatientAddress pa = pas.get(0);
+                        final List<Serializable> content = pa.getValue().get(0).getContent();
+                        for (final Serializable s : content) {
                             if (s instanceof JAXBElement) {
-                                JAXBElement element = (JAXBElement) s;
-                                String eName = element.getName().getLocalPart();
+                                final JAXBElement element = (JAXBElement) s;
+                                final String eName = element.getName().getLocalPart();
                                 if (StringUtils.equals("city", eName)) {
-                                    AdxpCity ac = (AdxpCity) element.getValue();
+                                    final AdxpCity ac = (AdxpCity) element.getValue();
                                     patientDemographics.setCity(StringUtils.strip(ac.getContent()));
                                 } else if (StringUtils.equals("streetName", eName)) {
-                                    AdxpStreetName asn = (AdxpStreetName) element.getValue();
+                                    final AdxpStreetName asn = (AdxpStreetName) element.getValue();
                                     patientDemographics.setStreetAddress(StringUtils.strip(asn.getContent()));
                                 } else if (StringUtils.equals("country", eName)) {
-                                    AdxpCountry ac = (AdxpCountry) element.getValue();
+                                    final AdxpCountry ac = (AdxpCountry) element.getValue();
                                     patientDemographics.setCountry(StringUtils.strip(ac.getContent()));
                                 } else if (StringUtils.equals("postalCode", eName)) {
-                                    AdxpPostalCode apc = (AdxpPostalCode) element.getValue();
+                                    final AdxpPostalCode apc = (AdxpPostalCode) element.getValue();
                                     patientDemographics.setPostalCode(StringUtils.strip(apc.getContent()));
                                 }
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.warn("Unable to parse city, street name, country or postal code", e);
                 }
 
                 // Given name, family name
                 try {
-                    List<PRPAMT201306UV02LivingSubjectName> sns = pl.getLivingSubjectName();
+                    final List<PRPAMT201306UV02LivingSubjectName> sns = pl.getLivingSubjectName();
                     if (sns != null && !sns.isEmpty()) {
-                        PRPAMT201306UV02LivingSubjectName sn = sns.get(0);
-                        List<Serializable> content = sn.getValue().get(0).getContent();
-                        for (Serializable s : content) {
+                        final PRPAMT201306UV02LivingSubjectName sn = sns.get(0);
+                        final List<Serializable> content = sn.getValue().get(0).getContent();
+                        for (final Serializable s : content) {
                             if (s instanceof JAXBElement) {
-                                JAXBElement element = (JAXBElement) s;
-                                String eName = element.getName().getLocalPart();
+                                final JAXBElement element = (JAXBElement) s;
+                                final String eName = element.getName().getLocalPart();
                                 if (StringUtils.equals("given", eName)) {
-                                    EnGiven eg = (EnGiven) element.getValue();
+                                    final EnGiven eg = (EnGiven) element.getValue();
                                     patientDemographics.setGivenName(eg.getContent());
                                 } else if (StringUtils.equals("family", eName)) {
-                                    EnFamily ef = (EnFamily) element.getValue();
+                                    final EnFamily ef = (EnFamily) element.getValue();
                                     patientDemographics.setFamilyName(ef.getContent());
                                 }
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.warn("Unable to parse given name or family name", e);
                 }
 
                 // Id
                 try {
-                    List<PRPAMT201306UV02LivingSubjectId> livingSubjectIdList = pl.getLivingSubjectId();
+                    final List<PRPAMT201306UV02LivingSubjectId> livingSubjectIdList = pl.getLivingSubjectId();
                     if (livingSubjectIdList != null && !livingSubjectIdList.isEmpty()) {
-                        PRPAMT201306UV02LivingSubjectId id = livingSubjectIdList.get(0);
+                        final PRPAMT201306UV02LivingSubjectId id = livingSubjectIdList.get(0);
                         patientDemographics.setId(id.getValue().get(0).getExtension());
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.warn("Unable to parse patient id", e);
                 }
 
@@ -503,14 +493,14 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         return patientDemographics;
     }
 
-    private void pRPAIN201306UV02Builder(PRPAIN201305UV02 inputMessage, PRPAIN201306UV02 outputMessage, SOAPHeader soapHeader,
-                                         EventLog eventLog) throws Exception {
+    private void pRPAIN201306UV02Builder(final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
+                                         final EventLog eventLog) throws Exception {
 
-        String sigCountryCode;
+        final String sigCountryCode;
 
         if (patientSearchService instanceof PatientSearchInterfaceWithDemographics) {
-            var patientSearchInterfaceWithDemographics = (PatientSearchInterfaceWithDemographics) patientSearchService;
-            var patientDemographics = parsePRPAIN201305UV02toPatientDemographics(inputMessage);
+            final var patientSearchInterfaceWithDemographics = (PatientSearchInterfaceWithDemographics) patientSearchService;
+            final var patientDemographics = parsePRPAIN201305UV02toPatientDemographics(inputMessage);
             patientSearchInterfaceWithDemographics.setPatientDemographics(patientDemographics);
         }
 
@@ -562,7 +552,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         outputMessage.getAcknowledgement().get(0).setTypeCode(objectFactory.createCS());
         outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
 
-        PRPAMT201306UV02QueryByParameter inputQBP = inputMessage.getControlActProcess().getQueryByParameter().getValue();
+        final PRPAMT201306UV02QueryByParameter inputQBP = inputMessage.getControlActProcess().getQueryByParameter().getValue();
 
         // Create controlActProcess
         outputMessage.setControlActProcess(objectFactory.createPRPAIN201306UV02MFMIMT700711UV01ControlActProcess());
@@ -581,10 +571,10 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         outputMessage.getControlActProcess().getQueryAck().getQueryId().setRoot(inputQBP.getQueryId().getRoot());
         outputMessage.getControlActProcess().getQueryAck().getQueryId().setExtension(inputQBP.getQueryId().getExtension());
 
-        Element shElement;
+        final Element shElement;
         try {
             shElement = XMLUtils.toDOM(soapHeader);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("SOAP header jaxb to dom failed.", e);
             throw e;
         }
@@ -593,21 +583,21 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         try {
             sigCountryCode = SAML2Validator.validateXCPDHeader(shElement);
 
-            String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
-            String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();
+            final String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
+            final String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();
             logger.info("Sender Home Community ID.... '{}'", senderHomeCommID);
             logger.info("Receiver Home Community ID.. '{}'", receiverHomeCommID);
             logger.info("Constants.HOME_COMM_ID...... '{}'", Constants.HOME_COMM_ID);
 
-            List<PRPAMT201306UV02LivingSubjectId> livingSubjectIds = inputQBP.getParameterList().getLivingSubjectId();
+            final List<PRPAMT201306UV02LivingSubjectId> livingSubjectIds = inputQBP.getParameterList().getLivingSubjectId();
             if (!receiverHomeCommID.equals(Constants.HOME_COMM_ID)) {
                 fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_GENERIC, "Receiver has wrong Home Community ID.");
             } else if (!livingSubjectIds.isEmpty()) {
-                var stringBuilderNRO = new StringBuilder();
-                List<PatientId> patientIdList = new ArrayList<>();
+                final var stringBuilderNRO = new StringBuilder();
+                final List<PatientId> patientIdList = new ArrayList<>();
                 stringBuilderNRO.append("<patient>");
-                for (PRPAMT201306UV02LivingSubjectId livingSubjectId : livingSubjectIds) {
-                    var patientId = new PatientId();
+                for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : livingSubjectIds) {
+                    final var patientId = new PatientId();
                     patientId.setRoot(livingSubjectId.getValue().get(0).getRoot());
                     patientId.setExtension(livingSubjectId.getValue().get(0).getExtension());
                     stringBuilderNRO.append("<livingSubjectId>");
@@ -616,28 +606,28 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                     stringBuilderNRO.append("</livingSubjectId>");
                     patientIdList.add(patientId);
                 }
-                List<PRPAMT201306UV02LivingSubjectAdministrativeGender> administrativeGenders =
+                final List<PRPAMT201306UV02LivingSubjectAdministrativeGender> administrativeGenders =
                         inputQBP.getParameterList().getLivingSubjectAdministrativeGender();
                 if (!CollectionUtils.isEmpty(administrativeGenders)) {
                     stringBuilderNRO.append("<livingSubjectAdministrativeGender>").append(administrativeGenders
                             .get(0).getValue().get(0).getCode()).append("</livingSubjectAdministrativeGender>");
                 }
 
-                List<PRPAMT201306UV02LivingSubjectBirthTime> subjectBirthTimes =
+                final List<PRPAMT201306UV02LivingSubjectBirthTime> subjectBirthTimes =
                         inputQBP.getParameterList().getLivingSubjectBirthTime();
                 if (!CollectionUtils.isEmpty(subjectBirthTimes)) {
                     stringBuilderNRO.append("<livingSubjectBirthTime>").append(subjectBirthTimes.get(0).getValue()
                             .get(0).getValue()).append("</livingSubjectBirthTime>");
                 }
 
-                List<PRPAMT201306UV02LivingSubjectName> livingSubjectNames =
+                final List<PRPAMT201306UV02LivingSubjectName> livingSubjectNames =
                         inputQBP.getParameterList().getLivingSubjectName();
                 if (!CollectionUtils.isEmpty(livingSubjectNames)) {
                     // TODO: Implementation to be finalized.
                     logger.info("Patient Names must be added to the NRO message");
                 }
 
-                List<PRPAMT201306UV02PatientAddress> patientAddresses = inputQBP.getParameterList().getPatientAddress();
+                final List<PRPAMT201306UV02PatientAddress> patientAddresses = inputQBP.getParameterList().getPatientAddress();
                 if (!CollectionUtils.isEmpty(patientAddresses)) {
                     // TODO: Implementation to be finalized.
                     logger.info("Patient Addresses must be added to the NRO message");
@@ -649,22 +639,22 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
                 // Joao: we have an adhoc XML document, so we can generate this evidence correctly
                 try {
-                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                    final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                     factory.setNamespaceAware(true);
-                    DocumentBuilder builder = factory.newDocumentBuilder();
-                    Document doc = builder.parse(new InputSource(new StringReader(stringBuilderNRO.toString())));
+                    final DocumentBuilder builder = factory.newDocumentBuilder();
+                    final Document doc = builder.parse(new InputSource(new StringReader(stringBuilderNRO.toString())));
                     EvidenceUtils.createEvidenceREMNRO(doc, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
                             Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
                             Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
                             Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode(),
                             new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCPD_REQ",
                             Helper.getHCPAssertion(shElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     logger.error(ExceptionUtils.getStackTrace(e));
                 }
 
                 // call to NI
-                List<PatientDemographics> demographicsList = patientSearchService.getPatientDemographics(patientIdList);
+                final List<PatientDemographics> demographicsList = patientSearchService.getPatientDemographics(patientIdList);
 
                 // Joao: the NRR is being generated based on the request data, not on the response. This NRR is optional as per the CP, so it's left commented
 //                try {
@@ -691,8 +681,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";
-                    var distinguishName = eventLog.getSC_UserID();
-                    int cIndex = distinguishName.indexOf("C=");
+                    final var distinguishName = eventLog.getSC_UserID();
+                    final int cIndex = distinguishName.indexOf("C=");
 
                     if (cIndex > 0) {
                         countryCode = distinguishName.substring(cIndex + 2, cIndex + 4);
@@ -742,19 +732,19 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 // Preparing demographic query not allowed error
                 fillOutputMessage(outputMessage, XCPDErrorCode.DemographicsQueryNotAllowed, OpenNCPErrorCode.ERROR_PI_GENERIC, "Queries are only available with patient identifiers");
             }
-        } catch (OpenNCPErrorCodeException e) {
+        } catch (final OpenNCPErrorCodeException e) {
             logger.error(e.getMessage(), e);
             fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage());
-        } catch (XCPDNIException e) {
+        } catch (final XCPDNIException e) {
             logger.error(e.getMessage(), e);
-            var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+            final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
             fillOutputMessage(outputMessage, e.getXcpdErrorCode(), e.getOpenncpErrorCode(), codeContext, Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error(e.getMessage(), e);
             fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_GENERIC, e.getMessage());
         }
         // Set queryByParameter
-        var prpamt201306UV02QueryByParameter = objectFactory.createPRPAMT201306UV02QueryByParameter();
+        final var prpamt201306UV02QueryByParameter = objectFactory.createPRPAMT201306UV02QueryByParameter();
         prpamt201306UV02QueryByParameter.setQueryId(inputQBP.getQueryId());
         prpamt201306UV02QueryByParameter.setStatusCode(inputQBP.getStatusCode());
         prpamt201306UV02QueryByParameter.setParameterList(inputQBP.getParameterList());
@@ -762,18 +752,18 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 objectFactory.createPRPAIN201306UV02MFMIMT700711UV01ControlActProcessQueryByParameter(prpamt201306UV02QueryByParameter));
 
         // Set sender of the input to receiver of the output
-        var mccimt000300UV01Receiver = objectFactory.createMCCIMT000300UV01Receiver();
+        final var mccimt000300UV01Receiver = objectFactory.createMCCIMT000300UV01Receiver();
         mccimt000300UV01Receiver.setTypeCode(CommunicationFunctionType.RCV);
         mccimt000300UV01Receiver.setDevice(objectFactory.createMCCIMT000300UV01Device());
         mccimt000300UV01Receiver.getDevice().setDeterminerCode("INSTANCE");
         mccimt000300UV01Receiver.getDevice().setClassCode(EntityClassDevice.DEV);
         mccimt000300UV01Receiver.getDevice().getId().add(inputMessage.getSender().getDevice().getId().get(0));
         // Set asAgent
-        var mccimt000300UV01Agent = objectFactory.createMCCIMT000300UV01Agent();
+        final var mccimt000300UV01Agent = objectFactory.createMCCIMT000300UV01Agent();
         mccimt000300UV01Agent.getClassCode().add("AGNT");
 
-        var mccimt000300UV01Organization = objectFactory.createMCCIMT000300UV01Organization();
-        MCCIMT000100UV01Organization inpOrganization = inputMessage.getSender().getDevice().getAsAgent().getValue().getRepresentedOrganization().getValue();
+        final var mccimt000300UV01Organization = objectFactory.createMCCIMT000300UV01Organization();
+        final MCCIMT000100UV01Organization inpOrganization = inputMessage.getSender().getDevice().getAsAgent().getValue().getRepresentedOrganization().getValue();
         mccimt000300UV01Organization.setClassCode(inpOrganization.getClassCode());
         mccimt000300UV01Organization.setDeterminerCode(inpOrganization.getDeterminerCode());
         mccimt000300UV01Organization.getId().add(inpOrganization.getId().get(0));
@@ -783,7 +773,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         outputMessage.getReceiver().add(mccimt000300UV01Receiver);
 
         // Set receiver of the input to sender of the output
-        var mccimt000300UV01Sender = objectFactory.createMCCIMT000300UV01Sender();
+        final var mccimt000300UV01Sender = objectFactory.createMCCIMT000300UV01Sender();
         mccimt000300UV01Sender.setTypeCode(CommunicationFunctionType.SND);
         mccimt000300UV01Sender.setDevice(objectFactory.createMCCIMT000300UV01Device());
         mccimt000300UV01Sender.getDevice().setDeterminerCode("INSTANCE");
@@ -798,7 +788,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             logger.info("Preparing Event Log: '{}' - SC UserId: '{}' - SP UserId: '{}'", eventLog.getEventType(),
                     eventLog.getSC_UserID(), eventLog.getSP_UserID());
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             logger.error("Prepare Audit log failed.", ex);
             // Is it fatal, if Audit log cannot be created?
         }

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +42,9 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 public class SecurityTokenServiceWS {
@@ -60,7 +63,7 @@ public class SecurityTokenServiceWS {
     static {
         try {
             InitializationService.initialize();
-        } catch (InitializationException e) {
+        } catch (final InitializationException e) {
             // SAML Framework cannot be initialized correctly.
         }
     }
@@ -75,21 +78,21 @@ public class SecurityTokenServiceWS {
         // Default empty constructor.
     }
 
-    public void createResponseHeader(SOAPHeader header, String messageId) {
+    public void createResponseHeader(final SOAPHeader header, final String messageId) {
 
         try {
-            var now = new DateTime();
+            final var now = new DateTime();
 
-            var soapFactory = SOAPFactory.newInstance();
-            SOAPElement messageIdElem = header.addHeaderElement(new QName(ADDRESSING_NS, MESSAGE_ID, "wsa"));
+            final var soapFactory = SOAPFactory.newInstance();
+            final SOAPElement messageIdElem = header.addHeaderElement(new QName(ADDRESSING_NS, MESSAGE_ID, "wsa"));
             messageIdElem.setTextContent("uuid:" + UUID.randomUUID());
-            SOAPElement securityHeaderElem = header.addHeaderElement(new QName(WS_SEC_NS, "Security", "wsse"));
+            final SOAPElement securityHeaderElem = header.addHeaderElement(new QName(WS_SEC_NS, "Security", "wsse"));
 
-            SOAPElement timeStampElem = soapFactory.createElement("Timestamp", "wsu", WS_SEC_UTIL_NS);
-            SOAPElement ltCreated = soapFactory.createElement("Created", "wsu", WS_SEC_UTIL_NS);
+            final SOAPElement timeStampElem = soapFactory.createElement("Timestamp", "wsu", WS_SEC_UTIL_NS);
+            final SOAPElement ltCreated = soapFactory.createElement("Created", "wsu", WS_SEC_UTIL_NS);
             ltCreated.setTextContent(now.toDateTime(DateTimeZone.UTC).toString());
 
-            SOAPElement ltExpires = soapFactory.createElement("Expires", "wsu", WS_SEC_UTIL_NS);
+            final SOAPElement ltExpires = soapFactory.createElement("Expires", "wsu", WS_SEC_UTIL_NS);
             ltExpires.setTextContent(now.plusHours(2).toDateTime(DateTimeZone.UTC).toString());
 
             timeStampElem.addChildElement(ltCreated);
@@ -97,37 +100,37 @@ public class SecurityTokenServiceWS {
 
             securityHeaderElem.addChildElement(timeStampElem);
 
-            SOAPElement actionElem = header.addHeaderElement(new QName(ADDRESSING_NS, "Action", "wsa"));
+            final SOAPElement actionElem = header.addHeaderElement(new QName(ADDRESSING_NS, "Action", "wsa"));
             actionElem.setTextContent("urn:IssueTokenResponse");
 
-            SOAPElement relatesToElem = header.addHeaderElement(new QName(ADDRESSING_NS, "RelatesTo", "wsa"));
+            final SOAPElement relatesToElem = header.addHeaderElement(new QName(ADDRESSING_NS, "RelatesTo", "wsa"));
             relatesToElem.setTextContent(messageId);
 
-        } catch (SOAPException ex) {
+        } catch (final SOAPException ex) {
             logger.error(null, ex);
             throw new WebServiceException("Could not create Response Header");
         }
     }
 
-    public String getCertificateCommonName(Assertion hcpIdAssertion) {
+    public String getCertificateCommonName(final Assertion hcpIdAssertion) {
 
         //TODO: Test Certificate CN retrieve
-        var keyInfo = hcpIdAssertion.getSignature().getKeyInfo();
-        for (X509Data x509Data : keyInfo.getX509Datas()) {
-            for (org.opensaml.xmlsec.signature.X509Certificate x509Certificate : x509Data.getX509Certificates()) {
+        final var keyInfo = hcpIdAssertion.getSignature().getKeyInfo();
+        for (final X509Data x509Data : keyInfo.getX509Datas()) {
+            for (final org.opensaml.xmlsec.signature.X509Certificate x509Certificate : x509Data.getX509Certificates()) {
                 logger.info("[SAML] Signature certificate:\n'{}' ", x509Certificate.getValue());
 
-                byte[] encodedCert = Base64.getDecoder().decode(removeDisplayCharacter(x509Certificate.getValue()));
-                InputStream inputStream = new ByteArrayInputStream(encodedCert);
+                final byte[] encodedCert = Base64.getDecoder().decode(removeDisplayCharacter(x509Certificate.getValue()));
+                final InputStream inputStream = new ByteArrayInputStream(encodedCert);
 
-                CertificateFactory certFactory;
+                final CertificateFactory certFactory;
                 try {
                     certFactory = CertificateFactory.getInstance("X.509");
-                    java.security.cert.X509Certificate cert = (java.security.cert.X509Certificate) certFactory
+                    final java.security.cert.X509Certificate cert = (java.security.cert.X509Certificate) certFactory
                             .generateCertificate(inputStream);
                     logger.info(getCommonName(cert));
                     return getCommonName(cert);
-                } catch (CertificateException e) {
+                } catch (final CertificateException e) {
                     logger.error("CertificateException: '{}'", e.getMessage());
                 }
             }
@@ -138,58 +141,58 @@ public class SecurityTokenServiceWS {
     public String getClientIP() {
 
         try {
-            var messageContext = context.getMessageContext();
-            var httpServletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
-            var clientIpAddressAsString = httpServletRequest.getRemoteAddr();
+            final var messageContext = context.getMessageContext();
+            final var httpServletRequest = (HttpServletRequest) messageContext.get(MessageContext.SERVLET_REQUEST);
+            final var clientIpAddressAsString = httpServletRequest.getRemoteAddr();
             logger.debug("clientIpAddress: '{}'", clientIpAddressAsString);
-            var clientIpAddress = InetAddress.getByName(clientIpAddressAsString);
+            final var clientIpAddress = InetAddress.getByName(clientIpAddressAsString);
             if (!clientIpAddress.isLinkLocalAddress() && !clientIpAddress.isLoopbackAddress()) {
                 return clientIpAddressAsString;
             } else {
                 return STSUtils.getSTSServerIP();
             }
-        } catch (UnknownHostException ex) {
+        } catch (final UnknownHostException ex) {
             logger.error("UnknownHostException: '{}'", ex.getMessage());
         }
         return "Could not get client IP address!";
     }
 
-    public String getCommonName(X509Certificate certificate) {
+    public String getCommonName(final X509Certificate certificate) {
         return CertUtil.subjectCN(certificate);
     }
 
-    public Assertion getIdAssertionFromHeader(SOAPHeader header) throws WSTrustException {
+    public Assertion getIdAssertionFromHeader(final SOAPHeader header) throws WSTrustException {
 
         try {
             // First, find the assertion from the header.
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             if (header.getElementsByTagNameNS(SAML20_TOKEN_URN, "Assertion").getLength() != 1) {
                 throw new WSTrustException("SAML Identity Assertion is missing from the Security Header");
             }
-            SOAPElement assertion = (SOAPElement) header.getElementsByTagNameNS(SAML20_TOKEN_URN, "Assertion").item(0);
-            Document assertDoc = builder.newDocument();
+            final SOAPElement assertion = (SOAPElement) header.getElementsByTagNameNS(SAML20_TOKEN_URN, "Assertion").item(0);
+            final Document assertDoc = builder.newDocument();
 
-            Node dupBody = assertDoc.importNode(assertion, true);
+            final Node dupBody = assertDoc.importNode(assertion, true);
             assertDoc.appendChild(dupBody);
             if (assertion == null) {
                 return null;
             } else {
                 assertDoc.getDocumentElement().setIdAttribute("ID", true);
-                var signatureManager = new SignatureManager();
+                final var signatureManager = new SignatureManager();
                 signatureManager.verifyEnvelopedSignature(assertDoc);
             }
-            var unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-            var unmarshaller = unmarshallerFactory.getUnmarshaller(assertion);
+            final var unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
+            final var unmarshaller = unmarshallerFactory.getUnmarshaller(assertion);
             return (Assertion) unmarshaller.unmarshall(assertDoc.getDocumentElement());
 
-        } catch (SMgrException ex) {
+        } catch (final SMgrException ex) {
             throw new WSTrustException("Error validating SAML Assertion signature", ex);
-        } catch (ParserConfigurationException | UnmarshallingException ex) {
+        } catch (final ParserConfigurationException | UnmarshallingException ex) {
             throw new WSTrustException("Error Parsing SAML Assertion in Message Header", ex);
         }
     }
 
-    public String getMessageIdFromHeader(SOAPHeader header) {
+    public String getMessageIdFromHeader(final SOAPHeader header) {
 
         if (header.getElementsByTagNameNS(ADDRESSING_NS, MESSAGE_ID).getLength() < 1) {
             throw new WebServiceException("Message ID not found in Header");
@@ -200,21 +203,25 @@ public class SecurityTokenServiceWS {
         return messageID;
     }
 
-    public String getPatientID(SOAPElement body) {
+    public List<String> getPatientIDs(final SOAPElement body) {
 
         if (body.getElementsByTagNameNS(TRC_NS, "TRCParameters").getLength() < 1) {
             throw new WebServiceException("No TRC Parameters in RST");
         }
 
-        SOAPElement trcDetails = (SOAPElement) body.getElementsByTagNameNS(TRC_NS, "TRCParameters").item(0);
-        if (trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId").item(0) == null) {
-            // Cannot be null!
+        final SOAPElement trcDetails = (SOAPElement) body.getElementsByTagNameNS(TRC_NS, "TRCParameters").item(0);
+        final NodeList patientIdElements = trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId");
+        if (patientIdElements.getLength() == 0 || patientIdElements.item(0) == null) {
             throw new WebServiceException("Patient ID is Missing from the RST");
         }
-        return trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId").item(0).getTextContent();
+        final List<String> patientIds = new ArrayList<>();
+        for (int i = 0; i < patientIdElements.getLength(); i++) {
+            patientIds.add(patientIdElements.item(i).getTextContent());
+        }
+        return patientIds;
     }
 
-    public String getRSTAction(SOAPBody body) throws WSTrustException {
+    public String getRSTAction(final SOAPBody body) throws WSTrustException {
 
         if (body.getElementsByTagNameNS(WS_TRUST_NS, "RequestType").getLength() < 1) {
             throw new WSTrustException("No Request Type is Specified.");
@@ -223,7 +230,7 @@ public class SecurityTokenServiceWS {
         return body.getElementsByTagNameNS(WS_TRUST_NS, "RequestType").item(0).getTextContent();
     }
 
-    public String getRequestedToken(SOAPBody body) throws WSTrustException {
+    public String getRequestedToken(final SOAPBody body) throws WSTrustException {
 
         if (body.getElementsByTagNameNS(WS_TRUST_NS, "TokenType").getLength() < 1) {
             throw new WSTrustException("No Token Type is Specified.");
@@ -232,18 +239,18 @@ public class SecurityTokenServiceWS {
         return body.getElementsByTagNameNS(WS_TRUST_NS, "TokenType").item(0).getTextContent();
     }
 
-    public void log(SOAPMessage message) {
+    public void log(final SOAPMessage message) {
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-            try (var out = new ByteArrayOutputStream()) {
+            try (final var out = new ByteArrayOutputStream()) {
                 message.writeTo(out);
                 loggerClinical.debug("SOAPMessage:\n{}", out);
-            } catch (IOException | SOAPException e) {
+            } catch (final IOException | SOAPException e) {
                 loggerClinical.error("Exception: '{}'", e.getMessage(), e);
             }
         }
     }
 
-    private String removeDisplayCharacter(String certificateValue) {
+    private String removeDisplayCharacter(final String certificateValue) {
 
         String certificatePEM = RegExUtils.removeAll(certificateValue, "-----BEGIN CERTIFICATE-----");
         certificatePEM = RegExUtils.removeAll(certificatePEM, "-----END CERTIFICATE-----");
