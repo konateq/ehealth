@@ -90,7 +90,7 @@ public abstract class AbstractAuditMessageBuilder {
         return message;
     }
 
-    private boolean getUserIsRequestor(final EventLog eventLog) {
+    protected boolean getUserIsRequestor(final EventLog eventLog) {
         if (eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_INITIALIZE) || eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_DISCARD)) {
             return !eventLog.getNcpSide().equals(NcpSide.NCP_B);
         } else {
