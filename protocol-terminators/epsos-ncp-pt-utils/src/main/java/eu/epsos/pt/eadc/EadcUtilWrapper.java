@@ -190,14 +190,20 @@ public class EadcUtilWrapper {
         var transactionInfo = new ObjectFactory().createComplexTypeTransactionInfo();
         transactionInfo.setAuthenticationLevel(reqMsgContext != null ? extractAuthenticationMethodFromAssertion(getAssertion(reqMsgContext)) : null);
         transactionInfo.setDirection(direction != null ? direction.toString() : null);
-        transactionInfo.setStartTime(startTime != null ? getDateAsRFC822String(startTime) : null);
+        if(startTime == null) {
+            startTime = new Date();
+        }
+        transactionInfo.setStartTime(getDateAsRFC822String(startTime));
         if(endTime == null) {
             endTime = new Date();
         }
-        transactionInfo.setEndTime(endTime != null ? getDateAsRFC822String(endTime) : null);
-        transactionInfo.setDuration(endTime != null && startTime != null ? String.valueOf(endTime.getTime() - startTime.getTime()) : null);
+        transactionInfo.setEndTime(getDateAsRFC822String(endTime));
+        transactionInfo.setDuration(String.valueOf(endTime.getTime() - startTime.getTime()));
         transactionInfo.setHomeAddress(EventLogClientUtil.getSourceGatewayIdentifier());
         String sndIso = reqMsgContext != null ? extractSendingCountryIsoFromAssertion(getAssertion(reqMsgContext)) : null;
+        if(sndIso == null || sndIso.isEmpty()) {
+            sndIso = countryCodeA;
+        }
         transactionInfo.setSndISO(StringUtils.upperCase(sndIso));
         transactionInfo.setSndNCPOID(sndIso != null ? OidUtil.getHomeCommunityId(sndIso.toLowerCase()) : null);
 
