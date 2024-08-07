@@ -29,9 +29,9 @@ public class TRCAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
             // Human Requestor
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     true, eventLog.getSourceip());
-            addService(message, eventLog.getSC_UserID(), getUserIsRequestor(eventLog), AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME,
+            addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME,
                     eventLog.getSourceip());
-            addService(message, eventLog.getSP_UserID(), getUserIsRequestor(eventLog), AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
+            addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
                     eventLog.getTargetip());
             addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("1"), "Patient",
                     "2", AuditConstant.RFC3881, "Patient Number",
