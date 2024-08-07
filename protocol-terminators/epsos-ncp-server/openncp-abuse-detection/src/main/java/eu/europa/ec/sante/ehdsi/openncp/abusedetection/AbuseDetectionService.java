@@ -375,94 +375,110 @@ public class AbuseDetectionService implements Job {
                 boolean evtPresent = false;
                 AbuseTransactionType transactionType = AbuseTransactionType.TRANSACTION_UNKNOWN;
                 if (StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode()) &&
+                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("XCPD::CrossGatewayPatientDiscovery",
+                                EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getCode()))) {
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode()))) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCPD_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_LIST.getIheCode()) &&
+                        EventType.PATIENT_SERVICE_LIST.getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayQuery",
+                                EventType.PATIENT_SERVICE_LIST.getIheTransactionName()) &&
+                        au.getEventIdentification().getEventTypeCode()
+                                .stream()
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.PATIENT_SERVICE_LIST.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.PATIENT_SERVICE_LIST.getCode())) &&
+                                        ClassCode.PS_CLASSCODE.getCode()))*/) {
+                    evtPresent = true;
+                    transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
+                }
+                if (!evtPresent && /*StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.PATIENT_SERVICE_RETRIEVE.getCsdCode()) &&*/  // csdCode for this event is 110107 on client and 110106 on server, so there would be an ambiguity
+                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.PATIENT_SERVICE_RETRIEVE.getIheTransactionName()) &&
+                        au.getEventIdentification().getEventTypeCode()
+                                .stream()
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.PS_CLASSCODE.getCode()))) {
+                                        ClassCode.PS_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode()) &&
+                        EventType.ORDER_SERVICE_LIST.getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.ORDER_SERVICE_LIST.getIheTransactionName()) &&
+                        au.getEventIdentification().getEventTypeCode()
+                                .stream()
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.ORDER_SERVICE_LIST.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.PATIENT_SERVICE_RETRIEVE.getCode())) &&
+                                        ClassCode.EP_CLASSCODE.getCode()))*/) {
+                    evtPresent = true;
+                    transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
+                }
+                if (!evtPresent && /*StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.PATIENT_SERVICE_RETRIEVE.getCsdCode()) &&*/ // csdCode for this event is 110107 on client and 110106 on server, so there would be an ambiguity
+                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.ORDER_SERVICE_RETRIEVE.getIheTransactionName()) &&
+                        au.getEventIdentification().getEventTypeCode()
+                                .stream()
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.ORDER_SERVICE_RETRIEVE.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.PS_CLASSCODE.getCode()))) {
+                                        ClassCode.EP_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_LIST.getIheCode()) &&
+                        EventType.DISPENSATION_SERVICE_INITIALIZE.getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("XDR::ProvideandRegisterDocumentSet-b",
+                                EventType.DISPENSATION_SERVICE_INITIALIZE.getIheTransactionName()) &&
+                        au.getEventIdentification().getEventTypeCode()
+                                .stream()
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.DISPENSATION_SERVICE_DISCARD.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_LIST.getCode())) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EP_CLASSCODE.getCode()))) {
-                    evtPresent = true;
-                    transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
-                }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode()) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_RETRIEVE.getCode())) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EP_CLASSCODE.getCode()))) {
-                    evtPresent = true;
-                    transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
-                }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.DISPENSATION_SERVICE_INITIALIZE.getIheCode()) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.DISPENSATION_SERVICE_DISCARD.getCode())) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EDD_CLASSCODE.getCode()))) {
+                                        ClassCode.EDD_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XDR_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.ORCD_SERVICE_LIST.getIheCode()) &&
+                        EventType.ORCD_SERVICE_LIST.getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayQuery",
+                                EventType.ORCD_SERVICE_LIST.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORCD_SERVICE_LIST.getCode()))) {
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.ORCD_SERVICE_LIST.getIheCode()))) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
                 if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
                         EventType.ORCD_SERVICE_RETRIEVE.getIheCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
+                                EventType.ORCD_SERVICE_RETRIEVE.getIheTransactionName()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORCD_SERVICE_RETRIEVE.getCode()))) {
+                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
+                                        EventType.ORCD_SERVICE_RETRIEVE.getIheCode()))) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }

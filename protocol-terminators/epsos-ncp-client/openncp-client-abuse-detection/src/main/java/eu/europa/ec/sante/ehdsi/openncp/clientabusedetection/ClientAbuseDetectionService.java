@@ -383,7 +383,7 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getCode()))) {
+                                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode()))) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCPD_SERVICE_REQUEST;
                 }
@@ -394,11 +394,11 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.PATIENT_SERVICE_LIST.getCode())) &&
+                                        EventType.PATIENT_SERVICE_LIST.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.PS_CLASSCODE.getCode()))) {
+                                        ClassCode.PS_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
@@ -409,11 +409,11 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.PATIENT_SERVICE_RETRIEVE.getCode())) &&
+                                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.PS_CLASSCODE.getCode()))) {
+                                        ClassCode.PS_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
@@ -424,11 +424,11 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_LIST.getCode())) &&
+                                        EventType.ORDER_SERVICE_LIST.getCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EP_CLASSCODE.getCode()))) {
+                                        ClassCode.EP_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
@@ -439,11 +439,11 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_RETRIEVE.getCode())) &&
+                                        EventType.ORDER_SERVICE_RETRIEVE.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EP_CLASSCODE.getCode()))) {
+                                        ClassCode.EP_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
@@ -454,11 +454,11 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.DISPENSATION_SERVICE_DISCARD.getCode())) &&
+                                        EventType.DISPENSATION_SERVICE_DISCARD.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EDD_CLASSCODE.getCode()))) {
+                                        ClassCode.EDD_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XDR_SERVICE_REQUEST;
                 }
@@ -469,7 +469,7 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORCD_SERVICE_LIST.getCode()))) {
+                                        EventType.ORCD_SERVICE_LIST.getIheCode()))) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
@@ -480,7 +480,7 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORCD_SERVICE_RETRIEVE.getCode()))) {
+                                        EventType.ORCD_SERVICE_RETRIEVE.getIheCode()))) {
                     evtPresent = true;
                     transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
