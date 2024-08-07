@@ -27,9 +27,11 @@ public class CommunicationFailureAuditMessageBuilder extends AbstractAuditMessag
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
-            addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("1"),
-                    "Patient", "2", AuditConstant.RFC3881, "Patient Number",
-                    "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
+                addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
+                        "Patient", "2", AuditConstant.RFC3881, "Patient Number",
+                        "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
                     Short.valueOf("3"), "9", "errormsg");
         } catch (final Exception e) {

@@ -47,8 +47,8 @@ public class NOKAssertionAuditMessageBuilderTest extends XMLTestCase {
             eventLog.setPC_RoleID("PC Role ID");
             eventLog.setPC_UserID("eHealth OpenNCP EU Portal");
 
-            eventLog.setPS_ParticipantObjectID("PS Participant Object ID");
-            eventLog.setPT_ParticipantObjectID("2-1234-W7^^^&1.3.6.1.4.1.48336.1000&ISO");
+            eventLog.setPS_ParticipantObjectIDs(Collections.singletonList("PS Participant Object ID"));
+            eventLog.setPT_ParticipantObjectIDs(Collections.singletonList("2-1234-W7^^^&1.3.6.1.4.1.48336.1000&ISO"));
             eventLog.setQueryByParameter("Query By Parameter");
             eventLog.setReqM_ParticipantObjectDetail("AXAXAXAX".getBytes("UTF-8"));
             eventLog.setReqM_ParticipantObjectID("urn:oid:1.3.6.1.4.1.48336");

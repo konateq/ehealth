@@ -73,15 +73,17 @@ public abstract class AbstractAuditMessageBuilder {
             addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), getUserIsRequestor(eventLog),
                     "1.3.6.1.4.1.12559.11.10.1.3.2.2.2", eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                    false, eventLog.getSourceip());
+                    getUserIsRequestor(eventLog), eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME); // eventLog.getSourceip()
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME); // eventLog.getTargetip()
             addAuditSource(message, eventLog.getAS_AuditSourceId());
-            addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("1"),
-                    "Patient", "2", AuditConstant.RFC3881, "Patient Number",
-                    "Cross Gateway Patient Discovery", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
+                addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
+                        "Patient", "2", AuditConstant.RFC3881, "Patient Number",
+                        "Cross Gateway Patient Discovery", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
                     Short.valueOf("3"), "9", "errormsg");
         } catch (final Exception e) {
@@ -272,7 +274,7 @@ public abstract class AbstractAuditMessageBuilder {
         humanRequester.setAlternativeUserID(alternativeUserID);
         humanRequester.setNetworkAccessPointID(ipAddress);
         humanRequester.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
-        humanRequester.setUserIsRequestor(Boolean.FALSE);
+        humanRequester.setUserIsRequestor(userIsRequester);
 
         final RoleIDCode humanRequesterRoleId = new RoleIDCode();
         humanRequesterRoleId.setCsdCode("110153");

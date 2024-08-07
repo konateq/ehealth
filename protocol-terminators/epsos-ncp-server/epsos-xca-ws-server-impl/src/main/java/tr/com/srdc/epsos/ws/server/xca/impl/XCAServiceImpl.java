@@ -164,7 +164,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 break;
         }
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
-        eventLog.setPS_ParticipantObjectID(getDocumentEntryPatientId(request));
+        eventLog.setPS_ParticipantObjectIDs(getDocumentEntryPatientId(request));
 
         if (response.getRegistryObjectList() != null) {
             final List<String> documentIds = new ArrayList<>();
@@ -191,7 +191,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         eventLog.setHR_AlternativeUserID(Helper.getAlternateUserID(sh));
         eventLog.setHR_RoleID(Helper.getRoleID(sh));
         eventLog.setSP_UserID(HTTPUtil.getSubjectDN(true));
-        eventLog.setPT_ParticipantObjectID(getDocumentEntryPatientId(request));
+        eventLog.setPT_ParticipantObjectIDs(getDocumentEntryPatientId(request));
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 
         if (response.getRegistryErrorList() != null) {
@@ -283,7 +283,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         eventLog.setHR_AlternativeUserID(Helper.getAlternateUserID(sh));
         eventLog.setHR_RoleID(Helper.getRoleID(sh));
         eventLog.setSP_UserID(HTTPUtil.getSubjectDN(true));
-        eventLog.setPT_ParticipantObjectID(Helper.getDocumentEntryPatientIdFromTRCAssertion(sh));
+        eventLog.setPT_ParticipantObjectIDs(Collections.singletonList(Helper.getDocumentEntryPatientIdFromTRCAssertion(sh)));
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 
         if (errorsDiscovered) {
@@ -336,18 +336,19 @@ public class XCAServiceImpl implements XCAServiceInterface {
     /**
      * Util method extracting the XDS Patient Identifier from the XCA query.
      *
-     * @return HL7v2 Patient Identifier formatted String.
+     * @return List of HL7v2 Patient Identifier formatted Strings.
      */
-    private String getDocumentEntryPatientId(final AdhocQueryRequest request) {
+    private List<String> getDocumentEntryPatientId(final AdhocQueryRequest request) {
 
+        final List<String> patientIds = new ArrayList<>();
         for (final SlotType1 slot : request.getAdhocQuery().getSlot()) {
             if (slot.getName().equals("$XDSDocumentEntryPatientId")) {
                 String patientId = slot.getValueList().getValue().get(0);
                 patientId = patientId.substring(1, patientId.length() - 1);
-                return patientId;
+                patientIds.add(patientId);
             }
         }
-        return "$XDSDocumentEntryPatientId Not Found!";
+        return patientIds;
     }
 
     private FilterParams getFilterParams(final AdhocQueryRequest request) {

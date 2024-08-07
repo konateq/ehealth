@@ -33,9 +33,11 @@ public class NOKAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
                     eventLog.getSourceip());
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
                     eventLog.getTargetip());
-            addParticipantObject(message, eventLog.getPT_ParticipantObjectID(), Short.valueOf("1"), Short.valueOf("10"), "Guarantor",
-                    "7", AuditConstant.RFC3881, "Guarantor Number",
-                    "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
+                addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("10"), "Guarantor",
+                        "7", AuditConstant.RFC3881, "Guarantor Number",
+                        "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
+            }
         } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
