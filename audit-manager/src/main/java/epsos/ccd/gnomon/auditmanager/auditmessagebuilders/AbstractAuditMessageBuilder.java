@@ -70,8 +70,7 @@ public abstract class AbstractAuditMessageBuilder {
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
                     eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
-            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), getUserIsRequestor(eventLog),
-                    "1.3.6.1.4.1.12559.11.10.1.3.2.2.2", eventLog.getSourceip());
+            addPointOfCare(message, eventLog.getPC_UserID(), getUserIsRequestor(eventLog), eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     false, eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
@@ -168,43 +167,24 @@ public abstract class AbstractAuditMessageBuilder {
     /**
      * @param message
      * @param userId
-     * @param roleId
      * @param userIsRequester
-     * @param codeSystem
      * @return
      */
-    protected AuditMessage addPointOfCare(final AuditMessage message, final String userId, final String roleId, final boolean userIsRequester, final String codeSystem, final String ipAddress) {
+    protected AuditMessage addPointOfCare(final AuditMessage message, final String userId, final boolean userIsRequester, final String ipAddress) {
+        final String participantUserId = StringUtils.isBlank(userId) ? "SP" : userId;
+        final ActiveParticipantContents participant = new ActiveParticipantContents();
+        participant.setUserID(participantUserId);
+        participant.setAlternativeUserID(participantUserId);
+        participant.setNetworkAccessPointID(ipAddress);
+        participant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
+        participant.setUserIsRequestor(userIsRequester);
 
-        if (StringUtils.isBlank(userId)) {
-            // This is service provider and doesn't need Point of Care
-            final ActiveParticipantContents participant = new ActiveParticipantContents();
-            participant.setUserID("SP");
-            participant.setAlternativeUserID("SP");
-            participant.setNetworkAccessPointID(ipAddress);
-            participant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
-            participant.setUserIsRequestor(userIsRequester);
-
-            final RoleIDCode codedValue = new RoleIDCode();
-            codedValue.setCsdCode("110152");
-            codedValue.setCodeSystemName("DCM");
-            codedValue.setOriginalText(codeSystem); // Should be "Destination Role ID"
-            participant.getRoleIDCode().add(codedValue);
-            message.getActiveParticipant().add(participant);
-        } else {
-            final ActiveParticipantContents participant = new ActiveParticipantContents();
-            participant.setUserID(userId);
-            participant.setAlternativeUserID(userId);
-            participant.setNetworkAccessPointID(ipAddress);
-            participant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
-            participant.setUserIsRequestor(userIsRequester);
-
-            final RoleIDCode codedValue = new RoleIDCode();
-            codedValue.setCsdCode("110152");
-            codedValue.setCodeSystemName("DCM");
-            codedValue.setOriginalText(codeSystem); // Should be "Destination Role ID"
-            participant.getRoleIDCode().add(codedValue);
-            message.getActiveParticipant().add(participant);
-        }
+        final RoleIDCode codedValue = new RoleIDCode();
+        codedValue.setCsdCode("110152");
+        codedValue.setCodeSystemName(AuditConstant.DICOM);
+        codedValue.setOriginalText(AuditConstant.DESTINATION_ROLE_ID);
+        participant.getRoleIDCode().add(codedValue);
+        message.getActiveParticipant().add(participant);
         return message;
     }
 
