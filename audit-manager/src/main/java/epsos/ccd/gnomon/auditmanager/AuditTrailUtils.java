@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import javax.xml.bind.*;
+import java.io.File;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
@@ -278,6 +279,12 @@ public enum AuditTrailUtils {
             String tap = Utils.getProperty("TEST_AUDITS_PATH");
             try {
                 if (auditmessage.getEventIdentification() != null && auditmessage.getEventIdentification().getEventTypeCode().get(0).getDisplayName() != null) {
+                    File file = new File(tap);
+
+                    if (!file.exists()) {
+                        file.mkdirs();
+                    }
+
                     Utils.writeXMLToFile(auditmsg, tap + (auditmessage.getEventIdentification().getEventTypeCode()
                             .get(0).getDisplayName().split("::"))[0] + "-" +
                             new SimpleDateFormat("yyyy.MM.dd'at'HH-mm-ss.SSS").format(new Date(System.currentTimeMillis())) + ".xml");

@@ -35,18 +35,18 @@ public class OpenNCPValidation {
      * @param eventType
      * @param ncpSide
      */
-    public static void validateAuditMessage(String document, String eventType, NcpSide ncpSide) {
+    public static void validateAuditMessage(final String document, final String eventType, final NcpSide ncpSide) {
 
         LOGGER.info("Audit Message Validation: '{}'-'{}'", eventType, ncpSide.getName());
-        String validator = ValidatorUtil.obtainAuditModel(eventType, ncpSide);
+        final String validator = ValidatorUtil.obtainAuditModel(eventType, ncpSide);
 
         if (isRemoteValidationEnable()) {
 
             new Thread(() -> {
-                StopWatch watch = new StopWatch();
+                final StopWatch watch = new StopWatch();
                 watch.start();
-                AuditMessageValidator auditMessageValidator = GazelleValidatorFactory.getAuditMessageValidator();
-                String xmlResult = auditMessageValidator.validateDocument(document, validator);
+                final AuditMessageValidator auditMessageValidator = GazelleValidatorFactory.getAuditMessageValidator();
+                final String xmlResult = auditMessageValidator.validateDocument(document, validator);
                 ReportBuilder.build(ReportBuilder.formatDate(), validator, ObjectType.AUDIT.toString(), document,
                         DetailedResultUnMarshaller.unmarshal(xmlResult), xmlResult, ncpSide);
                 watch.stop();
@@ -61,7 +61,7 @@ public class OpenNCPValidation {
      * @param assertion
      * @param ncpSide
      */
-    public static void validateHCPAssertion(Assertion assertion, NcpSide ncpSide) {
+    public static void validateHCPAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate HCP Assertion...");
         validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_HCP_IDENTITY, ncpSide);
@@ -71,7 +71,7 @@ public class OpenNCPValidation {
      * @param assertion
      * @param ncpSide
      */
-    public static void validateNoKAssertion(Assertion assertion, NcpSide ncpSide) {
+    public static void validateNoKAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate Next Of Kin Assertion...");
         validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
@@ -81,7 +81,7 @@ public class OpenNCPValidation {
      * @param assertion
      * @param ncpSide
      */
-    public static void validateTRCAssertion(Assertion assertion, NcpSide ncpSide) {
+    public static void validateTRCAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate TRC Assertion...");
         validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_TRC, ncpSide);
@@ -89,33 +89,33 @@ public class OpenNCPValidation {
 
     /**
      * @param assertion
-     * @param schematron
+     * @param validatorName
      * @param ncpSide
      */
-    private static void validateAssertion(Assertion assertion, String schematron, NcpSide ncpSide) {
+    private static void validateAssertion(final Assertion assertion, final String validatorName, final NcpSide ncpSide) {
 
         LOGGER.info("[Validation Service: Assertion Validator]");
         try {
-            String base64 = DatatypeConverter.printBase64Binary(XMLUtil.prettyPrint(assertion.getDOM()).getBytes(StandardCharsets.UTF_8));
+            final String base64 = DatatypeConverter.printBase64Binary(XMLUtil.prettyPrint(assertion.getDOM()).getBytes(StandardCharsets.UTF_8));
 
             if (isRemoteValidationEnable()) {
 
                 new Thread(() -> {
-                    StopWatch watch = new StopWatch();
+                    final StopWatch watch = new StopWatch();
                     watch.start();
-                    String xmlResult;
-                    SchematronValidator schematronValidator = GazelleValidatorFactory.getSchematronValidator();
-                    xmlResult = schematronValidator.validateObject(base64, schematron, schematron);
-                    DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
-                    ReportBuilder.build(ReportBuilder.formatDate(), schematron, ObjectType.ASSERTION.toString(), base64, detailedResult, xmlResult, ncpSide);
+                    final String xmlResult;
+                    final AssertionValidator assertionValidator = GazelleValidatorFactory.getAssertionValidator();
+                    xmlResult = assertionValidator.validateBase64Document(base64, validatorName);
+                    final DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
+                    ReportBuilder.build(ReportBuilder.formatDate(), validatorName, ObjectType.ASSERTION.toString(), base64, detailedResult, xmlResult, ncpSide);
                     watch.stop();
                     LOGGER.info(MSG_VALIDATION_EXECUTION, watch.getTime());
                 }).start();
 
             } else {
-                ReportBuilder.build(ReportBuilder.formatDate(), schematron, ObjectType.ASSERTION.toString(), base64, ncpSide);
+                ReportBuilder.build(ReportBuilder.formatDate(), validatorName, ObjectType.ASSERTION.toString(), base64, ncpSide);
             }
-        } catch (TransformerException e) {
+        } catch (final TransformerException e) {
             LOGGER.error("TransformerException: '{}'", e.getMessage(), e);
         }
     }
@@ -124,7 +124,7 @@ public class OpenNCPValidation {
      * @param request
      * @param ncpSide
      */
-    public static void validatePatientDemographicRequest(String request, NcpSide ncpSide) {
+    public static void validatePatientDemographicRequest(final String request, final NcpSide ncpSide) {
 
         validatePatientDemographic(request, ValidatorUtil.EHDSI_ID_SERVICE_REQUEST, ObjectType.XCPD_QUERY_REQUEST, ncpSide);
     }
@@ -133,7 +133,7 @@ public class OpenNCPValidation {
      * @param request
      * @param ncpSide
      */
-    public static void validatePatientDemographicResponse(String request, NcpSide ncpSide) {
+    public static void validatePatientDemographicResponse(final String request, final NcpSide ncpSide) {
 
         validatePatientDemographic(request, ValidatorUtil.EHDSI_ID_SERVICE_RESPONSE, ObjectType.XCPD_QUERY_RESPONSE, ncpSide);
     }
@@ -144,17 +144,17 @@ public class OpenNCPValidation {
      * @param objectType
      * @param ncpSide
      */
-    private static void validatePatientDemographic(String request, String validator, ObjectType objectType, NcpSide ncpSide) {
+    private static void validatePatientDemographic(final String request, final String validator, final ObjectType objectType, final NcpSide ncpSide) {
 
         LOGGER.info("[Validation Service: XCPD Validator]");
         if (isRemoteValidationEnable()) {
 
             new Thread(() -> {
-                StopWatch watch = new StopWatch();
+                final StopWatch watch = new StopWatch();
                 watch.start();
-                HL7v3Validator hl7v3Validator = GazelleValidatorFactory.getHL7v3Validator();
-                String xmlResult = hl7v3Validator.validateDocument(request, validator, ncpSide);
-                DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
+                final HL7v3Validator hl7v3Validator = GazelleValidatorFactory.getHL7v3Validator();
+                final String xmlResult = hl7v3Validator.validateDocument(request, validator, ncpSide);
+                final DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
                 ReportBuilder.build(ReportBuilder.formatDate(), validator, objectType.toString(), request, detailedResult, xmlResult, ncpSide);
                 watch.stop();
                 LOGGER.info(MSG_VALIDATION_EXECUTION, watch.getTime());
@@ -169,10 +169,10 @@ public class OpenNCPValidation {
      * @param message
      * @param ncpSide
      */
-    public static void validateCrossCommunityAccess(String message, NcpSide ncpSide, List<ClassCode> classCodes) {
+    public static void validateCrossCommunityAccess(final String message, final NcpSide ncpSide, final List<ClassCode> classCodes) {
 
         LOGGER.info("[Validation Service: XCA Validator]");
-        XdsModel xdsModel = ValidatorUtil.obtainModelXca(message, classCodes);
+        final XdsModel xdsModel = ValidatorUtil.obtainModelXca(message, classCodes);
         validateXDSMessage(message, xdsModel, ncpSide);
     }
 
@@ -180,23 +180,23 @@ public class OpenNCPValidation {
      * @param request
      * @param ncpSide
      */
-    public static void validateXDRMessage(String request, NcpSide ncpSide, List<String> classCodes) {
+    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final List<String> classCodes) {
 
         LOGGER.info("[Validation Service: XDR Validator]");
-        XdsModel xdsModel = ValidatorUtil.obtainModelXdr(request, classCodes);
+        final XdsModel xdsModel = ValidatorUtil.obtainModelXdr(request, classCodes);
         validateXDSMessage(request, xdsModel, ncpSide);
     }
 
-    private static void validateXDSMessage(String message, XdsModel xdsModel, NcpSide ncpSide) {
+    private static void validateXDSMessage(final String message, final XdsModel xdsModel, final NcpSide ncpSide) {
 
         if (isRemoteValidationEnable()) {
 
             new Thread(() -> {
-                StopWatch watch = new StopWatch();
+                final StopWatch watch = new StopWatch();
                 watch.start();
-                XdsValidator xdsValidator = GazelleValidatorFactory.getXdsValidator();
-                String xmlResult = xdsValidator.validateDocument(message, xdsModel.getValidatorName());
-                DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
+                final XdsValidator xdsValidator = GazelleValidatorFactory.getXdsValidator();
+                final String xmlResult = xdsValidator.validateDocument(message, xdsModel.getValidatorName());
+                final DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
                 ReportBuilder.build(ReportBuilder.formatDate(), xdsModel.getValidatorName(), xdsModel.getObjectType(), message, detailedResult, xmlResult, ncpSide);
                 watch.stop();
                 LOGGER.info(MSG_VALIDATION_EXECUTION, watch.getTime());
@@ -212,19 +212,19 @@ public class OpenNCPValidation {
      * @param classCode
      * @param isPivot
      */
-    public static void validateCdaDocument(String cda, NcpSide ncpSide, ClassCode classCode, boolean isPivot) {
+    public static void validateCdaDocument(final String cda, final NcpSide ncpSide, final ClassCode classCode, final boolean isPivot) {
 
         LOGGER.info("[Validation Service: CDA Validator]");
-        boolean isScannedDocument = cda.contains("nonXMLBody");
-        String cdaModel = ValidatorUtil.obtainCdaModel(classCode, isPivot, isScannedDocument);
+        final boolean isScannedDocument = cda.contains("nonXMLBody");
+        final String cdaModel = ValidatorUtil.obtainCdaModel(classCode, isPivot, isScannedDocument);
 
         if (isRemoteValidationEnable()) {
 
             new Thread(() -> {
-                StopWatch watch = new StopWatch();
+                final StopWatch watch = new StopWatch();
                 watch.start();
-                String xmlResult = GazelleValidatorFactory.getCdaValidator().validateDocument(cda, cdaModel, ncpSide);
-                DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
+                final String xmlResult = GazelleValidatorFactory.getCdaValidator().validateDocument(cda, cdaModel, ncpSide);
+                final DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
                 ReportBuilder.build(ReportBuilder.formatDate(), cdaModel, ObjectType.CDA.toString(), cda, detailedResult, xmlResult, ncpSide);
                 watch.stop();
                 LOGGER.info(MSG_VALIDATION_EXECUTION, watch.getTime());

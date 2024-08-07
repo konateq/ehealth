@@ -6,7 +6,7 @@ import java.util.Optional;
 import eu.epsos.protocolterminators.ws.server.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.constant.error.ErrorCode;
 import eu.europa.ec.sante.ehdsi.constant.error.ITMTSAMError;
-import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.exceptions.OpenNCPErrorCodeException;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.ObjectFactory;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import org.apache.axiom.om.OMAbstractFactory;
@@ -19,10 +19,17 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 public class RegistryErrorUtils {
 
     private static final OMFactory omFactory = OMAbstractFactory.getOMFactory();
-    private static final oasis.names.tc.ebxml_regrep.xsd.rs._3.ObjectFactory ofRs = new oasis.names.tc.ebxml_regrep.xsd.rs._3.ObjectFactory();
+    private static final ObjectFactory ofRs = new ObjectFactory();
 
-    public static void addErrorMessage(RegistryErrorList registryErrorList, ErrorCode errorCode, String codeContext, String location, RegistryErrorSeverity severity) {
-        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, location, severity));
+    public static void addErrorMessage(RegistryErrorList registryErrorList, ErrorCode errorCode, String codeContext, RegistryErrorSeverity severity) {
+        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, null, severity));
+    }
+
+    public static void addErrorMessage(RegistryErrorList registryErrorList, ErrorCode errorCode, String codeContext, Exception e, RegistryErrorSeverity severity) {
+        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
+                .findFirst()
+                .map(StackTraceElement::toString)
+                .orElse(StringUtils.EMPTY), severity));
     }
 
     public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ErrorCode errorCode, String codeContext, RegistryErrorSeverity severity) {
@@ -44,19 +51,6 @@ public class RegistryErrorUtils {
                 severity));
     }
 
-    private static RegistryError createErrorMessage(String errorCode, String codeContext, Exception e, RegistryErrorSeverity severity) {
-
-        var registryError = ofRs.createRegistryError();
-        registryError.setErrorCode(errorCode);
-        registryError.setLocation(Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
-                .findFirst()
-                .map(StackTraceElement::toString)
-                .orElse(StringUtils.EMPTY));
-        registryError.setSeverity(severity.getText());
-        registryError.setCodeContext(codeContext);
-        return registryError;
-    }
-
     private static RegistryError createErrorMessage(String errorCode, String codeContext, String location, RegistryErrorSeverity severity) {
 
         var registryError = ofRs.createRegistryError();
@@ -74,7 +68,6 @@ public class RegistryErrorUtils {
         registryError.addAttribute(omFactory.createOMAttribute("errorCode", null, errorCode));
         String aux = severity != null ? severity.getText() : null;
         registryError.addAttribute(omFactory.createOMAttribute("severity", null, aux));
-        // EHNCP-1131
         registryError.addAttribute(omFactory.createOMAttribute("location", null, location));
         return registryError;
     }

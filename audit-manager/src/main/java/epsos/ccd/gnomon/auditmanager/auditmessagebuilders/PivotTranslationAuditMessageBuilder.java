@@ -14,18 +14,18 @@ public class PivotTranslationAuditMessageBuilder extends AbstractAuditMessageBui
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PivotTranslationAuditMessageBuilder.class);
     @Override
-    public AuditMessage build(EventLog eventLog) {
+    public AuditMessage build(final EventLog eventLog) {
         AuditMessage message = null;
         try {
-            ObjectFactory of = new ObjectFactory();
+            final ObjectFactory of = new ObjectFactory();
             message = of.createAuditMessage();
             addAuditSource(message, eventLog.getAS_AuditSourceId());
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(),
                     eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
 
-            addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
-                    "Service Provider", eventLog.getTargetip());
-        } catch (Exception e) {
+            addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
+                    AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getTargetip());
+        } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
         if (message != null) {

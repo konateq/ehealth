@@ -35,7 +35,7 @@ app:
   name: translations and mappings ws
   api:
     title: Translations and mappings Webservice
-    version: @project.version@-@maven.build.timestamp@
+    version: '@project.version@-@maven.build.timestamp@'
     description: Translations and mappings Webservice
     base-package: eu.europa.ec.sante.ehdsi.openncp.tm.ws
     contact-name: eHealth DSI Support

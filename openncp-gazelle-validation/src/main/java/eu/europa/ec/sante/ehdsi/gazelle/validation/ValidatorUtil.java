@@ -4,7 +4,6 @@ import eu.epsos.validation.datamodel.common.NcpSide;
 import eu.europa.ec.sante.ehdsi.constant.ClassCode;
 import eu.europa.ec.sante.ehdsi.gazelle.validation.util.ObjectType;
 import eu.europa.ec.sante.ehdsi.gazelle.validation.util.XdsModel;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,16 +17,19 @@ public class ValidatorUtil {
     public static final String EHDSI_ART_DECOR_CDA_PIVOT;
     public static final String EHDSI_ART_DECOR_SCANNED_DOCUMENT;
     public static final String EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC;
-    public static final String EHDSI_AUDIT_IDENTIFICATION_SERVICE_SP;
     public static final String EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST;
     public static final String EHDSI_AUDIT_HCP_ASSURANCE;
+    public static final String EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SC;
     public static final String EHDSI_AUDIT_FETCH_DOC_SERVICE_SC;
+    public static final String EHDSI_AUDIT_FETCH_ORDER_SERVICE_SC;
     public static final String EHDSI_AUDIT_ISSUANCE_TRC_ASSERTION;
     public static final String EHDSI_AUDIT_ISSUANCE_NOK_ASSERTION;
     public static final String EHDSI_AUDIT_PIVOT_TRANSLATION;
     public static final String EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SP;
     public static final String EHDSI_AUDIT_ISSUANCE_HCP_ASSERTION;
+    public static final String EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SP;
     public static final String EHDSI_AUDIT_FETCH_DOC_SERVICE_SP;
+    public static final String EHDSI_AUDIT_FETCH_ORDER_SERVICE_SP;
     public static final String EHDSI_AUDIT_SMP_SERVICE_CONSUMER_QUERY;
     public static final String EHDSI_AUDIT_SMP_SERVICE_CONSUMER_PUSH;
     public static final String EHDSI_ASSERTION_HCP_IDENTITY;
@@ -74,14 +76,17 @@ public class ValidatorUtil {
             EHDSI_ART_DECOR_SCANNED_DOCUMENT = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_SCANNED_DOCUMENT");
 
             EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC");
-            EHDSI_AUDIT_IDENTIFICATION_SERVICE_SP = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_IDENTIFICATION_SERVICE_SP");
             EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST");
             EHDSI_AUDIT_HCP_ASSURANCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_HCP_ASSURANCE_AUDIT");
+            EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SC = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SC");
+            EHDSI_AUDIT_FETCH_ORDER_SERVICE_SC = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_FETCH_ORDER_SERVICE_SC");
             EHDSI_AUDIT_FETCH_DOC_SERVICE_SC = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_FETCH_DOC_SERVICE_SC");
             EHDSI_AUDIT_ISSUANCE_TRC_ASSERTION = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_ISSUANCE_TRC_ASSERTION");
             EHDSI_AUDIT_ISSUANCE_NOK_ASSERTION = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_ISSUANCE_NOK_ASSERTION");
             EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SP = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SP");
             EHDSI_AUDIT_ISSUANCE_HCP_ASSERTION = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_ISSUANCE_HCP_ASSERTION");
+            EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SP = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SP");
+            EHDSI_AUDIT_FETCH_ORDER_SERVICE_SP = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_FETCH_ORDER_SERVICE_SP");
             EHDSI_AUDIT_FETCH_DOC_SERVICE_SP = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_FETCH_DOC_SERVICE_SP");
             EHDSI_AUDIT_PIVOT_TRANSLATION = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PIVOT_TRANSLATION");
             EHDSI_AUDIT_SMP_SERVICE_CONSUMER_QUERY = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_SMP_SERVICE_CONSUMER_QUERY");
@@ -111,7 +116,7 @@ public class ValidatorUtil {
             EHDSI_XDS_OS_RETRIEVE_RESPONSE_XCA = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_XDS_OS_RETRIEVE_RESPONSE_XCA");
             EHDSI_XDS_PS_RETRIEVE_RESPONSE_XCA = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_XDS_PS_RETRIEVE_RESPONSE_XCA");
             EHDSI_XDS_FETCH_DOC_RETRIEVE_RESPONSE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_XDS_FETCH_DOC_RETRIEVE_RESPONSE");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Failure during static initialization: '{}'", e.getMessage(), e);
             throw e;
         }
@@ -120,90 +125,39 @@ public class ValidatorUtil {
     private ValidatorUtil() {
     }
 
-    public static String obtainAuditModel(String eventType, NcpSide ncpSide) {
-
-        String model = "";
-        // Infer model according to NCP Side and EventCode
-        if (ncpSide == NcpSide.NCP_A) {
-            if (StringUtils.equals(eventType, "EHDSI-11")) {
-                model = ValidatorUtil.EHDSI_AUDIT_HCP_ASSURANCE;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-94")) {
-                model = ValidatorUtil.EHDSI_AUDIT_PIVOT_TRANSLATION;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-21")
-                    || StringUtils.equals(eventType, "EHDSI-22")
-                    || StringUtils.equals(eventType, "EHDSI-31")
-                    || StringUtils.equals(eventType, "EHDSI-32")
-                    || StringUtils.equals(eventType, "ITI-38")
-                    || StringUtils.equals(eventType, "ITI-39")
-                    || StringUtils.equals(eventType, "EHDSI-61")
-                    || StringUtils.equals(eventType, "EHDSI-62")
-                    || StringUtils.equals(eventType, "EHDSI-95")
-                    || StringUtils.equals(eventType, "EHDSI-97")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_FETCH_DOC_SERVICE_SP;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-41") || StringUtils.equals(eventType, "EHDSI-42")
-                    || StringUtils.equals(eventType, "EHDSI-51")) {
-                model = ValidatorUtil.EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SP;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-193")) {
-                model = ValidatorUtil.EHDSI_AUDIT_SMP_SERVICE_CONSUMER_QUERY;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-194")) {
-                model = ValidatorUtil.EHDSI_AUDIT_SMP_SERVICE_CONSUMER_PUSH;
-            }
-        } else {
-            if (StringUtils.equals(eventType, "EHDSI-11")) {
-                model = ValidatorUtil.EHDSI_AUDIT_HCP_ASSURANCE;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-94")) {
-                model = ValidatorUtil.EHDSI_AUDIT_PIVOT_TRANSLATION;
-            }
-            if (StringUtils.equals(eventType, "ITI-38")
-                    || StringUtils.equals(eventType, "ITI-39")
-                    || StringUtils.equals(eventType, "EHDSI-95")
-                    || StringUtils.equals(eventType, "EHDSI-97")) {
-                model = ValidatorUtil.EHDSI_AUDIT_HCP_ASSURANCE;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-21") || StringUtils.equals(eventType, "EHDSI-22")
-                    || StringUtils.equals(eventType, "EHDSI-31") || StringUtils.equals(eventType, "EHDSI-32")
-                    || StringUtils.equals(eventType, "EHDSI-61") || StringUtils.equals(eventType, "EHDSI-62")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_FETCH_DOC_SERVICE_SC;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-41") || StringUtils.equals(eventType, "EHDSI-42")
-                    || StringUtils.equals(eventType, "EHDSI-51")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-91")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_ISSUANCE_HCP_ASSERTION;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-92")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_ISSUANCE_TRC_ASSERTION;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-96")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_ISSUANCE_NOK_ASSERTION;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-93")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-193")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_SMP_SERVICE_CONSUMER_QUERY;
-            }
-            if (StringUtils.equals(eventType, "EHDSI-194")) {
-
-                model = ValidatorUtil.EHDSI_AUDIT_SMP_SERVICE_CONSUMER_PUSH;
-            }
+    public static String obtainAuditModel(final String eventType, final NcpSide ncpSide) {
+        switch (eventType) {
+            case "EHDSI-11":
+                return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SC;
+            case "EHDSI-21":
+            case "EHDSI-31":
+            case "EHDSI-61":
+                return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_FETCH_ORDER_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_FETCH_ORDER_SERVICE_SC;
+            case "EHDSI-22":
+            case "EHDSI-32":
+            case "EHDSI-62":
+                return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_FETCH_DOC_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_FETCH_DOC_SERVICE_SC;
+            case "EHDSI-41":
+            case "EHDSI-42":
+            case "EHDSI-51":
+                return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC;
+            case "EHDSI-91":
+                return ValidatorUtil.EHDSI_AUDIT_ISSUANCE_HCP_ASSERTION;
+            case "EHDSI-92":
+                return ValidatorUtil.EHDSI_AUDIT_ISSUANCE_TRC_ASSERTION;
+            case "EHDSI-93":
+                return ValidatorUtil.EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST;
+            case "EHDSI-94":
+                return ValidatorUtil.EHDSI_AUDIT_PIVOT_TRANSLATION;
+            case "EHDSI-96":
+                return ValidatorUtil.EHDSI_AUDIT_ISSUANCE_NOK_ASSERTION;
+            case "EHDSI-193":
+                return ValidatorUtil.EHDSI_AUDIT_SMP_SERVICE_CONSUMER_QUERY;
+            case "EHDSI-194":
+                return ValidatorUtil.EHDSI_AUDIT_SMP_SERVICE_CONSUMER_PUSH;
+            default:
+                throw new RuntimeException("No Audit model found for event type [" + eventType + "]");
         }
-        return model;
     }
 
     /**
@@ -216,7 +170,7 @@ public class ValidatorUtil {
      * @param isScannedDocument The boolean flag stating if the document is a scanned document or not.
      * @return the correspondent CDA model.
      */
-    public static String obtainCdaModel(ClassCode classCode, boolean isPivot, boolean isScannedDocument) {
+    public static String obtainCdaModel(final ClassCode classCode, final boolean isPivot, final boolean isScannedDocument) {
 
         if (classCode == null) {
             return null;
@@ -236,12 +190,12 @@ public class ValidatorUtil {
      * @param classCodes
      * @return the proper model to be used in the validation
      */
-    public static XdsModel obtainModelXdr(String message, List<String> classCodes) {
+    public static XdsModel obtainModelXdr(final String message, final List<String> classCodes) {
 
         final String PROVIDE_AND_REGISTER_REQUEST = "ProvideAndRegisterDocumentSetRequest";
         final String PROVIDE_AND_REGISTER_RESPONSE = "RegistryResponse";
 
-        XdsModel result = new XdsModel();
+        final XdsModel result = new XdsModel();
 
         if (message.contains(PROVIDE_AND_REGISTER_REQUEST)) {
 
@@ -276,14 +230,14 @@ public class ValidatorUtil {
      * @param classCodes
      * @return the proper model to be used in the validation
      */
-    public static XdsModel obtainModelXca(String message, List<ClassCode> classCodes) {
+    public static XdsModel obtainModelXca(final String message, final List<ClassCode> classCodes) {
 
         final String QUERY_REQUEST = "AdhocQueryRequest";
         final String QUERY_RESPONSE = "AdhocQueryResponse";
         final String RETRIEVE_REQUEST = "RetrieveDocumentSetRequest";
         final String RETRIEVE_RESPONSE = "RetrieveDocumentSetResponse";
 
-        XdsModel result = new XdsModel();
+        final XdsModel result = new XdsModel();
 
         // Query / List operations
         // Request
@@ -362,7 +316,7 @@ public class ValidatorUtil {
         return result;
     }
 
-    private static boolean hasClassCode(String message, List<ClassCode> classCodes, ClassCode classCodeToMatch) {
+    private static boolean hasClassCode(final String message, final List<ClassCode> classCodes, final ClassCode classCodeToMatch) {
         if (message.contains(classCodeToMatch.getCode())) {
             return true;
         }
