@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -209,12 +210,13 @@ public class SecurityTokenServiceWS {
         }
 
         final SOAPElement trcDetails = (SOAPElement) body.getElementsByTagNameNS(TRC_NS, "TRCParameters").item(0);
-        if (trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId").item(0) == null) {
+        final NodeList patientIdElements = trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId");
+        if (patientIdElements.getLength() == 0 || patientIdElements.item(0) == null) {
             throw new WebServiceException("Patient ID is Missing from the RST");
         }
-        final List<String> patientIds = new ArrayList();
-        for (int i = 0; i < trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId").getLength(); i++) {
-            patientIds.add(trcDetails.getElementsByTagNameNS(TRC_NS, "PatientId").item(i).getTextContent());
+        final List<String> patientIds = new ArrayList<>();
+        for (int i = 0; i < patientIdElements.getLength(); i++) {
+            patientIds.add(patientIdElements.item(i).getTextContent());
         }
         return patientIds;
     }
