@@ -76,10 +76,10 @@ public abstract class AbstractAuditMessageBuilder {
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
                     eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
-            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), false,
+            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), getUserIsRequestor(eventLog),
                     "1.3.6.1.4.1.12559.11.10.1.3.2.2.2");
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                    false);
+                    getUserIsRequestor(eventLog));
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
                     AuditConstant.CODE_SYSTEM_EHDSI, "Service Consumer"); // eventLog.getSourceip()
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
@@ -94,6 +94,14 @@ public abstract class AbstractAuditMessageBuilder {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
         return message;
+    }
+
+    protected boolean getUserIsRequestor(final EventLog eventLog) {
+        if (eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_INITIALIZE) || eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_DISCARD)) {
+            return eventLog.getNcpSide().equals(NcpSide.NCP_B) ? false : true;
+        } else {
+            return eventLog.getNcpSide().equals(NcpSide.NCP_B) ? true : false;
+        }
     }
 
     /**

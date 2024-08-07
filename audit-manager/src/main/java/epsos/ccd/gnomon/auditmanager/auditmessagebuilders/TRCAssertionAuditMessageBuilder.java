@@ -24,7 +24,7 @@ public class TRCAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(),
                     eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             // Point Of Care
-            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), true,
+            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getPC_RoleID(), getUserIsRequestor(eventLog),
                     "1.3.6.1.4.1.12559.11.10.1.3.2.2.2");
             // Human Requestor
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
