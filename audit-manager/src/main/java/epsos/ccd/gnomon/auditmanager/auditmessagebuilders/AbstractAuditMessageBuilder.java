@@ -258,7 +258,7 @@ public abstract class AbstractAuditMessageBuilder {
         humanRequesterRoleId.setCsdCode("110153");
         humanRequesterRoleId.setOriginalText(roleId);
         humanRequesterRoleId.setCodeSystemName(AuditConstant.DICOM);
-        humanRequesterRoleId.setOriginalText("Source Role ID");
+        humanRequesterRoleId.setOriginalText(AuditConstant.SOURCE_ROLE_ID);
 
         humanRequester.getRoleIDCode().add(humanRequesterRoleId);
         auditMessage.getActiveParticipant().add(humanRequester);
