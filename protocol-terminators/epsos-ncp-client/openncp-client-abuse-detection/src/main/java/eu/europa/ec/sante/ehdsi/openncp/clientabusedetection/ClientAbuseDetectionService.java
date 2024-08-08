@@ -3,11 +3,12 @@ package eu.europa.ec.sante.ehdsi.openncp.clientabusedetection;
 import com.ibatis.common.jdbc.ScriptRunner;
 import epsos.ccd.gnomon.auditmanager.AuditTrailUtils;
 import epsos.ccd.gnomon.auditmanager.EventType;
-import eu.europa.ec.sante.ehdsi.constant.ClassCode;
 import eu.europa.ec.sante.ehdsi.openncp.abusedetection.*;
 import eu.europa.ec.sante.ehdsi.openncp.util.OpenNCPConstants;
 import eu.europa.ec.sante.ehdsi.openncp.util.ServerMode;
-import net.RFC3881.*;
+import net.RFC3881.ActiveParticipantContents;
+import net.RFC3881.AuditMessage;
+import net.RFC3881.ParticipantObjectIdentificationContents;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.joda.time.*;
@@ -424,7 +425,7 @@ public class ClientAbuseDetectionService implements Job {
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_LIST.getCode())) /*&&
+                                        EventType.ORDER_SERVICE_LIST.getIheCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
@@ -683,21 +684,5 @@ public class ClientAbuseDetectionService implements Job {
             }
         }
         return ret;
-    }
-
-    private String getActiveParticipants(List<ActiveParticipantContents> activeParticipants) {
-        StringBuilder val = new StringBuilder();
-        for (ActiveParticipantContents p : activeParticipants) {
-            val.append("ActiveParticipant ").append(p.getUserID()).append(" - ").append(p.isUserIsRequestor()).append(" ");
-        }
-        return StringUtils.trim(val.toString());
-    }
-
-    private String getTypeCodes(List<CodedValueType> eventTypeCode) {
-        StringBuilder val = new StringBuilder();
-        for (CodedValueType t : eventTypeCode) {
-            val.append("EventTypeCode ").append(t.getCode()).append(" - ").append(t.getDisplayName()).append(" ");
-        }
-        return StringUtils.trim(val.toString());
     }
 }
