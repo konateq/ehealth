@@ -80,7 +80,13 @@ CREATE TABLE objects_detail_types (ObjectEntity_id BIGINT NOT NULL, objectDetail
 
 ALTER TABLE objects_detail_types ADD PRIMARY KEY (ObjectEntity_id, objectDetailTypes_id);
 
-CREATE TABLE participants_codes (ParticipantEntity_id BIGINT NOT NULL, participantTypeCodes_id BIGINT NOT NULL, CONSTRAINT FK6mo8s3p730mpu65trdu4akehf FOREIGN KEY (participantTypeCodes_id) REFERENCES codes(id), CONSTRAINT FKth6nbhfn1lbkvtr5m942q305v FOREIGN KEY (ParticipantEntity_id) REFERENCES participants(id), UNIQUE (participantTypeCodes_id));
+CREATE TABLE participants_codes
+(
+    ParticipantEntity_id    BIGINT NOT NULL,
+    participantTypeCodes_id BIGINT NOT NULL,
+    CONSTRAINT FK6mo8s3p730mpu65trdu4akehf FOREIGN KEY (participantTypeCodes_id) REFERENCES codes (id),
+    CONSTRAINT FKth6nbhfn1lbkvtr5m942q305v FOREIGN KEY (ParticipantEntity_id) REFERENCES participants (id)
+);
 
 ALTER TABLE participants_codes ADD PRIMARY KEY (ParticipantEntity_id, participantTypeCodes_id);
 
