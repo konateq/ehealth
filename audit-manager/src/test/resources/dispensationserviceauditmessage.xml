@@ -5,7 +5,7 @@
         <EventTypeCode csd-code="ITI-41" codeSystemName="IHE Transactions" displayName="DispensationService::Initialize" originalText="XDR::ProvideandRegisterDocumentSet-b"/>
     </EventIdentification>
     <ActiveParticipant UserID="eHealth OpenNCP EU Portal" AlternativeUserID="eHealth OpenNCP EU Portal"
-                       UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
+                       UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110152" codeSystemName="DCM" originalText="Destination Role ID"/>
     </ActiveParticipant>
     <ActiveParticipant UserID="HR User ID" AlternativeUserID="HR Alternative User ID" UserIsRequestor="true"

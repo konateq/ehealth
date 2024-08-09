@@ -70,7 +70,7 @@ public abstract class AbstractAuditMessageBuilder {
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
                     eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
-            addPointOfCare(message, eventLog.getPC_UserID(), getUserIsRequestor(eventLog), eventLog.getSourceip());
+            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     getUserIsRequestor(eventLog), eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
@@ -92,10 +92,16 @@ public abstract class AbstractAuditMessageBuilder {
     }
 
     protected boolean getUserIsRequestor(final EventLog eventLog) {
-        if (eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_INITIALIZE) || eventLog.getEventType().equals(EventType.DISPENSATION_SERVICE_DISCARD)) {
-            return !eventLog.getNcpSide().equals(NcpSide.NCP_B);
-        } else {
-            return eventLog.getNcpSide().equals(NcpSide.NCP_B);
+        switch (eventLog.getEventType()) {
+            case DISPENSATION_SERVICE_INITIALIZE:
+            case DISPENSATION_SERVICE_DISCARD:
+                return !eventLog.getNcpSide().equals(NcpSide.NCP_B);
+            case ORDER_SERVICE_RETRIEVE:
+            case PATIENT_SERVICE_RETRIEVE:
+            case ORCD_SERVICE_RETRIEVE:
+                return false;
+            default:
+                return eventLog.getNcpSide().equals(NcpSide.NCP_B);
         }
     }
 
@@ -169,17 +175,16 @@ public abstract class AbstractAuditMessageBuilder {
     /**
      * @param message
      * @param userId
-     * @param userIsRequester
      * @return
      */
-    protected AuditMessage addPointOfCare(final AuditMessage message, final String userId, final boolean userIsRequester, final String ipAddress) {
+    protected AuditMessage addPointOfCare(final AuditMessage message, final String userId, final String ipAddress) {
         final String participantUserId = StringUtils.isBlank(userId) ? "SP" : userId;
         final ActiveParticipantContents participant = new ActiveParticipantContents();
         participant.setUserID(participantUserId);
         participant.setAlternativeUserID(participantUserId);
         participant.setNetworkAccessPointID(ipAddress);
         participant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
-        participant.setUserIsRequestor(userIsRequester);
+        participant.setUserIsRequestor(false);
 
         final RoleIDCode codedValue = new RoleIDCode();
         codedValue.setCsdCode("110152");
