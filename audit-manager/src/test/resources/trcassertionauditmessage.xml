@@ -4,7 +4,7 @@
         <EventID csd-code="110112" codeSystemName="DCM" displayName="ncp::TrcAssertion" originalText="Query"/>
         <EventTypeCode csd-code="EHDSI-92" codeSystemName="IHE Transactions" displayName="ncp::TrcAssertion" originalText="ncp::TrcAssertion"/>
     </EventIdentification>
-    <ActiveParticipant UserID="PC User ID" AlternativeUserID="PC User ID" UserIsRequestor="true"
+    <ActiveParticipant UserID="PC User ID" AlternativeUserID="PC User ID" UserIsRequestor="false"
                        NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110152" codeSystemName="DCM" originalText="Destination Role ID"/>
     </ActiveParticipant>
