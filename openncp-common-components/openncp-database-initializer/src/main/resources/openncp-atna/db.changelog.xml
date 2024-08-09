@@ -273,7 +273,7 @@
                 <constraints nullable="false" references="participants(id)" foreignKeyName="FKth6nbhfn1lbkvtr5m942q305v"/>
             </column>
             <column name="participantTypeCodes_id" type="bigint">
-                <constraints nullable="false" unique="true" references="codes(id)" foreignKeyName="FK6mo8s3p730mpu65trdu4akehf"/>
+                <constraints nullable="false" references="codes(id)" foreignKeyName="FK6mo8s3p730mpu65trdu4akehf"/>
             </column>
         </createTable>
 
