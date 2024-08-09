@@ -273,7 +273,8 @@
                 <constraints nullable="false" references="participants(id)" foreignKeyName="FKth6nbhfn1lbkvtr5m942q305v"/>
             </column>
             <column name="participantTypeCodes_id" type="bigint">
-                <constraints nullable="false" references="codes(id)" foreignKeyName="FK6mo8s3p730mpu65trdu4akehf"/>
+                <constraints nullable="false" unique="true" references="codes(id)"
+                             foreignKeyName="FK6mo8s3p730mpu65trdu4akehf"/>
             </column>
         </createTable>
 
@@ -299,6 +300,13 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
+    </changeSet>
+
+    <changeSet id="5" author="ghysmat">
+        <dropUniqueConstraint
+                constraintName="participantTypeCodes_id"
+                tableName="participants_codes"
+                uniqueColumns="participantTypeCodes_id"/>
     </changeSet>
 
 </databaseChangeLog>
