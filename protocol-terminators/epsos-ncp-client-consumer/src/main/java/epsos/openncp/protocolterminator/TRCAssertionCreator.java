@@ -1,6 +1,5 @@
 package epsos.openncp.protocolterminator;
 
-import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.AssertionConstants;
 import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.PurposeOfUse;
 import eu.europa.ec.sante.ehdsi.openncp.assertionvalidator.saml.SAML;
 import eu.europa.ec.sante.ehdsi.openncp.configmanager.ConfigurationManagerFactory;
@@ -99,7 +98,7 @@ public class TRCAssertionCreator {
         if (true) {
             Attribute att = saml.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
             att.setFriendlyName("Patient ID");
-            att.setName(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
+            att.setName("urn:oasis:names:tc:xacml:1.0:resource:resource-id");
             att.setNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
 
             XMLObjectBuilder<?> builder = XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(XSAny.TYPE_NAME);
@@ -119,7 +118,7 @@ public class TRCAssertionCreator {
         if (true) {
             Attribute att = saml.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
             att.setFriendlyName("XSPA Purpose of Use");
-            att.setName(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
+            att.setName("urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
             att.setNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
 
             XMLObjectBuilder<?> builder = XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(XSAny.TYPE_NAME);

@@ -107,9 +107,9 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     @Override
     public void XSPASubjectValidatorForHCP(Assertion assertion, ClassCode classCode) throws MissingFieldException, InvalidFieldException {
 
-        String subjectId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
+        String subjectId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_SUBJECT_SUBJECT_ID);
         if (StringUtils.isEmpty(subjectId)) {
-            throw new InvalidFieldException(String.format("XSPA Subject '%s' attribute in assertion should be filled.", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID));
+            throw new InvalidFieldException(String.format("XSPA Subject '%s' attribute in assertion should be filled.", AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_SUBJECT_SUBJECT_ID));
         }
     }
 

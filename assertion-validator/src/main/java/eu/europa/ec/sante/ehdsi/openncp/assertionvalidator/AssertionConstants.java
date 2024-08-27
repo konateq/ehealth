@@ -5,7 +5,9 @@ public class AssertionConstants {
     public static final String URN_EHDSI_NAMES_SUBJECT_ON_BEHALF_OF = "urn:ehdsi:names:subject:on-behalf-of";
     public static final String URN_EHDSI_NAMES_SUBJECT_HEALTHCARE_FACILITY_TYPE = "urn:ehdsi:names:subject:healthcare-facility-type";
     public static final String URN_OASIS_NAMES_TC_SAML_2_0_ASSERTION = "urn:oasis:names:tc:SAML:2.0:assertion";
+    public static final String URN_OASIS_NAMES_TC_XACML_1_0_SUBJECT_SUBJECT_ID = "urn:oasis:names:tc:xspa:1.0:subject:subject-id";
     public static final String URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE = "urn:oasis:names:tc:xacml:2.0:subject:role";
+    public static final String URN_OASIS_NAMES_TC_XACML_1_0_RESOURCE_RESOURCE_ID = "urn:oasis:names:tc:xacml:1.0:resource:resource-id";
     public static final String URN_OASIS_NAMES_TC_XSPA_1_0_ENVIRONMENT_LOCALITY = "urn:oasis:names:tc:xspa:1.0:environment:locality";
     public static final String URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID = "urn:oasis:names:tc:xspa:1.0:subject:subject-id";
     public static final String URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE = "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse";

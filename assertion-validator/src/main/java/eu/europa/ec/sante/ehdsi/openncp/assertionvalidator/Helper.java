@@ -100,7 +100,7 @@ public class Helper {
     }
 
     public static String getAlternateUserID(Element soapHeader) {
-        String result = getXSPAAttributeByName(soapHeader, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID, false);
+        String result = getXSPAAttributeByName(soapHeader, AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_SUBJECT_SUBJECT_ID, false);
         if (result == null) {
             return "N/A";
         }
@@ -203,7 +203,7 @@ public class Helper {
      */
     public static String getDocumentEntryPatientIdFromTRCAssertion(Element soapHeaderElement) {
 
-        String patientId = getXSPAAttributeByName(soapHeaderElement, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID, true);
+        String patientId = getXSPAAttributeByName(soapHeaderElement, AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_RESOURCE_RESOURCE_ID, true);
         if (patientId == null) {
             logger.error("Patient ID not found in TRC assertion");
         }
