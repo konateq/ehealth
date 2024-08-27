@@ -159,7 +159,7 @@ public class SamlTRCIssuer {
             attrPID.setFriendlyName("XSPA Subject");
 
             // TODO: Is there a constant for that urn??
-            attrPID.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+            attrPID.setName("urn:oasis:names:tc:xacml:1.0:resource:resource-id");
             attrPID.setNameFormat(Attribute.URI_REFERENCE);
 
             //Create and add the Attribute Value
@@ -350,7 +350,7 @@ public class SamlTRCIssuer {
         attrPID.setFriendlyName("XSPA Subject");
 
         // TODO: Is there a constant for that urn??
-        attrPID.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+        attrPID.setName("urn:oasis:names:tc:xacml:1.0:resource:resource-id");
         attrPID.setNameFormat(Attribute.URI_REFERENCE);
 
         //Create and add the Attribute Value

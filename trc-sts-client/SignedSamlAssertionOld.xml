@@ -61,7 +61,7 @@
         </saml2:AuthnContext>
     </saml2:AuthnStatement>
     <saml2:AttributeStatement>
-        <saml2:Attribute FriendlyName="XSPA Subject" Name="urn:oasis:names:tc:xspa:1.0:subject:subject-id"
+        <saml2:Attribute FriendlyName="XSPA Subject" Name="urn:oasis:names:tc:xacml:1.0:resource:resource-id"
                          NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
             <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema"
                                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">TestId2

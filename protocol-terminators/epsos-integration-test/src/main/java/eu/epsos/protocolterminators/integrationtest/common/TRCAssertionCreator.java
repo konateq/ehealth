@@ -108,7 +108,7 @@ public class TRCAssertionCreator {
         if (true) {
             Attribute att = saml.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
             att.setFriendlyName("XSPA Subject");
-            att.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+            att.setName("urn:oasis:names:tc:xacml:1.0:resource:resource-id");
             att.setNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
 
             XMLObjectBuilder<?> builder = XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(XSAny.TYPE_NAME);

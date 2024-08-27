@@ -36,17 +36,17 @@ public class EventLogClientUtil {
     private EventLogClientUtil() {
     }
 
-    public static void createDummyMustUnderstandHandler(final Stub stub) {
+    public static void createDummyMustUnderstandHandler(Stub stub) {
 
-        final var description = new HandlerDescription("DummyMustUnderstandHandler");
+        var description = new HandlerDescription("DummyMustUnderstandHandler");
         description.setHandler(new DummyMustUnderstandHandler());
-        final var axisConfiguration = stub._getServiceClient().getServiceContext().getConfigurationContext()
+        var axisConfiguration = stub._getServiceClient().getServiceContext().getConfigurationContext()
                 .getAxisConfiguration();
-        final List<Phase> phasesList = axisConfiguration.getInFlowPhases();
-        final var myPhase = new Phase("MyPhase");
+        List<Phase> phasesList = axisConfiguration.getInFlowPhases();
+        var myPhase = new Phase("MyPhase");
         try {
             myPhase.addHandler(description);
-        } catch (final PhaseException ex) {
+        } catch (PhaseException ex) {
             throw new RuntimeException(ex);
         }
         phasesList.add(0, myPhase);
@@ -69,26 +69,26 @@ public class EventLogClientUtil {
      * @param endpointReference - client endpoint reference value extracted from the SOAP ServiceClient.
      * @return IP address of the client retrieved by InetAddress or ERROR_UNKNOWN_HOST.
      */
-    public static String getTargetGatewayIdentifier(final String endpointReference) {
+    public static String getTargetGatewayIdentifier(String endpointReference) {
 
         try {
-            final var uri = new URI(endpointReference);
-            final var inetAddress = InetAddress.getByName(uri.getHost());
+            var uri = new URI(endpointReference);
+            var inetAddress = InetAddress.getByName(uri.getHost());
             if (!inetAddress.isLinkLocalAddress() && !inetAddress.isLoopbackAddress()
                     && (inetAddress instanceof Inet4Address)) {
                 return inetAddress.getHostAddress();
             } else {
                 return uri.getHost();
             }
-        } catch (final Exception e) {
+        } catch (Exception e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
             return ERROR_UNKNOWN_HOST;
         }
     }
 
-    public static EventLog prepareEventLog(final MessageContext msgContext, final SOAPEnvelope soapEnvelope, final String endpointReference, final String dstHomeCommunityId) {
+    public static EventLog prepareEventLog(MessageContext msgContext, SOAPEnvelope soapEnvelope, String endpointReference, String dstHomeCommunityId) {
 
-        final var eventLog = new EventLog();
+        var eventLog = new EventLog();
         eventLog.setEI_EventDateTime(DateUtil.getDateAsXMLGregorian(new Date()));
 
         // Set Active Participant Identification: Service Consumer NCP
@@ -105,12 +105,12 @@ public class EventLogClientUtil {
         eventLog.setTargetip(getTargetGatewayIdentifier(endpointReference));
 
         // Set Participant Object: Request Message
-        final String reqMessageId = appendUrnUuid(EventLogUtil.getMessageID(msgContext.getEnvelope()));
+        String reqMessageId = appendUrnUuid(EventLogUtil.getMessageID(msgContext.getEnvelope()));
         eventLog.setReqM_ParticipantObjectID(reqMessageId);
         eventLog.setReqM_ParticipantObjectDetail(msgContext.getEnvelope().getHeader().toString().getBytes());
 
         // Set Participant Object: ResponseMessage
-        final String rspMessageId = appendUrnUuid(EventLogUtil.getMessageID(soapEnvelope));
+        String rspMessageId = appendUrnUuid(EventLogUtil.getMessageID(soapEnvelope));
         eventLog.setResM_ParticipantObjectID(rspMessageId);
         eventLog.setResM_ParticipantObjectDetail(soapEnvelope.getHeader().toString().getBytes());
         eventLog.setHciIdentifier(dstHomeCommunityId);
@@ -118,16 +118,16 @@ public class EventLogClientUtil {
         return eventLog;
     }
 
-    public static void logIdAssertion(final EventLog eventLog, final Assertion idAssertion) {
+    public static void logIdAssertion(EventLog eventLog, Assertion idAssertion) {
 
-        final String spProvidedID = idAssertion.getSubject().getNameID().getSPProvidedID();
-        final String humanReqUserId = StringUtils.isNotBlank(spProvidedID) ? spProvidedID : "" + "<" + idAssertion.getSubject().getNameID().getValue()
+        String spProvidedID = idAssertion.getSubject().getNameID().getSPProvidedID();
+        String humanReqUserId = StringUtils.isNotBlank(spProvidedID) ? spProvidedID : "" + "<" + idAssertion.getSubject().getNameID().getValue()
                 + "@" + idAssertion.getIssuer().getValue() + ">";
         eventLog.setHR_UserID(humanReqUserId);
         var isOrganizationProvided = false;
 
-        for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
-            for (final Attribute attribute : attributeStatement.getAttributes()) {
+        for (AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
+            for (Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
                     eventLog.setHR_AlternativeUserID(EventLogUtil.getAttributeValue(attribute));
                 } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xacml:2.0:subject:role")) {
@@ -144,11 +144,11 @@ public class EventLogClientUtil {
         }
     }
 
-    public static void logTrcAssertion(final EventLog eventLog, final Assertion idAssertion) {
+    public static void logTrcAssertion(EventLog eventLog, Assertion idAssertion) {
 
-        for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
-            for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+        for (AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
+            for (Attribute attribute : attributeStatement.getAttributes()) {
+                if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xacml:1.0:resource:resource-id")) {
                     eventLog.setPT_ParticipantObjectIDs(Collections.singletonList(EventLogUtil.getAttributeValue(attribute)));
                     break;
                 }
@@ -156,12 +156,12 @@ public class EventLogClientUtil {
         }
     }
 
-    public static void sendEventLog(final EventLog eventLog) {
+    public static void sendEventLog(EventLog eventLog) {
 
         AuditServiceFactory.getInstance().write(eventLog, "", "1");
     }
 
-    public static String appendUrnUuid(final String uuid) {
+    public static String appendUrnUuid(String uuid) {
 
         if (uuid == null || uuid.isEmpty() || uuid.startsWith(Constants.UUID_PREFIX)) {
             return uuid;
