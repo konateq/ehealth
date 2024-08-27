@@ -164,7 +164,7 @@ public class SamlNextOfKinIssuer {
         //Creating the Attribute that holds the Patient ID
 //        Attribute attrPID = create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
 //        attrPID.setFriendlyName("XSPA Subject");
-//        attrPID.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+//        attrPID.setName("urn:oasis:names:tc:xacml:1.0:resource:resource-id");
 //        attrPID.setNameFormat(Attribute.URI_REFERENCE);
 
         //Create and add the Attribute Value

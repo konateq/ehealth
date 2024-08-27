@@ -109,7 +109,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         String subjectId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_SUBJECT_SUBJECT_ID);
         if (StringUtils.isEmpty(subjectId)) {
-            throw new InvalidFieldException(String.format("XSPA Subject '%s' attribute in assertion should be filled.", AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_SUBJECT_SUBJECT_ID));
+            throw new InvalidFieldException("XSPA Subject 'urn:oasis:names:tc:xspa:1.0:subject:subject-id' attribute in assertion should be filled.");
         }
     }
 
@@ -122,9 +122,9 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     @Override
     public void XSPASubjectValidatorForTRC(Assertion assertion, ClassCode classCode) throws MissingFieldException, InvalidFieldException {
 
-        String resourceId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
+        String resourceId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_1_0_RESOURCE_RESOURCE_ID);
         if (StringUtils.isBlank(resourceId)) {
-            throw new InvalidFieldException(String.format("XSPA Subject '%s' attribute in assertion should be filled.", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID));
+            throw new InvalidFieldException("XSPA Subject 'urn:oasis:names:tc:xacml:1.0:resource:resource-id' attribute in assertion should be filled.");
         }
     }
 
