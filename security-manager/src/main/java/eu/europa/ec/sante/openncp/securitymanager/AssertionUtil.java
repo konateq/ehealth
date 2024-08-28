@@ -160,7 +160,7 @@ public class AssertionUtil {
         XSAny pou = xsAnyBuilder.buildObject("urn:hl7-org:v3", "PurposeOfUse", "");
         pou.getUnknownAttributes().put(new QName("code"), value);
         pou.getUnknownAttributes().put(new QName("codeSystem"), "3bc18518-d305-46c2-a8d6-94bd59856e9e");
-        pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI XSPA PurposeOfUse");
+        pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI PurposeofUse");
         pou.getUnknownAttributes().put(new QName("displayName"), value);
         //pou.setTextContent(value);
         XSAny pouAttributeValue = xsAnyBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);

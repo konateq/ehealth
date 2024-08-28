@@ -378,7 +378,7 @@ public class SamlTRCIssuer {
             XSAny pou = xsAnyBuilder.buildObject("urn:hl7-org:v3", "PurposeOfUse", "");
             pou.getUnknownAttributes().put(new QName("code"), purposeOfUse);
             pou.getUnknownAttributes().put(new QName("codeSystem"), "3bc18518-d305-46c2-a8d6-94bd59856e9e");
-            pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI XSPA PurposeOfUse");
+            pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI PurposeofUse");
             pou.getUnknownAttributes().put(new QName("displayName"), purposeOfUse);
             //pou.setTextContent(purposeOfUse);
             XSAny pouAttributeValue = xsAnyBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
