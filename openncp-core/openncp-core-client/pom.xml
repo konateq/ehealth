@@ -10,7 +10,7 @@
     <name>openncp-core-client</name>
 
     <properties>
-        <axis2.version>1.8.2</axis2.version>
+        <axis2.version>1.41</axis2.version>
     </properties>
 
 
