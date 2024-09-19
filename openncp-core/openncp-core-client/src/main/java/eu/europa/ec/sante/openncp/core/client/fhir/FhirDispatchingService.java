@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.fhir;
 
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import eu.europa.ec.sante.openncp.core.common.fhir.DispatchResult;
 import eu.europa.ec.sante.openncp.core.common.fhir.FhirDispatchingClient;
 import eu.europa.ec.sante.openncp.core.common.fhir.HapiWebClientFactory;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
@@ -31,7 +33,7 @@ public class FhirDispatchingService implements DispatchingService {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
-        final Bundle result = hapiWebClient.dispatch(requestDetails, JWTToken);
+        final Bundle result = hapiWebClient.dispatchReadAsBundle(requestDetails, JWTToken);
         validationService.validate(result, requestDetails.getRestOperationType());
 
         return (T) result;
@@ -44,9 +46,21 @@ public class FhirDispatchingService implements DispatchingService {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
-        final Bundle result = hapiWebClient.dispatch(requestDetails, JWTToken);
+        final Bundle result = hapiWebClient.dispatchReadAsBundle(requestDetails, JWTToken);
         validationService.validate(result, requestDetails.getRestOperationType());
         
         return (T) result;
+    }
+
+    @Override
+    public MethodOutcome dispatchWrite(EuRequestDetails requestDetails, String jwtToken) {
+        Validate.notNull(requestDetails, "The request details cannot be null");
+
+        final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
+        final Bundle result = hapiWebClient.dis(requestDetails, jwtToken);
+        validationService.validate(result, requestDetails.getRestOperationType());
+
+        return (T) result;
+
     }
 }

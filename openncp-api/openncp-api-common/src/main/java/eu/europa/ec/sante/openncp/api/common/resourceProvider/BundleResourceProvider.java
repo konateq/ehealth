@@ -1,17 +1,16 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
+import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.*;
-import ca.uhn.fhir.rest.api.SearchContainedModeEnum;
-import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
-import ca.uhn.fhir.rest.api.SortSpec;
-import ca.uhn.fhir.rest.api.SummaryEnum;
+import ca.uhn.fhir.rest.api.*;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableEuRequestDetails;
@@ -20,6 +19,7 @@ import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.OperationOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,46 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
         return bundle;
     }
 
-    @Search(allowUnknownParams = true)
+    @Create
+    public MethodOutcome createPatient(@ResourceParam Bundle theBundle, final HttpServletRequest theServletRequest, final RequestDetails theRequestDetails) {
+
+        final String JWTToken = getJwtFromRequest(theServletRequest);
+        final MethodOutcome methodOutcome = dispatchingService.dispatchWrite(EuRequestDetails.of(theRequestDetails), JWTToken);
+
+        /*
+         * First we might want to do business validation. The UnprocessableEntityException
+         * results in an HTTP 422, which is appropriate for business rule failure
+         */
+        if (theBundle.getIdentifier().isEmpty()) {
+            /* It is also possible to pass an OperationOutcome resource
+             * to the UnprocessableEntityException if you want to return
+             * a custom populated OperationOutcome. Otherwise, a simple one
+             * is created using the string supplied below.
+             */
+            throw new UnprocessableEntityException(Msg.code(636) + "No identifier supplied");
+        }
+
+        // Save this patient to the database...
+        savePatientToDatabase(thePatient);
+
+        // This method returns a MethodOutcome object which contains
+        // the ID (composed of the type Patient, the logical ID 3746, and the
+        // version ID 1)
+        final MethodOutcome retVal = new MethodOutcome();
+        retVal.setId(new IdType("Patient", "3746", "1"));
+
+        // You can also add an OperationOutcome resource to return
+        // This part is optional though:
+        OperationOutcome outcome = new OperationOutcome();
+        outcome.addIssue().setDiagnostics("One minor issue detected");
+        retVal.setOperationOutcome(outcome);
+        return retVal;
+    }
+
+
+
+
+        @Search(allowUnknownParams = true)
     public IBaseBundle search(
             final HttpServletRequest theServletRequest,
             final HttpServletResponse theServletResponse,
