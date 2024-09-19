@@ -9,7 +9,8 @@ import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -58,10 +59,8 @@ public class DiagnosticReportResourceProvider extends AbstractResourceProvider i
 
                               @Description(shortDefinition = "Date range for the search") @OptionalParam(
                                       name = "date") final DateRangeParam dateRange) {
-
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-
-        final Bundle serverResponse = dispatchingService.dispatchSearch(EuRequestDetails.of(theRequestDetails), JWTToken);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse);
+        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
 
         return handledBundle;

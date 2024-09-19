@@ -1,4 +1,4 @@
-name: "openncp"
+version: '3'
 services:
   mysql:
     container_name: openncp_db

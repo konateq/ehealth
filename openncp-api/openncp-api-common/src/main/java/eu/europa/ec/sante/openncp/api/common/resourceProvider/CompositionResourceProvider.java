@@ -11,8 +11,8 @@ import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableEuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
@@ -51,9 +51,9 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
 
     @Read
     public CompositionLabReportMyHealthEu find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse,
-                                       final RequestDetails theRequestDetails) {
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-        final CompositionLabReportMyHealthEu handledCompositionLabReportEu = dispatchingService.dispatchRead(EuRequestDetails.of(theRequestDetails), JWTToken);
+                                               final RequestDetails theRequestDetails) {
+        final DispatchContext dispatchContext = ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse);
+        final CompositionLabReportMyHealthEu handledCompositionLabReportEu = dispatchingService.dispatchRead(dispatchContext);
 
         return handledCompositionLabReportEu;
     }
@@ -101,8 +101,8 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
             final SearchContainedModeEnum theSearchContainedMode
 
     ) {
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(ImmutableEuRequestDetails.of(theRequestDetails), JWTToken);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse);
+        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
 
         return handledBundle;
@@ -111,6 +111,7 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
     @Operation(name = "$document", idempotent = true, bundleType = BundleTypeEnum.DOCUMENT)
     public IBaseBundle getDocumentForComposition(
             final HttpServletRequest theServletRequest,
+            final HttpServletResponse theServletResponse,
             @IdParam final IIdType theId,
             @Description(
                     formalDefinition =
@@ -130,9 +131,8 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
             @Sort final SortSpec theSortSpec,
             final RequestDetails theRequestDetails) {
 
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-
-        final Bundle handledCompositionLabReportEu = dispatchingService.dispatchRead(ImmutableEuRequestDetails.of(theRequestDetails), JWTToken);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse);
+        final Bundle handledCompositionLabReportEu = dispatchingService.dispatchRead(dispatchContext);
 
         return handledCompositionLabReportEu;
     }

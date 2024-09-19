@@ -14,7 +14,8 @@ import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.AuditEvent
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.AuditableEvent;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.FallbackAuditEventProducer;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.ImmutableAuditableEvent;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.FhirCustomInterceptor;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -52,11 +53,11 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                                       final ResponseDetails responseDetails,
                                       final HttpServletRequest httpServletRequest,
                                       final HttpServletResponse httpServletResponse) {
-        final EuRequestDetails euRequestDetails = EuRequestDetails.of(requestDetails);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.of(requestDetails, httpServletRequest, httpServletResponse);
         final AuditableEvent auditableEvent = ImmutableAuditableEvent.builder()
                 .pointcut(Pointcut.SERVER_OUTGOING_RESPONSE)
                 .fhirContext(fhirContext)
-                .euRequestDetails(euRequestDetails)
+                .euRequestDetails(dispatchContext)
                 .resource(baseResource)
                 .build();
         final List<AuditEvent> auditEvents = auditEventProducers.stream()

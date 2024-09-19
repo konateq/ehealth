@@ -12,8 +12,8 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableEuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -48,51 +48,17 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
 
     @Read
     public Bundle find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-        final Bundle bundle = dispatchingService.dispatchRead(EuRequestDetails.of(theRequestDetails), JWTToken);
+        final Bundle bundle = dispatchingService.dispatchRead(ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse));
         return bundle;
     }
 
     @Create
-    public MethodOutcome createPatient(@ResourceParam Bundle theBundle, final HttpServletRequest theServletRequest, final RequestDetails theRequestDetails) {
+    public MethodOutcome createPatient(@ResourceParam Bundle bundleToCreate, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+        return dispatchingService.dispatchWrite(ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse), bundleToCreate);
 
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-        final MethodOutcome methodOutcome = dispatchingService.dispatchWrite(EuRequestDetails.of(theRequestDetails), JWTToken);
-
-        /*
-         * First we might want to do business validation. The UnprocessableEntityException
-         * results in an HTTP 422, which is appropriate for business rule failure
-         */
-        if (theBundle.getIdentifier().isEmpty()) {
-            /* It is also possible to pass an OperationOutcome resource
-             * to the UnprocessableEntityException if you want to return
-             * a custom populated OperationOutcome. Otherwise, a simple one
-             * is created using the string supplied below.
-             */
-            throw new UnprocessableEntityException(Msg.code(636) + "No identifier supplied");
-        }
-
-        // Save this patient to the database...
-        savePatientToDatabase(thePatient);
-
-        // This method returns a MethodOutcome object which contains
-        // the ID (composed of the type Patient, the logical ID 3746, and the
-        // version ID 1)
-        final MethodOutcome retVal = new MethodOutcome();
-        retVal.setId(new IdType("Patient", "3746", "1"));
-
-        // You can also add an OperationOutcome resource to return
-        // This part is optional though:
-        OperationOutcome outcome = new OperationOutcome();
-        outcome.addIssue().setDiagnostics("One minor issue detected");
-        retVal.setOperationOutcome(outcome);
-        return retVal;
     }
 
-
-
-
-        @Search(allowUnknownParams = true)
+    @Search(allowUnknownParams = true)
     public IBaseBundle search(
             final HttpServletRequest theServletRequest,
             final HttpServletResponse theServletResponse,
@@ -134,8 +100,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
 
             final SearchContainedModeEnum theSearchContainedMode) {
 
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(ImmutableEuRequestDetails.of(theRequestDetails), JWTToken);
+        final Bundle serverResponse = dispatchingService.dispatchSearch(ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse));
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
 
         return handledBundle;
