@@ -45,7 +45,7 @@ public class FhirDispatchingService implements DispatchingService {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
-        final Bundle result = hapiWebClient.dispatchSearch(requestDetails);
+        final Bundle result = hapiWebClient.dispatchRead(requestDetails);
         validationService.validate(result, requestDetails.getRestOperationType());
         
         return (T) result;
