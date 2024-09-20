@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
-import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.*;
@@ -10,16 +9,14 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.OperationOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -36,9 +33,10 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler) {
-        this.dispatchingService = Validate.notNull(dispatchingService);
-        this.bundleHandler = Validate.notNull(bundleHandler);
+    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
+        super(serverContext);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
+        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null.");
     }
 
     @Override
@@ -48,13 +46,15 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
 
     @Read
     public Bundle find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
-        final Bundle bundle = dispatchingService.dispatchRead(ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse));
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        final Bundle bundle = dispatchingService.dispatchRead(dispatchContext);
         return bundle;
     }
 
     @Create
-    public MethodOutcome createPatient(@ResourceParam Bundle bundleToCreate, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
-        return dispatchingService.dispatchWrite(ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse), bundleToCreate);
+    public MethodOutcome createPatient(@ResourceParam final Bundle bundleToCreate, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        return dispatchingService.dispatchWrite(dispatchContext, bundleToCreate);
 
     }
 
@@ -99,8 +99,8 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
             final SearchTotalModeEnum theSearchTotalMode,
 
             final SearchContainedModeEnum theSearchContainedMode) {
-
-        final Bundle serverResponse = dispatchingService.dispatchSearch(ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse));
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
 
         return handledBundle;

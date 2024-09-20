@@ -3,6 +3,10 @@ package eu.europa.ec.sante.openncp.core.common.fhir;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.gclient.ICreateTyped;
+import ca.uhn.fhir.rest.gclient.IQuery;
+import ca.uhn.fhir.rest.gclient.IReadExecutable;
+import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.JwtToken;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -15,6 +19,7 @@ import org.thymeleaf.util.Validate;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -29,11 +34,16 @@ public class FhirDispatchingClient {
         return dispatchOperation(
                 dispatchContext,
                 RestOperationTypeEnum.SEARCH_TYPE,
-                (jwtToken, dispatchUri) -> genericClient.search()
-                        .byUrl(dispatchUri.toString())
-                        .withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue())
-                        .returnBundle(Bundle.class)
-                        .execute()
+                (jwtToken, dispatchUri) -> {
+                    IQuery<Bundle> bundleQuery = genericClient.search()
+                            .byUrl(dispatchUri.toString())
+                            .returnBundle(Bundle.class);
+
+                    if (jwtToken != null) {
+                        bundleQuery = bundleQuery.withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue());
+                    }
+                    return bundleQuery.execute();
+                }
         );
     }
 
@@ -42,11 +52,14 @@ public class FhirDispatchingClient {
                 dispatchContext,
                 RestOperationTypeEnum.READ,
                 (jwtToken, dispatchUri) -> {
-                    final IBaseResource response = genericClient.read()
+                    IReadExecutable<IBaseResource> readExecutable = genericClient.read()
                             .resource(dispatchContext.getResourceType())
-                            .withUrl(dispatchUri.toString())
-                            .withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue())
-                            .execute();
+                            .withUrl(dispatchUri.toString());
+                    if (jwtToken != null) {
+                        readExecutable = readExecutable.withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue());
+                    }
+
+                    final IBaseResource response = readExecutable.execute();
                     if (response instanceof Bundle) {
                         return (Bundle) response;
                     } else {
@@ -60,10 +73,16 @@ public class FhirDispatchingClient {
         return dispatchOperation(
                 dispatchContext,
                 RestOperationTypeEnum.CREATE,
-                (jwtToken, dispatchUri) -> genericClient.create()
-                        .resource(bundleToCreate)
-                        .withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue())
-                        .execute()
+                (jwtToken, dispatchUri) -> {
+                    ICreateTyped createResource = genericClient.create()
+                            .resource(bundleToCreate);
+                    if (jwtToken != null) {
+                        createResource = createResource.withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue());
+                    }
+                    return createResource.execute();
+                }
+
+
         );
     }
 
@@ -83,9 +102,9 @@ public class FhirDispatchingClient {
                     expectedOperation, dispatchContext.getRestOperationType()));
         }
 
-        final JwtToken jwtToken = dispatchContext.getJwtTokenFromRequest();
+        final Optional<JwtToken> jwtToken = dispatchContext.getNcpSide() == NcpSide.NCP_B ? dispatchContext.getJwtTokenFromRequest() : Optional.empty();
         final URI dispatchUri = this.getDispatchUri(dispatchContext);
-        return fhirDispatchOperation.apply(jwtToken, dispatchUri);
+        return fhirDispatchOperation.apply(jwtToken.orElse(null), dispatchUri);
     }
 
     private URI getDispatchUri(final DispatchContext dispatchContext) {

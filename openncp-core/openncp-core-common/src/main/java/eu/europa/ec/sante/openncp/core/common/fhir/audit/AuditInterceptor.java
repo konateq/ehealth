@@ -8,6 +8,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.api.server.ResponseDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher.AuditDispatcher;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher.DispatchResult;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.AuditEventProducer;
@@ -38,12 +39,14 @@ public class AuditInterceptor implements FhirCustomInterceptor {
     private final List<AuditEventProducer> auditEventProducers;
     private final FallbackAuditEventProducer fallbackAuditEventProducer;
     private final List<AuditDispatcher> auditDispatchers;
+    private final ServerContext serverContext;
 
-    public AuditInterceptor(final FhirContext fhirContext, final List<AuditEventProducer> auditEventProducers, final FallbackAuditEventProducer fallbackAuditEventProducer, final List<AuditDispatcher> auditDispatchers) {
+    public AuditInterceptor(final FhirContext fhirContext, final List<AuditEventProducer> auditEventProducers, final FallbackAuditEventProducer fallbackAuditEventProducer, final List<AuditDispatcher> auditDispatchers, ServerContext serverContext) {
         this.fhirContext = Validate.notNull(fhirContext, "fhirContext cannot be null.");
         this.auditEventProducers = Validate.notNull(auditEventProducers, "auditEventProducers cannot be null.");
         this.fallbackAuditEventProducer = Validate.notNull(fallbackAuditEventProducer, "fallbackAuditEventProducer cannot be null.");
         this.auditDispatchers = Validate.notNull(auditDispatchers, "auditDispatchers cannot be null.");
+        this.serverContext = Validate.notNull(serverContext, "serverContext cannot be null.");
     }
 
     @Hook(Pointcut.SERVER_OUTGOING_RESPONSE)
@@ -53,11 +56,15 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                                       final ResponseDetails responseDetails,
                                       final HttpServletRequest httpServletRequest,
                                       final HttpServletResponse httpServletResponse) {
-        final DispatchContext dispatchContext = ImmutableDispatchContext.of(requestDetails, httpServletRequest, httpServletResponse);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.builder()
+                .ncpSide(serverContext.getNcpSide())
+                .hapiRequestDetails(requestDetails)
+                .servletRequest(httpServletRequest)
+                .servletResponse(httpServletResponse).build();
         final AuditableEvent auditableEvent = ImmutableAuditableEvent.builder()
                 .pointcut(Pointcut.SERVER_OUTGOING_RESPONSE)
                 .fhirContext(fhirContext)
-                .euRequestDetails(dispatchContext)
+                .dispatchContext(dispatchContext)
                 .resource(baseResource)
                 .build();
         final List<AuditEvent> auditEvents = auditEventProducers.stream()

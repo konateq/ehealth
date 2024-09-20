@@ -8,8 +8,8 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -29,8 +29,9 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService) {
-        this.dispatchingService = Validate.notNull(dispatchingService);
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, ServerContext serverContext) {
+        super(serverContext);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
     }
 
     @Override
@@ -57,7 +58,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
                               @Description(shortDefinition = "Date range for the search") @OptionalParam(
                                       name = "date") final DateRangeParam dateRange) {
 
-        final DispatchContext dispatchContext = ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse);
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
 
         return serverResponse;

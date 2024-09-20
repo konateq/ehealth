@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.context;
 
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
 import eu.europa.ec.sante.openncp.core.common.CountryCode;
 import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.CountryCodeInterceptor;
@@ -17,6 +18,8 @@ import java.util.Optional;
  */
 @Domain
 public interface DispatchContext {
+    NcpSide getNcpSide();
+
     RequestDetails getHapiRequestDetails();
 
     HttpServletRequest getServletRequest();
@@ -31,14 +34,8 @@ public interface DispatchContext {
         return CountryCode.of(countryCode);
     }
 
-    default JwtToken getJwtTokenFromRequest() {
-        final String header = getServletRequest().getHeader("Authorization");
-        final JwtToken jwtToken = JwtToken.of(header);
-        if (jwtToken == null) {
-            throw new RuntimeException("JWT Token is missing");
-        }
-        return jwtToken;
-
+    default Optional<JwtToken> getJwtTokenFromRequest() {
+        return JwtToken.extractFrom(getServletRequest());
     }
 
     default RestOperationTypeEnum getRestOperationType() {

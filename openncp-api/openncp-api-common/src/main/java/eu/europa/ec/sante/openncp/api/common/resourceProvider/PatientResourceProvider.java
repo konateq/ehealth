@@ -12,8 +12,8 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -37,9 +37,10 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler) {
-        this.dispatchingService = Validate.notNull(dispatchingService);
-        this.bundleHandler = Validate.notNull(bundleHandler);
+    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, ServerContext serverContext) {
+        super(serverContext);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
+        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null.");
     }
 
     @Override
@@ -78,7 +79,7 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
 
                               @RawParam final Map<String, List<String>> theAdditionalRawParams) {
 
-        final DispatchContext dispatchContext = ImmutableDispatchContext.of(theRequestDetails, theServletRequest, theServletResponse);
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
 

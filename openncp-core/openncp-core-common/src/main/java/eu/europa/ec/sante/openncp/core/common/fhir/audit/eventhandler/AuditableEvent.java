@@ -28,7 +28,7 @@ public interface AuditableEvent {
 
     FhirContext getFhirContext();
 
-    DispatchContext getEuRequestDetails();
+    DispatchContext getDispatchContext();
 
     Optional<IBaseResource> getResource();
 
@@ -106,10 +106,10 @@ public interface AuditableEvent {
                         .map(Bundle.BundleEntryComponent::getResource)
                         .filter(predicate)
                         .map(Resource::getIdElement)
-                        .map(idElement -> getEuRequestDetails().createFullyQualifiedResourceReference(idElement))
+                        .map(idElement -> getDispatchContext().createFullyQualifiedResourceReference(idElement))
                         .collect(Collectors.toSet());
             } else {
-                return Set.of(getEuRequestDetails().createFullyQualifiedResourceReference(resource.getIdElement()));
+                return Set.of(getDispatchContext().createFullyQualifiedResourceReference(resource.getIdElement()));
             }
         }).orElse(Collections.emptySet());
     }
