@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.interceptor.InterceptorAdapter;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.JwtToken;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
@@ -16,6 +17,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2V
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.apache.commons.lang3.Validate;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Unmarshaller;
@@ -41,12 +43,13 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
 
     private final TokenProvider tokenProvider;
-
     private final SAML2Validator saml2Validator;
+    private final ServerContext serverContext;
 
-    public JwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator) {
+    public JwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator, final ServerContext serverContext) {
         this.tokenProvider = tokenProvider;
         this.saml2Validator = saml2Validator;
+        this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
     }
 
     @Override
@@ -54,6 +57,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
         LOGGER.info("Validating the incoming JWT bearer token.");
         final Optional<JwtToken> jwtToken = JwtToken.extractFrom(theRequest);
         if (jwtToken.isEmpty()) {
+            LOGGER.error("No jwt token found in request [{}] with serverContext [{}]", theRequest, serverContext);
             throw new AuthenticationException("A bearer token is mandatory to initiate a request.");
         }
 
