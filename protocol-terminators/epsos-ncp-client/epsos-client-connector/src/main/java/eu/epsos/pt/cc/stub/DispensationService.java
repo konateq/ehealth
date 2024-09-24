@@ -17,7 +17,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import tr.com.srdc.epsos.data.model.XdrRequest;
 import tr.com.srdc.epsos.data.model.XdrResponse;
-import tr.com.srdc.epsos.util.Constants;
 import tr.com.srdc.epsos.util.XMLUtil;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -67,7 +66,7 @@ public class DispensationService {
                                          final Map<AssertionEnum, Assertion> assertionMap) throws XDRException, ParseException {
 
         LOGGER.info("[CC] Dispense Service: Initialize");
-        XdrRequest request = XdrRequestDts.newInstance(document, patient);
+        final XdrRequest request = XdrRequestDts.newInstance(document, patient);
         return XdrDocumentSource.initialize(request, countryCode, assertionMap);
     }
 
@@ -89,25 +88,25 @@ public class DispensationService {
 
         LOGGER.info("[CC] Dispense Service: DISCARD");
         try {
-            Document dispense = XMLUtil.parseContent(document.getBase64Binary());
-            NodeList nodeList = dispense.getElementsByTagName("code");
+            final Document dispense = XMLUtil.parseContent(document.getBase64Binary());
+            NodeList nodeList = dispense.getElementsByTagNameNS("urn:hl7-org:v3", "code");
             Node search = nodeList.item(0);
             NamedNodeMap namedNodeMap = search.getAttributes();
             Node nodeAttr = namedNodeMap.getNamedItem("code");
             nodeAttr.setTextContent(ClassCode.EDD_CLASSCODE.getCode());
 
-            nodeList = dispense.getElementsByTagName("templateId");
+            nodeList = dispense.getElementsByTagNameNS("urn:hl7-org:v3", "templateId");
             search = nodeList.item(0);
             namedNodeMap = search.getAttributes();
             nodeAttr = namedNodeMap.getNamedItem("root");
             nodeAttr.setTextContent("1.3.6.1.4.1.12559.11.10.1.3.1.1.2-DISCARD");
 
-            String updated = XMLUtil.documentToString(dispense);
+            final String updated = XMLUtil.documentToString(dispense);
             document.setBase64Binary(updated.getBytes(StandardCharsets.UTF_8));
-        } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
+        } catch (final ParserConfigurationException | SAXException | IOException | TransformerException e) {
             LOGGER.error("Exception: '{}'", e.getMessage());
         }
-        XdrRequest request = XdrRequestDts.newInstance(document, patient);
+        final XdrRequest request = XdrRequestDts.newInstance(document, patient);
         return XdrDocumentSource.discard(request, countryCode, assertionMap);
     }
 }
