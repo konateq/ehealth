@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBase;
@@ -28,7 +28,7 @@ public interface AuditableEvent {
 
     FhirContext getFhirContext();
 
-    EuRequestDetails getEuRequestDetails();
+    DispatchContext getDispatchContext();
 
     Optional<IBaseResource> getResource();
 
@@ -106,10 +106,10 @@ public interface AuditableEvent {
                         .map(Bundle.BundleEntryComponent::getResource)
                         .filter(predicate)
                         .map(Resource::getIdElement)
-                        .map(idElement -> getEuRequestDetails().createFullyQualifiedResourceReference(idElement))
+                        .map(idElement -> getDispatchContext().createFullyQualifiedResourceReference(idElement))
                         .collect(Collectors.toSet());
             } else {
-                return Set.of(getEuRequestDetails().createFullyQualifiedResourceReference(resource.getIdElement()));
+                return Set.of(getDispatchContext().createFullyQualifiedResourceReference(resource.getIdElement()));
             }
         }).orElse(Collections.emptySet());
     }

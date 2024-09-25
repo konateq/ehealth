@@ -6,7 +6,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.core.common.CountryCode;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.client.HttpClient;
@@ -59,7 +59,7 @@ public class HapiWebClientFactory {
         return createClient(endpointUrl);
     }
 
-    public FhirDispatchingClient createClient(final EuRequestDetails requestDetails) {
+    public FhirDispatchingClient createClient(final DispatchContext requestDetails) {
         return createClient(requestDetails.getCountryCode());
     }
 }

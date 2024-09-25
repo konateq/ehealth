@@ -1,9 +1,10 @@
 package eu.europa.ec.sante.openncp.core.server.nc.mock.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import eu.europa.ec.sante.openncp.core.common.fhir.FhirDispatchingClient;
 import eu.europa.ec.sante.openncp.core.common.fhir.HapiWebClientFactory;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -29,11 +30,11 @@ public class FhirMockDispatchingService implements DispatchingService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IBaseResource> T dispatchSearch(final EuRequestDetails requestDetails, final String JWTToken) {
-        Validate.notNull(requestDetails, "The request details cannot be null");
+    public <T extends IBaseResource> T dispatchSearch(final DispatchContext dispatchContext) {
+        Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
 
         final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
-        final Bundle result = hapiWebClient.dispatch(requestDetails, null);
+        final Bundle result = hapiWebClient.dispatchSearch(dispatchContext);
 
         return (T) result;
     }
@@ -41,11 +42,18 @@ public class FhirMockDispatchingService implements DispatchingService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IBaseResource> T dispatchRead(final EuRequestDetails requestDetails, final String JWTToken) {
-        Validate.notNull(requestDetails, "The request details cannot be null");
+    public <T extends IBaseResource> T dispatchRead(final DispatchContext dispatchContext) {
+        Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
         final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
-        final Bundle result = hapiWebClient.dispatch(requestDetails, null);
+        final Bundle result = hapiWebClient.dispatchRead(dispatchContext);
 
         return (T) result;
+    }
+
+    @Override
+    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, final Bundle bundleToCreate) {
+        Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
+        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/baseserver/fhir");
+        return hapiWebClient.dispatchWrite(dispatchContext, bundleToCreate);
     }
 }

@@ -338,6 +338,22 @@
                 <artifactId>spring-test</artifactId>
                 <version>${spring.version}</version>
             </dependency>
+            <!--
+                Spring Boot 2.7.18 pulls in spring-web version 5.3.31 transitively that
+                contains a well known CVE: https://spring.io/security/cve-2024-22243
+                By explicitly adding it as a dependency spring boot will use this version instead.
+                Remove this when spring boot is updated as well
+             -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
             <!-- Saxon dependencies -->
             <dependency>
                 <groupId>net.sf.saxon</groupId>

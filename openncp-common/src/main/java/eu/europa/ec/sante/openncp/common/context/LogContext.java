@@ -1,11 +1,13 @@
 package eu.europa.ec.sante.openncp.common.context;
 
+import eu.europa.ec.sante.openncp.common.IpInformation;
 import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -83,6 +85,8 @@ public final class LogContext {
         MDC.remove("correlationId");
         MDC.remove("errorId");
         MDC.remove("CountryCode");
+        MDC.remove("ipInformationHostIp");
+        MDC.remove("ipInformationRequestIp");
     }
 
     public static void setCountryCode(final String countryCode) {
@@ -91,5 +95,18 @@ public final class LogContext {
 
     public static String getCountryCode() {
         return MDC.get("CountryCode");
+    }
+
+    public static void setIpInformation(final IpInformation ipInformation) {
+        ipInformation.getRequestIp().ifPresent(requestIp -> MDC.put("ipInformationRequestIp", requestIp));
+        ipInformation.getHostIp().ifPresent(hostIp -> MDC.put("ipInformationHostIp", hostIp));
+    }
+
+    public static Optional<IpInformation> getIpInformation() {
+        if (StringUtils.isNotBlank(MDC.get("ipInformationHostIp")) || StringUtils.isNotBlank(MDC.get("ipInformationRequestIp"))) {
+            return Optional.of(IpInformation.from(MDC.get("ipInformationHostIp"), MDC.get("ipInformationRequestIp")));
+        }
+
+        return Optional.empty();
     }
 }
