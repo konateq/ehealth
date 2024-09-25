@@ -436,6 +436,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
             shElement = XMLUtils.toDOM(soapHeader);
             documentSearchService.setSOAPHeader(shElement);
             sigCountryCode = SAML2Validator.validateXCAHeader(shElement, getClassCode(classCodeValues));
+        } catch (InsufficientRightsException ire) {
+            logger.error(ire.getMessage(), ire);
+            RegistryErrorUtils.addErrorMessage(registryErrorList, ire.getErrorCode(), ire.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            return;
         } catch (final OpenNCPErrorCodeException e) {
             logger.error(e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(registryErrorList, e.getErrorCode(), e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
