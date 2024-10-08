@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.fhir;
 
+import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.common.fhir.FhirDispatchingClient;
 import eu.europa.ec.sante.openncp.core.common.fhir.HapiWebClientFactory;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
@@ -27,11 +29,15 @@ public class FhirDispatchingService implements DispatchingService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IBaseResource> T dispatchSearch(final EuRequestDetails requestDetails, String JWTToken) {
+    public <T extends IBaseResource> T dispatchSearch(final EuRequestDetails requestDetails, final String JWTToken) {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
         final Bundle result = hapiWebClient.dispatch(requestDetails, JWTToken);
+        if (OpenNCPValidation.isValidationEnable()) {
+            OpenNCPValidation.validateFhirResource(requestDetails.toString(),
+                    NcpSide.NCP_B, requestDetails.getResourceType(), true);
+        }
         validationService.validate(result, requestDetails.getRestOperationType());
 
         return (T) result;
@@ -40,11 +46,15 @@ public class FhirDispatchingService implements DispatchingService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IBaseResource> T dispatchRead(final EuRequestDetails requestDetails, String JWTToken) {
+    public <T extends IBaseResource> T dispatchRead(final EuRequestDetails requestDetails, final String JWTToken) {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
         final Bundle result = hapiWebClient.dispatch(requestDetails, JWTToken);
+        if (OpenNCPValidation.isValidationEnable()) {
+            OpenNCPValidation.validateFhirResource(requestDetails.toString(),
+                    NcpSide.NCP_B, requestDetails.getResourceType(), true);
+        }
         validationService.validate(result, requestDetails.getRestOperationType());
         
         return (T) result;

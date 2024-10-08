@@ -34,7 +34,7 @@ public class FhirMockDispatchingService implements DispatchingService {
 
         final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
         final Bundle result = hapiWebClient.dispatch(requestDetails, null);
-
+        
         return (T) result;
     }
 
