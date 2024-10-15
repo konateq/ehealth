@@ -16,6 +16,9 @@ public class ValidatorUtil {
     public static final String EHDSI_ART_DECOR_CDA_FRIENDLY;
     public static final String EHDSI_ART_DECOR_CDA_PIVOT;
     public static final String EHDSI_ART_DECOR_SCANNED_DOCUMENT;
+    public static final String EHDSI_HL7_FHIR_PATIENT_RESOURCE;
+    public static final String EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE;
+    public static final String EHDSI_HL7_FHIR_BUNDLE_RESOURCE;
     public static final String EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC;
     public static final String EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST;
     public static final String EHDSI_AUDIT_HCP_ASSURANCE;
@@ -74,6 +77,10 @@ public class ValidatorUtil {
             EHDSI_ART_DECOR_CDA_FRIENDLY = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_CDA_FRIENDLY");
             EHDSI_ART_DECOR_CDA_PIVOT = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_CDA_PIVOT");
             EHDSI_ART_DECOR_SCANNED_DOCUMENT = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_SCANNED_DOCUMENT");
+
+            EHDSI_HL7_FHIR_PATIENT_RESOURCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_HL7_FHIR_PATIENT_RESOURCE");
+            EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE");
+            EHDSI_HL7_FHIR_BUNDLE_RESOURCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_HL7_FHIR_BUNDLE_RESOURCE");
 
             EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC");
             EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST");
@@ -179,6 +186,24 @@ public class ValidatorUtil {
                 return ValidatorUtil.EHDSI_ART_DECOR_SCANNED_DOCUMENT;
             } else {
                 return isPivot ? ValidatorUtil.EHDSI_ART_DECOR_CDA_PIVOT : ValidatorUtil.EHDSI_ART_DECOR_CDA_FRIENDLY;
+            }
+        }
+    }
+
+    public static String obtainFhirModel(final String resourceType) {
+
+        if (resourceType == null) {
+            return null;
+        } else {
+            switch (resourceType) {
+                case "Patient":
+                    return ValidatorUtil.EHDSI_HL7_FHIR_PATIENT_RESOURCE;
+                case "DocumentReference":
+                    return ValidatorUtil.EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE;
+                case "Bundle":
+                    return ValidatorUtil.EHDSI_HL7_FHIR_BUNDLE_RESOURCE;
+                default:
+                    throw new IllegalArgumentException("Unsupported resource type [" + resourceType + "]");
             }
         }
     }

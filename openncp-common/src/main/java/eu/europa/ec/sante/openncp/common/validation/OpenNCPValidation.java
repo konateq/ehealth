@@ -236,6 +236,24 @@ public class OpenNCPValidation {
     }
 
     /**
+     * @param fhirResource
+     * @param ncpSide
+     * @param resourceType
+     * @param isPivot
+     */
+    public static void validateFhirResource(final String fhirResource, final NcpSide ncpSide, final String resourceType, final boolean isPivot) {
+
+        final String fhirModel = ValidatorUtil.obtainFhirModel(resourceType);
+
+        LOGGER.info("[Validation Service: FHIR Validator]");
+        if (isRemoteValidationEnable()) {
+            //TODO Remote validation to be implemented for FHIR resources
+        } else {
+            ReportBuilder.build(ReportBuilder.formatDate(), "model", ObjectType.FHIR.toString(), fhirResource, ncpSide);
+        }
+    }
+
+    /**
      * @return
      */
     public static boolean isValidationEnable() {
