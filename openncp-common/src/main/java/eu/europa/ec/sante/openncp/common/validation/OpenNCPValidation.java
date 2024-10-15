@@ -114,7 +114,7 @@ public class OpenNCPValidation {
                 new Thread(() -> {
                     final StopWatch watch = new StopWatch();
                     watch.start();
-                    final AssertionValidator assertionValidator = GazelleValidatorFactory.getAssertionValidator();
+                    final DocumentValidator assertionValidator = GazelleValidatorFactory.getAssertionValidator();
                     final String xmlResult = assertionValidator.validateBase64Document(base64, validator);
                     final DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
                     ReportBuilder.build(ReportBuilder.formatDate(), validator, ObjectType.ASSERTION.toString(), base64, detailedResult, xmlResult, ncpSide);

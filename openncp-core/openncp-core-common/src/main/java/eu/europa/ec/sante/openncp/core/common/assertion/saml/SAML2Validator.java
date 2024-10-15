@@ -185,7 +185,9 @@ public class SAML2Validator {
             validateHcpAssertion(hcpAssertion);
             validateTrcAssertion(trcAssertion);
 
-            sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
+            final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
+            checkHCPAssertion(hcpAssertionDetails, null);
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
             policyAssertionManager.XCAPermissionValidator(hcpAssertion, classCode);
             checkTRCAssertion(trcAssertion, classCode);
             checkTRCAdviceIdReferenceAgainstHCPId(trcAssertion, hcpAssertion);
@@ -245,7 +247,9 @@ public class SAML2Validator {
             validateHcpAssertion(hcpAssertion);
             validateTrcAssertion(trcAssertion);
 
-            sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
+            final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
+            checkHCPAssertion(hcpAssertionDetails, null);
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
             policyAssertionManager.XDRPermissionValidator(hcpAssertion, classCode);
             checkTRCAssertion(trcAssertion, classCode);
             checkTRCAdviceIdReferenceAgainstHCPId(trcAssertion, hcpAssertion);
@@ -384,7 +388,8 @@ public class SAML2Validator {
                 throw (new MissingFieldException("HCP Assertion element is required."));
             }
 
-            sigCountryCode = signatureManager.verifySAMLAssertion(hcpAssertion);
+            final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
         } catch (final IOException | UnmarshallingException e) {
             LOGGER.error("'{}'", e.getMessage(), e);
         } catch (final SAXException e) {
