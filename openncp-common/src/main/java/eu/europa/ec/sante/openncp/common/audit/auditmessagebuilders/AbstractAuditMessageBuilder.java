@@ -34,6 +34,7 @@ public abstract class AbstractAuditMessageBuilder {
         participantObjectIdentification.setParticipantObjectID(participantId);
         participantObjectIdentification.setParticipantObjectTypeCode(participantCode.toString());
         participantObjectIdentification.setParticipantObjectTypeCodeRole(participantRole.toString());
+        participantObjectIdentification.setParticipantObjectName(participantName);
 
         final ParticipantObjectIDTypeCode codedValue = new ParticipantObjectIDTypeCode();
         codedValue.setCsdCode(PS_ObjectCode);

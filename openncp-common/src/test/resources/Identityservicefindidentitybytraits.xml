@@ -23,14 +23,17 @@
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="PS Participant Object ID" ParticipantObjectTypeCode="1" ParticipantObjectTypeCodeRole="1">
         <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number" originalText="Patient Number"/>
+        <ParticipantObjectName>PatientSource</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="2-1234-W7^^^&amp;1.3.6.1.4.1.48336.1000&amp;ISO" ParticipantObjectTypeCode="1" ParticipantObjectTypeCodeRole="1">
         <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number" originalText="Patient Number"/>
+        <ParticipantObjectName>PatientTarget</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="secondIdentifier" ParticipantObjectTypeCode="1"
                                      ParticipantObjectTypeCodeRole="1">
         <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number"
                                      originalText="Patient Number"/>
+        <ParticipantObjectName>PatientTarget</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="2.16.17.710.850.1000.990.1" ParticipantObjectTypeCode="2"
                                      ParticipantObjectTypeCodeRole="24">

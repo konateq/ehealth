@@ -68,19 +68,25 @@ public class EventLogUtil {
         } else {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
         }
-        // Patient Source is not written, because HCP assurance audit does not include patient mapping information
+        // Set Participant Object: Patient Source
+        final List<String> sourcePatientIds = new ArrayList<>();
+        for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : request.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
+            sourcePatientIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
+        }
+        eventLog.setPS_ParticipantObjectIDs(sourcePatientIds);
+
         // Set Participant Object: Patient Target
-        final List<String> patientIds = new ArrayList<>();
+        final List<String> targetPatientIds = new ArrayList<>();
         if (!response.getControlActProcess().getSubject().isEmpty()) {
             for (final PRPAIN201306UV02MFMIMT700711UV01Subject1 subject1 : response.getControlActProcess().getSubject()) {
-                patientIds.add(getParticipantObjectID(subject1.getRegistrationEvent().getSubject1().getPatient().getId().get(0)));
+                targetPatientIds.add(getParticipantObjectID(subject1.getRegistrationEvent().getSubject1().getPatient().getId().get(0)));
             }
         } else {
             for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : response.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
-                patientIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
+                targetPatientIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
             }
         }
-        eventLog.setPT_ParticipantObjectIDs(patientIds);
+        eventLog.setPT_ParticipantObjectIDs(targetPatientIds);
 
         // Set Participant Object: Error Message
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
