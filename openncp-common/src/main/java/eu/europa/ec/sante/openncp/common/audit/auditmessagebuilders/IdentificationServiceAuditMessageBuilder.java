@@ -58,7 +58,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
                         "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
-                    Short.valueOf("3"), "9", "errormsg");
+                    Short.valueOf("3"), "9", "errormsg","");
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(message.toString());
             }

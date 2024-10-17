@@ -66,6 +66,7 @@ public class IdentificationServiceAuditMessageBuilderTest extends XMLTestCase {
             final URL url = Resources.getResource("Identityservicefindidentitybytraits.xml");
             final AuditMessage expectedAuditMessage = AuditTrailUtils.convertXMLToAuditObject(IOUtils.toInputStream(Resources.toString(url, StandardCharsets.UTF_8)));
             expectedAuditMessage.getEventIdentification().setEventDateTime(now);
+
             XMLUnit.setIgnoreWhitespace(true);
             System.out.println(AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
             assertXMLEqual(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage), AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));

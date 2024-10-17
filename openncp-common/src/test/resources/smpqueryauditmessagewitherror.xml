@@ -18,8 +18,10 @@
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtY2VydC1hdXRoLXRlc3QucHVibGlzaGVyLmVoZWFsdGgudGVzdGEuZXUvZWhlYWx0aC1wYXJ0aWNpcGFudGlkLXFuczo6dXJuOmVoZWFsdGg6cHQ6bmNwLWlkcC9zZXJ2aWNlcy9laGVhbHRoLXJlc2lkLXFuczo6dXJuOmVoZWFsdGg6cGF0aWVudGlkZW50aWZpY2F0aW9uYW5kYXV0aGVudGljYXRpb246OnhjcGQ6OmNyb3NzZ2F0ZXdheXBhdGllbnRkaXNjb3ZlcnklMjMlMjNpdGktNTU=" ParticipantObjectTypeCode="2" ParticipantObjectTypeCodeRole="3">
         <ParticipantObjectIDTypeCode csd-code="9" codeSystemName="eHealth DSI Security" originalText="error message"/>
         <ParticipantObjectDetail type="errormsg" value="ZXJyb3JNZXNzYWdl"/>
+        <ParticipantObjectName>PatientSource</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="2">
         <ParticipantObjectIDTypeCode csd-code="SMP" codeSystemName="eHealth DSI Security" displayName="SignedServiceMetadata" originalText="SignedServiceMetadata"/>
+        <ParticipantObjectName>Patient</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

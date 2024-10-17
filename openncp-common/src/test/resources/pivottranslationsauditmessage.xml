@@ -13,8 +13,10 @@
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="4" ParticipantObjectDataLifeCycle="5">
         <ParticipantObjectIDTypeCode csd-code="in" codeSystemName="eHealth DSI Translation" displayName="Input Data" originalText="Input Data"/>
+        <ParticipantObjectName>PatientSource</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectTypeCode="4" ParticipantObjectDataLifeCycle="5">
         <ParticipantObjectIDTypeCode csd-code="out" codeSystemName="eHealth DSI Translation" displayName="Output Data" originalText="Output Data"/>
+        <ParticipantObjectName>PatientTarget</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

@@ -24,5 +24,6 @@
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="2">
         <ParticipantObjectIDTypeCode csd-code="IdA" codeSystemName="eHealth DSI Security" displayName="HCP Identity Assertion" originalText="HCP Identity Assertion"/>
+        <ParticipantObjectName>Patient</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

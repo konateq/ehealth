@@ -42,7 +42,7 @@ public class NOKAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
         }
         if (message != null) {
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "NokA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "NOK Assertion");
+                    "NokA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "NOK Assertion","Patient");
         }
         return message;
     }

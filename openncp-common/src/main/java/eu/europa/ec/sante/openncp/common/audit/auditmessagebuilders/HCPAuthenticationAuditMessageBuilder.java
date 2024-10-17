@@ -38,7 +38,7 @@ public class HCPAuthenticationAuditMessageBuilder extends AbstractAuditMessageBu
         if (message != null) {
             // Event Target
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "IdA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "HCP Identity Assertion");
+                    "IdA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "HCP Identity Assertion","Patient");
         }
         return message;
     }

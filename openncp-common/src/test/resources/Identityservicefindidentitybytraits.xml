@@ -40,5 +40,6 @@
         <ParticipantObjectIDTypeCode csd-code="ITI-55" codeSystemName="IHE Transactions" displayName="Patient Number" originalText="Cross Gateway Patient Discovery"/>
         <ParticipantObjectQuery>UXVlcnkgQnkgUGFyYW1ldGVy</ParticipantObjectQuery>
         <ParticipantObjectDetail type="ihe:homeCommunityID" value="Mi4xNi4xNy43MTAuODUwLjEwMDAuOTkwLjE="/>
+        <ParticipantObjectName>Patient</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

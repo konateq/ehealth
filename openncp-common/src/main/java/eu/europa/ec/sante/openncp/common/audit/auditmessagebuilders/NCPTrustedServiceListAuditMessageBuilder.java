@@ -32,7 +32,7 @@ public class NCPTrustedServiceListAuditMessageBuilder extends AbstractAuditMessa
         }
         if (message != null) {
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "NSL", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "Trusted Service List");
+                    "NSL", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "Trusted Service List","Patient");
         }
         return message;
     }

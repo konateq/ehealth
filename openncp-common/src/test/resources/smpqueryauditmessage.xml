@@ -18,5 +18,6 @@
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="2">
         <ParticipantObjectIDTypeCode codeSystemName="eHealth DSI Security" csd-code="SMP" displayName="SignedServiceMetadata" originalText="SignedServiceMetadata"/>
+        <ParticipantObjectName>Patient</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

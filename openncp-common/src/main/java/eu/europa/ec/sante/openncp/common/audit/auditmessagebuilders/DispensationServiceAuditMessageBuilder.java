@@ -13,7 +13,7 @@ public class DispensationServiceAuditMessageBuilder extends AbstractAuditMessage
                     "Patient", "urn:uuid:a54d6aa5-d40d-43f9-88c5-b4633d873bdd", "IHE XDS Metadata", "Patient Number",
                     "Cross Gateway Query", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), Short.valueOf("4"),
-                        "12", "", Short.valueOf("0"), "", "");
+                        "12", "", Short.valueOf("0"), "", "","PatientTarget");
         }
         return message;
     }

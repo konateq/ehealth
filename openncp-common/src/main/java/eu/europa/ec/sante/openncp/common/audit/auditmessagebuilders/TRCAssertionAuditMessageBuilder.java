@@ -33,7 +33,7 @@ public class TRCAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
                     eventLog.getTargetip());
             for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
-                addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"), "Patient",
+                addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"), "PatientSource",
                         "2", AuditConstant.RFC3881, "Patient Number",
                         "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             }
@@ -42,7 +42,7 @@ public class TRCAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
         }
         if (message != null) {
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "TrcA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "TRC Assertion");
+                    "TrcA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "TRC Assertion","Patient");
         }
         return message;
     }
