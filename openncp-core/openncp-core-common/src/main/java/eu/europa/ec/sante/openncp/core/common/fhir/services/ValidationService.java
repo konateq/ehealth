@@ -7,7 +7,6 @@ import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import jakarta.servlet.ServletContext;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.Logger;
@@ -22,15 +21,13 @@ public class ValidationService {
 
     private final FhirValidator fhirValidator;
     private final FhirContext fhirContext;
-    private final ServletContext servletContext;
 
     @Value("${hapi.fhir.validation.enabled}")
     private boolean validationEnabled;
 
-    public ValidationService(final FhirValidator fhirValidator, final FhirContext fhirContext, final ServletContext servletContext) {
-        this.fhirValidator = Validate.notNull(fhirValidator);
-        this.fhirContext = fhirContext;
-        this.servletContext = servletContext;
+    public ValidationService(final FhirValidator fhirValidator, final FhirContext fhirContext) {
+        this.fhirValidator = Validate.notNull(fhirValidator, "fhirValidator cannot be null" );
+        this.fhirContext = Validate.notNull(fhirContext, "fhirContext cannot be null" );
     }
 
     public ValidationResult validate(final IBaseResource baseResource, final RestOperationTypeEnum restOperationTypeEnum) {

@@ -249,7 +249,7 @@ public class OpenNCPValidation {
         if (isRemoteValidationEnable()) {
             //TODO Remote validation to be implemented for FHIR resources
         } else {
-            ReportBuilder.build(ReportBuilder.formatDate(), "model", ObjectType.FHIR.toString(), fhirResource, ncpSide);
+            ReportBuilder.build(ReportBuilder.formatDate(), resourceType, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         }
     }
 
