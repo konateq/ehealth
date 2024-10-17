@@ -197,7 +197,7 @@ public class ValidatorUtil {
         } else {
             switch (resourceType) {
                 case "Patient":
-                    return ValidatorUtil.EHDSI_HL7_FHIR_PATIENT_RESOURCE;
+                    return ValidatorUtil.EHDSI_HL7_FHIR_PATIENT_RESOURCE.toString();
                 case "DocumentReference":
                     return ValidatorUtil.EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE;
                 case "Bundle":
