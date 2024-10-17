@@ -51,6 +51,9 @@ services:
       DRIVER_CLASS_NAME: ${DRIVER_CLASS_NAME}
       DB_PASSWORD: ${DB_ROOT_PASSWORD}
       DB_ACTIVE_PROFILE: ${DB_ACTIVE_PROFILE}
+      TSAM_SYNC_URL: ${TSAM_SYNC_URL}
+      TSAM_SYNC_USERNAME: ${TSAM_SYNC_USERNAME}
+      TSAM_SYNC_PASSWORD: ${TSAM_SYNC_PASSWORD}
     build:
       context: ./
       dockerfile: ./openncp-tsam-sync/Dockerfile
