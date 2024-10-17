@@ -140,6 +140,7 @@ services:
       - "host.docker.internal:host-gateway"
     dns:
       - 10.0.0.1
+      - 8.8.8.8
     depends_on:
       mysql:
         condition: service_healthy
@@ -270,6 +271,7 @@ services:
       - "host.docker.internal:host-gateway"
     dns:
       - 10.0.0.1
+      - 8.8.8.8
     depends_on:
       mysql:
         condition: service_healthy
