@@ -72,7 +72,7 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                 LOGGER.debug("Audit event dispatching using dispatcher [{}] for audit event [{}]", auditDispatcher.getClass().getSimpleName(), auditEventAsJsonString);
             }
 
-            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent);
+            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, euRequestDetails.getResourceType());
             LOGGER.debug("Audit event dispatched with result [{}]", dispatchResult);
             if (dispatchResult.isSuccess()) {
                 LOGGER.info("Audit event successfully dispatched: [{}]", dispatchResult.getMessage());
