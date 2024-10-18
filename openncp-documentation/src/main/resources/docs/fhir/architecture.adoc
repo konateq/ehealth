@@ -1,4 +1,4 @@
-=== Architecture
+==== Architecture
 
 Our FHIR implementation is based on the R4 version of the HL7® FHIR specification.
 Reason for this is that also the EU Lab Reports FHIR IGs are currently defined in R4.
@@ -6,7 +6,7 @@ Reason for this is that also the EU Lab Reports FHIR IGs are currently defined i
 The user interface is not part of the current OpenNCP implementation and needs to be developed by implemented by the Member States.
 Similarly as with the CDA Display Tool, a visualization tool for the FHIR bundles will be included in the OpenNCP as a reference implementation in the near future.
 
-==== High level architecture
+===== High level architecture
 
 The high level layers of the OpenNCP related to FHIR are the following:
 
@@ -27,7 +27,7 @@ image::media/openncp_overview.png[]
 .High level architecture
 image::media/high_level_architecture.png[]
 
-==== Detailed architecture
+===== Detailed architecture
 
 To facilitate the deployment of OpenNCP, we use docker as a container management tool that comprises the different components, configuration and required (populated) databases.
 This allows users to startup all the necessary components using a simple docker command.
@@ -38,7 +38,7 @@ This URL will be used by the application to connect the server from the client.
 .Detailed architecture
 image::media/detailed_architecture.png[]
 
-==== Request/Response flows
+===== Request/Response flows
 
 To retrieve a Patient resource, the /Patient REST API is used based on the PDQm (ITI-78) profile.
 The /DocumentReference REST API is used to retrieve the different Resources that match specific search criteria.
@@ -54,7 +54,7 @@ On the server side, transcodings (mappings) are applied to the bundle, where on 
 .Request/response flow
 image::media/request_response_flow.png[]
 
-==== Audit
+===== Audit
 
 Audit logging leverages the FHIR https://www.hl7.org/fhir/auditevent.html[AuditEvent]. +
 This AuditEvent is based on http://tools.ietf.org/html/rfc3881[RFC 3881], now managed by http://medical.nema.org/medical/dicom/current/output/html/part15.html#sect_A.5[DICOM Part 15 Annex A5] and is formatted as https://www.json.org/json-en.html[json]. +
@@ -67,7 +67,7 @@ The location where this file is saved is currently `$\{EPSOS_PROPS_PATH\} + /val
 
 Currently, only *outgoing* fhir message from NCP-A and NCP-B are being audited.
 
-==== Validation
+===== Validation
 
 For the validation of FHIR resources we use the HAPI Instance Validator. HAPI provides a built-in and configurable mechanism for validating resources using FHIR's own conformance resources (StructureDefinition, ValueSet, CodeSystem, etc.). This mechanism is called the Instance Validator.
 
@@ -83,7 +83,7 @@ These can be downloaded here:
 - EU Lab Report FHIR IG package: https://build.fhir.org/ig/hl7-eu/laboratory/downloads.html
 - HL7 IPS FHIR IG package: 	https://build.fhir.org/ig/HL7/fhir-ips/downloads.html
 
-===== Configuration
+====== Configuration
 
 The validation is defined as a Spring bean and is performed conditionally based on a configurable boolean property
 
@@ -122,9 +122,9 @@ In the case of a *validation error*, an error message is logged, together with t
 
 2023-12-21 15:39:46 [2023-12-21T14:39:46.597Z] [http-nio-8080-exec-10] INFO  e.e.e.s.m.services.ValidationService.validate(45) - The Profile 'http://hl7.org/fhir/StructureDefinition/translation|4.0.1' definition allows for the type code but found type string
 ----
-==== Security
+===== Security
 
-===== Authentication
+====== Authentication
 
 All the endpoints require an authentication of the client, as MyHealth@EU is using SAML Tokens https://webgate.ec.europa.eu/fpfis/wikis/x/AeTzN, the FHIR flows re-use the SAML Token Option https://profiles.ihe.net/ITI/IUA/index.html#372432-saml-token-option where the SAML Assertion is added as a claim inside a JSON Web Token (JWT) in the header of each request. The JWT token is signed by the client using HMAC SHA-512 algorithm and a secret key that is shared between server amd client.
 

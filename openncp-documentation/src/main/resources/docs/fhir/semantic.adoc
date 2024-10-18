@@ -1,13 +1,13 @@
-=== Semantic
+==== Semantic
 
 For the MyHealth@EU FHIR IGs, the starting point are the European Lab Report FHIR IGs, that are based on the eHN Laboratory Result guidelines. Resources are defined based on the MyHealth@EU requirements catalogue, containing specializations of the European Lab Report FHIR IGs, and adding vocabulary bindings with concepts from the Master Value Sets Catalogue (MVC)
 
 
-==== Technical
+===== Technical
 
 We use SUSHI to generate the FHIR IG content based on FHIR Shorthand files. SUSHI (aka "SUSHI Unshortens Short Hand Inputs") is a reference implementation command-line interpreter/compiler for FHIR Shorthand (FSH).
 
-==== Resources
+===== Resources
 
 FHIR is built around the concept of "_resources_." +
 Each resource represents a granular, logical unit of healthcare information. Examples include individual data elements like Patient, Encounter, Medication, and Observation. These resources can be used independently or combined to support complex clinical workflows and records management.

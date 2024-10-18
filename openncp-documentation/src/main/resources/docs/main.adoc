@@ -1,0 +1,22 @@
+:toc:
+:toclevels: 3
+:pagenums:
+:source-highlighter: coderay
+
+== Introduction
+
+== IHE
+
+== FHIR
+include::fhir/intro.adoc[]
+include::fhir/fhirig.adoc[]
+include::fhir/objective.adoc[]
+include::fhir/semantic.adoc[]
+include::fhir/architecture.adoc[]
+include::fhir/visualisation.adoc[]
+// This will be generated
+include::fhir/api/index.adoc[]
+
+== Releases
+include::releases/v8.0.0.adoc[]
+
