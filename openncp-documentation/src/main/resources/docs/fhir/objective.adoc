@@ -1,4 +1,4 @@
-== Objective
+=== Objective
 
 The HL7® FHIR technology (https://www.hl7.org/fhir/) is used in the OpenNCP Reference Implementation to implement the workflows and the clinical document definition used in parallel of the usual IHE Technical Framework https://www.ihe.net/resources/technical_frameworks/#IT.
 
@@ -16,10 +16,3 @@ Conceptually, the FHIR implemention can be divided in 3 parts:
 
 .Conceptual overview
 image::media/conceptual_overview.png[]
-
-include::semantic.adoc[]
-
-include::architecture.adoc[]
-
-include::visualisation.adoc[]
-

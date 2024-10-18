@@ -1,4 +1,4 @@
-== FHIR Implementation Guides
+=== Implementation Guides
 
 [cols="1,1"]
 |===

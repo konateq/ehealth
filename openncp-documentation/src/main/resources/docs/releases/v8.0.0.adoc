@@ -1,0 +1,255 @@
+=== Release 8.0.0
+
+==== Upgrade from release 7.x.x to release 8.0.0
+
+===== Introduction
+The upgrade from version 7 to version 8 brings significant changes to the project structure, the bean creation and on top introduces a major new feature: the integration of FHIR capabilities.
+
+===== Main changes
+
+====== New project structure
+The previous project structure was highly complex and disorganized, with at numerous different package structures (ee.affecto.\*, ep.*, epsos.ccd.gnomon.\*, eu.epsos.*, eu.esens.abb.*, etc.) and modules, leading to dependency challenges and limiting the project's potential for expansion and improvement. +
+With the need to integrate FHIR capabilities into the existing solution, a decision was made to restructure the entire project to better accommodate this addition and facilitate future scalability.
+
+*Packages*
+
+We have renamed all packages to begin with `eu.europa.ec.sante.openncp`, except for ATNA, which was directly sourced from another project.
+
+*Structure*
+
+The application has been reorganized into three primary modules:
+
+. *Application*
++
+This component contains the startup logic and acts as the entry point for all services.
+
+. *Api*
++
+As the name suggests, this part manages everything related to public-facing APIs.
+
+. *Core*
++
+This component handles the core business logic.
+
+In addition to the modules mentioned above, there are several other modules included. These either serve as dependencies for the core modules or provide supplementary tools and utilities.
+
+<<<
+
+Below is a simplified overview of the modules within the new structure:
+
+[source]
+----
+/ehealth
+├── /openncp-common
+├── /openncp-application
+│   ├── /openncp-application-client
+│   ├── /openncp-application-client-connector
+│   ├── /openncp-application-openatna
+│   ├── /openncp-application-server
+│   ├── /openncp-application-transformation
+│   └── /openncp-application-trc-sts
+├── /openncp-api
+│   ├── /openncp-api-client
+│   ├── /openncp-api-common
+│   ├── /openncp-api-server
+│   ├── /openncp-api-transformation
+│   └── /openncp-api-trc-sts
+├── /openncp-core
+│   ├── /openncp-core-client
+│   ├── /openncp-core-client-api
+│   ├── /openncp-core-client-connector
+│   ├── /openncp-core-common
+│   ├── /openncp-core-server
+│   ├── /openncp-core-server-api
+│   ├── /openncp-core-server-mock
+│   └── /openncp-core-trc-sts
+├── /openncp-tools
+│   ├── /openncp-configuration-utility
+│   ├── /openncp-tsam-exporter
+│   └── /openncp-tsam-sync
+├── /openncp-coverage
+├── /openncp-docker
+├── /openncp-documentation
+└── /openncp-web-manager
+    ├── /openncp-web-manager-backend
+    └── /openncp-web-manager-frontend
+----
+
+As a result of this restructuring, the group IDs and artifact IDs have also been updated.
+
+===== Bean creation
+In the previous version, bean creation primarily relied on outdated static blocks and static factory methods, which mostly consisted of basic `new Class()` initializers. +
+Starting with wave 8, we began phasing out this approach in favor of a Spring-based solution that takes advantage of the more modern Inversion of Control (IoC) pattern.
+
+This change also allows member states to benefit from these Spring/IoC changes.
+
+===== FHIR capabilities
+Beginning with wave 8, we have integrated FHIR (Fast Healthcare Interoperability Resources) capabilities to improve interoperability and streamline healthcare data exchange. FHIR is a modern, widely-used standard that simplifies the sharing of healthcare information between systems, ensuring consistency, flexibility, and security.
+
+We've implemented these capabilities using HAPI FHIR, an open-source framework that fully supports the FHIR standard.
+
+Currently, two main functionalities have been introduced:
+
+. Patient Information
+. Lab Results
+
+===== Detailed migration guide
+
+====== NCP-B (client) portal connector
+
+As part of the structural changes, we have also addressed and cleaned up several incorrectly generated JAXB models. +
+While the main interface of the portal connector remains unchanged, some models have been renamed and all of them have been relocated to different packages.
+
+*Dependency migration*
+
+Wave 7
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante.ehdsi.openncp-protocol-terminators</groupId>
+    <artifactId>openncp-ncp-pt-client-consumer</artifactId>
+</dependency>
+----
+
+Wave 8
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante</groupId>
+    <artifactId>openncp-application-client-connector</artifactId>
+</dependency>
+----
+
+
+*Package renames*
+
+Wave 7 +
+`epsos.openncp.protocolterminator.clientconnector.*`
+
+Wave 8 +
+`eu.europa.ec.sante.openncp.core.client.api.*`
+
+*Specific model renames*
+
+- EpsosDocument
++
+Wave 7 +
+`epsos.openncp.protocolterminator.clientconnector.EpsosDocument1`
++
+Wave 8 +
+`eu.europa.ec.sante.openncp.core.client.api.EpsosDocument`
+
+- AssertionEnum
++
+Wave 7 +
+`eu.europa.ec.sante.ehdsi.constant.assertion.AssertionEnum`
++
+Wave 8 +
+`eu.europa.ec.sante.openncp.core.client.api.AssertionEnum`
+
+- ClientConnectorConsumerException
++
+Wave 7 +
+`epsos.openncp.protocolterminator.ClientConnectorConsumerException`
++
+Wave 8 +
+`eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException`
+
+====== NCP-A (server) national infrastructure integration
+
+*Dependency migration*
+
+The interfaces needed to be implemented by the member state has been moved.
+
+Wave 7
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante.ehdsi.openncp-protocol-terminators.openncp-ncp-server</groupId>
+    <artifactId>openncp-interface</artifactId>
+</dependency>
+----
+
+Wave 8
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante</groupId>
+    <artifactId>openncp-core-server-api</artifactId>
+</dependency>
+----
+
+*Interface migration*
+
+The interfaces of the main services in the national infrastructure connector remain unchanged, but they have all been relocated to new packages. As a result, you will need to update your bean creation methods, whether you're using a Service Loader, Spring factories, or similar mechanisms as well as update the import of the interface in your actual implementation.
+
+The package structure has changed from +
+`eu.epsos.protocolterminators.ws.server.\*` +
+to +
+`eu.europa.ec.sante.openncp.core.server.api.ihe.*`
+
+For example, if you are using the PatientSearchInterface with a Service Loader +
+`META-INF/services/eu.epsos.protocolterminators.ws.server.xcpd.PatientSearchInterface` +
+should now be updated to +
+`META-INF/services/eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface`
+
+*New FHIR interface*
+
+We have introduced a new service that enables FHIR communication between NCP-B and NCP-A. From NCP-B, a FHIR request is sent to NCP-A, which utilizes the methods defined in the newly added interface:
+`eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService`
+
+IMPORTANT: If your national infrastructure does not support FHIR capabilities, this dispatching service will function as a proxy between NCP-A's FHIR capabilities and the national infrastructure. However, it is essential that a valid (HAPI) FHIR Resource is returned. It is the responsibility of the national infrastructure to map its own response to the equivalent (HAPI) FHIR Resource.
+
+For instance, if you are using a Service Loader, you will need to add the following entry: +
+`META-INF/services/eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService` +
+similar to the existing IHE services.
+
+===== Some spring implementation examples:
+
+*With spring factories:*
+
+Add a +
+`META-INF/spring.factories` file +
+with content: +
+`org.springframework.boot.autoconfigure.EnableAutoConfiguration=YourNIConfigurationClass`
+
+Create the new configuration class:
+[source,java]
+----
+@Configuration
+@ComponentScan(basePackages = "your.ni.packages")
+public class YourNIConfigurationClass {
+}
+----
+
+And the actual implementation:
+[source,java]
+----
+package your.ni.packages;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+
+@Service
+public class YourNIDispatchingService implements DispatchingService {
+    // your implementation here
+}
+----
+
+*Without spring.factories:*
+
+[source,java]
+----
+@Configuration
+public class YourNIConfigurationClass {
+
+    @Bean
+    @Primary
+    public DispatchingService dispatchingService() {
+        return new YourNIDispatchingService();
+    }
+}
+----
+
+
+
+
+
