@@ -57,21 +57,13 @@
                         </goals>
                         <configuration>
                             <target>
-                                <fileset id="media-files" dir="src/main/resources/docs/">
-                                    <include name="**/*.png"/>
-                                    <include name="**/*.jpg"/>
-                                    <include name="**/*.jpeg"/>
-                                </fileset>
-                                <macrodef name="copy-media">
-                                    <attribute name="todir"/>
-                                    <sequential>
-                                        <copy todir="@{todir}" flatten="true">
-                                            <fileset refid="media-files"/>
-                                        </copy>
-                                    </sequential>
-                                </macrodef>
-                                <copy-media todir="${project.build.directory}/generated-sources/media"/>
-<!--                                <copy-media todir="${project.build.directory}/generated-docs/media"/>-->
+                                <copy todir="${project.build.directory}/generated-sources/media" flatten="true">
+                                    <fileset dir="src/main/resources/docs/">
+                                        <include name="**/*.png"/>
+                                        <include name="**/*.jpg"/>
+                                        <include name="**/*.jpeg"/>
+                                    </fileset>
+                                </copy>
                             </target>
                         </configuration>
                     </execution>
