@@ -217,7 +217,7 @@ public class OpenNCPValidation {
 
         LOGGER.info("[Validation Service: CDA Validator]");
         final boolean isScannedDocument = cda.contains("nonXMLBody");
-        final String cdaModel = ValidatorUtil.obtainCdaModel(classCode, isPivot, isScannedDocument);
+        final String cdaModel = ValidatorUtil.obtainCdaModel(isPivot, isScannedDocument);
 
         if (isRemoteValidationEnable()) {
 
@@ -232,6 +232,24 @@ public class OpenNCPValidation {
             }).start();
         } else {
             ReportBuilder.build(ReportBuilder.formatDate(), cdaModel, ObjectType.CDA.toString(), cda, ncpSide);
+        }
+    }
+
+    /**
+     * @param fhirResource
+     * @param ncpSide
+     * @param resourceType
+     * @param isPivot
+     */
+    public static void validateFhirResource(final String fhirResource, final NcpSide ncpSide, final String resourceType, final boolean isPivot) {
+
+        final String fhirModel = ValidatorUtil.obtainFhirModel(resourceType);
+
+        LOGGER.info("[Validation Service: FHIR Validator]");
+        if (isRemoteValidationEnable()) {
+            //TODO Remote validation to be implemented for FHIR resources
+        } else {
+            ReportBuilder.build(ReportBuilder.formatDate(), fhirModel, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         }
     }
 

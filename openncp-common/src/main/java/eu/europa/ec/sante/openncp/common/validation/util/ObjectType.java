@@ -5,6 +5,7 @@ public enum ObjectType {
     ASSERTION("ASSERTION"),
     AUDIT("AUDIT"),
     CDA("CDA"),
+    FHIR("FHIR"),
     PDQ("PDQ"),
     XCA_QUERY_REQUEST("XCA-QUERY-REQUEST"),
     XCA_QUERY_RESPONSE("XCA-QUERY-RESPONSE"),
@@ -19,7 +20,7 @@ public enum ObjectType {
 
     private final String name;
 
-    ObjectType(String s) {
+    ObjectType(final String s) {
         name = s;
     }
 

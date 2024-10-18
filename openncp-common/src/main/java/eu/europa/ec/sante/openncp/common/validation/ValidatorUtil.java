@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.validation.util.ObjectType;
 import eu.europa.ec.sante.openncp.common.validation.util.XdsModel;
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,9 @@ public class ValidatorUtil {
     public static final String EHDSI_ART_DECOR_CDA_FRIENDLY;
     public static final String EHDSI_ART_DECOR_CDA_PIVOT;
     public static final String EHDSI_ART_DECOR_SCANNED_DOCUMENT;
+    public static final String EHDSI_HL7_FHIR_PATIENT_RESOURCE;
+    public static final String EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE;
+    public static final String EHDSI_HL7_FHIR_BUNDLE_RESOURCE;
     public static final String EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC;
     public static final String EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST;
     public static final String EHDSI_AUDIT_HCP_ASSURANCE;
@@ -74,6 +78,10 @@ public class ValidatorUtil {
             EHDSI_ART_DECOR_CDA_FRIENDLY = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_CDA_FRIENDLY");
             EHDSI_ART_DECOR_CDA_PIVOT = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_CDA_PIVOT");
             EHDSI_ART_DECOR_SCANNED_DOCUMENT = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_ART_DECOR_SCANNED_DOCUMENT");
+
+            EHDSI_HL7_FHIR_PATIENT_RESOURCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_HL7_FHIR_PATIENT_RESOURCE");
+            EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE");
+            EHDSI_HL7_FHIR_BUNDLE_RESOURCE = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_HL7_FHIR_BUNDLE_RESOURCE");
 
             EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC");
             EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST = (String) GazelleConfiguration.getInstance().getConfiguration().getProperty("EHDSI_AUDIT_IMPORT_NCP_TRUSTED_LIST");
@@ -161,25 +169,35 @@ public class ValidatorUtil {
     }
 
     /**
-     * This helper method will return a specific CDA model based on a document class code
-     * (also choosing between friendly or pivot documents).
+     * This helper method will return a specific CDA model
+     * (choosing between friendly or pivot documents).
      *
-     * @param classCode         The document class code.
      * @param isPivot           The boolean flag stating if the document is pivot or
      *                          not.
      * @param isScannedDocument The boolean flag stating if the document is a scanned document or not.
      * @return the correspondent CDA model.
      */
-    public static String obtainCdaModel(final ClassCode classCode, final boolean isPivot, final boolean isScannedDocument) {
+    public static String obtainCdaModel(final boolean isPivot, final boolean isScannedDocument) {
 
-        if (classCode == null) {
-            return null;
-        } else {
-            if (isScannedDocument) {
+        if (isScannedDocument) {
                 return ValidatorUtil.EHDSI_ART_DECOR_SCANNED_DOCUMENT;
             } else {
                 return isPivot ? ValidatorUtil.EHDSI_ART_DECOR_CDA_PIVOT : ValidatorUtil.EHDSI_ART_DECOR_CDA_FRIENDLY;
             }
+    }
+
+    public static String obtainFhirModel(final String resourceType) {
+
+        Validate.notBlank(resourceType);
+        switch (resourceType) {
+                case "Patient":
+                    return ValidatorUtil.EHDSI_HL7_FHIR_PATIENT_RESOURCE.toString();
+                case "DocumentReference":
+                    return ValidatorUtil.EHDSI_HL7_FHIR_DOCUMENT_REFERENCE_RESOURCE;
+                case "Bundle":
+                    return ValidatorUtil.EHDSI_HL7_FHIR_BUNDLE_RESOURCE;
+                default:
+                    throw new IllegalArgumentException("Unsupported resource type [" + resourceType + "]");
         }
     }
 

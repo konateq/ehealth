@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.common.validation.reporting;
 
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.util.FileSystemUtils;
 import eu.europa.ec.sante.openncp.common.validation.GazelleConfiguration;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import net.ihe.gazelle.jaxb.result.sante.DetailedResult;
@@ -18,9 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * @author Marcelo Fonseca <marcelo.fonseca@iuz.pt>
- */
 public class ReportBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReportBuilder.class);
@@ -100,7 +98,7 @@ public class ReportBuilder {
         reportDirName = Constants.EPSOS_PROPS_PATH + REPORT_FILES_FOLDER + File.separator + sideFolder;
         reportFileName = reportDirName + File.separator + buildReportFileName(reportDate, model, objectType, validationTestResult);
 
-        if (checkReportDir(reportDirName)) {
+        if (FileSystemUtils.createDirIfNotExists(reportDirName)) {
 
             LOGGER.info("Writing validation report in: '{}'", reportFileName);
             reportFile = new File(reportFileName);
@@ -199,28 +197,6 @@ public class ReportBuilder {
 
         fileName.append(FILE_EXTENSION);
         return fileName.toString();
-    }
-
-    /**
-     * This method will check if the report directory exists, if not, it will create it.
-     *
-     * @param reportDirPath the complete path for the report dir.
-     * @return a boolean flag stating the success of the operation.
-     */
-    private static boolean checkReportDir(final String reportDirPath) {
-
-        File reportDir = new File(reportDirPath);
-
-        if (!reportDir.exists()) {
-            LOGGER.info("Creating validation report folder in: '{}'", reportDirPath);
-            if (!reportDir.mkdirs()) {
-                LOGGER.error("An error has occurred during the creation of validation report directory.");
-                return false;
-            } else {
-                return true;
-            }
-        }
-        return true;
     }
 
     /**

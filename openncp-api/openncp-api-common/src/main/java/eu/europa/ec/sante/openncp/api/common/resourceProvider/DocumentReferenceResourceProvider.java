@@ -10,6 +10,7 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -28,7 +29,8 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService) {
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ValidationService validationService) {
+        super(validationService);
         this.dispatchingService = Validate.notNull(dispatchingService);
     }
 
@@ -59,7 +61,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
         final String JWTToken = getJwtFromRequest(theServletRequest);
 
         final Bundle serverResponse = dispatchingService.dispatchSearch(EuRequestDetails.of(theRequestDetails), JWTToken);
-
+        validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
     }
 }

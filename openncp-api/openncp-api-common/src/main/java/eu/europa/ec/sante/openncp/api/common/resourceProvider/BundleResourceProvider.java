@@ -16,6 +16,7 @@ import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableEuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -31,12 +32,11 @@ import java.util.Set;
 @Component
 public class BundleResourceProvider extends AbstractResourceProvider implements IResourceProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BundleResourceProvider.class);
-
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler) {
+    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
+        super(validationService);
         this.dispatchingService = Validate.notNull(dispatchingService);
         this.bundleHandler = Validate.notNull(bundleHandler);
     }
@@ -50,6 +50,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     public Bundle find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final String JWTToken = getJwtFromRequest(theServletRequest);
         final Bundle bundle = dispatchingService.dispatchRead(EuRequestDetails.of(theRequestDetails), JWTToken);
+        validate(bundle, theRequestDetails.getRestOperationType());
         return bundle;
     }
 
