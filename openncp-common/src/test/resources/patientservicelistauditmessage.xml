@@ -32,7 +32,6 @@
         <ParticipantObjectIDTypeCode csd-code="ITI-38" codeSystemName="IHE Transactions" displayName="Patient Number" originalText="Cross Gateway Query"/>
         <ParticipantObjectQuery>UXVlcnkgQnkgUGFyYW1ldGVy</ParticipantObjectQuery>
         <ParticipantObjectDetail type="ihe:homeCommunityID" value="NDI="/>
-        <ParticipantObjectName>Patient</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="2" ParticipantObjectTypeCodeRole="4">
         <ParticipantObjectIDTypeCode csd-code="12" codeSystemName="DCM" displayName="Cross Gateway Query" originalText="Cross Gateway Query"/>

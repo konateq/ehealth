@@ -23,7 +23,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
         }
 
         addParticipantObject(message, eventLog.getHciIdentifier(), Short.valueOf("2"), Short.valueOf("24"),
-                "Patient", "ITI-55", "IHE Transactions", "Patient Number",
+                null, "ITI-55", "IHE Transactions", "Patient Number",
                 "Cross Gateway Patient Discovery", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
 
         return message;
