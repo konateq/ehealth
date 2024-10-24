@@ -1,0 +1,5 @@
+=== Release 8.0.1
+
+We reintroduced the `ServiceLoader` mechanism as a fallback for bean loading and provided *default implementations* for all services ensuring that the server will start even if the national implementation does not provide its own service implementations.
+
+WARNING: The `ServiceLoader` mechanism is deprecated as of wave 8 and will be completely removed in wave 9. From wave 9 onwards, you *must* provide services as Spring beans.
