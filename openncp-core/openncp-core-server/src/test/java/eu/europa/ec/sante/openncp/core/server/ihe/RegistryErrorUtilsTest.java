@@ -27,6 +27,7 @@ public class RegistryErrorUtilsTest {
             final RegistryError registryError = registryErrorList.getRegistryError().get(0);
             Assert.assertEquals(ERROR_GENERIC.getCode(), registryError.getErrorCode());
             Assert.assertNotNull(registryError.getLocation());
+            Assert.assertEquals(e.getMessage(), registryError.getLocation());
             Assert.assertEquals(codeContext, registryError.getCodeContext());
             Assert.assertEquals(registryErrorSeverity.getText(), registryError.getSeverity());
         }
