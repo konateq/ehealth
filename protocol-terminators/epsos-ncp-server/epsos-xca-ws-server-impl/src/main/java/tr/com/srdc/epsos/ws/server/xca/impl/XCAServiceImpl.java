@@ -239,6 +239,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             // Log this under Order Service
             eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
             eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
+            eventLog.setEI_EventActionCode(EventActionCode.READ);
         } else {
             switch (classCode) {
                 case EP_CLASSCODE:
