@@ -677,7 +677,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 if (demographicsList.isEmpty()) {
                     // Preparing answer not available error
 
-                    fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_NO_MATCH, "No patient found.", "NF");
+                    fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_NO_MATCH,
+                            "No patient found.", "tr.com.srdc.epsos.ws.server.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:681)");
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";
@@ -734,14 +735,14 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             }
         } catch (final OpenNCPErrorCodeException e) {
             logger.error(e.getMessage(), e);
-            fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage());
+            fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage(),Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY));
         } catch (final XCPDNIException e) {
             logger.error(e.getMessage(), e);
             final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
             fillOutputMessage(outputMessage, e.getXcpdErrorCode(), e.getOpenncpErrorCode(), codeContext, Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY));
         } catch (final Exception e) {
             logger.error(e.getMessage(), e);
-            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_GENERIC, e.getMessage());
+            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_GENERIC, e.getMessage(),Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY));
         }
         // Set queryByParameter
         final var prpamt201306UV02QueryByParameter = objectFactory.createPRPAMT201306UV02QueryByParameter();

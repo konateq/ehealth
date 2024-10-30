@@ -26,7 +26,10 @@ public class RegistryErrorUtils {
     }
 
     public static void addErrorMessage(RegistryErrorList registryErrorList, ErrorCode errorCode, String codeContext, Exception e, RegistryErrorSeverity severity) {
-        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, e.getMessage(), severity));
+        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
+                .findFirst()
+                .map(StackTraceElement::toString)
+                .orElse(StringUtils.EMPTY), severity));
     }
 
     public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ErrorCode errorCode, String codeContext, RegistryErrorSeverity severity) {
@@ -34,7 +37,10 @@ public class RegistryErrorUtils {
     }
 
     public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ErrorCode errorCode, String codeContext, Exception e, RegistryErrorSeverity severity) {
-        registryErrorList.addChild(createErrorOMMessage(ons, errorCode.getCode(), codeContext, e.getMessage(), severity));
+        registryErrorList.addChild(createErrorOMMessage(ons, errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
+                .findFirst()
+                .map(StackTraceElement::toString)
+                .orElse(StringUtils.EMPTY), severity));
     }
 
     public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ITMTSAMError error, String operationType, RegistryErrorSeverity severity) {

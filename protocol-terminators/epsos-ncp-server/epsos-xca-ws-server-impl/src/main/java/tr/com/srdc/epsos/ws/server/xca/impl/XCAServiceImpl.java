@@ -688,8 +688,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         break;
                 }
             } catch (final NIException e) {
-                final var stackTraceLines = e.getStackTrace();
-                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
+                final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), codeContext,
                         e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {
@@ -912,7 +912,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         .add(Criteria.REPOSITORY_ID, repositoryId));
             } catch (final NIException e) {
                 logger.error("NIException: '{}'", e.getMessage(), e);
-                final var stackTraceLines = e.getStackTrace();
                 final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
                 RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, e.getOpenncpErrorCode(), codeContext, e,
                         RegistryErrorSeverity.ERROR_SEVERITY_ERROR);

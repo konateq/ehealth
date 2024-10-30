@@ -4,8 +4,13 @@ import eu.epsos.protocolterminators.ws.server.common.RegistryErrorSeverity;
 import eu.europa.ec.sante.ehdsi.constant.error.OpenNCPErrorCode;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 
 public class RegistryErrorUtilsTest {
@@ -25,7 +30,10 @@ public class RegistryErrorUtilsTest {
             final RegistryError registryError = registryErrorList.getRegistryError().get(0);
             Assert.assertEquals(ERROR_GENERIC.getCode(), registryError.getErrorCode());
             Assert.assertNotNull(registryError.getLocation());
-            Assert.assertEquals(e.getMessage(), registryError.getLocation());
+            Assert.assertEquals(Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
+                    .findFirst()
+                    .map(StackTraceElement::toString)
+                    .orElse(StringUtils.EMPTY), registryError.getLocation());
             Assert.assertEquals(codeContext, registryError.getCodeContext());
             Assert.assertEquals(registryErrorSeverity.getText(), registryError.getSeverity());
         }
