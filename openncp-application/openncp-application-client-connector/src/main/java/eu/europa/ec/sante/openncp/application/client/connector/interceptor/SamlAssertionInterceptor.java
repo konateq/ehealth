@@ -25,9 +25,9 @@ import java.util.Optional;
 /**
  * Adding SOAP header with SAML assertion to request.
  */
-public class AddSamlAssertionInterceptor extends AbstractSoapInterceptor {
+public class SamlAssertionInterceptor extends AbstractSoapInterceptor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AddSamlAssertionInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SamlAssertionInterceptor.class);
 
     static {
         try {
@@ -37,7 +37,7 @@ public class AddSamlAssertionInterceptor extends AbstractSoapInterceptor {
         }
     }
 
-    public AddSamlAssertionInterceptor() {
+    public SamlAssertionInterceptor() {
         super(Phase.PREPARE_SEND);
     }
 
