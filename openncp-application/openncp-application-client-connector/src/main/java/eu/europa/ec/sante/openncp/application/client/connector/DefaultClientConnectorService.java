@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
+import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.AddSamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
@@ -14,9 +16,11 @@ import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.ws.addressing.WSAddressingFeature;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.hl7.fhir.r4.model.Bundle;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -30,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,11 +43,14 @@ import java.util.Map;
  */
 @Service
 public class DefaultClientConnectorService implements ClientConnectorService {
-    // Logger
+
     private final Logger logger = LoggerFactory.getLogger(DefaultClientConnectorService.class);
     private final ConfigurationManager configurationManager;
     // URL of the targeted NCP-B - ClientService.wsdl
     private final String endpointReference;
+
+
+    private final RestApiClientService restApiClientService;
 
     private static final String DCCS_SC_KEYSTORE_PASSWORD = "SC_KEYSTORE_PASSWORD";
 
@@ -57,14 +65,14 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         return loggingFeature;
     }
 
-    public DefaultClientConnectorService(final ConfigurationManager configurationManager) {
+    public DefaultClientConnectorService(final ConfigurationManager configurationManager, final RestApiClientService restApiClientService) {
         this.configurationManager = Validate.notNull(configurationManager);
         this.endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
+        this.restApiClientService = Validate.notNull(restApiClientService);
 
         final ClientService ss = new ClientService();
         clientConnectorService = new ClientConnectorServicePortTypeWrapper(ss.getClientServicePort());
         clientConnectorService.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointReference);
-
 
         final Client client = ClientProxy.getClient(clientConnectorService.getClientConnectorServicePortType());
         client.getBus().getFeatures().add(loggingFeature());
@@ -78,7 +86,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         final HTTPConduit conduit = (HTTPConduit) client.getConduit();
 
         final TLSClientParameters tlsClientParameters = new TLSClientParameters();
-        // This should be configurable, you dont want to disable the CN check in production!!
+        // This should be configurable, you don't want to disable the CN check in production!!
         tlsClientParameters.setDisableCNCheck(true);
         tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         tlsClientParameters.setSSLSocketFactory(getSSLSocketFactory());
@@ -232,6 +240,59 @@ public class DefaultClientConnectorService implements ClientConnectorService {
 
         return clientConnectorService.getClientConnectorServicePortType().sayHello(name);
     }
+
+    /**
+     * @param assertions    - Map of assertions required by the transaction (HCP, NoK optional).
+     * @param countryCode   - ISO Country code of the patient country of origin.
+     * @param searchParams  - Search parameters to uniquely define the patient.
+     * @return List of PatientMyHealthEu resources
+     * @throws ClientConnectorException
+     */
+    @Override
+    public ResponseEntity<String> queryPatientFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+        final String jwtToken = JwtTokenGenerator.generate(assertions);
+        return restApiClientService.search(countryCode, jwtToken, searchParams, "Patient");
+    }
+
+    /**
+     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode   - ISO Country code of the patient country of origin.
+     * @param searchParams  - Search parameters to match the DocumentReferences.
+     * @return List of DocumentReference Resources
+     * @throws ClientConnectorException
+     */
+    @Override
+    public ResponseEntity<String> queryDocumentReferenceFhir(Map<AssertionEnum, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+        final String jwtToken = JwtTokenGenerator.generate(assertions);
+        return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
+    }
+
+    /**
+     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode   - ISO Country code of the patient country of origin.
+     * @param searchParams  - Search parameters to identify the Bundle.
+     * @return List of Bundle resources
+     * @throws ClientConnectorException
+     */
+    @Override
+    public ResponseEntity<String> queryBundleFhir(Map<AssertionEnum, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+        final String jwtToken = JwtTokenGenerator.generate(assertions);
+        return restApiClientService.search(countryCode, jwtToken, searchParams, "Bundle");
+    }
+
+    /**
+     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode   - ISO Country code of the patient country of origin.
+     * @param id            - Identifier of the bundle
+     * @return List of Bundle resources
+     * @throws ClientConnectorException
+     */
+    @Override
+    public ResponseEntity<String> queryBundleFhirById(Map<AssertionEnum, Assertion> assertions, String countryCode, String id) throws ClientConnectorException {
+        final String jwtToken = JwtTokenGenerator.generate(assertions);
+        return restApiClientService.search(countryCode, jwtToken, new HashMap<String, String>(), "Bundle/" +id);
+    }
+
 
     /**
      * Retrieves the clinical document of an identified patient (prescription, patient summary or original clinical document).

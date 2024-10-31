@@ -17,7 +17,7 @@ public class FhirDispatchingService implements DispatchingService {
 
     private final HapiWebClientFactory hapiWebClientFactory;
 
-    public FhirDispatchingService(final HapiWebClientFactory hapiWebClientFactory, final ValidationService validationService) {
+    public FhirDispatchingService(final HapiWebClientFactory hapiWebClientFactory) {
         this.hapiWebClientFactory = Validate.notNull(hapiWebClientFactory, "HapiWebClientFactory must not be null");
     }
 

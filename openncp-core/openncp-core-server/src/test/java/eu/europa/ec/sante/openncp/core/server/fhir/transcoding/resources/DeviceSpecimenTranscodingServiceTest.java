@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.server.fhir.transcoding.resources;
 
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.DeviceSpecimenMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.DeviceSpecimenMyHealthEu;
 import eu.europa.ec.sante.openncp.core.common.tsam.CodeConcept;
 import eu.europa.ec.sante.openncp.core.common.tsam.ImmutableCodeConcept;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.ITMTSAMError;

@@ -3,6 +3,7 @@ package eu.europa.ec.sante.openncp.application.client.connector;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionServiceImpl;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
+import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
 import eu.europa.ec.sante.openncp.application.client.connector.testutils.AssertionTestUtil;
 import eu.europa.ec.sante.openncp.application.client.connector.testutils.AssertionTestUtil.Concept;
 import eu.europa.ec.sante.openncp.common.ClassCode;
@@ -42,6 +43,7 @@ class DefaultClientConnectorServiceIntegrationTest {
     private static ConfigurationManager mockedConfigurationManager;
     private static AssertionService assertionService;
     private static KeyStoreManager keyStoreManager;
+    private static RestApiClientService restApiClientService;
 
     @BeforeAll
     static void setup() throws Exception {
@@ -68,7 +70,7 @@ class DefaultClientConnectorServiceIntegrationTest {
 
         setFinalStatic(ConfigurationManagerFactory.class.getDeclaredField("configurationManager"), mockedConfigurationManager);
 
-        clientConnectorService = new DefaultClientConnectorService(mockedConfigurationManager);
+        clientConnectorService = new DefaultClientConnectorService(mockedConfigurationManager, restApiClientService);
         keyStoreManager = new DatabasePropertiesKeyStoreManager(mockedConfigurationManager);
         assertionService = new AssertionServiceImpl(keyStoreManager, mockedConfigurationManager);
 

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources;
+package eu.europa.ec.sante.openncp.common.fhir.context.r4.resources;
 
 import ca.uhn.fhir.model.api.annotation.Extension;
 import ca.uhn.fhir.model.api.annotation.ResourceDef;

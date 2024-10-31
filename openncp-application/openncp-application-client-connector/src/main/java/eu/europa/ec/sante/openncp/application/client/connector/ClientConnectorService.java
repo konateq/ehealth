@@ -1,7 +1,11 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.PatientMyHealthEu;
 import eu.europa.ec.sante.openncp.core.client.api.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.DocumentReference;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -67,4 +71,43 @@ public interface ClientConnectorService {
      * @return Hello message concatenated with the token passed as parameter.
      */
     String sayHello(final Map<AssertionEnum, Assertion> assertions, final String name);
+
+    /**
+     * @param assertions     - Map of assertions required by the transaction (HCP, NoK optional).
+     * @param countryCode    - ISO Country code of the patient country of origin.
+     * @param searchParams   - Search parameters to uniquely define the patient.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    ResponseEntity<String> queryPatientFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
+            throws ClientConnectorException;
+
+    /**
+     * @param assertions      - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode     - ISO Country code of the patient country of origin.
+     * @param searchParams    - Search parameters to match the DocumentReferences.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
+            throws ClientConnectorException;
+
+    /**
+     * @param assertions       - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode      - ISO Country code of the patient country of origin.
+     * @param searchParams     - Search parameters to identify the Bundle.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    ResponseEntity<String> queryBundleFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
+            throws ClientConnectorException;
+
+    /**
+     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode   - ISO Country code of the patient country of origin.
+     * @param id            - Identifier of the bundle
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    public ResponseEntity<String> queryBundleFhirById(Map<AssertionEnum, Assertion> assertions, String countryCode, String id) throws ClientConnectorException;
 }
