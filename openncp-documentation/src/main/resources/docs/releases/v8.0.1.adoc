@@ -3,3 +3,68 @@
 We reintroduced the `ServiceLoader` mechanism as a fallback for bean loading and provided *default implementations* for all services ensuring that the server will start even if the national implementation does not provide its own service implementations.
 
 WARNING: The `ServiceLoader` mechanism is deprecated as of wave 8 and will be completely removed in wave 9. From wave 9 onwards, you *must* provide services as Spring beans.
+
+The `ServiceLoader` mechanism is available as a Spring bean, annotated with '@Configuration' in the class `ServicesConfiguration` located in the package `eu.europa.ec.sante.openncp.core.server.ihe` of the module `openncp-core-server`.
+
+We have 2 scenarios:
+
+1. Using spring aware implementation classes for the national implementation
+2. Using normal Java classes as implementation classes for the national implementation
+
+==== Spring based scenario
+
+When you go for the Spring solution, the national implementation of the interfaces is defined as a Spring bean. In order to not conflict with the ServicesConfiguration bean, it is important to mark your implementation bean as '*Primary*' to ensure it is preferred over the ServicesConfiguration mechanism.
+
+If problems would rise with Beans that are not found, a solution could be to add a `spring.factories` files in the META-INF file in the resources folder with the following content:
+
+[source,]
+----
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+ms.openncp.nationalconnector.ModuleConfiguration
+----
+
+This class is a configuration where the different implementation classes are defined as Spring beans:
+
+[source,]
+----
+public class ModuleConfiguration {
+    @Bean
+    @Primary
+    public DispatchingService dispatchingServiceMs() {
+        return new NationalDispatchingService();
+    }
+
+    @Bean
+    @Primary
+    public DocumentSearchInterface documentSearchMs() {
+        return new NationalDocumentSearch();
+    }
+
+    @Bean
+    @Primary
+    public PatientSearchInterface patientSearchMs() {
+        return new NationalPatientSearch();
+    }
+
+    @Bean
+    @Primary
+    public DocumentSubmitInterface documentSubmitMs() {
+        return new NationalDocumentSubmit();
+    }
+}
+----
+
+In order to avoid naming conflicts it is strongly advised to provide a unique name for your Spring bean.
+
+==== non Spring-based scenario
+
+If you are not using the Spring solution, the ServicesConfiguration bean is loaded and the national implementation of the interfaces are found through files stored in the META-INF/services folder:
+
+- eu.europa.ec.sante.openncp.core.server.api.ihe.xca.DocumentSearchInterface
+- eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface
+- eu.europa.ec.sante.openncp.core.server.api.ihe.xdr.DocumentSubmitInterface
+
+The content of each of these files must contain the location of the implementation in the national infrastructure:
+
+`eu.europa.ec.sante.openncp.core.server.nc.ms.xca.impl.NationalDocumentSearchImpl`
+

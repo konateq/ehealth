@@ -165,6 +165,8 @@ Wave 8 +
 
 ====== NCP-A (server) national infrastructure integration
 
+A general advise is to create a national connector that links the OpenNCP server component with the national infrastructure. Doing so favours loose coupling and makes it easier to migrate towards a Spring-based solution.
+
 *Dependency migration*
 
 The interfaces needed to be implemented by the member state has been moved.
@@ -228,12 +230,12 @@ Create the new configuration class:
 @ComponentScan(basePackages = "your.ni.packages")
 public class YourNIConfigurationClass {
     @Bean
-    public DispatchingService dispatchingService() {
+    public DispatchingService nationalDispatchingService() {
         return new YourNIDispatchingService();
     }
 
     @Bean
-    public DocumentSearchInterface documentSearch() {
+    public DocumentSearchInterface nationalDocumentSearch() {
         return new YourNIDDocumentSearchInterface();
     }
 
