@@ -44,6 +44,7 @@ public class ServicesConfiguration {
 
     /**
      * The PatientSearchInterfaceWithDemographics should take precedence over the regular PatientSearchInterface since it is a more concrete implementation.
+     * If a spring implementation was already provided this method would not be triggered because of the {@link ConditionalOnMissingBean}
      * <p>
      * The bean is loaded dynamically using a {@link ServiceLoader} mechanism if no spring
      * implementation for PatientSearchInterfaceWithDemographics is found.
@@ -53,6 +54,7 @@ public class ServicesConfiguration {
      * @return a PatientSearchInterfaceWithDemographics implementation if available, or null otherwise.
      */
     @Bean
+    @ConditionalOnMissingBean
     public PatientSearchInterface patientSearchInterfaceWithDemographics() {
         return loadBeanViaServiceLoader(PatientSearchInterfaceWithDemographics.class)
                 .map(patientSearchInterfaceWithDemographics -> (PatientSearchInterface) patientSearchInterfaceWithDemographics)
@@ -99,6 +101,7 @@ public class ServicesConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public DocumentSearchInterface documentSearchInterface() {
         return loadWithFallBack(DocumentSearchInterface.class, () -> Optional.of(new DocumentSearchInterface() {
             @Override
@@ -144,6 +147,7 @@ public class ServicesConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public DocumentSubmitInterface documentSubmitInterface() {
         return loadWithFallBack(DocumentSubmitInterface.class, () -> Optional.of(new DocumentSubmitInterface() {
 
@@ -165,6 +169,7 @@ public class ServicesConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public DispatchingService dispatchingService() {
         return loadWithFallBack(DispatchingService.class, () -> Optional.of(new DispatchingService() {
 
