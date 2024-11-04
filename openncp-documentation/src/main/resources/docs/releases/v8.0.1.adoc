@@ -16,19 +16,23 @@ We have 2 scenarios:
 When you go for the Spring solution, the national implementation of the interfaces is defined as a Spring bean. Make sure the National Implementation beans are chosen over the default openNCP ones.
 There are several ways to do this:
 
-1. Exclude our services +
+1. Exclude OpenNCP fallback services +
 +
 [source, java]
 ----
+import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
+
 @EnableAutoConfiguration(exclude = { ServicesConfiguration.class }
 ----
 +
-2. Add an `@Primary` to your service beans +
+2. Add `@Primary` to your service beans +
 +
-3. Make sure your configuration is loaded before the openNCP one
+3. Make sure your configuration is loaded before the OpenNCP fallback services
 +
 [source, java]
 ----
+import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
+
 @AutoConfigureBefore(ServicesConfiguration.class)
 ----
 
@@ -89,3 +93,7 @@ The content of each of these files must contain the location of the implementati
 
 `eu.europa.ec.sante.openncp.core.server.nc.ms.xca.impl.NationalDocumentSearchImpl`
 
+Remember:
+If you want to support the HL7 FHIR services, you will still need to implement the interface as already defined in the v8.0.0 migration manual.
+
+- eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService
