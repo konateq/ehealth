@@ -58,6 +58,8 @@ In order to avoid naming conflicts it is strongly advised to provide a unique na
 
 ==== non Spring-based scenario
 
+This scenario is the fallback scenario and allows the national implementations to work the way they did before using the ServiceLoader mechanism.
+
 If you are not using the Spring solution, the ServicesConfiguration bean is loaded and the national implementation of the interfaces are found through files stored in the META-INF/services folder:
 
 - eu.europa.ec.sante.openncp.core.server.api.ihe.xca.DocumentSearchInterface
