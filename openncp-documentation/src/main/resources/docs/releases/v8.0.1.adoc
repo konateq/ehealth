@@ -44,8 +44,6 @@ This class is a configuration where the different implementation classes are def
 
 [source, java]
 ----
-import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
-
 @Configuration
 public class ModuleConfiguration {
     @Bean
