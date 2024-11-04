@@ -13,9 +13,26 @@ We have 2 scenarios:
 
 ==== Spring based scenario
 
-When you go for the Spring solution, the national implementation of the interfaces is defined as a Spring bean. In order to not conflict with the ServicesConfiguration bean, it is important to mark your implementation bean as '*Primary*' to ensure it is preferred over the ServicesConfiguration mechanism.
+When you go for the Spring solution, the national implementation of the interfaces is defined as a Spring bean. Make sure the National Implementation beans are chosen over the default openNCP ones.
+There are several ways to do this:
 
-If problems would rise with Beans that are not found, a solution could be to add a `spring.factories` files in the META-INF file in the resources folder with the following content:
+1. Exclude our services +
++
+[source, java]
+----
+@EnableAutoConfiguration(exclude = { ServicesConfiguration.class }
+----
++
+2. Add an `@Primary` to your service beans +
++
+3. Make sure your configuration is loaded before the openNCP one
++
+[source, java]
+----
+@AutoConfigureBefore(ServicesConfiguration.class)
+----
+
+The following is an example using `spring.factories` and the `@Primary` notation.
 
 [source,]
 ----
@@ -25,8 +42,11 @@ ms.openncp.nationalconnector.ModuleConfiguration
 
 This class is a configuration where the different implementation classes are defined as Spring beans:
 
-[source,]
+[source, java]
 ----
+import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
+
+@Configuration
 public class ModuleConfiguration {
     @Bean
     @Primary
