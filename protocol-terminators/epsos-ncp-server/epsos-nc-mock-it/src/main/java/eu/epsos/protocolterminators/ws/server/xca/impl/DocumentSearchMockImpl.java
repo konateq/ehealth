@@ -899,28 +899,18 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
     }
 
     private EPDocumentMetaData.SubstitutionMetaData getSubstitution(Document doc) {
-        XPathFactory factory = XPathFactory.newInstance();
-        XPath path = factory.newXPath();
-        String substitution;
-
-        //substitution = path.evaluate("//*[local-name()='entryRelationship']/*[local-name()='observation']/*[local-name()='SubstanceAdminSubstitution']/@value", doc);
-        // Substitution is always allowed in Country B unless formally specified SUBST with code=N which means no substitution,
-        // all other cases (No SUBST element, code G=Generic or code TE=Therapeutic alternative means substitution is allowed
         List<Node> nodeListCode = XMLUtil.getNodeList(doc, "/ClinicalDocument/component/structuredBody/component/section/entry/substanceAdministration[@classCode = 'SBADM']/entryRelationship[@typeCode = 'SUBJ']/observation[@classCode = 'OBS']/code[@code = 'SUBST']");
-        List<Node> nodeListValue = XMLUtil.getNodeList(doc, "/ClinicalDocument/component/structuredBody/component/section/entry/substanceAdministration[@classCode = 'SBADM']/entryRelationship[@typeCode = 'SUBJ']/observation[@classCode = 'OBS']/value[@code = 'N']");
 
         var substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
         if (nodeListCode != null && !nodeListCode.isEmpty()) {
-            for (Node node : nodeListValue) {
-                String valueAttr = node.getNodeName();
-                String codeAttr = node.getAttributes().getNamedItem("code").getNodeValue();
-                logger.debug("Value: '{}' - Code: '{}'", valueAttr, codeAttr);
-                if (valueAttr.equals("value") && codeAttr.equals("N")) {
-                    substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.N);
-                } else {
-                    substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
-                }
-                break;
+            Node node = nodeListCode.get(0);
+            String valueAttr = node.getNodeName();
+            String codeAttr = node.getAttributes().getNamedItem("code").getNodeValue();
+            logger.debug("Value: '{}' - Code: '{}'", valueAttr, codeAttr);
+            if (valueAttr.equals("value") && codeAttr.equals("N")) {
+                substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.N);
+            } else {
+                substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
             }
         }
         return substitutionMetadata;
