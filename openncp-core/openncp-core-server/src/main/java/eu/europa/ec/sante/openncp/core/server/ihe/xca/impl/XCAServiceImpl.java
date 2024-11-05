@@ -634,7 +634,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         break;
                 }
             } catch (final NIException e) {
-                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
+                final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), codeContext,
                         e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {
