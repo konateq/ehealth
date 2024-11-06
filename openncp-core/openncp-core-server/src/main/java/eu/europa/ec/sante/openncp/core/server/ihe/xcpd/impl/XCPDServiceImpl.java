@@ -668,8 +668,13 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 if (demographicsList.isEmpty()) {
                     // Preparing answer not available error
 
-                    fillOutputMessage(outputMessage, XCPDErrorCode.AnswerNotAvailable, OpenNCPErrorCode.ERROR_PI_NO_MATCH,
-                            "No patient found.", "tr.com.srdc.epsos.ws.server.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() +")");
+                    final var codeContext = OpenNCPErrorCode.ERROR_PI_NO_MATCH.getDescription() + "^" + "No patient found";
+
+                    fillOutputMessage(outputMessage,
+                            XCPDErrorCode.AnswerNotAvailable,
+                            OpenNCPErrorCode.ERROR_PI_NO_MATCH,
+                            codeContext,
+                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() +")");
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";
