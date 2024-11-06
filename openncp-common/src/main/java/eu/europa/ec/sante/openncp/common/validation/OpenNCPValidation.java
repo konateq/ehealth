@@ -181,7 +181,7 @@ public class OpenNCPValidation {
      * @param request
      * @param ncpSide
      */
-    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final List<String> classCodes) {
+    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final ClassCode classCodes) {
 
         LOGGER.info("[Validation Service: XDR Validator]");
         final XdsModel xdsModel = ValidatorUtil.obtainModelXdr(request, classCodes);
