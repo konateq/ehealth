@@ -17,6 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -898,22 +899,20 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
         return strength;
     }
 
-    private EPDocumentMetaData.SubstitutionMetaData getSubstitution(Document doc) {
-        List<Node> nodeListCode = XMLUtil.getNodeList(doc, "/ClinicalDocument/component/structuredBody/component/section/entry/substanceAdministration[@classCode = 'SBADM']/entryRelationship[@typeCode = 'SUBJ']/observation[@classCode = 'OBS']/code[@code = 'SUBST']");
+    private EPDocumentMetaData.SubstitutionMetaData getSubstitution(final Document doc) {
+        final List<Node> nodeListCode = XMLUtil.getNodeList(doc, "/ClinicalDocument/component/structuredBody/component/section/entry/substanceAdministration[@classCode = 'SBADM']/entryRelationship[@typeCode = 'SUBJ']/observation[@classCode = 'OBS']/code[@code = 'SUBST']");
 
-        var substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
         if (nodeListCode != null && !nodeListCode.isEmpty()) {
-            Node node = nodeListCode.get(0);
-            String valueAttr = node.getNodeName();
-            String codeAttr = node.getAttributes().getNamedItem("code").getNodeValue();
+            Validate.isTrue(nodeListCode.size() == 1);
+            final Node node = nodeListCode.get(0);
+            final String valueAttr = node.getNodeName();
+            final String codeAttr = node.getAttributes().getNamedItem("code").getNodeValue();
             logger.debug("Value: '{}' - Code: '{}'", valueAttr, codeAttr);
-            if (valueAttr.equals("value") && codeAttr.equals("N")) {
-                substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.N);
-            } else {
-                substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
-            }
+            return (valueAttr.equals("value") && codeAttr.equals("N"))
+                    ? new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.N)
+                    : new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
         }
-        return substitutionMetadata;
+        return new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
     }
 
     private boolean getDispensable(Document xmlDoc) {
