@@ -250,7 +250,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
             /* Perform validation of request message */
             if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, null);
+                OpenNCPValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, classCode);
             }
             /*
              * Execute Operation
@@ -270,10 +270,6 @@ public class DocumentRecipient_ServiceStub extends Stub {
                     case ED_CLASSCODE:
                         endpoint = dynamicDiscoveryService.getEndpointUrl(
                                 this.countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.DISPENSATION_SERVICE, true);
-                        break;
-                    case CONSENT_CLASSCODE:
-                        endpoint = dynamicDiscoveryService.getEndpointUrl(
-                                this.countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.CONSENT_SERVICE, true);
                         break;
                     default:
                         break;
@@ -348,7 +344,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
             /* Perform validation of response message */
             if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, null);
+                OpenNCPValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, classCode);
             }
             /*
              * Return

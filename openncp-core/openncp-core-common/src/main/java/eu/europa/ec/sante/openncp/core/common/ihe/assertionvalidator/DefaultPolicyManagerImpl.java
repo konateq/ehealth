@@ -424,14 +424,6 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
             case EDD_CLASSCODE:
                 XDRPermissionValidatorSubmitDocument(assertion);
                 break;
-            //  HCER is not supported currently in eHDSI project.
-            case HCER_CLASSCODE:
-                XDRPermissionValidatorEncounterReport(assertion);
-                break;
-            // CONSENT is not supported currently in eHDSI project.
-            case CONSENT_CLASSCODE:
-                XDRPermissionValidatorConsent(assertion);
-                break;
             default:
                 logger.error("Invalid document class code: '{}'", classCode);
                 throw new MissingFieldException("Invalid document class code: " + classCode);
