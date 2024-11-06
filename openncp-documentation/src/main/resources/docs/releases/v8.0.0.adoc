@@ -165,6 +165,27 @@ Wave 8 +
 
 WARNING: as we transitioned to spring, the `ConfigurationManagerFactory` is deprecated and most likely won't work.
 
+This approach will no longer work: +
+[source,java]
+----
+var clientConnectorService = new DefaultClientConnectorService(ConfigurationManagerFactory.getConfigurationManager());
+----
+use bean injection instead
+[source,java]
+----
+public class PatientService {
+
+    private final ClientConnectorService clientConnectorService;
+
+    public PatientService(final ClientConnectorService clientConnectorService) {
+        this.clientConnectorService = Validate.notNull(clientConnectorService, "clientConnectorService must not be null");
+    }
+
+    public void someMethod() {
+        clientConnectorService.queryPatient(assertionMap, landCode, patientDemographics);
+    }
+}
+----
 *Datasource clashes*
 
 We marked the DataSource used for the properties database as @Primary.
