@@ -32,6 +32,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExternalI
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExtrinsicObjectType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
 import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
@@ -439,6 +440,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
             }
             RegistryErrorUtils.addErrorMessage(registryErrorList, code, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
             throw e;
+        } finally {
+            handleException(request, response, eventLog, getClassCode(classCodeValues), registryErrorList, shElement);
         }
 
         final String fullPatientId = SoapElementHelper.getDocumentEntryPatientIdFromTRCAssertion(shElement);
@@ -639,15 +642,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {
-                try {
-                    if (!registryErrorList.getRegistryError().isEmpty()) {
-                        response.setRegistryErrorList(registryErrorList);
-                    }
-                    prepareEventLogForQuery(eventLog, request, response, shElement, classCodeValue);
-                } catch (final Exception e) {
-                    logger.error("Prepare Audit log failed: '{}'", e.getMessage(), e);
-                    // Is this fatal?
-                }
+                handleException(request, response, eventLog, classCodeValue, registryErrorList, shElement);
             }
         }
 
@@ -655,6 +650,17 @@ public class XCAServiceImpl implements XCAServiceInterface {
             response.setRegistryErrorList(registryErrorList);
         }
         response.setStatus(responseStatus);
+    }
+
+    private void handleException(AdhocQueryRequest request, AdhocQueryResponse response, EventLog eventLog, ClassCode classCodeValue, RegistryErrorList registryErrorList, Element shElement) {
+        try {
+            if (!registryErrorList.getRegistryError().isEmpty()) {
+                response.setRegistryErrorList(registryErrorList);
+            }
+            prepareEventLogForQuery(eventLog, request, response, shElement, classCodeValue);
+        } catch (final Exception e) {
+            throw new RuntimeException(String.format("Prepare Audit log failed: [%s]", e.getMessage()), e);
+        }
     }
 
     private List<OrCDDocumentMetaData> getOrCDDocumentMetaDataList(final ClassCode classCode, final SearchCriteria searchCriteria)
