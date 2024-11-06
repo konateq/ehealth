@@ -258,9 +258,6 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
             case EP_CLASSCODE:
                 XCAPermissionValidatorEP(assertion);
                 break;
-            case MRO_CLASSCODE:
-                XCAPermissionValidatorMro(assertion);
-                break;
             case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
             case ORCD_LABORATORY_RESULTS_CLASSCODE:
             case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
@@ -385,17 +382,6 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
         }
         logger.error("InsufficientRightsException for Cross-Community Access to ePrescription request");
         throw new InsufficientRightsException();
-    }
-
-    /**
-     * XCA validator for MRO service, currently using the same validator for eP.
-     *
-     * @param assertion - SAML user assertion.
-     * @throws InsufficientRightsException - User doesn't have enough privileges.
-     */
-    private void XCAPermissionValidatorMro(Assertion assertion) throws InsufficientRightsException {
-
-        XCAPermissionValidatorEP(assertion);
     }
 
     /**
