@@ -155,6 +155,92 @@ Wave 7 +
 Wave 8 +
 `eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException`
 
+WARNING: as we transitioned to spring, the `ConfigurationManagerFactory` is deprecated and most likely won't work.
+
+This approach will no longer work: +
+[source,java]
+----
+var clientConnectorService = new DefaultClientConnectorService(ConfigurationManagerFactory.getConfigurationManager());
+----
+use bean injection instead
+[source,java]
+----
+public class PatientService {
+
+    private final ClientConnectorService clientConnectorService;
+
+    public PatientService(final ClientConnectorService clientConnectorService) {
+        this.clientConnectorService = Validate.notNull(clientConnectorService, "clientConnectorService must not be null");
+    }
+
+    public void someMethod() {
+        clientConnectorService.queryPatient(assertionMap, landCode, patientDemographics);
+    }
+}
+----
+*Datasource clashes*
+
+We marked the DataSource used for the properties database as @Primary.
+While this configuration might change in a future version. If you need an additional DataSource without conflict with the default Spring DataSource prefix, you can define one with a custom prefix like this:
+
+[source,]
+----
+your.datasource.url=jdbc:mysql://localhost:3306/mydb
+your.datasource.username=myuser
+your.datasource.password=mypassword
+your.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+----
+
+[source,java]
+----
+@Configuration
+@EnableJpaRepositories(
+    basePackages = "your.repository", // Specify the package where your repositories are located
+    entityManagerFactoryRef = "yourEntityManagerFactory",
+    transactionManagerRef = "yourTransactionManager"
+)
+public class YourDataSourceConfig {
+    @Bean
+    @ConfigurationProperties("your.datasource")
+    public DataSourceProperties yourDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean(name = "yourDataSource")
+    public DataSource yourDataSource(DataSourceProperties yourDataSourceProperties) {
+        return yourDataSourceProperties.initializeDataSourceBuilder().build();
+    }
+
+    @Bean(name = "yourEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean yourEntityManagerFactory(
+            DataSource yourDataSource) {
+        LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
+        factory.setDataSource(yourDataSource);
+        factory.setPackagesToScan("your.model"); // Specify the package where your entities are located
+        factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+        return factory;
+    }
+
+    @Bean(name = "yourTransactionManager")
+    public PlatformTransactionManager yourTransactionManager(
+            EntityManagerFactory yourEntityManagerFactory) {
+        return new JpaTransactionManager(yourEntityManagerFactory);
+    }
+}
+----
+
+[source,java]
+----
+@Service
+public class YourService {
+    private final DataSource yourDataSource;
+
+    public MyService(@Qualifier("yourDataSource") DataSource yourDataSource) {
+        this.yourDataSource = yourDataSource;
+    }
+}
+----
+
 ====== NCP-A (server) national infrastructure integration
 
 *Dependency migration*
