@@ -5,8 +5,10 @@ import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.AnswerNotAvailableException;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
 import eu.europa.ec.sante.openncp.core.server.nc.mock.common.NationalConnectorGateway;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -67,7 +69,7 @@ public class PatientSearchMockImpl extends NationalConnectorGateway implements P
             File rootDir = new File(patientFile + patientId.getRoot());
             //  Patient ID 999999 will throw an Exception from National Connector
             if (StringUtils.equals(patientId.getExtension(), "999999")) {
-                throw new NIException(OpenNCPErrorCode.ERROR_PI_REGISTRY_NOT_AVAILABLE);
+                throw new NIException(OpenNCPErrorCode.ERROR_PI_REGISTRY_NOT_AVAILABLE, "National Registry Not Available");
             }
 
             if (rootDir.exists()) {
