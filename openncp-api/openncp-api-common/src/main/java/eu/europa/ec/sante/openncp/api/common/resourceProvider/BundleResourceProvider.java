@@ -18,8 +18,6 @@ import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,14 +30,10 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-//    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
-//        super(serverContext);
-
-    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
-        super(validationService);
-        //  super(serverContext);
-        this.dispatchingService = Validate.notNull(dispatchingService);
-        this.bundleHandler = Validate.notNull(bundleHandler);
+    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+        super(serverContext, validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
     @Override

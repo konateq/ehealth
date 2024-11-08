@@ -39,14 +39,10 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-
-//    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
-//        super(serverContext);
-
-    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
-        super(validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService);
-        this.bundleHandler = bundleHandler;
+    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+        super(serverContext, validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
     @Override

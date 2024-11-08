@@ -30,12 +30,10 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
-//    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, ServerContext serverContext) {
-//        super(serverContext);
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ValidationService validationService) {
-        super(validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService);
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+        super(serverContext, validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
     }
 
     @Override

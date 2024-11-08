@@ -38,12 +38,10 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-//    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, ServerContext serverContext) {
-//        super(serverContext);
-    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
-        super(validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService);
-        this.bundleHandler = Validate.notNull(bundleHandler);
+    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+        super(serverContext, validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
     @Override

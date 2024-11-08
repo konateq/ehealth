@@ -41,7 +41,7 @@ public class AuditInterceptor implements FhirCustomInterceptor {
     private final List<AuditDispatcher> auditDispatchers;
     private final ServerContext serverContext;
 
-    public AuditInterceptor(final FhirContext fhirContext, final List<AuditEventProducer> auditEventProducers, final FallbackAuditEventProducer fallbackAuditEventProducer, final List<AuditDispatcher> auditDispatchers, ServerContext serverContext) {
+    public AuditInterceptor(final FhirContext fhirContext, final List<AuditEventProducer> auditEventProducers, final FallbackAuditEventProducer fallbackAuditEventProducer, final List<AuditDispatcher> auditDispatchers, final ServerContext serverContext) {
         this.fhirContext = Validate.notNull(fhirContext, "fhirContext cannot be null.");
         this.auditEventProducers = Validate.notNull(auditEventProducers, "auditEventProducers cannot be null.");
         this.fallbackAuditEventProducer = Validate.notNull(fallbackAuditEventProducer, "fallbackAuditEventProducer cannot be null.");
@@ -80,12 +80,12 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                 LOGGER.debug("Audit event dispatching using dispatcher [{}] for audit event [{}]", auditDispatcher.getClass().getSimpleName(), auditEventAsJsonString);
             }
 
-            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, euRequestDetails.getResourceType());
+            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, dispatchContext.getResourceType());
             LOGGER.debug("Audit event dispatched with result [{}]", dispatchResult);
             if (dispatchResult.isSuccess()) {
                 LOGGER.info("Audit event successfully dispatched: [{}]", dispatchResult.getMessage());
             } else {
-                DispatchResult.DispatchError dispatchError = dispatchResult.getError();
+                final DispatchResult.DispatchError dispatchError = dispatchResult.getError();
                 final String errorMessage = String.format("Dispatching the audit event FAILED: [%s]", dispatchError.getErrorMessage());
                 dispatchError.getThrowable().ifPresentOrElse(throwable -> LOGGER.error(errorMessage, throwable), () -> LOGGER.error(errorMessage));
             }
