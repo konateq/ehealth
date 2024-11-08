@@ -38,6 +38,7 @@
         <module>openncp-tools</module>
         <module>openncp-docker</module>
         <module>openncp-documentation</module>
+        <module>openncp-coverage</module>
     </modules>
 
     <scm>
@@ -121,7 +122,6 @@
         <xmlunit.version>1.1</xmlunit.version>
         <guava.version>31.0.1-jre</guava.version>
         <commons-io.version>2.11.0</commons-io.version>
-        <commons-text.version>1.12.0</commons-text.version>
         <hikaricp.version>4.0.3</hikaricp.version>
         <xalan.version>2.7.3</xalan.version>
         <servlet-api.version>3.1.0</servlet-api.version>
@@ -173,6 +173,12 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-text</artifactId>
                 <version>${commons-text.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-lang3</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>
@@ -777,6 +783,10 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco-maven-plugin.version}</version>
+                <configuration>
+                    <destFile>${session.executionRootDirectory}/target/site/jacoco.exec</destFile>
+                    <append>true</append>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>

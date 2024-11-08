@@ -7,6 +7,7 @@ import eu.europa.ec.dynamicdiscovery.model.DocumentIdentifier;
 import eu.europa.ec.dynamicdiscovery.model.ParticipantIdentifier;
 import eu.europa.ec.sante.openncp.common.configuration.StandardProperties;
 import eu.europa.ec.sante.openncp.common.property.PropertyService;
+import eu.europa.ec.sante.openncp.webmanager.backend.WebManagerBackendException;
 import eu.europa.ec.sante.openncp.webmanager.backend.error.ApiException;
 import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.cfg.ReadSMPProperties;
 import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.domain.ReferenceCollection;
@@ -16,6 +17,7 @@ import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.service.DynamicD
 import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.service.SimpleErrorHandler;
 import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.smpeditor.service.DynamicDiscoveryClient;
 import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.util.SslUtil;
+import eu.europa.ec.sante.openncp.webmanager.backend.service.ExceptionType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -130,9 +132,7 @@ public class SMPDeleteFileController {
             assert smpClient != null;
             documentIdentifiers = smpClient.getService().getServiceGroup(participantIdentifier).getDocumentIdentifiers();
         } catch (final TechnicalException ex) {
-            success = false;
-            errorType = TECHNICAL_EXCEPTION;
-            logger.error("Technical Exception - '{}'", SimpleErrorHandler.printExceptionStackTrace(ex));
+            throw new WebManagerBackendException(ExceptionType.SMP_EXCEPTION, ex, ex.getMessage());
         }
 
         URI serviceGroup = null;

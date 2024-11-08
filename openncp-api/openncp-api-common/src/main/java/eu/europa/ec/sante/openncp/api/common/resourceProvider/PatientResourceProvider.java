@@ -15,6 +15,7 @@ import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -37,10 +38,12 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, ServerContext serverContext) {
-        super(serverContext);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
-        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null.");
+//    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, ServerContext serverContext) {
+//        super(serverContext);
+    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
+        super(validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService);
+        this.bundleHandler = Validate.notNull(bundleHandler);
     }
 
     @Override
@@ -82,7 +85,7 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
-
+        validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;
     }
 }

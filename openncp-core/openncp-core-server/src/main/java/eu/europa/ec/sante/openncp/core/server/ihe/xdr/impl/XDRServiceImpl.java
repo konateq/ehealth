@@ -58,10 +58,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class XDRServiceImpl implements XDRServiceInterface {
@@ -365,7 +362,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         } catch (final NIException e) {
             logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
         } catch (final Exception e) {
             logger.error("Generic Exception: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
@@ -557,7 +554,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 //                    }
                 } catch (final NIException e) {
                     logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-                    registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+                    registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
                 } catch (final Exception e) {
                     logger.error("Generic Exception: '{}'", e.getMessage(), e);
                     RegistryErrorUtils.addErrorMessage(

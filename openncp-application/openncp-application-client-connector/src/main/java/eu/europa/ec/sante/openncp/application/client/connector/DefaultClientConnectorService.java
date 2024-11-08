@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
-import eu.europa.ec.sante.openncp.application.client.connector.interceptor.AddSamlAssertionInterceptor;
+import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.*;
@@ -70,7 +70,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         client.getBus().getFeatures().add(loggingFeature());
         client.getBus().getFeatures().add(new WSAddressingFeature());
 
-        client.getOutInterceptors().add(new AddSamlAssertionInterceptor());
+        client.getOutInterceptors().add(new SamlAssertionInterceptor());
         client.getInInterceptors().add(new LoggingInInterceptor());
         client.getOutInterceptors().add(new LoggingOutInterceptor());
         client.getInInterceptors().add(new TransportTokenInInterceptor());

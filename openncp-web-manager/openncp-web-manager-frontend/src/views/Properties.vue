@@ -36,7 +36,7 @@ export default {
       headers: [
         {
           text: 'Name',
-          value: 'name'
+          value: 'key'
         },
         {
           text: 'Value',

@@ -15,6 +15,7 @@ import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IIdType;
@@ -38,10 +39,14 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
-        super(serverContext);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
-        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null.");
+
+//    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
+//        super(serverContext);
+
+    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
+        super(validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService);
+        this.bundleHandler = bundleHandler;
     }
 
     @Override
@@ -55,7 +60,7 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
                                                final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final CompositionLabReportMyHealthEu handledCompositionLabReportEu = dispatchingService.dispatchRead(dispatchContext);
-
+        validate(handledCompositionLabReportEu, theRequestDetails.getRestOperationType());
         return handledCompositionLabReportEu;
     }
 

@@ -13,6 +13,7 @@ import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -28,15 +29,17 @@ import java.util.Set;
 @Component
 public class BundleResourceProvider extends AbstractResourceProvider implements IResourceProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BundleResourceProvider.class);
-
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
-        super(serverContext);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
-        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null.");
+//    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext) {
+//        super(serverContext);
+
+    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
+        super(validationService);
+        //  super(serverContext);
+        this.dispatchingService = Validate.notNull(dispatchingService);
+        this.bundleHandler = Validate.notNull(bundleHandler);
     }
 
     @Override
@@ -48,6 +51,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     public Bundle find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle bundle = dispatchingService.dispatchRead(dispatchContext);
+        validate(bundle, theRequestDetails.getRestOperationType());
         return bundle;
     }
 

@@ -405,6 +405,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
             shElement = XMLUtils.toDOM(soapHeader);
             documentSearchService.setSOAPHeader(shElement);
             sigCountryCode = saml2Validator.validateXCAHeader(shElement, getClassCode(classCodeValues));
+        } catch (InsufficientRightsException ire) {
+            logger.error(ire.getMessage(), ire);
+            RegistryErrorUtils.addErrorMessage(registryErrorList, ire.getErrorCode(), ire.getMessage(), ire, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            return;
         } catch (final SMgrException e) {
             logger.error(e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
@@ -630,7 +634,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         break;
                 }
             } catch (final NIException e) {
-                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription(),
+                final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), codeContext,
                         e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {

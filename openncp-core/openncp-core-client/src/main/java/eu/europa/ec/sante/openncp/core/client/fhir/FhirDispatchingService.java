@@ -16,14 +16,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class FhirDispatchingService implements DispatchingService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FhirDispatchingService.class);
-
-    private final ValidationService validationService;
     private final HapiWebClientFactory hapiWebClientFactory;
 
     public FhirDispatchingService(final HapiWebClientFactory hapiWebClientFactory, final ValidationService validationService) {
         this.hapiWebClientFactory = Validate.notNull(hapiWebClientFactory, "HapiWebClientFactory must not be null");
-        this.validationService = Validate.notNull(validationService, "ValidationService must not be null");
     }
 
     @Override
@@ -33,8 +29,6 @@ public class FhirDispatchingService implements DispatchingService {
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
         final Bundle result = hapiWebClient.dispatchSearch(requestDetails);
-        validationService.validate(result, requestDetails.getRestOperationType());
-
         return (T) result;
     }
 
@@ -46,8 +40,6 @@ public class FhirDispatchingService implements DispatchingService {
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
         final Bundle result = hapiWebClient.dispatchRead(requestDetails);
-        validationService.validate(result, requestDetails.getRestOperationType());
-        
         return (T) result;
     }
 

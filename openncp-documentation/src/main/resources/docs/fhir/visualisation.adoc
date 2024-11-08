@@ -1,10 +1,10 @@
-=== Visualisation
+==== Visualisation
 
 For the visualisation of the FHIR bundle, the starting point is the JSON file representing the bundle.
 
 Similarly to the CDA Display Tool reference implementation, that is part of OpenNCP, a FHIR Display reference implementation will be included in the future in OpenNCP.
 A service will be added accepting the FHIR resource in JSON format and returning the HTML version displaying the different included resources.
 
-==== Hapi FHIR Display
+===== Hapi FHIR Display
 
 For the display of the resource, HAPI FHIR libraries will be used initially. When needed, more specific libraries can be included in a future release.

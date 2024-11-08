@@ -11,6 +11,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -29,9 +30,12 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, ServerContext serverContext) {
-        super(serverContext);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null.");
+//    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, ServerContext serverContext) {
+//        super(serverContext);
+
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ValidationService validationService) {
+        super(validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService);
     }
 
     @Override
@@ -60,7 +64,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
-
+        validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
     }
 }

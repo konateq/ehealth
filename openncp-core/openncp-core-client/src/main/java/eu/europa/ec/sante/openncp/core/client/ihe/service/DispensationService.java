@@ -95,13 +95,13 @@ public class DispensationService {
         LOGGER.info("[CC] Dispense Service: DISCARD");
         try {
             final Document dispense = XMLUtil.parseContent(document.getBase64Binary());
-            NodeList nodeList = dispense.getElementsByTagName("code");
+            NodeList nodeList = dispense.getElementsByTagNameNS("urn:hl7-org:v3", "code");
             Node search = nodeList.item(0);
             NamedNodeMap namedNodeMap = search.getAttributes();
             Node nodeAttr = namedNodeMap.getNamedItem("code");
             nodeAttr.setTextContent(ClassCode.EDD_CLASSCODE.getCode());
 
-            nodeList = dispense.getElementsByTagName("templateId");
+            nodeList = dispense.getElementsByTagNameNS("urn:hl7-org:v3", "templateId");
             search = nodeList.item(0);
             namedNodeMap = search.getAttributes();
             nodeAttr = namedNodeMap.getNamedItem("root");

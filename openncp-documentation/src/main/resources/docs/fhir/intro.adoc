@@ -1,11 +1,9 @@
+=== Introduction
+
 FHIR (Fast Healthcare Interoperability Resources) is an open standard developed by HL7 International, aimed at improving healthcare data exchange between different systems and stakeholders. This standard defines how healthcare information can be exchanged electronically, promoting interoperability and ensuring that software systems can work together effectively.
 
 This document details the different aspects of the FHIR solution in the current MyHealth@EU NCP implemention and provides the documentation for the provided REST APIs. +
 These pages are documenting the current implemented components.
 It cannot be seen as a final documentation, but as a draft that will be kept in sync with the progress of the technical implementation.
 Feel free to add suggestions, feedback and/or comments.
-
-include::fhirig.adoc[]
-
-include::objective.adoc[]
 

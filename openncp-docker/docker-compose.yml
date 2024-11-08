@@ -51,6 +51,9 @@ services:
       DRIVER_CLASS_NAME: ${DRIVER_CLASS_NAME}
       DB_PASSWORD: ${DB_ROOT_PASSWORD}
       DB_ACTIVE_PROFILE: ${DB_ACTIVE_PROFILE}
+      TSAM_SYNC_URL: ${TSAM_SYNC_URL}
+      TSAM_SYNC_USERNAME: ${TSAM_SYNC_USERNAME}
+      TSAM_SYNC_PASSWORD: ${TSAM_SYNC_PASSWORD}
     build:
       context: ./
       dockerfile: ./openncp-tsam-sync/Dockerfile
@@ -136,6 +139,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:
+      - 10.0.0.1
       - 8.8.8.8
     depends_on:
       mysql:
@@ -266,6 +270,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     dns:
+      - 10.0.0.1
       - 8.8.8.8
     depends_on:
       mysql:
