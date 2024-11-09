@@ -11,7 +11,8 @@ import Anomalies from '../views/anomalies-viewer/Anomalies'
 import AnomaliesDetails from '../views/anomalies-viewer/AnomaliesDetails'
 import AuditMessages from '../views/atna-viewer/AuditMessages'
 import AuditMessageDetails from '../views/atna-viewer/AuditMessageDetails'
-import Properties from '../views/Properties'
+// import Properties from '../views/Properties'
+import Properties from '../views/PropertiesMgmt'
 import UserList from '../views/user-management/UserList'
 import ErrorMessages from '../views/atna-viewer/ErrorMessages'
 import SmpEditor from '../views/smp-editor/SmpEditor'
@@ -64,8 +65,15 @@ const routes = [
         name: 'Dashboard',
         component: Dashboard
       },
+      /*
       {
         path: 'openncp-properties',
+        name: 'Properties',
+        component: Properties
+      },
+      */
+      {
+        path: 'openncp-properties_mgmt',
         name: 'Properties',
         component: Properties
       },
