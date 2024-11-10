@@ -11,5 +11,5 @@ public interface DispatchingService {
 
     <T extends IBaseResource> T dispatchRead(DispatchContext requestDetails);
 
-    MethodOutcome dispatchWrite(DispatchContext requestDetails, Bundle bundleToCreate);
+    MethodOutcome dispatchWrite(DispatchContext requestDetails, IBaseResource bundleToCreate);
 }

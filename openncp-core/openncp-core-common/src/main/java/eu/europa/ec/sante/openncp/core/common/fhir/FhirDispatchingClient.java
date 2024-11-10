@@ -69,13 +69,13 @@ public class FhirDispatchingClient {
         );
     }
 
-    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, Bundle bundleToCreate) {
+    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, IBaseResource resourceToCreate) {
         return dispatchOperation(
                 dispatchContext,
                 RestOperationTypeEnum.CREATE,
                 (jwtToken, dispatchUri) -> {
                     ICreateTyped createResource = genericClient.create()
-                            .resource(bundleToCreate);
+                            .resource(resourceToCreate);
                     if (jwtToken != null) {
                         createResource = createResource.withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue());
                     }

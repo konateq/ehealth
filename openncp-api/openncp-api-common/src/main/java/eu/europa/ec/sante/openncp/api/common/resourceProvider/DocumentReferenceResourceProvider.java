@@ -1,8 +1,11 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
+import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
@@ -64,5 +67,12 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
+    }
+
+    @Create
+    public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        return dispatchingService.dispatchWrite(dispatchContext, documentReference);
+
     }
 }

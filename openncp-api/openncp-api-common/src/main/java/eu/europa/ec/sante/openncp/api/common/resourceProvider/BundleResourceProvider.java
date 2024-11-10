@@ -50,7 +50,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     }
 
     @Create
-    public MethodOutcome createPatient(@ResourceParam final Bundle bundleToCreate, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+    public MethodOutcome createBundle(@ResourceParam final Bundle bundleToCreate, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         return dispatchingService.dispatchWrite(dispatchContext, bundleToCreate);
 
