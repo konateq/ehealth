@@ -439,6 +439,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         } catch (InsufficientRightsException ire) {
             logger.error(ire.getMessage(), ire);
             RegistryErrorUtils.addErrorMessage(registryErrorList, ire.getErrorCode(), ire.getMessage(), ire, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            response.setRegistryErrorList(registryErrorList);
             return;
         } catch (final OpenNCPErrorCodeException e) {
             logger.error(e.getMessage(), e);
