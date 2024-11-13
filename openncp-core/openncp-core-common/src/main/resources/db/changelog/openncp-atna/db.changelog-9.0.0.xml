@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <property name="blob_type" value="longblob" dbms="mysql"/>
+    <property name="blob_type" value="blob" dbms="oracle"/>
+    <property name="blob_type" value="bytea" dbms="postgresql"/>
+
+    <changeSet id="1" author="admin">
+        <sqlFile path="classpath:db/changelog/openncp-atna/02-atna.sql" />
+    </changeSet>
+
+    <changeSet id="${version}-create-tables" author="subigre">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <or>
+                    <tableExists tableName="codes"/>
+                    <tableExists tableName="detail_types"/>
+                    <tableExists tableName="errors"/>
+                    <tableExists tableName="objects"/>
+                    <tableExists tableName="participants"/>
+                    <tableExists tableName="message_objects"/>
+                    <tableExists tableName="network_access_points"/>
+                    <tableExists tableName="message_participants"/>
+                    <tableExists tableName="sources"/>
+                    <tableExists tableName="message_sources"/>
+                    <tableExists tableName="messages"/>
+                    <tableExists tableName="object_descriptions"/>
+                    <tableExists tableName="object_details"/>
+                    <tableExists tableName="provisional_messages"/>
+                    <tableExists tableName="sop_classes"/>
+                    <tableExists tableName="descriptions_sop_classes"/>
+                    <tableExists tableName="sources_codes"/>
+                    <tableExists tableName="event_types_codes"/>
+                    <tableExists tableName="messages_mobjects"/>
+                    <tableExists tableName="messages_mparticipants"/>
+                    <tableExists tableName="messages_msources"/>
+                    <tableExists tableName="mobjects_details"/>
+                    <tableExists tableName="objects_descriptions"/>
+                    <tableExists tableName="objects_detail_types"/>
+                    <tableExists tableName="participants_codes"/>
+                </or>
+            </not>
+        </preConditions>
+        <createTable tableName="codes">
+            <column name="codetype" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="code" type="varchar(255)"/>
+            <column name="codeSystem" type="varchar(255)"/>
+            <column name="codeSystemName" type="varchar(255)"/>
+            <column name="displayName" type="varchar(255)"/>
+            <column name="originalText" type="varchar(255)"/>
+            <column name="type" type="int"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="detail_types">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="type" type="int"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="errors">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="errorMessage" type="varchar(255)"/>
+            <column name="errorTimestamp" type="datetime"/>
+            <column name="payload" type="blob"/>
+            <column name="sourceIp" type="varchar(255)"/>
+            <column name="stackTrace" type="blob"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="objects">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="objectId" type="varchar(4000)"/>
+            <column name="objectName" type="varchar(255)"/>
+            <column name="objectSensitivity" type="varchar(255)"/>
+            <column name="objectTypeCode" type="int"/>
+            <column name="objectTypeCodeRole" type="int"/>
+            <column name="version" type="int"/>
+            <column name="objectIdTypeCode_id" type="bigint">
+                <constraints references="codes(id)" foreignKeyName="FKfyfue7oxuywpf6vhi2k88s3ag"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="participants">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="alternativeUserId" type="varchar(255)"/>
+            <column name="userId" type="varchar(255)"/>
+            <column name="userName" type="varchar(255)"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="message_objects">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="objectDataLifeCycle" type="int"/>
+            <column name="objectQuery" type="blob"/>
+            <column name="object_id" type="bigint">
+                <constraints references="objects(id)" foreignKeyName="FK2sbpity0lukij70rch7wotusq"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="network_access_points">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="identifier" type="varchar(255)"/>
+            <column name="type" type="int"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="message_participants">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="userIsRequestor" type="boolean"/>
+            <column name="networkAccessPoint_id" type="bigint">
+                <constraints references="network_access_points(id)" foreignKeyName="FKku36awkwewy8t2ju6hmmw2pyv"/>
+            </column>
+            <column name="participant_id" type="bigint">
+                <constraints references="participants(id)" foreignKeyName="FKk4um5vd0o6w4cyisrbuv3giux"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="sources">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="enterpriseSiteId" type="varchar(255)"/>
+            <column name="sourceId" type="varchar(255)"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="message_sources">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="source_id" type="bigint">
+                <constraints references="sources(id)" foreignKeyName="FKgvurh01o22nssxssh47uriypw"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="messages">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="eventActionCode" type="varchar(255)"/>
+            <column name="eventDateTime" type="datetime"/>
+            <column name="eventOutcome" type="int"/>
+            <column name="messageContent" type="blob"/>
+            <column name="sourceAddress" type="varchar(255)"/>
+            <column name="eventId_id" type="bigint">
+                <constraints references="codes(id)" foreignKeyName="FK25e2tvsr216gcrnnm8g8mjjs9"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="object_descriptions">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="accessionNumbers" type="varchar(255)"/>
+            <column name="mppsUids" type="varchar(255)"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="object_details">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="type" type="varchar(255)"/>
+            <column name="value" type="blob"/>
+        </createTable>
+
+        <createTable tableName="provisional_messages">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="content" type="blob"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="sop_classes">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="instanceUids" type="varchar(255)"/>
+            <column name="numberOfInstances" type="int"/>
+            <column name="sopId" type="varchar(255)"/>
+            <column name="version" type="int"/>
+        </createTable>
+
+        <createTable tableName="descriptions_sop_classes">
+            <column name="ObjectDescriptionEntity_id" type="bigint">
+                <constraints nullable="false" references="object_descriptions(id)" foreignKeyName="FKmfl2jl6ye3x1wm1x9rlg86th4"/>
+            </column>
+            <column name="sopClasses_id" type="bigint">
+                <constraints nullable="false" references="sop_classes(id)" foreignKeyName="FKo48ywchf7r2vp0h1brdfrqgt5" unique="true"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="descriptions_sop_classes" columnNames="ObjectDescriptionEntity_id,sopClasses_id"/>
+
+        <createTable tableName="sources_codes">
+            <column name="SourceEntity_id" type="bigint">
+                <constraints nullable="false" references="sources(id)" foreignKeyName="FKtgrtl1q9ask9p3lffxk2ml7ov"/>
+            </column>
+            <column name="sourceTypeCodes_id" type="bigint">
+                <constraints nullable="false" unique="true" references="codes(id)" foreignKeyName="FK4trv14tkssknvmk981xphfe9b"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="sources_codes" columnNames="SourceEntity_id,sourceTypeCodes_id"/>
+
+        <createTable tableName="event_types_codes">
+            <column name="MessageEntity_id" type="bigint">
+                <constraints references="messages(id)" foreignKeyName="FK5d391ir4nl5dunu63ou8axwat"/>
+            </column>
+            <column name="eventTypeCodes_id" type="bigint">
+                <constraints references="codes(id)" foreignKeyName="FK7wq9wpkhlyar32s651qp37xxg"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="event_types_codes" columnNames="MessageEntity_id,eventTypeCodes_id"/>
+
+        <createTable tableName="messages_mobjects">
+            <column name="MessageEntity_id" type="bigint">
+                <constraints references="messages(id)" foreignKeyName="FKoki02bkry1spcafvuiatye5cl"/>
+            </column>
+            <column name="messageObjects_id" type="bigint">
+                <constraints nullable="false" unique="true" references="message_objects(id)" foreignKeyName="FKeoa85h3a4u8pal49uab5e0o0x"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="messages_mobjects" columnNames="MessageEntity_id,messageObjects_id"/>
+
+        <createTable tableName="messages_mparticipants">
+            <column name="MessageEntity_id" type="bigint">
+                <constraints references="messages(id)" foreignKeyName="FKfjf7riikc0yxuyy035vjqnuhv"/>
+            </column>
+            <column name="messageParticipants_id" type="bigint">
+                <constraints nullable="false" unique="true" references="message_participants(id)" foreignKeyName="FKc65s1re3oidqjtnojw2y7wpne"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="messages_mparticipants" columnNames="MessageEntity_id,messageParticipants_id"/>
+
+        <createTable tableName="messages_msources">
+            <column name="MessageEntity_id" type="bigint">
+                <constraints references="messages(id)" foreignKeyName="FKcanembxio6ajydtck27pj3128"/>
+            </column>
+            <column name="messageSources_id" type="bigint">
+                <constraints nullable="false" unique="true" references="message_sources(id)" foreignKeyName="FK7mtkxfbrj15cnxsdj071ant4i"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="messages_msources" columnNames="MessageEntity_id,messageSources_id"/>
+
+        <createTable tableName="mobjects_details">
+            <column name="MessageObjectEntity_id" type="bigint">
+                <constraints references="message_objects(id)" foreignKeyName="FKpjao4hpqmnwks4ie9ilsxfhax"/>
+            </column>
+            <column name="details_id" type="bigint">
+                <constraints nullable="false" unique="true" references="object_details(id)" foreignKeyName="FKns6dutobj42hykd0cwqidwcmh"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="mobjects_details" columnNames="MessageObjectEntity_id,details_id"/>
+
+        <createTable tableName="objects_descriptions">
+            <column name="ObjectEntity_id" type="bigint">
+                <constraints nullable="false" references="objects(id)" foreignKeyName="FKt42hs1642o6x9h2j5mmtmu21e"/>
+            </column>
+            <column name="objectDescriptions_id" type="bigint">
+                <constraints nullable="false" unique="true" references="object_descriptions(id)" foreignKeyName="FKgdt0p1nbmpl92wctwcx1l081y"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="objects_descriptions" columnNames="ObjectEntity_id,objectDescriptions_id"/>
+
+        <createTable tableName="objects_detail_types">
+            <column name="ObjectEntity_id" type="bigint">
+                <constraints nullable="false" references="objects(id)" foreignKeyName="FK4qbbl5uhnjqalam9hqtsckpgg"/>
+            </column>
+            <column name="objectDetailTypes_id" type="bigint">
+                <constraints nullable="false" unique="true" references="detail_types(id)" foreignKeyName="FKgimc70hjnuj9qkf3p0s0q3qmo"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="objects_detail_types" columnNames="ObjectEntity_id,objectDetailTypes_id"/>
+
+        <createTable tableName="participants_codes">
+            <column name="ParticipantEntity_id" type="bigint">
+                <constraints nullable="false" references="participants(id)" foreignKeyName="FKth6nbhfn1lbkvtr5m942q305v"/>
+            </column>
+            <column name="participantTypeCodes_id" type="bigint">
+                <constraints nullable="false" unique="true" references="codes(id)"
+                             foreignKeyName="FK6mo8s3p730mpu65trdu4akehf"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="participants_codes" columnNames="ParticipantEntity_id,participantTypeCodes_id"/>
+    </changeSet>
+
+    <changeSet id="2" author="subigje">
+        <modifyDataType columnName="payload" newDataType="${blob_type}" tableName="errors"/>
+        <modifyDataType columnName="stackTrace" newDataType="${blob_type}" tableName="errors"/>
+        <modifyDataType columnName="messageContent" newDataType="${blob_type}" tableName="messages"/>
+        <modifyDataType columnName="objectQuery" newDataType="${blob_type}" tableName="message_objects"/>
+        <modifyDataType columnName="value" newDataType="${blob_type}" tableName="object_details"/>
+        <modifyDataType columnName="content" newDataType="${blob_type}" tableName="provisional_messages"/>
+    </changeSet>
+
+    <changeSet id="3" author="subigje">
+        <modifyDataType columnName="userId" newDataType="varchar(1000)" tableName="participants"/>
+    </changeSet>
+
+    <changeSet id="4" author="karouja">
+        <addColumn tableName="messages" >
+            <column name="messageType" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="5" author="ghysmat">
+        <dropUniqueConstraint
+                constraintName="participantTypeCodes_id"
+                tableName="participants_codes"
+                uniqueColumns="participantTypeCodes_id"/>
+    </changeSet>
+
+</databaseChangeLog>

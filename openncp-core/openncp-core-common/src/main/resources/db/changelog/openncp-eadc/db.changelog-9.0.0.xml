@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <changeSet id="1" author="admin">
+        <sqlFile path="classpath:db/changelog/openncp-eadc/04-eadc.sql" />
+    </changeSet>
+
+    <changeSet id="${version}-create-tables" author="subigre">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <or>
+                    <tableExists tableName="eTransaction"/>
+                    <tableExists tableName="eTransactionData"/>
+                </or>
+            </not>
+        </preConditions>
+        <createTable tableName="eTransaction">
+            <column name="Transaction_PK" type="varchar(64)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="Direction" type="varchar(500)"/>
+            <column name="HomeISO" type="varchar(500)"/>
+            <column name="HomeHCID" type="varchar(500)"/>
+            <column name="HomeHost" type="varchar(500)"/>
+            <column name="HomeAddress" type="varchar(500)"/>
+            <column name="SndISO" type="varchar(500)"/>
+            <column name="SndNCP_OID" type="varchar(500)"/>
+            <column name="SndHCID" type="varchar(500)"/>
+            <column name="SndAddress" type="varchar(500)"/>
+            <column name="SndHost" type="varchar(500)"/>
+            <column name="SndMsgID" type="varchar(500)"/>
+            <column name="ReceivingISO" type="varchar(500)"/>
+            <column name="ReceivingNCP_OID" type="varchar(500)"/>
+            <column name="ReceivingHost" type="varchar(500)"/>
+            <column name="ReceivingAddr" type="varchar(500)"/>
+            <column name="ReceivingMsgID" type="varchar(500)"/>
+            <column name="TransactionCounter" type="varchar(500)"/>
+            <column name="HumanRequestor" type="varchar(500)"/>
+            <column name="UserId" type="varchar(500)"/>
+            <column name="POC" type="varchar(500)"/>
+            <column name="POC_ID" type="varchar(500)"/>
+            <column name="AuthenticationLevel" type="varchar(500)"/>
+            <column name="RequestAction" type="varchar(500)"/>
+            <column name="ResponseAction" type="varchar(500)"/>
+            <column name="ServiceType" type="varchar(500)"/>
+            <column name="ServiceName" type="varchar(500)"/>
+            <column name="StartTime" type="varchar(500)"/>
+            <column name="EndTime" type="varchar(500)"/>
+            <column name="Duration" type="varchar(500)"/>
+        </createTable>
+
+        <createTable tableName="eTransactionData">
+            <column name="TransactionData_PK" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="Transaction_FK" type="varchar(64)">
+                <constraints nullable="false" references="eTransaction(Transaction_PK)" foreignKeyName="Transaction_FK__TransactionDataPK"/>
+            </column>
+            <column name="DataType" type="varchar(500)"/>
+            <column name="DataTypeName" type="varchar(500)"/>
+            <column name="DataValue" type="varchar(500)"/>
+            <column name="ValueDisplay" type="varchar(500)"/>
+            <column name="Void0" type="varchar(500)"/>
+            <column name="Void1" type="varchar(500)"/>
+            <column name="Void2" type="varchar(500)"/>
+            <column name="Void3" type="varchar(500)"/>
+            <column name="Void4" type="varchar(500)"/>
+            <column name="Void5" type="varchar(500)"/>
+            <column name="Void6" type="varchar(500)"/>
+            <column name="Void7" type="varchar(500)"/>
+            <column name="Void8" type="varchar(500)"/>
+            <column name="Void9" type="varchar(500)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="jdethise">
+        <addColumn tableName="eTransaction">
+            <column name="HomeNCP_OID" type="varchar(500)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="3" author="miorial">
+        <createTable tableName="eTransactionError">
+            <column name="TransactionError_PK" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="Transaction_FK" type="varchar(64)">
+                <constraints nullable="false" references="eTransaction(Transaction_PK)" foreignKeyName="Transaction_FK__TransactionErrorPK"/>
+            </column>
+            <column name="ErrorDescription" type="varchar(2000)"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

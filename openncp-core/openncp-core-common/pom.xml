@@ -237,6 +237,11 @@
             <version>${spring.security.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>4.15.0</version>
+        </dependency>
     </dependencies>
 
     <build>

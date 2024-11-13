@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <changeSet id="1" author="admin">
+        <sqlFile path="classpath:db/changelog/openncp-properties/01-ehealth-properties.sql" />
+    </changeSet>
+
+    <changeSet id="${version}-create-tables" author="subigre">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <or>
+                    <tableExists tableName="EHNCP_PROPERTY"/>
+                    <tableExists tableName="EHNCP_ROLE"/>
+                    <tableExists tableName="EHNCP_USER"/>
+                    <tableExists tableName="EHNCP_USER_ROLE"/>
+                </or>
+            </not>
+        </preConditions>
+        <createTable tableName="EHNCP_PROPERTY">
+            <column name="NAME" type="varchar(255)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="VALUE" type="varchar(255)"/>
+            <column name="IS_SMP" type="boolean"/>
+        </createTable>
+
+        <createTable tableName="EHNCP_ROLE">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="NAME" type="varchar(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="DESCRIPTION" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="EHNCP_USER">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="USERNAME" type="varchar(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="PASSWORD" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ENABLED" type="bit(1)" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL" type="varchar(45)" />
+            <column name="VERIFICATION_CODE" type="varchar(64)" />
+            <column name="RESET_DATE" type="datetime(6)" />
+            <column name="RESET_KEY" type="varchar(255)" />
+        </createTable>
+
+        <createTable tableName="EHNCP_USER_ROLE">
+            <column name="USER_ID" type="bigint">
+                <constraints nullable="false" references="EHNCP_USER(ID)" foreignKeyName="FK_EHNCP_USER_ROLE_USER"/>
+            </column>
+            <column name="ROLE_ID" type="bigint">
+                <constraints nullable="false" references="EHNCP_ROLE(ID)" foreignKeyName="FK_EHNCP_USER_ROLE_ROLE"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="EHNCP_USER_ROLE" columnNames="USER_ID,ROLE_ID"/>
+    </changeSet>
+
+    <changeSet id="2" author="miorial">
+        <createTable tableName="EHNCP_ANOMALY">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="DESCRIPTION" type="varchar(2000)" />
+            <column name="TYPE" type="varchar(20)"/>
+            <column name="EVENT_DATE" type="datetime"/>
+            <column name="EVENT_START_DATE" type="datetime"/>
+            <column name="EVENT_END_DATE" type="datetime"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

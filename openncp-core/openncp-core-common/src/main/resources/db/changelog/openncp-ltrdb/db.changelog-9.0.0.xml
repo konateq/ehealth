@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+
+    <changeSet id="1" author="admin">
+        <sqlFile path="classpath:db/changelog/openncp-ltrdb/03-ltrdb.sql" />
+    </changeSet>
+
+    <changeSet id="${version}-create-tables" author="subigre">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <or>
+                    <tableExists tableName="CODE_SYSTEM"/>
+                    <tableExists tableName="CODE_SYSTEM_VERSION"/>
+                    <tableExists tableName="CODE_SYSTEM_CONCEPT"/>
+                    <tableExists tableName="DESIGNATION"/>
+                    <tableExists tableName="TRANSCODING_ASSOCIATION"/>
+                    <tableExists tableName="VALUE_SET"/>
+                    <tableExists tableName="VALUE_SET_VERSION"/>
+                    <tableExists tableName="X_CONCEPT_VALUE_SET"/>
+                </or>
+            </not>
+        </preConditions>
+        <createTable tableName="CODE_SYSTEM">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="OID" type="varchar(255)"/>
+            <column name="NAME" type="varchar(255)"/>
+            <column name="DESCRIPTION" type="varchar(4000)"/>
+        </createTable>
+
+        <createTable tableName="CODE_SYSTEM_VERSION">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="CODE_SYSTEM_ID" type="bigint">
+                <constraints nullable="false" references="CODE_SYSTEM(ID)" foreignKeyName="FK_CODE_SYSTEM_VERSION_CODE_SYSTEM"/>
+            </column>
+            <column name="FULL_NAME" type="varchar(255)"/>
+            <column name="LOCAL_NAME" type="varchar(255)"/>
+            <column name="PREVIOUS_VERSION_ID" type="bigint"/>
+            <column name="EFFECTIVE_DATE" type="datetime"/>
+            <column name="RELEASE_DATE" type="datetime"/>
+            <column name="STATUS" type="varchar(255)"/>
+            <column name="STATUS_DATE" type="datetime"/>
+            <column name="DESCRIPTION" type="varchar(4000)"/>
+            <column name="COPYRIGHT" type="varchar(255)"/>
+            <column name="SOURCE" type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="CODE_SYSTEM_CONCEPT">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="CODE" type="varchar(255)"/>
+            <column name="CODE_SYSTEM_VERSION_ID" type="bigint">
+                <constraints nullable="false" references="CODE_SYSTEM_VERSION(ID)" foreignKeyName="FK_CODE_SYSTEM_CONCEPT_CODE_SYSTEM_VERSION"/>
+            </column>
+            <column name="STATUS" type="varchar(255)"/>
+            <column name="STATUS_DATE" type="datetime"/>
+            <column name="DEFINITION" type="varchar(4000)"/>
+            <column name="COPYRIGHT" type="varchar(255)"/>
+            <column name="SOURCE" type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="DESIGNATION">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="CODE_SYSTEM_CONCEPT_ID" type="bigint">
+                <constraints nullable="false" references="CODE_SYSTEM_CONCEPT(ID)" foreignKeyName="FK_DESIGNATION_CODE_SYSTEM_CONCEPT"/>
+            </column>
+            <column name="DESIGNATION" type="varchar(4000)"/>
+            <column name="LANGUAGE_CODE" type="varchar(255)"/>
+            <column name="TYPE" type="varchar(255)"/>
+            <column name="IS_PREFERRED" type="boolean"/>
+            <column name="STATUS" type="varchar(255)"/>
+            <column name="STATUS_DATE" type="datetime"/>
+        </createTable>
+
+        <createTable tableName="TRANSCODING_ASSOCIATION">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="TRANSCODING_ASSOCIATION_ID" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TARGET_CONCEPT_ID" type="bigint">
+                <constraints nullable="false" references="CODE_SYSTEM_CONCEPT(ID)" foreignKeyName="FK_TRANSCODING_ASSOCIATION_TARGET_CONCEPT"/>
+            </column>
+            <column name="SOURCE_CONCEPT_ID" type="bigint">
+                <constraints nullable="false" references="CODE_SYSTEM_CONCEPT(ID)" foreignKeyName="FK_TRANSCODING_ASSOCIATION_SOURCE_CONCEPT"/>
+            </column>
+            <column name="QUALITY" type="varchar(255)"/>
+            <column name="STATUS" type="varchar(255)"/>
+            <column name="STATUS_DATE" type="datetime"/>
+        </createTable>
+
+        <createTable tableName="VALUE_SET">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="OID" type="varchar(255)"/>
+            <column name="EPSOS_NAME" type="varchar(255)"/>
+            <column name="DESCRIPTION" type="varchar(4000)"/>
+            <column name="PARENT_CODE_SYSTEM_ID" type="bigint">
+                <constraints references="CODE_SYSTEM(ID)" foreignKeyName="FK_VALUE_SET_PARENT_CODE_SYSTEM"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="VALUE_SET_VERSION">
+            <column name="ID" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="VALUE_SET_ID" type="bigint">
+                <constraints nullable="false" references="VALUE_SET(ID)" foreignKeyName="FK_VALUE_SET_VERSION_VALUE_SET"/>
+            </column>
+            <column name="VERSION_NAME" type="varchar(255)"/>
+            <column name="EFFECTIVE_DATE" type="datetime"/>
+            <column name="RELEASE_DATE" type="datetime"/>
+            <column name="STATUS" type="varchar(255)"/>
+            <column name="STATUS_DATE" type="datetime"/>
+            <column name="DESCRIPTION" type="varchar(4000)"/>
+            <column name="PREVIOUS_VERSION_ID" type="bigint"/>
+        </createTable>
+
+        <createTable tableName="X_CONCEPT_VALUE_SET">
+            <column name="CODE_SYSTEM_CONCEPT_ID" type="bigint">
+                <constraints nullable="false" references="CODE_SYSTEM_CONCEPT(ID)" foreignKeyName="FK_X_CONCEPT_VALUE_SET_CODE_SYSTEM_CONCEPT"/>
+            </column>
+            <column name="VALUE_SET_VERSION_ID" type="bigint">
+                <constraints nullable="false" references="VALUE_SET_VERSION(ID)" foreignKeyName="FK_X_CONCEPT_VALUE_SET_VALUE_SET_VERSION"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="X_CONCEPT_VALUE_SET" columnNames="CODE_SYSTEM_CONCEPT_ID,VALUE_SET_VERSION_ID"/>
+    </changeSet>
+</databaseChangeLog>
