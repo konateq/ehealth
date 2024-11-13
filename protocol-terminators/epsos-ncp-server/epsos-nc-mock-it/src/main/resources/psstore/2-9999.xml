@@ -12,7 +12,7 @@
     <ns1:recordTarget>
         <ns1:templateId root="2.16.840.1.113883.3.1937.777.11.10.100" />
         <ns1:patientRole classCode="PAT">
-            <ns1:id assigningAuthorityName="MBO" extension="2-9999" root="2.16.17.710.850.1000.990.1.1000" />
+            <ns1:id assigningAuthorityName="MBO" extension="2-9999" root="1.3.6.1.4.1.48336" />
             <ns1:addr nullFlavor="NI" />
             <ns1:telecom nullFlavor="NI" />
             <ns1:patient>

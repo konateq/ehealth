@@ -95,8 +95,6 @@ public class PatientSearchMockImpl extends NationalConnectorGateway implements P
             properties.load(inputStream);
 
             PatientDemographics patient = new PatientDemographics();
-            String newRoot = id.getRoot();
-            id.setRoot(newRoot + ".1000");
             patient.setIdList(Collections.singletonList(id));
             patient.setAdministrativeGender(Gender.parseGender(properties.getProperty(GENDER)));
             int year = Integer.parseInt(properties.getProperty(BIRTH_DATE_YEAR));
