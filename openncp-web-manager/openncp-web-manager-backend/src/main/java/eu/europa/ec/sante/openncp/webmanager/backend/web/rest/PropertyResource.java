@@ -24,7 +24,7 @@ public class PropertyResource {
     }
 
     @PutMapping(path = "/properties/{key}")
-    public ResponseEntity<Property> updateAssociation(@PathVariable final String key, @RequestParam("value") String value) {
+    public ResponseEntity<Property> updateProperty(@PathVariable final String key, @RequestParam("value") String value) {
         Optional<Property> p = propertyService.findByKey(key);
         if(p.isPresent()) {
             final Property property = Property.of(p.get().getKey(), value);
