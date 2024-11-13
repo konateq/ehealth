@@ -51,9 +51,9 @@ public class FhirMockDispatchingService implements DispatchingService {
     }
 
     @Override
-    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, final Bundle bundleToCreate) {
+    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, final IBaseResource resourceToCreate) {
         Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
         final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/baseserver/fhir");
-        return hapiWebClient.dispatchWrite(dispatchContext, bundleToCreate);
+        return hapiWebClient.dispatchWrite(dispatchContext, resourceToCreate);
     }
 }

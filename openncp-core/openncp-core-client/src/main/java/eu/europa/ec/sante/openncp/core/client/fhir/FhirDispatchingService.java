@@ -44,10 +44,10 @@ public class FhirDispatchingService implements DispatchingService {
     }
 
     @Override
-    public MethodOutcome dispatchWrite(final DispatchContext requestDetails, final Bundle bundleToCreate) {
+    public MethodOutcome dispatchWrite(final DispatchContext requestDetails, final IBaseResource resourceToCreate) {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
-        return hapiWebClient.dispatchWrite(requestDetails, bundleToCreate);
+        return hapiWebClient.dispatchWrite(requestDetails, resourceToCreate);
     }
 }
