@@ -591,9 +591,10 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
     public List<DocumentAssociation<EPDocumentMetaData>> getEPDocumentList(SearchCriteria searchCriteria) throws NIException {
 
         logger.info("[National Infrastructure Mock] Get ePrescription Document List: '{}'", searchCriteria.toString());
+
         Assertion assertion = NationalConnectorUtil.getTRCAssertionFromSOAPHeader(getSOAPHeader());
         NationalConnectorUtil.logAssertionAsXml(assertion);
-        if (StringUtils.equals(searchCriteria.getCriteriaValue(Criteria.PATIENT_ID), "1-9999^^^&2.16.17.710.850.1000.990.1.1000&ISO")) {
+        if (StringUtils.equals(searchCriteria.getCriteriaValue(Criteria.PATIENT_ID), "1-9999^^^&1.3.6.1.4.1.48336&ISO")) {
             NoMatchException noMatchException = new NoMatchException("[National Infrastructure Mock] No eP List Found");
             noMatchException.setOpenncpErrorCode(OpenNCPErrorCode.ERROR_EP_NOT_FOUND);
             throw noMatchException;
@@ -690,7 +691,7 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
 
         logger.info("[National Infrastructure Mock] Retrieve Document: '{}', '{}', '{}'", searchCriteria.getCriteriaValue(Criteria.DOCUMENT_ID),
                 searchCriteria.getCriteriaValue(Criteria.PATIENT_ID), searchCriteria.getCriteriaValue(Criteria.REPOSITORY_ID));
-        if (StringUtils.equals("2-9999^^^&2.16.17.710.850.1000.990.1.1000&ISO", searchCriteria.getCriteriaValue(Criteria.PATIENT_ID))) {
+        if (StringUtils.equals("2-9999^^^&1.3.6.1.4.1.48336&ISO", searchCriteria.getCriteriaValue(Criteria.PATIENT_ID))) {
             throw new NIException(OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING, "[National Infrastructure Mock] Error Retrieving Document for Patient: " +
                     searchCriteria.getCriteriaValue(Criteria.PATIENT_ID));
         }
