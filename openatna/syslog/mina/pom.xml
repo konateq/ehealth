@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.europa.ec.sante.ehdsi.openncp-openatna</groupId>
         <artifactId>syslog</artifactId>
-        <version>7.1.3-SNAPSHOT</version>
+        <version>7.1.3</version>
     </parent>
 
     <artifactId>syslog-mina</artifactId>

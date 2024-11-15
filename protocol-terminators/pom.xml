@@ -6,7 +6,7 @@
     <parent>
         <artifactId>openncp</artifactId>
         <groupId>eu.europa.ec.sante.ehdsi</groupId>
-        <version>7.1.3-SNAPSHOT</version>
+        <version>7.1.3</version>
     </parent>
 
     <artifactId>openncp-protocol-terminators</artifactId>
