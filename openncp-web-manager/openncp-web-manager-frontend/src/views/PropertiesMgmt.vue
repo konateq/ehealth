@@ -7,7 +7,6 @@
         <v-divider inset></v-divider>
         <template v-slot:top>
           <!-- add new record toolbar + button -->
-
           <v-toolbar flat>
             <div class="d-flex w-100">
               <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" dense outlined single-line hide-details></v-text-field>
@@ -32,7 +31,14 @@
             true-value="true"
             input-value=editedItem.value
             v-model="editedItem.value" :hide-details="true" dense single-line :autofocus="true" v-else-if="item.id === editedItem.id && item.is_boolean === true"></v-checkbox>
-          <span v-else>{{item.value}}</span>
+          <span v-else style="width: 0">
+            <span v-if="item.is_boolean === true" style="width: 0">
+              <span v-if="item.value === 'true'" style="background-color: green">&nbsp;&nbsp;&nbsp;</span>
+              <span v-else style="background-color: red">&nbsp;&nbsp;&nbsp;</span>
+              <span>&nbsp;</span>
+            </span>
+            {{item.value}}
+          </span>
         </template>
         <template v-slot:[`item.actions`]="{ item }">
           <div v-if="item.id === editedItem.id">
