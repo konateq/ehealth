@@ -13,9 +13,12 @@ import org.w3c.dom.NodeList;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+
+import static eu.europa.ec.sante.openncp.common.configuration.util.Constants.EPSOS_PROPS_PATH;
 
 @Component
 public class CodedElementList implements TMConstants {
@@ -100,7 +103,8 @@ public class CodedElementList implements TMConstants {
             final Document doc;
             // If the default coded element configuration is overridden, trying to load the national configuration file.
             if (isCodedElementListOverride()) {
-                doc = XmlUtil.getDocument(new File(getCodedElementListPath()), true);
+                var path = Paths.get(System.getenv("EPSOS_PROPS_PATH"), getCodedElementListPath());
+                doc = XmlUtil.getDocument(path.toFile(), true);
             } else {
                 // Otherwise the default eHDSI Coded Element List is used.
                 final InputStream inputStream = CodedElementList.class.getClassLoader().getResourceAsStream(XML_CODED_ELEMENT_LIST);
