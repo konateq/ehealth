@@ -1,5 +1,12 @@
 name: "openncp"
 services:
+  init:
+    image: tomcat:9-jdk11-temurin
+    container_name: init-container
+    volumes:
+      - ./init.sh:/usr/local/bin/init.sh:ro
+    entrypoint: [ "/bin/bash", "/usr/local/bin/init.sh" ]
+    restart: "no"
   mysql:
     container_name: openncp_db
     hostname: ${DB_HOST}

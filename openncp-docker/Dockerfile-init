@@ -1,0 +1,10 @@
+FROM tomcat:9-jdk11-temurin
+
+# Copy the init script into the image
+COPY init.sh /usr/local/bin/init.sh
+
+# Make the script executable
+RUN chmod +x /usr/local/bin/init.sh
+
+# Set the entrypoint to run the init script
+ENTRYPOINT ["/usr/local/bin/init.sh"]
