@@ -22,7 +22,7 @@ public class EuCorsInterceptor extends CorsInterceptor {
 
         config.addExposedHeader("Location");
         config.addExposedHeader("Content-Location");
-        config.setAllowedMethods(Arrays.asList("GET", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "OPTIONS", "POST"));
 
         return config;
     }
