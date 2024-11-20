@@ -54,9 +54,21 @@
             </v-list-item-content>
           </v-list-item>
         </v-list-group>
-        <v-list-item
+        <!--v-list-item
           link
           to="/openncp-properties"
+          v-if="checkRoles('GTW_NCP_ADMIN')"
+        >
+          <v-list-item-action>
+            <v-icon>mdi-cog</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>OpenNCP Properties</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item-->
+        <v-list-item
+          link
+          to="/openncp-properties_mgmt"
           v-if="checkRoles('GTW_NCP_ADMIN')"
         >
           <v-list-item-action>
