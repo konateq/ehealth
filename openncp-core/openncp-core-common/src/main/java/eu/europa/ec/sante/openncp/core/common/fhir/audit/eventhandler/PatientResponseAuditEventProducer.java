@@ -1,10 +1,8 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
-import eu.europa.ec.sante.openncp.common.IpInformation;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
-import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -12,8 +10,6 @@ import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -69,26 +65,7 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 .build();
     }
 
-    private List<AuditEventData.ParticipantData> createParticipants() {
-        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
-        final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
-                .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlAsRoot()))
-                .requestor(false)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getRequestIp))
-                .build();
-
-        final AuditEventData.ParticipantData serviceProvider = ImmutableParticipantData.builder()
-                .id((String) usernamePasswordAuthenticationToken.getCredentials())
-                .roleCode("provider role unknown")
-                .requestor(true)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getHostIp))
-                .build();
-
-        return List.of(serviceConsumer, serviceProvider);
-    }
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {
         final List<AuditEventData.ParticipantData> participants = createParticipants();
