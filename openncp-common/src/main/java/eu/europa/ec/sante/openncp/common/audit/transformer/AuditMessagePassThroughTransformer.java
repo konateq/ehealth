@@ -12,7 +12,6 @@ public class AuditMessagePassThroughTransformer implements AuditMessageTransform
 
     @Override
     public boolean accepts(Object message) {
-        Validate.notNull(message);
         return message instanceof AuditMessage;
     }
 
