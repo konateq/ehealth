@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.OrCDDocumentMetaData;
@@ -51,7 +51,7 @@ public class PatientServiceTest {
         documentResponse.setMimeType("42");
         documentResponse.setRepositoryUniqueId("42");
         when(xcaInitGateway.crossGatewayRetrieve(Mockito.<XDSDocument>any(), Mockito.<String>any(), Mockito.<String>any(),
-                Mockito.<String>any(), Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any()))
+                Mockito.<String>any(), Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any()))
                 .thenReturn(documentResponse);
 
         GenericDocumentCode classCode = new GenericDocumentCode();
@@ -106,7 +106,7 @@ public class PatientServiceTest {
     public void testRetrieve2() throws XCAException {
         // Arrange
         when(xcaInitGateway.crossGatewayRetrieve(Mockito.<XDSDocument>any(), Mockito.<String>any(), Mockito.<String>any(),
-                Mockito.<String>any(), Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any()))
+                Mockito.<String>any(), Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any()))
                 .thenThrow(new XCAException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred", "Context"));
 
         GenericDocumentCode classCode = new GenericDocumentCode();

@@ -7,9 +7,9 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.constants.ihe.xcpd.XCPDConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
@@ -183,7 +183,7 @@ public class RespondingGateway_ServiceStub extends Stub {
      * @param assertionMap
      * @return
      */
-    public PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PRPAIN201305UV02 prpain201305UV02, final Map<AssertionEnum, Assertion> assertionMap, final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
+    public PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PRPAIN201305UV02 prpain201305UV02, final Map<AssertionType, Assertion> assertionMap, final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
 
         MessageContext _messageContext = null;
         MessageContext _returnMessageContext = null;
@@ -197,7 +197,7 @@ public class RespondingGateway_ServiceStub extends Stub {
         Date transactionEndTime = new Date();
 
         LOGGER.info("respondingGateway_PRPA_IN201305UV02('{}', '{}'", prpain201305UV02.getId().getRoot(),
-                assertionMap.get(AssertionEnum.CLINICIAN).getID());
+                assertionMap.get(AssertionType.HCP).getID());
 
         try {
             // TMP
@@ -232,11 +232,11 @@ public class RespondingGateway_ServiceStub extends Stub {
             final var headerSecurity = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("Security", omNamespace);
 
             try {
-                if (assertionMap.containsKey(AssertionEnum.NEXT_OF_KIN)) {
-                    final var assertionNextOfKin = assertionMap.get(AssertionEnum.NEXT_OF_KIN);
+                if (assertionMap.containsKey(AssertionType.NOK)) {
+                    final var assertionNextOfKin = assertionMap.get(AssertionType.NOK);
                     headerSecurity.addChild(XMLUtils.toOM(assertionNextOfKin.getDOM()));
                 }
-                final var assertionId = assertionMap.get(AssertionEnum.CLINICIAN);
+                final var assertionId = assertionMap.get(AssertionType.HCP);
                 headerSecurity.addChild(XMLUtils.toOM(assertionId.getDOM()));
 
                 _serviceClient.addHeader(headerSecurity);
@@ -410,7 +410,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             // eventLog
             final EventLog eventLog = createAndSendEventLog(prpain201305UV02, (PRPAIN201306UV02) object, messageContext,
-                    _returnEnv, env, assertionMap.get(AssertionEnum.CLINICIAN), this._getServiceClient().getOptions().getTo().getAddress(), dstHomeCommunityId);
+                    _returnEnv, env, assertionMap.get(AssertionType.HCP), this._getServiceClient().getOptions().getTo().getAddress(), dstHomeCommunityId);
 
             try {
                 LOGGER.info("SOAP MESSAGE IS: '{}'", XMLUtils.toDOM(_returnEnv));

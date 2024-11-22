@@ -3,6 +3,8 @@ package eu.europa.ec.sante.openncp.application.client.connector;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionServiceImpl;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
+import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
+import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.testutils.AssertionTestUtil;
 import eu.europa.ec.sante.openncp.application.client.connector.testutils.AssertionTestUtil.Concept;
 import eu.europa.ec.sante.openncp.common.ClassCode;
@@ -10,6 +12,7 @@ import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.DatabasePropertiesKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.*;
@@ -31,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SetEnvironmentVariable(key = "EPSOS_PROPS_PATH", value = "")
@@ -40,8 +44,10 @@ class DefaultClientConnectorServiceIntegrationTest {
     private static DefaultClientConnectorService clientConnectorService;
 
     private static ConfigurationManager mockedConfigurationManager;
+    private static JwtTokenGenerator jwtTokenGenerator;
     private static AssertionService assertionService;
     private static KeyStoreManager keyStoreManager;
+    private static RestApiClientService restApiClientService;
 
     @BeforeAll
     static void setup() throws Exception {
@@ -68,9 +74,11 @@ class DefaultClientConnectorServiceIntegrationTest {
 
         setFinalStatic(ConfigurationManagerFactory.class.getDeclaredField("configurationManager"), mockedConfigurationManager);
 
-        clientConnectorService = new DefaultClientConnectorService(mockedConfigurationManager);
+        jwtTokenGenerator = new JwtTokenGenerator(mockedConfigurationManager);
+        clientConnectorService = new DefaultClientConnectorService(mockedConfigurationManager, restApiClientService, jwtTokenGenerator);
         keyStoreManager = new DatabasePropertiesKeyStoreManager(mockedConfigurationManager);
         assertionService = new AssertionServiceImpl(keyStoreManager, mockedConfigurationManager);
+
 
     }
 
@@ -84,16 +92,16 @@ class DefaultClientConnectorServiceIntegrationTest {
 
     @Test
     void sayHello() {
-        final Map<AssertionEnum, Assertion> assertions = new HashMap<>();
-        assertions.put(AssertionEnum.CLINICIAN, createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        assertions.put(AssertionType.HCP, createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
         final String response = clientConnectorService.sayHello(assertions, "Kim");
         assertThat(response).isEqualTo("Hello Kim");
     }
 
     @Test
     void queryPatient() throws ClientConnectorException {
-        final Map<AssertionEnum, Assertion> assertions = new HashMap<>();
-        assertions.put(AssertionEnum.CLINICIAN, createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        assertions.put(AssertionType.HCP, createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
 
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
@@ -109,7 +117,7 @@ class DefaultClientConnectorServiceIntegrationTest {
 
     @Test
     void queryDocuments() throws ClientConnectorException, STSClientException, MarshallingException, MalformedURLException {
-        final Map<AssertionEnum, Assertion> assertions = new HashMap<>();
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
 
         final ObjectFactory objectFactory = new ObjectFactory();
@@ -117,9 +125,9 @@ class DefaultClientConnectorServiceIntegrationTest {
         patientId.setRoot("1.3.6.1.4.1.48336");
         patientId.setExtension("2-1234-W8");
 
-        assertions.put(AssertionEnum.CLINICIAN, clinicalAssertion);
+        assertions.put(AssertionType.HCP, clinicalAssertion);
         final Assertion treatmentConfirmationAssertion = AssertionTestUtil.createPatientConfirmationPlain(assertionService, new URL(mockedConfigurationManager.getProperty("secman.sts.url")), clinicalAssertion, patientId, "TREATMENT");
-        assertions.put(AssertionEnum.TREATMENT, treatmentConfirmationAssertion);
+        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
 
         final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
         classCode.setNodeRepresentation(ClassCode.PS_CLASSCODE.getCode());
@@ -132,7 +140,7 @@ class DefaultClientConnectorServiceIntegrationTest {
 
     @Test
     void retrieveDocument() throws ClientConnectorException, STSClientException, MarshallingException, MalformedURLException {
-        final Map<AssertionEnum, Assertion> assertions = new HashMap<>();
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
 
         final ObjectFactory objectFactory = new ObjectFactory();
@@ -144,9 +152,9 @@ class DefaultClientConnectorServiceIntegrationTest {
         documentId.setDocumentUniqueId("1.2.752.129.2.1.2.1^PS_W8_EU.1");
         documentId.setRepositoryUniqueId("1.3.6.1.4.1.48336");
 
-        assertions.put(AssertionEnum.CLINICIAN, clinicalAssertion);
+        assertions.put(AssertionType.HCP, clinicalAssertion);
         final Assertion treatmentConfirmationAssertion = AssertionTestUtil.createPatientConfirmationPlain(assertionService, new URL(mockedConfigurationManager.getProperty("secman.sts.url")), clinicalAssertion, patientId, "TREATMENT");
-        assertions.put(AssertionEnum.TREATMENT, treatmentConfirmationAssertion);
+        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
 
         final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
         classCode.setNodeRepresentation(ClassCode.PS_CLASSCODE.getCode());

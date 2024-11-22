@@ -4,6 +4,7 @@ import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.interceptor.InterceptorAdapter;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
@@ -61,7 +62,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
         String token = StringUtils.remove(authorization, "Bearer ");
         DecodedJWT jwt = tokenProvider.verifyToken(token);
 
-        String saml = jwt.getClaim("saml").asString();
+        String saml = jwt.getClaim(AssertionType.HCP.name()).asString();
 
 
         Base64.Decoder decoder = Base64.getDecoder();

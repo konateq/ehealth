@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerException;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201305UV02;
@@ -34,7 +34,7 @@ public final class RespondingGateway_RequestSender {
      * Builds and sends a PRPA_IN201305UV02 HL7 message, representing an XCPD Request process.
      */
     public static PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PatientDemographics patientDemographics,
-                                                                       final Map<AssertionEnum, Assertion> assertionMap, final String countryCode)
+                                                                       final Map<AssertionType, Assertion> assertionMap, final String countryCode)
             throws NoPatientIdDiscoveredException {
 
         final var dynamicDiscoveryService = new DynamicDiscoveryService();
@@ -55,7 +55,7 @@ public final class RespondingGateway_RequestSender {
         return sendRequest(endpointUrl, hl7Request, assertionMap, countryCode, dstHomeCommunityId);
     }
 
-    private static PRPAIN201306UV02 sendRequest(final String endpointUrl, final PRPAIN201305UV02 pRPAIN201305UV022, final Map<AssertionEnum, Assertion> assertionMap,
+    private static PRPAIN201306UV02 sendRequest(final String endpointUrl, final PRPAIN201305UV02 pRPAIN201305UV022, final Map<AssertionType, Assertion> assertionMap,
                                                 final String countryCode,
                                                 final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
 

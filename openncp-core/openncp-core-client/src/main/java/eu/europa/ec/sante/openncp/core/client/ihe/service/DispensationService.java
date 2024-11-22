@@ -1,8 +1,8 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.service;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.client.api.EpsosDocument;
 import eu.europa.ec.sante.openncp.core.client.api.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrDocumentSource;
@@ -69,7 +69,7 @@ public class DispensationService {
      * @throws ParseException
      */
     public XdrResponse initialize(final EpsosDocument document, final PatientDemographics patient, final String countryCode,
-                                         final Map<AssertionEnum, Assertion> assertionMap) throws XDRException, ParseException {
+                                         final Map<AssertionType, Assertion> assertionMap) throws XDRException, ParseException {
 
         LOGGER.info("[CC] Dispense Service: Initialize");
         final XdrRequest request = XdrRequestDts.newInstance(document, patient);
@@ -90,7 +90,7 @@ public class DispensationService {
      * <dd>eDispensations are not rolled back automatically by the country of affiliation </dl>
      */
     public XdrResponse discard(final EpsosDocument document, final PatientDemographics patient, final String countryCode,
-                                      final Map<AssertionEnum, Assertion> assertionMap) throws XDRException, ParseException {
+                                      final Map<AssertionType, Assertion> assertionMap) throws XDRException, ParseException {
 
         LOGGER.info("[CC] Dispense Service: DISCARD");
         try {

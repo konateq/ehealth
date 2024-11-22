@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.server.fhir.transcoding.resources;
 
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.DiagnosticReportLabMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.DiagnosticReportLabMyHealthEu;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.ITMTSAMError;
 import eu.europa.ec.sante.openncp.core.common.tsam.service.TerminologyService;
 import org.hl7.fhir.r4.model.ResourceType;
