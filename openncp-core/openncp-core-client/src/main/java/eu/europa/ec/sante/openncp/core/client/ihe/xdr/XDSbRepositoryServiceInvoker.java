@@ -79,10 +79,6 @@ public class XDSbRepositoryServiceInvoker {
             case EDD_CLASSCODE:
                 endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.DISPENSATION_SERVICE);
                 break;
-            case CONSENT_CLASSCODE:
-            case HCER_CLASSCODE:
-                endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.CONSENT_SERVICE);
-                break;
             default:
                 logger.warn("Document Class Code: '{}' not supported!!! Endpoint cannot be loaded", docClassCode);
                 break;
@@ -348,22 +344,10 @@ public class XDSbRepositoryServiceInvoker {
                 break;
         }
 
-        if (docClassCode.equals(ClassCode.CONSENT_CLASSCODE)) {
-            result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_SCHEME, uuid,
-                    getConsentOptCode(request.getCda()), XDRConstants.EXTRINSIC_OBJECT.EVENT_CODING_SCHEME,
-                    getConsentOptName(request.getCda())));
-        }
-
         //  External Identifiers
         //  XDSDocumentEntry.PatientId
         result.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_SCHEME,
                 uuid, patientId.toString(), XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_STR));
-
-        //  XDSDocument.EntryUUID
-        if (docClassCode.equals(ClassCode.CONSENT_CLASSCODE)) {
-            // Missing XDSDocument.EntryUUID for Consent
-            logger.warn("Patient Consent not supported!!!");
-        }
 
         /* XDSDocument.UniqueId */
         result.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME,
@@ -387,12 +371,6 @@ public class XDSbRepositoryServiceInvoker {
 
         // eHDSI Type Code
         switch (docClassCode) {
-            case CONSENT_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
-                        uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.Consent.NODE_REPRESENTATION,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Consent.CODING_SCHEME,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Consent.DISPLAY_NAME));
-                break;
             case ED_CLASSCODE:
                 result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
                         uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensation.NODE_REPRESENTATION,
@@ -404,12 +382,6 @@ public class XDSbRepositoryServiceInvoker {
                         uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.NODE_REPRESENTATION,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.CODING_SCHEME,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.DISPLAY_NAME));
-                break;
-            case HCER_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
-                        uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.Hcer.NODE_REPRESENTATION,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Hcer.CODING_SCHEME,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Hcer.DISPLAY_NAME));
                 break;
             default:
                 logger.warn("Document Class Code: '{}' not supported!!! TypeCodeScheme cannot be loaded.", docClassCode);
@@ -630,10 +602,6 @@ public class XDSbRepositoryServiceInvoker {
     private String getNameFromClassCode(final ClassCode classCode) {
 
         switch (classCode) {
-            case HCER_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.NAME_HCER;
-            case CONSENT_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.NAME_CONSENT;
             case ED_CLASSCODE:
                 return XDRConstants.REGISTRY_PACKAGE.NAME_ED;
             case EDD_CLASSCODE:
@@ -651,10 +619,6 @@ public class XDSbRepositoryServiceInvoker {
     private String getDescriptionFromClassCode(final ClassCode classCode) {
 
         switch (classCode) {
-            case HCER_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.DESCRIPTION_HCER;
-            case CONSENT_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.DESCRIPTION_CONSENT;
             case ED_CLASSCODE:
                 return XDRConstants.REGISTRY_PACKAGE.DESCRIPTION_ED;
             case EDD_CLASSCODE:
@@ -672,10 +636,6 @@ public class XDSbRepositoryServiceInvoker {
     private String getSubmissionSetFromClassCode(final ClassCode classCode) {
 
         switch (classCode) {
-            case HCER_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.NAME_HCER;
-            case CONSENT_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_CONS_STR;
             case ED_CLASSCODE:
                 return XDRConstants.REGISTRY_PACKAGE.NAME_ED;
             case EDD_CLASSCODE:

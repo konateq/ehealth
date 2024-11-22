@@ -27,8 +27,9 @@ public enum XCPDErrorCode implements ErrorCode {
     EHICDataRequested("EHICDataRequested", "The service provider only allows for patient identification by national health card or EHIC. Queries based on demographics only are not supported.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1"),
     PrivacyViolation("PrivacyViolation", "The service provider does not accept he query because responding MAY lead to a disclosure of private patient data.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1"),
     InsufficientRights("InsufficientRights", "The requestor has insufficient rights to query for patient’s identity data.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1"),
+    NationalInfrastructure("NationalInfrastructure", "National infrastructure error occured while querying for patient’s identity data.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1"),
     PatientAuthenticationRequired("PatientAuthenticationRequired", "A respective identifier (e.g. GSS TAN)was not provided.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1"),
-    PolicyViolation("PolicyViolation", "The service consumer defined a confidence level that conflicts with thesecurity policy of the service provider.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1");
+    PolicyViolation("PolicyViolation", "The service consumer defined a confidence level that conflicts with the security policy of the service provider.", "1.3.6.1.4.1.12559.11.10.1.3.2.2.1");
 
     private final String code;
     private final String description;

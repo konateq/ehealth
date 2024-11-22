@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.openncp.core.server.ihe.xdr;
 
 
+import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.audit.AuditService;
 import eu.europa.ec.sante.openncp.common.audit.AuditServiceFactory;
@@ -30,9 +31,12 @@ import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
 import org.apache.axis2.util.JavaUtils;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import javax.xml.bind.*;
 import javax.xml.namespace.QName;
@@ -50,6 +54,9 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XDR_ServiceMessageReceiverInOut.class);
     private static final JAXBContext wsContext;
+
+    private static final String NAMESPACE_URI_RIM_3_0 = "urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0";
+    private static final String CLASSIFICATION_SCHEME_UUID_CLASS_CODE = "urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a";
 
     static {
 
@@ -89,8 +96,8 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
      * Axis2 method invoking web service and business logic related to XDR IHE Profile.
      *
      * @param msgContext     - SOAP MessageContext request.
-     * @param newMsgContext- SOAP MessageContext response.
-     * @throws AxisFault - Exception returned during the process.
+     * @param newMsgContext  - SOAP MessageContext response.
+     * @throws AxisFault     - Exception returned during the process.
      */
     public void invokeBusinessLogic(final MessageContext msgContext, final MessageContext newMsgContext) throws AxisFault {
 
@@ -145,9 +152,11 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                 if (StringUtils.equals("documentRecipient_ProvideAndRegisterDocumentSetB", methodName)) {
 
                     /* Validate incoming request */
-                    final String requestMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
+                    final Element incomingMessage = XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement());
+                    final String requestMessage = XMLUtil.prettyPrint(incomingMessage);
+                    final ClassCode classCode = retrieveClassCodeFromIncomingMessage(incomingMessage);
                     if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateXDRMessage(requestMessage, NcpSide.NCP_A, null);
+                        OpenNCPValidation.validateXDRMessage(requestMessage, NcpSide.NCP_A, classCode);
                     }
                     final ProvideAndRegisterDocumentSetRequestType wrappedParam = (ProvideAndRegisterDocumentSetRequestType) fromOM(
                             msgContext.getEnvelope().getBody().getFirstElement(),
@@ -173,7 +182,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                     /* Validate outgoing response */
                     final String responseMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
                     if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateXDRMessage(responseMessage, NcpSide.NCP_A, null);
+                        OpenNCPValidation.validateXDRMessage(responseMessage, NcpSide.NCP_A, classCode);
                     }
                     if (loggerClinical.isDebugEnabled() && !StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())) {
                         loggerClinical.debug("Response Header:\n{}", envelope.getHeader());
@@ -217,6 +226,22 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
             }
         }
 
+    }
+
+    private ClassCode retrieveClassCodeFromIncomingMessage(Element incomingMessage) {
+        Validate.notNull(incomingMessage, "incomingMessage cannot be null");
+        NodeList classificationNodes = incomingMessage.getElementsByTagNameNS(NAMESPACE_URI_RIM_3_0, "Classification");
+
+        for (int i = 0; i < classificationNodes.getLength(); i++) {
+            Element element = (Element) classificationNodes.item(i);
+
+            // Check if this node's classification scheme matches the target UUID
+            if (CLASSIFICATION_SCHEME_UUID_CLASS_CODE.equals(element.getAttribute("classificationScheme"))) {
+                String nodeRepresentation = element.getAttribute("nodeRepresentation");
+                return ClassCode.getByCode(nodeRepresentation);
+            }
+        }
+        return null; // No matching class code found
     }
 
     private OMElement toOM(final RegistryResponseType param) throws AxisFault {

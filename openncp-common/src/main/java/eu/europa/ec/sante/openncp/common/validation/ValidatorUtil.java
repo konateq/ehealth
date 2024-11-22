@@ -205,10 +205,10 @@ public class ValidatorUtil {
      * This method will look into an XDR message and obtain the proper model to validate it at Gazelle
      *
      * @param message    the XDR message to be validated
-     * @param classCodes
+     * @param classCode
      * @return the proper model to be used in the validation
      */
-    public static XdsModel obtainModelXdr(final String message, final List<String> classCodes) {
+    public static XdsModel obtainModelXdr(final String message, final ClassCode classCode) {
 
         final String PROVIDE_AND_REGISTER_REQUEST = "ProvideAndRegisterDocumentSetRequest";
         final String PROVIDE_AND_REGISTER_RESPONSE = "RegistryResponse";
@@ -216,26 +216,29 @@ public class ValidatorUtil {
         final XdsModel result = new XdsModel();
 
         if (message.contains(PROVIDE_AND_REGISTER_REQUEST)) {
-
-            if (message.contains(ClassCode.CONSENT_CLASSCODE.getCode())) {
-                result.setValidatorName(EHDSI_XDS_CS_PUT_REQUEST);
-            } else if (message.contains(ClassCode.EDD_CLASSCODE.getCode())) {
-                result.setValidatorName(EHDSI_XDS_ED_DISCARD_REQUEST);
-            } else if (message.contains(ClassCode.ED_CLASSCODE.getCode())) {
-                result.setValidatorName(EHDSI_XDS_ED_INIT_REQUEST);
-            } else {
-                result.setValidatorName(EHDSI_XDS_PROVIDE_DATA_REQUEST);
+            switch (classCode) {
+                case EDD_CLASSCODE:
+                    result.setValidatorName(EHDSI_XDS_ED_DISCARD_REQUEST);
+                    break;
+                case ED_CLASSCODE:
+                    result.setValidatorName(EHDSI_XDS_ED_INIT_REQUEST);
+                    break;
+                default:
+                    result.setValidatorName(EHDSI_XDS_PROVIDE_DATA_REQUEST);
             }
             result.setObjectType(ObjectType.XDR_SUBMIT_REQUEST.toString());
 
         } else if (message.contains(PROVIDE_AND_REGISTER_RESPONSE)) {
-
-            //  if (message.contains(ClassCode.EDD_CLASSCODE)) {
-            //      result.setValidatorName(EHDSI_XDS_ED_DISCARD_RESPONSE);
-            //  } else if (message.contains(ClassCode.ED_CLASSCODE)) {
-            //      result.setValidatorName(EHDSI_XDS_ED_INIT_RESPONSE);
-            //  }
-            result.setValidatorName(EHDSI_XDS_ED_INIT_RESPONSE);
+            switch (classCode) {
+                case EDD_CLASSCODE:
+                    result.setValidatorName(EHDSI_XDS_ED_DISCARD_RESPONSE);
+                    break;
+                case ED_CLASSCODE:
+                    result.setValidatorName(EHDSI_XDS_ED_INIT_RESPONSE);
+                    break;
+                default:
+                    result.setValidatorName(EHDSI_XDS_PROVIDE_DATA_RESPONSE);
+            }
             result.setObjectType(ObjectType.XDR_SUBMIT_RESPONSE.toString());
         }
         return result;

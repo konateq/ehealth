@@ -74,7 +74,7 @@ public class DisplayTest {
 
     @Test
     public void runFile() throws UITransformationException, IOException {
-        fileTest("/Users/mathiasghys/Downloads/2024-04-05T09-38-14.391012Z_CDA_EHDSI---PIVOT-CDA-(L3)-VALIDATION---WAVE-7-(V7.1.0)_NOT-TESTED.xml", TRANSFORMATION.WithOutputAndDefinedPath);
+        fileTest("/Users/mathiasghys/Downloads/2-1234-W8.xml", TRANSFORMATION.WithOutputAndDefinedPath);
     }
 
     @Test
