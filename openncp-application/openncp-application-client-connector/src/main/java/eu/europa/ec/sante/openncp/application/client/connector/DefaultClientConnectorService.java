@@ -2,7 +2,6 @@ package eu.europa.ec.sante.openncp.application.client.connector;
 
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
-import eu.europa.ec.sante.openncp.application.client.connector.interceptor.AddSamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
@@ -17,7 +16,6 @@ import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.ws.addressing.WSAddressingFeature;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.hl7.fhir.r4.model.Bundle;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
