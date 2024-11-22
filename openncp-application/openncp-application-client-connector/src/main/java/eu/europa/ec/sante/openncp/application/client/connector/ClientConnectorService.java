@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
 import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.PatientMyHealthEu;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.DocumentReference;
@@ -22,7 +23,7 @@ public interface ClientConnectorService {
      * @param filterParams - Extra parameters for search filtering.
      * @return List of clinical documents and metadata searched by the clinician.
      */
-    List<EpsosDocument> queryDocuments(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final PatientId patientId,
+    List<EpsosDocument> queryDocuments(final Map<AssertionType, Assertion> assertions, final String countryCode, final PatientId patientId,
                                        final List<GenericDocumentCode> classCodes, final FilterParams filterParams) throws ClientConnectorException;
 
     /**
@@ -33,7 +34,7 @@ public interface ClientConnectorService {
      * @param patientDemographics - Identifiers of the requested patient
      * @return List of patients found (only 1 patient is expected in MyHealth@EU)
      */
-    List<PatientDemographics> queryPatient(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final PatientDemographics patientDemographics)
+    List<PatientDemographics> queryPatient(final Map<AssertionType, Assertion> assertions, final String countryCode, final PatientDemographics patientDemographics)
             throws ClientConnectorException;
 
     /**
@@ -47,7 +48,7 @@ public interface ClientConnectorService {
      * @param targetLanguage  - Expected target language of the CDA translation.
      * @return Clinical Document and metadata returned by the Country of Origin.
      */
-    EpsosDocument retrieveDocument(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final DocumentId documentId,
+    EpsosDocument retrieveDocument(final Map<AssertionType, Assertion> assertions, final String countryCode, final DocumentId documentId,
                                           final String homeCommunityId, final GenericDocumentCode classCode, final String targetLanguage)
             throws ClientConnectorException;
 
@@ -60,7 +61,7 @@ public interface ClientConnectorService {
      * @param patientDemographics - Demographics of the patient linked to the document submission.
      * @return Acknowledge and status of the document submission.
      */
-    SubmitDocumentResponse submitDocument(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final EpsosDocument document,
+    SubmitDocumentResponse submitDocument(final Map<AssertionType, Assertion> assertions, final String countryCode, final EpsosDocument document,
                           final PatientDemographics patientDemographics) throws ClientConnectorException;
 
     /**
@@ -70,7 +71,7 @@ public interface ClientConnectorService {
      * @param name       - Token sent for testing.
      * @return Hello message concatenated with the token passed as parameter.
      */
-    String sayHello(final Map<AssertionEnum, Assertion> assertions, final String name);
+    String sayHello(final Map<AssertionType, Assertion> assertions, final String name);
 
     /**
      * @param assertions     - Map of assertions required by the transaction (HCP, NoK optional).
@@ -79,7 +80,7 @@ public interface ClientConnectorService {
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */
-    ResponseEntity<String> queryPatientFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
+    ResponseEntity<String> queryPatientFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
             throws ClientConnectorException;
 
     /**
@@ -89,7 +90,7 @@ public interface ClientConnectorService {
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */
-    ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
+    ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
             throws ClientConnectorException;
 
     /**
@@ -99,7 +100,7 @@ public interface ClientConnectorService {
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */
-    ResponseEntity<String> queryBundleFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
+    ResponseEntity<String> queryBundleFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams)
             throws ClientConnectorException;
 
     /**
@@ -109,5 +110,5 @@ public interface ClientConnectorService {
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */
-    public ResponseEntity<String> queryBundleFhirById(Map<AssertionEnum, Assertion> assertions, String countryCode, String id) throws ClientConnectorException;
+    public ResponseEntity<String> queryBundleFhirById(Map<AssertionType, Assertion> assertions, String countryCode, String id) throws ClientConnectorException;
 }

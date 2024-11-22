@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.Jwt
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
 import org.apache.commons.lang3.Validate;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -51,6 +52,8 @@ public class DefaultClientConnectorService implements ClientConnectorService {
 
     private final RestApiClientService restApiClientService;
 
+    private final JwtTokenGenerator jwtTokenGenerator;
+
     private static final String DCCS_SC_KEYSTORE_PASSWORD = "SC_KEYSTORE_PASSWORD";
 
     private final ObjectFactory objectFactory = new ObjectFactory();
@@ -64,10 +67,13 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         return loggingFeature;
     }
 
-    public DefaultClientConnectorService(final ConfigurationManager configurationManager, final RestApiClientService restApiClientService) {
+    public DefaultClientConnectorService(final ConfigurationManager configurationManager,
+                                         final RestApiClientService restApiClientService,
+                                         final JwtTokenGenerator jwtTokenGenerator) {
         this.configurationManager = Validate.notNull(configurationManager);
         this.endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
         this.restApiClientService = Validate.notNull(restApiClientService);
+        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator);
 
         final ClientService ss = new ClientService();
         clientConnectorService = new ClientConnectorServicePortTypeWrapper(ss.getClientServicePort());
@@ -140,7 +146,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         } catch (final KeyStoreException e) {
             throw new ClientConnectorException("Error creating the truststore instance", e);
         }
-        InputStream trustStoreStream = null;
+        InputStream trustStoreStream;
         try {
             trustStoreStream = new FileInputStream(configurationManager.getProperty("SC_KEYSTORE_PATH"));
         } catch (final FileNotFoundException e) {
@@ -185,7 +191,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @return List of clinical documents and metadata searched by the clinician.
      */
     @Override
-    public List<EpsosDocument> queryDocuments(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final PatientId patientId,
+    public List<EpsosDocument> queryDocuments(final Map<AssertionType, Assertion> assertions, final String countryCode, final PatientId patientId,
                                               final List<GenericDocumentCode> classCodes, final FilterParams filterParams)
             throws ClientConnectorException {
 
@@ -212,7 +218,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param patientDemographics - Identifiers of the requested patient
      * @return List of patients found (only 1 patient is expected in MyHealth@EU)
      */
-    public List<PatientDemographics> queryPatient(final Map<AssertionEnum, Assertion> assertions, final String countryCode,
+    public List<PatientDemographics> queryPatient(final Map<AssertionType, Assertion> assertions, final String countryCode,
                                                   final PatientDemographics patientDemographics) throws ClientConnectorException {
 
         logger.info("[National Connector] queryPatient(countryCode:'{}')", countryCode);
@@ -233,7 +239,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param name       - Token sent for testing.
      * @return Hello message concatenated with the token passed as parameter.
      */
-    public String sayHello(final Map<AssertionEnum, Assertion> assertions, final String name) throws ClientConnectorException {
+    public String sayHello(final Map<AssertionType, Assertion> assertions, final String name) throws ClientConnectorException {
 
         logger.info("[National Connector] sayHello(name:'{}')", name);
 
@@ -248,8 +254,8 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryPatientFhir(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
-        final String jwtToken = JwtTokenGenerator.generate(assertions);
+    public ResponseEntity<String> queryPatientFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+        final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, searchParams, "Patient");
     }
 
@@ -261,8 +267,8 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryDocumentReferenceFhir(Map<AssertionEnum, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
-        final String jwtToken = JwtTokenGenerator.generate(assertions);
+    public ResponseEntity<String> queryDocumentReferenceFhir(Map<AssertionType, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+        final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
     }
 
@@ -274,8 +280,8 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryBundleFhir(Map<AssertionEnum, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
-        final String jwtToken = JwtTokenGenerator.generate(assertions);
+    public ResponseEntity<String> queryBundleFhir(Map<AssertionType, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+        final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, searchParams, "Bundle");
     }
 
@@ -287,9 +293,9 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryBundleFhirById(Map<AssertionEnum, Assertion> assertions, String countryCode, String id) throws ClientConnectorException {
-        final String jwtToken = JwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, new HashMap<String, String>(), "Bundle/" +id);
+    public ResponseEntity<String> queryBundleFhirById(Map<AssertionType, Assertion> assertions, String countryCode, String id) throws ClientConnectorException {
+        final String jwtToken = jwtTokenGenerator.generate(assertions);
+        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" +id);
     }
 
 
@@ -304,7 +310,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param targetLanguage  - Expected target language of the CDA translation.
      * @return Clinical Document and metadata returned by the Country of Origin.
      */
-    public EpsosDocument retrieveDocument(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final DocumentId documentId,
+    public EpsosDocument retrieveDocument(final Map<AssertionType, Assertion> assertions, final String countryCode, final DocumentId documentId,
                                           final String homeCommunityId, final GenericDocumentCode classCode, final String targetLanguage)
             throws ClientConnectorException {
 
@@ -331,7 +337,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param patientDemographics - Demographics of the patient linked to the document submission.
      * @return Acknowledge and status of the document submission.
      */
-    public SubmitDocumentResponse submitDocument(final Map<AssertionEnum, Assertion> assertions, final String countryCode, final EpsosDocument document,
+    public SubmitDocumentResponse submitDocument(final Map<AssertionType, Assertion> assertions, final String countryCode, final EpsosDocument document,
                                                  final PatientDemographics patientDemographics) throws ClientConnectorException {
 
         logger.info("[National Connector] submitDocument(countryCode:'{}')", countryCode);

@@ -7,8 +7,8 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryRequestCreator;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryResponseConverter;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
@@ -68,7 +68,7 @@ public class XcaInitGateway {
     public QueryResponse crossGatewayQuery(final PatientId pid, final String countryCode,
                                                   final List<GenericDocumentCode> documentCodes,
                                                   final FilterParams filterParams,
-                                                  final Map<AssertionEnum, Assertion> assertionMap,
+                                                  final Map<AssertionType, Assertion> assertionMap,
                                                   final String service) throws XCAException {
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
@@ -80,7 +80,7 @@ public class XcaInitGateway {
             builder.replace(builder.length() - 1, builder.length(), "]");
             final String classCodes = builder.toString();
             LOGGER_CLINICAL.info("QueryResponse crossGatewayQuery('{}','{}','{}','{}','{}','{}')", pid.getExtension(), countryCode,
-                    classCodes, assertionMap.get(AssertionEnum.CLINICIAN).getID(), assertionMap.get(AssertionEnum.TREATMENT).getID(), service);
+                    classCodes, assertionMap.get(AssertionType.HCP).getID(), assertionMap.get(AssertionType.TRC).getID(), service);
             if (filterParams != null) {
                 LOGGER_CLINICAL.info("FilterParams created Before: " + filterParams.getCreatedBefore());
                 LOGGER_CLINICAL.info("FilterParams created After: " + filterParams.getCreatedAfter());
@@ -123,12 +123,12 @@ public class XcaInitGateway {
 
     public RetrieveDocumentSetResponseType.DocumentResponse crossGatewayRetrieve(final XDSDocument document, final String homeCommunityId,
                                                                                  final String countryCode, final String targetLanguage,
-                                                                                 final Map<AssertionEnum, Assertion> assertionMap,
+                                                                                 final Map<AssertionType, Assertion> assertionMap,
                                                                                  final String service) throws XCAException {
 
         LOGGER.info("QueryResponse crossGatewayQuery('{}','{}','{}','{}','{}', '{}')", homeCommunityId, countryCode,
-                targetLanguage, assertionMap.get(AssertionEnum.CLINICIAN).getID(),
-                assertionMap.get(AssertionEnum.TREATMENT).getID(), service);
+                targetLanguage, assertionMap.get(AssertionType.HCP).getID(),
+                assertionMap.get(AssertionType.TRC).getID(), service);
         RetrieveDocumentSetResponseType.DocumentResponse result = null;
         final RetrieveDocumentSetResponseType queryResponse;
         ClassCode classCode = null;

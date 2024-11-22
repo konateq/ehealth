@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
 import org.opensaml.saml.saml2.core.Assertion;
 
@@ -16,7 +16,7 @@ public class ClientConnectorServicePortTypeWrapper {
         this.clientConnectorServicePortType = clientServicePortType;
     }
 
-    public void setAssertions(final Map<AssertionEnum, Assertion> assertions) {
+    public void setAssertions(final Map<AssertionType, Assertion> assertions) {
         getRequestContext().put(REQUESTCONTEXT_ASSERTIONS_KEY, assertions);
     }
 

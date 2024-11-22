@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.fhir;
 
+import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -13,6 +14,13 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.util.Map;
 
 @Service
@@ -29,9 +37,10 @@ public class RestApiClientService {
     public RestApiClientService(RestTemplateBuilder restTemplateBuilder, ConfigurationManager configurationManager, KeyStoreManager keyStoreManager) {
         this.configurationManager = configurationManager;
         this.keyStoreManager = keyStoreManager;
-//        final SSLContext sslContext = getSSLContext();
+        final SSLContext sslContext = getSSLContext();
 
         final CloseableHttpClient client = HttpClients.custom()
+                .setSSLContext(sslContext)
                 .build();
 
         this.restTemplate = restTemplateBuilder
@@ -65,26 +74,26 @@ public class RestApiClientService {
         return headers;
     }
 
-//    private SSLContext getSSLContext() {
-//
-//        SSLContext sslContext;
-//        try {
-//            String sigKeystorePassword = configurationManager.getProperty(Constant.NCP_SIG_KEYSTORE_PASSWORD);
-//
-//            sslContext = SSLContext.getInstance("TLSv1.2");
-//
-//            var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-//            keyManagerFactory.init(keyStoreManager.getKeyStore(), sigKeystorePassword.toCharArray());
-//
-//            var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
-//            trustManagerFactory.init(keyStoreManager.getTrustStore());
-//
-//            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
-//            return sslContext;
-//
-//        } catch (KeyManagementException | UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
-//            LOGGER.error("Exception: '{}'", e.getMessage(), e);
-//            return null;
-//        }
-//    }
+    private SSLContext getSSLContext() {
+
+        SSLContext sslContext;
+        try {
+            String sigKeystorePassword = configurationManager.getProperty(Constant.NCP_SIG_KEYSTORE_PASSWORD);
+
+            sslContext = SSLContext.getInstance("TLSv1.2");
+
+            var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+            keyManagerFactory.init(keyStoreManager.getKeyStore(), sigKeystorePassword.toCharArray());
+
+            var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+            trustManagerFactory.init(keyStoreManager.getTrustStore());
+
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            return sslContext;
+
+        } catch (KeyManagementException | UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+            LOGGER.error("Exception: '{}'", e.getMessage(), e);
+            return null;
+        }
+    }
 }

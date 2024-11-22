@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.service;
 
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
@@ -33,7 +33,7 @@ public class OrCDService {
                                      final String countryCode,
                                      final List<GenericDocumentCode> documentCodes,
                                      final FilterParams filterParams,
-                                     final Map<AssertionEnum, Assertion> assertionMap) throws XCAException {
+                                     final Map<AssertionType, Assertion> assertionMap) throws XCAException {
 
         return xcaInitGateway.crossGatewayQuery(pid, countryCode, documentCodes, filterParams, assertionMap,
                 RegisteredService.ORCD_SERVICE.getServiceName());
@@ -43,7 +43,7 @@ public class OrCDService {
                                                                             final String homeCommunityId,
                                                                             final String countryCode,
                                                                             final String targetLanguage,
-                                                                            final Map<AssertionEnum, Assertion> assertionMap)
+                                                                            final Map<AssertionType, Assertion> assertionMap)
             throws XCAException {
 
         return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.ORCD_SERVICE.getServiceName());

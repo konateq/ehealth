@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.common.security;
 
-public enum JwtClaimType {
+public enum AssertionType {
 
     HCP,
     TRC,

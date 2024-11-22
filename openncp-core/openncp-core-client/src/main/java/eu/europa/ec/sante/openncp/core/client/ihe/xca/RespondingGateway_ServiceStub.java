@@ -8,9 +8,9 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
@@ -219,7 +219,7 @@ public class RespondingGateway_ServiceStub extends Stub {
      * @param adhocQueryRequest
      */
     public AdhocQueryResponse respondingGateway_CrossGatewayQuery(final AdhocQueryRequest adhocQueryRequest,
-                                                                  final Map<AssertionEnum, Assertion> assertionMap,
+                                                                  final Map<AssertionType, Assertion> assertionMap,
                                                                   final List<ClassCode> classCodes)
             throws java.rmi.RemoteException, XCAException {
 
@@ -291,13 +291,13 @@ public class RespondingGateway_ServiceStub extends Stub {
             final var headerSecurity = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("Security", omNamespace);
 
             try {
-                if (assertionMap.containsKey(AssertionEnum.NEXT_OF_KIN)) {
-                    final var assertionNextOfKin = assertionMap.get(AssertionEnum.NEXT_OF_KIN);
+                if (assertionMap.containsKey(AssertionType.NOK)) {
+                    final var assertionNextOfKin = assertionMap.get(AssertionType.NOK);
                     headerSecurity.addChild(XMLUtils.toOM(assertionNextOfKin.getDOM()));
                 }
-                final var assertionId = assertionMap.get(AssertionEnum.CLINICIAN);
+                final var assertionId = assertionMap.get(AssertionType.HCP);
                 headerSecurity.addChild(XMLUtils.toOM(assertionId.getDOM()));
-                final var assertionTreatment = assertionMap.get(AssertionEnum.TREATMENT);
+                final var assertionTreatment = assertionMap.get(AssertionType.TRC);
                 headerSecurity.addChild(XMLUtils.toOM(assertionTreatment.getDOM()));
 
                 _serviceClient.addHeader(headerSecurity);
@@ -520,7 +520,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             for (final ClassCode classCode : classCodes) {
                 createAndSendEventLogQuery(adhocQueryRequest, adhocQueryResponse,
-                        _messageContext, _returnEnv, env, assertionMap.get(AssertionEnum.CLINICIAN), assertionMap.get(AssertionEnum.TREATMENT),
+                        _messageContext, _returnEnv, env, assertionMap.get(AssertionType.HCP), assertionMap.get(AssertionType.TRC),
                         this._getServiceClient().getOptions().getTo().getAddress(),
                         classCode, dstHomeCommunityId); // Audit
             }
@@ -620,7 +620,7 @@ public class RespondingGateway_ServiceStub extends Stub {
      * @throws java.rmi.RemoteException
      */
     public RetrieveDocumentSetResponseType respondingGateway_CrossGatewayRetrieve(final RetrieveDocumentSetRequestType retrieveDocumentSetRequest,
-                                                                                  final Map<AssertionEnum, Assertion> assertionMap,
+                                                                                  final Map<AssertionType, Assertion> assertionMap,
                                                                                   final ClassCode classCode)
             throws java.rmi.RemoteException, XCAException {
 
@@ -688,13 +688,13 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             try {
 
-                if (assertionMap.containsKey(AssertionEnum.NEXT_OF_KIN)) {
-                    final var assertionNextOfKin = assertionMap.get(AssertionEnum.NEXT_OF_KIN);
+                if (assertionMap.containsKey(AssertionType.NOK)) {
+                    final var assertionNextOfKin = assertionMap.get(AssertionType.NOK);
                     security.addChild(XMLUtils.toOM(assertionNextOfKin.getDOM()));
                 }
-                final var assertionId = assertionMap.get(AssertionEnum.CLINICIAN);
+                final var assertionId = assertionMap.get(AssertionType.HCP);
                 security.addChild(XMLUtils.toOM(assertionId.getDOM()));
-                final var assertionTreatment = assertionMap.get(AssertionEnum.TREATMENT);
+                final var assertionTreatment = assertionMap.get(AssertionType.TRC);
                 security.addChild(XMLUtils.toOM(assertionTreatment.getDOM()));
                 _serviceClient.addHeader(security);
             } catch (final Exception ex) {
@@ -881,8 +881,8 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             //  Create Audit messages
             final EventLog eventLog = createAndSendEventLogRetrieve(retrieveDocumentSetRequest, retrieveDocumentSetResponse,
-                    _messageContext, returnEnv, env, assertionMap.get(AssertionEnum.CLINICIAN),
-                    assertionMap.get(AssertionEnum.TREATMENT), this._getServiceClient().getOptions().getTo().getAddress(),
+                    _messageContext, returnEnv, env, assertionMap.get(AssertionType.HCP),
+                    assertionMap.get(AssertionType.TRC), this._getServiceClient().getOptions().getTo().getAddress(),
                     classCode, dstHomeCommunityId);
             LOGGER.info("[Audit Service] Event Log '{}' sent to ATNA server", eventLog.getEventType());
 
