@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.api.client;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.ClientService;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.*;
@@ -36,7 +37,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public String submitDocument(final SubmitDocumentRequest submitDocumentRequest) {
-        final Map<AssertionEnum, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
+        final Map<AssertionType, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getAssertions();
@@ -49,7 +50,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public List<EpsosDocument> queryDocuments(final QueryDocumentRequest queryDocumentRequest) {
-        final Map<AssertionEnum, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
+        final Map<AssertionType, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getAssertions();
@@ -64,7 +65,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public EpsosDocument retrieveDocument(final RetrieveDocumentRequest retrieveDocumentRequest) {
-        final Map<AssertionEnum, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
+        final Map<AssertionType, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getAssertions();
@@ -77,7 +78,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public List<PatientDemographics> queryPatient(final QueryPatientRequest queryPatientRequest) {
-        final Map<AssertionEnum, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
+        final Map<AssertionType, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getAssertions();
@@ -90,7 +91,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public String sayHello(final String name) {
-        final Map<AssertionEnum, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
+        final Map<AssertionType, Assertion> assertionMap = AssertionContextProvider.getAssertionContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getAssertions();

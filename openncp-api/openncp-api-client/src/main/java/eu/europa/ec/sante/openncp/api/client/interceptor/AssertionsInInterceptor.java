@@ -2,8 +2,8 @@ package eu.europa.ec.sante.openncp.api.client.interceptor;
 
 import eu.europa.ec.sante.openncp.api.client.AssertionContextProvider;
 import eu.europa.ec.sante.openncp.api.client.ImmutableAssertionContext;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.headers.Header;
@@ -27,26 +27,26 @@ public class AssertionsInInterceptor extends AbstractSoapInterceptor {
         super(Phase.PRE_INVOKE);
     }
 
-    private Map<AssertionEnum, Assertion> processAssertionList(final List<Assertion> assertionList) {
+    private Map<AssertionType, Assertion> processAssertionList(final List<Assertion> assertionList) {
 
         logger.info("[Client] Processing Assertions list from SOAP Header:");
-        final Map<AssertionEnum, Assertion> assertionEnumMap = new EnumMap<>(AssertionEnum.class);
+        final Map<AssertionType, Assertion> AssertionTypeMap = new EnumMap<>(AssertionType.class);
         for (final Assertion assertion : assertionList) {
             switch (assertion.getIssuer().getNameQualifier()) {
                 case "urn:ehdsi:assertions:hcp":
-                    assertionEnumMap.put(AssertionEnum.CLINICIAN, assertion);
+                    AssertionTypeMap.put(AssertionType.HCP, assertion);
                     break;
                 case "urn:ehdsi:assertions:nok":
-                    assertionEnumMap.put(AssertionEnum.NEXT_OF_KIN, assertion);
+                    AssertionTypeMap.put(AssertionType.NOK, assertion);
                     break;
                 case "urn:ehdsi:assertions:trc":
-                    assertionEnumMap.put(AssertionEnum.TREATMENT, assertion);
+                    AssertionTypeMap.put(AssertionType.TRC, assertion);
                     break;
                 default:
                     break;
             }
         }
-        return assertionEnumMap;
+        return AssertionTypeMap;
     }
 
     @Override
@@ -72,8 +72,8 @@ public class AssertionsInInterceptor extends AbstractSoapInterceptor {
             child = DOMUtils.getNextElement(child);
         }
 
-        final Map<AssertionEnum, Assertion> assertionEnumAssertionMap = processAssertionList(assertions);
-        AssertionContextProvider.setAssertionContext(ImmutableAssertionContext.builder().putAllAssertions(assertionEnumAssertionMap).build());
+        final Map<AssertionType, Assertion> AssertionTypeAssertionMap = processAssertionList(assertions);
+        AssertionContextProvider.setAssertionContext(ImmutableAssertionContext.builder().putAllAssertions(AssertionTypeAssertionMap).build());
     }
 
     private Optional<Assertion> toAssertion(final Element element) {

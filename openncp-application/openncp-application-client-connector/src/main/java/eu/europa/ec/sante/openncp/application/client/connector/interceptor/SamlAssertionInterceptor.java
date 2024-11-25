@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.interceptor;
 
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorServicePortTypeWrapper;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import org.apache.cxf.binding.soap.SoapHeader;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
@@ -48,12 +48,12 @@ public class SamlAssertionInterceptor extends AbstractSoapInterceptor {
             final SecurityBuilder securityBuilder = new SecurityBuilder();
             final Security security = securityBuilder.buildObject();
 
-            final Map<AssertionEnum, Assertion> assertions = Optional.ofNullable(
-                                                                             (Map<AssertionEnum, Assertion>) message.get(ClientConnectorServicePortTypeWrapper.REQUESTCONTEXT_ASSERTIONS_KEY))
+            final Map<AssertionType, Assertion> assertions = Optional.ofNullable(
+                                                                             (Map<AssertionType, Assertion>) message.get(ClientConnectorServicePortTypeWrapper.REQUESTCONTEXT_ASSERTIONS_KEY))
                                                                      .orElseGet(Map::of);
 
-            assertions.forEach((assertionEnum, assertion) -> {
-                LOGGER.debug("Adding assertion key [{}] and value [{}]", assertionEnum, assertion);
+            assertions.forEach((AssertionType, assertion) -> {
+                LOGGER.debug("Adding assertion key [{}] and value [{}]", AssertionType, assertion);
                 security.getUnknownXMLObjects().add(assertion);
             });
 

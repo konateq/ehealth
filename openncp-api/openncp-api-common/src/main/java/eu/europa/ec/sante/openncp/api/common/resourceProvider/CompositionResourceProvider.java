@@ -13,7 +13,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;

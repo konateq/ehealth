@@ -12,7 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.DocumentId;
 import eu.europa.ec.sante.openncp.core.client.api.EpsosDocument;
 import eu.europa.ec.sante.openncp.core.client.api.FilterParams;
@@ -90,7 +90,7 @@ public class ClientServiceImplTest {
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
                 Mockito.<String>any(), Mockito.<List<GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -238,7 +238,7 @@ public class ClientServiceImplTest {
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
                 Mockito.<String>any(), Mockito.<List<GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -426,7 +426,7 @@ public class ClientServiceImplTest {
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
                 Mockito.<String>any(), Mockito.<List<GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -542,7 +542,7 @@ public class ClientServiceImplTest {
                 Mockito.<String>any(),
                 Mockito.<List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -740,7 +740,7 @@ public class ClientServiceImplTest {
                 Mockito.<String>any(),
                 Mockito.<List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -820,7 +820,7 @@ public class ClientServiceImplTest {
                 Mockito.<String>any(),
                 Mockito.<List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -900,7 +900,7 @@ public class ClientServiceImplTest {
                 Mockito.<String>any(),
                 Mockito.<List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -1055,7 +1055,7 @@ public class ClientServiceImplTest {
                 Mockito.<String>any(),
                 Mockito.<List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -1208,7 +1208,7 @@ public class ClientServiceImplTest {
                 Mockito.<String>any(),
                 Mockito.<List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode>>any(),
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any())).thenReturn(queryResponse);
+                Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
         eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
@@ -1369,7 +1369,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -1474,7 +1474,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -1579,7 +1579,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -1764,7 +1764,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -1869,7 +1869,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -1974,7 +1974,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -2079,7 +2079,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -2184,7 +2184,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -2381,7 +2381,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -2486,7 +2486,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
@@ -2591,7 +2591,7 @@ public class ClientServiceImplTest {
         // Arrange
         when(identificationService.findIdentityByTraits(
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
-                Mockito.<Map<AssertionEnum, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
+                Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
         eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");

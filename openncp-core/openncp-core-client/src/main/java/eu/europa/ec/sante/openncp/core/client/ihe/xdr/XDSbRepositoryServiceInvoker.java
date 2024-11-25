@@ -5,10 +5,10 @@ import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
 import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
@@ -64,10 +64,10 @@ public class XDSbRepositoryServiceInvoker {
      * @throws RemoteException
      */
     public RegistryResponseType provideAndRegisterDocumentSet(final XdrRequest request, final String countryCode,
-                                                              final Map<AssertionEnum, Assertion> assertionMap, final ClassCode docClassCode)
+                                                              final Map<AssertionType, Assertion> assertionMap, final ClassCode docClassCode)
             throws RemoteException, XDRException {
 
-        logger.info("[XDSb Repository] XDR Request: '{}', '{}', '{}'", assertionMap.get(AssertionEnum.CLINICIAN).getID(), countryCode, docClassCode);
+        logger.info("[XDSb Repository] XDR Request: '{}', '{}', '{}'", assertionMap.get(AssertionType.HCP).getID(), countryCode, docClassCode);
         final RegistryResponseType response;
         final String submissionSetUuid = Constants.UUID_PREFIX + UUID.randomUUID();
 
@@ -425,7 +425,7 @@ public class XDSbRepositoryServiceInvoker {
      * @return
      */
     private RegistryPackageType prepareRegistryPackage(final XdrRequest request, final ClassCode docClassCode, final String submissionSetUuid,
-                                                       final Map<AssertionEnum, Assertion> assertionMap) {
+                                                       final Map<AssertionType, Assertion> assertionMap) {
 
         final var registryPackageType = ofRim.createRegistryPackageType();
         final var patientId = request.getPatient().getIdList().get(0);
@@ -441,9 +441,9 @@ public class XDSbRepositoryServiceInvoker {
         final ClassificationType classification;
         classification = makeClassification0(XDRConstants.REGISTRY_PACKAGE.AUTHOR_CLASSIFICATION_UUID, submissionSetUuid, "");
         classification.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_INSTITUTION_STR,
-                getAuthorInstitution(request, assertionMap.get(AssertionEnum.CLINICIAN))));
+                getAuthorInstitution(request, assertionMap.get(AssertionType.HCP))));
         classification.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_PERSON_STR,
-                getAuthorPerson(request, assertionMap.get(AssertionEnum.CLINICIAN))));
+                getAuthorPerson(request, assertionMap.get(AssertionType.HCP))));
         registryPackageType.getClassification().add(classification);
 
         registryPackageType.getClassification().add(makeClassification(XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_UUID, submissionSetUuid,
