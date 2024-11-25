@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -39,6 +40,7 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.Optional;
 
+@Component
 public class JwtSamlInterceptor extends InterceptorAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
@@ -51,6 +53,12 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
         this.tokenProvider = tokenProvider;
         this.saml2Validator = saml2Validator;
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
+
+        try {
+            org.opensaml.core.config.InitializationService.initialize();
+        } catch (InitializationException e) {
+            throw new RuntimeException("Could not initialize the opensaml InitializationService", e);
+        }
     }
 
     @Override
@@ -71,7 +79,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
             auditSecurityInfo = validateSaml(new String(decoder.decode(saml)));
         } catch (final Exception e) {
             LOGGER.error("Invalid SAML token", e);
-            throw new AuthenticationException("Invalid SAML token.");
+            throw new AuthenticationException("Invalid SAML token.", e);
         }
 
         if (auditSecurityInfo != null) {
@@ -84,11 +92,9 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
     }
 
 
-    private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException, InitializationException {
+    private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException {
 
         Assertion hcpIdentityAssertion = null;
-
-        org.opensaml.core.config.InitializationService.initialize();
 
         LOGGER.info("SAML token: {}", saml);
 

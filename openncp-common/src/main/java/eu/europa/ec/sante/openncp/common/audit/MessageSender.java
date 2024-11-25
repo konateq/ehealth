@@ -8,6 +8,7 @@ import eu.europa.ec.sante.openncp.common.audit.utils.Utils;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
 import net.RFC3881.dicom.AuditMessage;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +59,7 @@ public class MessageSender {
                 logger.info("Try to construct the Audit Message type: '{}'", "N/A");
             }
             final String auditMessage = AuditTrailUtils.constructMessage(auditmessage, true);
-
-            if (!Utils.isEmpty(auditMessage)) {
+            if (StringUtils.isNotBlank(auditMessage)) {
                 long timeout = Long.parseLong(Utils.getProperty("audit.time.to.try", "60000", true));
                 boolean timeouted;
                 logger.debug("Try to send the message for '{}' msec", timeout);
