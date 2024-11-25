@@ -28,9 +28,9 @@ public class ReportBuilder {
 
     static {
         GAZELLE_HTML_REPORT = Boolean.parseBoolean((String) GazelleConfiguration.getInstance()
-                .getConfiguration().getProperty("GAZELLE_HTML_REPORT"));
+                .getProperty("GAZELLE_HTML_REPORT"));
         GAZELLE_FORMATTED_REPORT = Boolean.parseBoolean((String) GazelleConfiguration.getInstance()
-                .getConfiguration().getProperty("GAZELLE_FORMATTED_REPORT"));
+                .getProperty("GAZELLE_FORMATTED_REPORT"));
     }
 
     private ReportBuilder() {
