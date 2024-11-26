@@ -11,58 +11,63 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class GazelleConfiguration {
 
     private static final String NATIONAL_CONFIG = System.getenv("EPSOS_PROPS_PATH") + "validation"
             + File.separatorChar + "gazelle.ehdsi.properties";
-    private static final Logger logger = LoggerFactory.getLogger((GazelleConfiguration.class));
-    private static GazelleConfiguration instance;
+    private static final Logger logger = LoggerFactory.getLogger(GazelleConfiguration.class);
+    private Properties properties;
+
+    private static GazelleConfiguration gazelleConfiguration;
 
     static {
         System.setProperty("javax.net.ssl.trustStore", Constants.TRUSTSTORE_PATH);
         System.setProperty("javax.net.ssl.trustStorePassword", Constants.TRUSTSTORE_PASSWORD);
     }
 
-    private Configuration configuration;
-
     private GazelleConfiguration() throws ConfigurationException {
 
         logger.info("eHDSI Gazelle Initialization!");
         File file = new File(NATIONAL_CONFIG);
-        String gazelleConfig;
+        properties = new Properties();
         if (file.exists()) {
             logger.info("Loading National Gazelle Configuration");
-            gazelleConfig = NATIONAL_CONFIG;
+            try {
+                properties.load(new FileInputStream(file));
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load properties file: " + NATIONAL_CONFIG, e);
+            }
         } else {
             logger.info("Loading Default Gazelle Configuration");
-            gazelleConfig = "gazelle.ehdsi.properties";
+            try (InputStream input = getClass().getClassLoader().getResourceAsStream("gazelle.ehdsi.properties" )) {
+                if (input == null) {
+                    throw new IOException("Resource file not found: " + "gazelle.ehdsi.properties");
+                }
+                properties.load(input);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load local properties file: " + "gazelle.ehdsi.properties", e);
+            }
         }
-        Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<FileBasedConfiguration> builder =
-                new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
-                        .configure(params.properties().setFileName(gazelleConfig));
-
-        configuration = builder.getConfiguration();
     }
 
     public static GazelleConfiguration getInstance() {
 
-        if (instance == null) {
+        if (gazelleConfiguration == null) {
             try {
-                instance = new GazelleConfiguration();
+                gazelleConfiguration = new GazelleConfiguration();
             } catch (ConfigurationException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
         }
-        return instance;
+        return gazelleConfiguration;
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfig(Configuration configuration) {
-        this.configuration = configuration;
+    public String getProperty(String key) {
+        return properties.getProperty(key);
     }
 }
