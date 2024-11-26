@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.application.client.connector;
+package eu.europa.ec.sante.openncp.application.client.connector.integrationtests;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

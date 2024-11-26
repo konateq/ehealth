@@ -1,9 +1,10 @@
-package eu.europa.ec.sante.openncp.application.client.connector.testutils;
+package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util;
 
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.ImmutableTrcAssertionRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.TrcAssertionRequest;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
@@ -13,8 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.opensaml.core.config.InitializationException;
-import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -40,97 +39,48 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class AssertionTestUtil {
+public class AssertionUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AssertionTestUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AssertionUtils.class);
 
-    static {
-        try {
-            InitializationService.initialize();
-        } catch (final InitializationException e) {
-            LOGGER.error("InitializationException: '{}'", e.getMessage());
-        }
+    public static Assertion createClinicalAssertion(final KeyStoreManager keyStoreManager, final String username, final String fullName,
+                                              final String email) {
+        final List<String> permissions = new ArrayList<>();
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-003");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-005");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-006");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-010");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-016");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-032");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-033");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-046");
+
+        final AssertionUtils.Concept conceptRole = new AssertionUtils.Concept();
+        conceptRole.setCode("221");
+        conceptRole.setCodeSystemId("2.16.840.1.113883.2.9.6.2.7");
+        conceptRole.setCodeSystemName("ISCO");
+        conceptRole.setDisplayName("Medical Doctors");
+
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+                "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
+                "eHDSI EU Testing MedCare Center", permissions, null);
     }
 
-    private AssertionTestUtil() {
-        //  Empty private constructor preventing instantiation.
-    }
-
-    public static Assertion createPatientConfirmationPlain(final AssertionService assertionService, final URL location, final Assertion clinicalAssertion, final PatientId patient, final String purposeOfUse) throws STSClientException, MarshallingException {
-        final String patientId = patient.getExtension() + "^^^&" + patient.getRoot() + "&ISO";
-
-        final TrcAssertionRequest assertionRequest = ImmutableTrcAssertionRequest.builder().location(location).assertion(clinicalAssertion).checkForHostname(false).validationEnabled(false).purposeOfUse(purposeOfUse).patientId(patientId).build();
-        final Assertion assertionTRC = assertionService.request(assertionRequest);
-        final var marshaller = new AssertionMarshaller();
-        final Element element = marshaller.marshall(assertionTRC);
-        final Document document = element.getOwnerDocument();
-        LOGGER.info("TRC Assertion: '{}'\n'{}'", assertionTRC.getID(), getDocumentAsXml(document, false));
-        return assertionTRC;
-    }
-
-    public static class Concept {
-
-        private String code;
-
-        private String displayName;
-        private String codeSystem;
-
-        private String codeSystemName;
-
-        public Concept() {
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(final String code) {
-            this.code = code;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public void setDisplayName(final String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getCodeSystem() {
-            return codeSystem;
-        }
-
-        public void setCodeSystemId(final String codeSystem) {
-            this.codeSystem = codeSystem;
-        }
-
-        public String getCodeSystemName() {
-            return codeSystemName;
-        }
-
-        public void setCodeSystemName(final String codeSystemName) {
-            this.codeSystemName = codeSystemName;
-        }
-    }
-
-    public static Assertion createHCPAssertion(KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
-                                               final String countryName, final String homeCommId, final Concept role, final String organization,
+    private static Assertion createHCPAssertion(KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
+                                               final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
                                                final String organizationId, final String facilityType, final String purposeOfUse,
                                                final String locality, final List<String> permissions, final String onBehalfId) {
 
@@ -199,7 +149,7 @@ public class AssertionTestUtil {
 
             // Set HC Identifier
             final var attrHCID = createAttribute(builderFactory, "HCI Identifier", "urn:ihe:iti:xca:2010:homeCommunityId", "urn:oid:" + homeCommId,
-                                                 "");
+                    "");
             attrStmt.getAttributes().add(attrHCID);
 
             // Set NP Identifier
@@ -217,20 +167,20 @@ public class AssertionTestUtil {
             // XSPA Organization - Optional Field (eHDSI SAML Profile 2.2.0)
             if (StringUtils.isNotBlank(organization)) {
                 final var attrPID3 = createAttribute(builderFactory, "XSPA Organization", "urn:oasis:names:tc:xspa:1.0:subject:organization",
-                                                     organization, "");
+                        organization, "");
                 attrStmt.getAttributes().add(attrPID3);
             }
 
             // XSPA Organization ID - Optional Field (eHDSI SAML Profile 2.2.0)
             if (StringUtils.isNotBlank(organizationId)) {
                 final var attrPID4 = createAttribute(builderFactory, "XSPA Organization ID", "urn:oasis:names:tc:xspa:1.0:subject:organization-id",
-                                                     organizationId, "");
+                        organizationId, "");
                 attrStmt.getAttributes().add(attrPID4);
             }
             // // On behalf of
             if (StringUtils.isNotBlank(onBehalfId)) {
                 final var attrPID41 = createAttribute(builderFactory, "OnBehalfOf", "urn:epsos:names:wp3.4:subject:on-behalf-of", onBehalfId,
-                                                      role.getDisplayName());
+                        role.getDisplayName());
                 attrStmt.getAttributes().add(attrPID41);
                 attrStmt.getAttributes().add(attrPID41);
             }
@@ -238,7 +188,7 @@ public class AssertionTestUtil {
             // eHealth DSI Healthcare Facility Type
             // var attrPID5 = createAttribute(builderFactory, "eHealth DSI Healthcare Facility Type",
             final var attrPID5 = createAttribute(builderFactory, "eHealth DSI Healthcare Facility Type",
-                                                 "urn:ehdsi:names:subject:healthcare-facility-type", facilityType, "");
+                    "urn:ehdsi:names:subject:healthcare-facility-type", facilityType, "");
             attrStmt.getAttributes().add(attrPID5);
 
             // XSPA Purpose of Use
@@ -264,12 +214,29 @@ public class AssertionTestUtil {
             final Element element = marshaller.marshall(assertion);
             assertion.setDOM(element);
             final Document document = element.getOwnerDocument();
-            final String hcpa = getDocumentAsXml(document, false);
+            final String hcpa = XmlUtils.getDocumentAsXml(document, false);
             LOGGER.info("#### HCPA Start\n '{}' \n#### HCPA End", hcpa);
         } catch (final Exception e) {
             LOGGER.error(ExceptionUtils.getStackTrace(e));
         }
         return assertion;
+    }
+
+    public static Assertion createTRCAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final PatientId patient, final String purposeOfUse) throws STSClientException, MarshallingException, MalformedURLException {
+        final String patientId = patient.getExtension() + "^^^&" + patient.getRoot() + "&ISO";
+        final URL trcServerUrl = new URL(configurationManager.getProperty("secman.sts.url"));
+        final TrcAssertionRequest assertionRequest = ImmutableTrcAssertionRequest.builder().location(trcServerUrl).assertion(clinicalAssertion).checkForHostname(false).validationEnabled(false).purposeOfUse(purposeOfUse).patientId(patientId).build();
+        final Assertion assertionTRC = assertionService.request(assertionRequest);
+        final var marshaller = new AssertionMarshaller();
+        final Element element = marshaller.marshall(assertionTRC);
+        final Document document = element.getOwnerDocument();
+        LOGGER.info("TRC Assertion: '{}'\n'{}'", assertionTRC.getID(), XmlUtils.getDocumentAsXml(document, false));
+        return assertionTRC;
+    }
+
+    private static <T> T create(final Class<T> cls, final QName qname) {
+        LOGGER.info("Creating class {}", cls.getName());
+        return (T) (XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(qname)).buildObject(qname);
     }
 
     private static void signSAMLAssertion(KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject, final String keyAlias) throws Exception {
@@ -306,8 +273,8 @@ public class AssertionTestUtil {
         LOGGER.info("Keystore & Signature Certificate loaded: '{}'", signatureCertificate.getSerialNumber());
 
         final Signature sig = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                                                                          .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
-                                                                          .buildObject(Signature.DEFAULT_ELEMENT_NAME);
+                .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
+                .buildObject(Signature.DEFAULT_ELEMENT_NAME);
         final BasicX509Credential signingCredential = CredentialSupport.getSimpleCredential(signatureCertificate, privateKey);
 
         sig.setSigningCredential(signingCredential);
@@ -315,16 +282,16 @@ public class AssertionTestUtil {
         sig.setCanonicalizationAlgorithm("http://www.w3.org/2001/10/xml-exc-c14n#");
 
         final var keyInfo = (KeyInfo) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                                                                      .getBuilder(KeyInfo.DEFAULT_ELEMENT_NAME)
-                                                                      .buildObject(KeyInfo.DEFAULT_ELEMENT_NAME);
+                .getBuilder(KeyInfo.DEFAULT_ELEMENT_NAME)
+                .buildObject(KeyInfo.DEFAULT_ELEMENT_NAME);
         final X509Data data = (X509Data) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                                                                         .getBuilder(X509Data.DEFAULT_ELEMENT_NAME)
-                                                                         .buildObject(X509Data.DEFAULT_ELEMENT_NAME);
+                .getBuilder(X509Data.DEFAULT_ELEMENT_NAME)
+                .buildObject(X509Data.DEFAULT_ELEMENT_NAME);
         final var x509Certificate = (org.opensaml.xmlsec.signature.X509Certificate) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                                                                                                                    .getBuilder(
-                                                                                                                            org.opensaml.xmlsec.signature.X509Certificate.DEFAULT_ELEMENT_NAME)
-                                                                                                                    .buildObject(
-                                                                                                                            org.opensaml.xmlsec.signature.X509Certificate.DEFAULT_ELEMENT_NAME);
+                .getBuilder(
+                        org.opensaml.xmlsec.signature.X509Certificate.DEFAULT_ELEMENT_NAME)
+                .buildObject(
+                        org.opensaml.xmlsec.signature.X509Certificate.DEFAULT_ELEMENT_NAME);
 
         final var value = Base64.encodeBase64String(signingCredential.getEntityCertificate().getEncoded());
         x509Certificate.setValue(value);
@@ -340,11 +307,6 @@ public class AssertionTestUtil {
         } catch (final SignatureException e) {
             throw new Exception(e);
         }
-    }
-
-    private static <T> T create(final Class<T> cls, final QName qname) {
-        LOGGER.info("Creating class {}", cls.getName());
-        return (T) (XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(qname)).buildObject(qname);
     }
 
     private static Attribute createAttribute(final String friendlyName, final String oasisName) {
@@ -394,7 +356,7 @@ public class AssertionTestUtil {
     }
 
     private static Attribute createAttributeXSPARole(final XMLObjectBuilderFactory builderFactory, final String FriendlyName, final String oasisName,
-                                                     final Concept conceptRole) {
+                                                     final AssertionUtils.Concept conceptRole) {
 
         final Attribute attrPID = create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
         attrPID.setFriendlyName(FriendlyName);
@@ -435,34 +397,48 @@ public class AssertionTestUtil {
         return attrPID;
     }
 
-    public static String getDocumentAsXml(final Document document, final boolean header) {
+    public static class Concept {
 
-        var response = "";
-        try {
-            final DOMSource domSource = new DOMSource(document);
-            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            final Transformer transformer = transformerFactory.newTransformer();
-            final String omit;
-            if (header) {
-                omit = "no";
-            } else {
-                omit = "yes";
-            }
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, omit);
-            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            final var stringWriter = new java.io.StringWriter();
-            final StreamResult sr = new StreamResult(stringWriter);
-            transformer.transform(domSource, sr);
-            response = stringWriter.toString();
-        } catch (final Exception e) {
-            LOGGER.error(ExceptionUtils.getStackTrace(e));
+        private String code;
+
+        private String displayName;
+        private String codeSystem;
+
+        private String codeSystemName;
+
+        public Concept() {
         }
-        return response;
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(final String code) {
+            this.code = code;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public void setDisplayName(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getCodeSystem() {
+            return codeSystem;
+        }
+
+        public void setCodeSystemId(final String codeSystem) {
+            this.codeSystem = codeSystem;
+        }
+
+        public String getCodeSystemName() {
+            return codeSystemName;
+        }
+
+        public void setCodeSystemName(final String codeSystemName) {
+            this.codeSystemName = codeSystemName;
+        }
     }
 }
