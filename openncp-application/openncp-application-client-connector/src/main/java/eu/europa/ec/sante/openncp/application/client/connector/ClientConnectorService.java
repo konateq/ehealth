@@ -96,7 +96,7 @@ public interface ClientConnectorService {
     /**
      * @param assertions      - Map of assertions required by the transaction (HCP, TRC, NoK optional).
      * @param countryCode     - ISO Country code of the patient country of origin.
-     * @param searchParams    - Search parameters to match the DocumentReferences.
+     * @param payload         - REST API Body.
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */

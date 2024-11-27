@@ -1,5 +1,7 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionServiceImpl;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
@@ -16,6 +18,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.DatabasePropertiesKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.*;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -23,11 +26,15 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.mockito.Mockito;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.springframework.http.ResponseEntity;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -165,6 +172,24 @@ class DefaultClientConnectorServiceIntegrationTest {
         assertThat(document).isNotNull();
     }
 
+    @Test
+    void postHospitalDischargeReport() throws IOException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        final Assertion clinicalAssertion = createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+
+        Map<String, Object> payload = jsonFileToMap("hdr/documentReference.json");
+
+        final ResponseEntity<String> responseEntity = clientConnectorService.postDocumentReferenceFhir(assertions, "BE", payload);
+        assertThat(responseEntity).isNotNull();
+    }
+
+    public Map<String, Object> jsonFileToMap(String path) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        final InputStream is = getClass().getResourceAsStream(path);
+
+        return mapper.readValue(is, new TypeReference<>() {});
+    }
 
     private Assertion createClinicalAssertion(final KeyStoreManager keyStoreManager, final String username, final String fullName,
                                               final String email) {
