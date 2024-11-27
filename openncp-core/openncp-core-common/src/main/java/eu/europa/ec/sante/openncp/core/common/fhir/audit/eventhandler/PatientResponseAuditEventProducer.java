@@ -70,34 +70,6 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 .build();
     }
 
-    private List<AuditEventData.ParticipantData> createParticipants() {
-        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
-
-        final List<AuditEventData.ParticipantData> participants = new ArrayList<>(2);
-        try {
-            final String subjectRole = AssertionHelper.getRoleCodeFromAssertion(auditSecurityInfo.getAssertion());
-            final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
-                    .id(usernamePasswordAuthenticationToken.getName())
-                    .roleCode(subjectRole)
-                    .requestor(false)
-                    .network(LogContext.getIpInformation().flatMap(IpInformation::getRequestIp))
-                    .build();
-            participants.add(serviceConsumer);
-        } catch (final MissingFieldException e) {
-            LOGGER.error("Could not create the service consumer because the subject role could not be extracted from the assertion", e);
-        }
-
-        final AuditEventData.ParticipantData serviceProvider = ImmutableParticipantData.builder()
-                .id((String) usernamePasswordAuthenticationToken.getCredentials())
-                .roleCode("provider role unknown")
-                .requestor(true)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getHostIp))
-                .build();
-        participants.add(serviceProvider);
-
-        return participants;
-    }
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {
         final List<AuditEventData.ParticipantData> participants = createParticipants();
