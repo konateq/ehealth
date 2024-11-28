@@ -262,6 +262,7 @@ public class AssertionTestUtil {
 
             final var marshaller = new AssertionMarshaller();
             final Element element = marshaller.marshall(assertion);
+            assertion.setDOM(element);
             final Document document = element.getOwnerDocument();
             final String hcpa = getDocumentAsXml(document, false);
             LOGGER.info("#### HCPA Start\n '{}' \n#### HCPA End", hcpa);

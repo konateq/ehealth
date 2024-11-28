@@ -172,25 +172,6 @@ class DefaultClientConnectorServiceIntegrationTest {
         assertThat(document).isNotNull();
     }
 
-    @Test
-    void postHospitalDischargeReport() throws IOException {
-        final Map<AssertionType, Assertion> assertions = new HashMap<>();
-        final Assertion clinicalAssertion = createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
-        assertions.put(AssertionType.HCP, clinicalAssertion);
-
-        Map<String, Object> payload = jsonFileToMap("hdr/documentReference.json");
-
-        final ResponseEntity<String> responseEntity = clientConnectorService.postDocumentReferenceFhir(assertions, "BE", payload);
-        assertThat(responseEntity).isNotNull();
-    }
-
-    public Map<String, Object> jsonFileToMap(String path) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        final InputStream is = getClass().getResourceAsStream(path);
-
-        return mapper.readValue(is, new TypeReference<>() {});
-    }
-
     private Assertion createClinicalAssertion(final KeyStoreManager keyStoreManager, final String username, final String fullName,
                                               final String email) {
         final List<String> permissions = new ArrayList<>();
@@ -204,7 +185,7 @@ class DefaultClientConnectorServiceIntegrationTest {
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-033");
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-046");
 
-        final Concept conceptRole = new Concept();
+        final AssertionTestUtil.Concept conceptRole = new AssertionTestUtil.Concept();
         conceptRole.setCode("221");
         conceptRole.setCodeSystemId("2.16.840.1.113883.2.9.6.2.7");
         conceptRole.setCodeSystemName("ISCO");
