@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.HashMap;
 
 @SetEnvironmentVariable(key = "EPSOS_PROPS_PATH", value = "")
-public class ITtest extends BaseIntegrationTest {
+public class ITtest extends BaseSystemTest {
     @Autowired
     private ClientConnectorService clientConnectorService;
 
