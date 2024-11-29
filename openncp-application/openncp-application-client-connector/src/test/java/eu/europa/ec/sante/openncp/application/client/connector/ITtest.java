@@ -8,6 +8,9 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerImpl;
 import eu.europa.ec.sante.openncp.common.property.PropertyService;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
+import eu.europa.ec.sante.openncp.core.client.api.ObjectFactory;
+import eu.europa.ec.sante.openncp.core.client.api.PatientDemographics;
+import eu.europa.ec.sante.openncp.core.client.api.PatientId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -30,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -70,22 +74,48 @@ public class ITtest {
     }
 
     @Test
+    void queryPatient() throws ClientConnectorException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        assertions.put(AssertionType.HCP, createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("2-1234-W8");
+
+        final PatientDemographics patientDemographics = objectFactory.createPatientDemographics();
+        patientDemographics.getPatientId().add(patientId);
+
+        final List<PatientDemographics> response = clientConnectorService.queryPatient(assertions, "BE", patientDemographics);
+        assertThat(response)
+                .isNotNull()
+                .hasSize(1)
+                .flatExtracting(PatientDemographics::getPatientId)
+                .extracting(PatientId::getRoot, PatientId::getExtension)
+                .containsExactly(
+                        tuple(patientId.getRoot(), patientId.getExtension())
+                );
+    }
+
+    @Test
     public void postHospitalDischargeReport() throws IOException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
         assertions.put(AssertionType.HCP, clinicalAssertion);
 
-        Map<String, Object> payload = jsonFileToMap("/hdr/documentReference.json");
+        final Map<String, Object> payload = jsonFileToMap("/hdr/documentReference.json");
 
         final ResponseEntity<String> responseEntity = clientConnectorService.postDocumentReferenceFhir(assertions, "BE", payload);
         assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
     }
 
-    private Map<String, Object> jsonFileToMap(String path) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
+    private Map<String, Object> jsonFileToMap(final String path) throws IOException {
+        final ObjectMapper mapper = new ObjectMapper();
         final InputStream is = getClass().getResourceAsStream(path);
 
-        return mapper.readValue(is, new TypeReference<>() {});
+        return mapper.readValue(is, new TypeReference<>() {
+        });
     }
 
     private Assertion createClinicalAssertion(final KeyStoreManager keyStoreManager, final String username, final String fullName,
