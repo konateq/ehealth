@@ -139,6 +139,7 @@
                         WEB-INF/lib/log4j-api-2.17.2.jar,
                         WEB-INF/lib/log4j-core-2.17.2.jar,
                         WEB-INF/lib/log4j-jcl-2.17.2.jar,
+                        WEB-INF/lib/commons-lang3-3.12.0.jar
                     </dependentWarExcludes>
                     <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
