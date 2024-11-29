@@ -49,7 +49,7 @@ public class PatientServiceIT extends BaseIntegrationTest {
                 .flatExtracting(PatientDemographics::getPatientId)
                 .extracting(PatientId::getRoot, PatientId::getExtension)
                 .containsExactly(
-                        tuple(patientId.getRoot(), patientId.getExtension())
+                        tuple(patientId.getRoot() + ".1000", patientId.getExtension())
                 );
     }
 }
