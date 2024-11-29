@@ -43,10 +43,6 @@
     <!--</logger>-->
     <!-- End Spring Web Service Logging-->
 
-    <logger name="org.apache.axis2" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
     <logger name="org.apache.http.client" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
@@ -55,48 +51,16 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.sante.openncp.common.validation" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.dynamicdiscovery" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.common" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
     <logger name="org.springframework.jdbc.datasource.DataSourceTransactionManager" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.core.client.ihe" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.core.client.fhir" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.epsos.pt.ws.client.xdr" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.core.common.tsam.service" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.core.common.tm.service" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-    <logger name="eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.common.configuration" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.core.client.abusedetection" level="INFO" additivity="false">
-        <appender-ref ref="FILE_ABUSE"/>
-        <appender-ref ref="STDOUT"/>
     </logger>
 
     <root level="INFO">

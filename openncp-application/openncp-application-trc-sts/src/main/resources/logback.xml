@@ -39,24 +39,15 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <!--  TODO change this logger when the security L&S is done -->
-    <logger name="epsos.ccd.netsmart.securitymanager.sts" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.audit.ssl" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.audit" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
     <logger name="org.opensaml" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.sante.openncp.common.validation" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core" level="INFO" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="eu.europa.ec.sante.openncp.common" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
