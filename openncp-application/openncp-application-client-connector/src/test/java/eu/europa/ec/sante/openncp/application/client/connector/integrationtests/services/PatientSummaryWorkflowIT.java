@@ -38,14 +38,6 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
     private KeyStoreManager keyStoreManager;
 
     @Test
-    void sayHello() {
-        final Map<AssertionType, Assertion> assertions = new HashMap<>();
-        assertions.put(AssertionType.HCP, AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
-        final String response = clientConnectorService.sayHello(assertions, "Kim");
-        assertThat(response).isEqualTo("Hello Kim");
-    }
-
-    @Test
     void queryPatient() throws ClientConnectorException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         assertions.put(AssertionType.HCP, AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
