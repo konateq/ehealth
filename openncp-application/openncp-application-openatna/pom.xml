@@ -13,7 +13,7 @@
     <properties>
         <commons-lang.version>2.6</commons-lang.version>
         <itextpdf.version>7.2.6</itextpdf.version>
-        <jasperreports.version>6.21.3</jasperreports.version>
+        <jasperreports.version>6.21.4</jasperreports.version>
     </properties>
 
     <name>OpenNCP OpenATNA</name>
