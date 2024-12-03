@@ -1,10 +1,7 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
-import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.PatientMyHealthEu;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.DocumentReference;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.http.ResponseEntity;
 
@@ -86,7 +83,6 @@ public interface ClientConnectorService {
     /**
      * @param assertions      - Map of assertions required by the transaction (HCP, TRC, NoK optional).
      * @param countryCode     - ISO Country code of the patient country of origin.
-     * @param searchParams    - Search parameters to match the DocumentReferences.
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */
