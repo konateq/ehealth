@@ -6,7 +6,9 @@ import ca.uhn.fhir.rest.server.interceptor.InterceptorAdapter;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.JwtToken;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
@@ -17,6 +19,7 @@ import net.shibboleth.utilities.java.support.component.ComponentInitializationEx
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Unmarshaller;
@@ -25,9 +28,9 @@ import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -38,40 +41,79 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Optional;
 
+@Component
 public class JwtSamlInterceptor extends InterceptorAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
 
     private final TokenProvider tokenProvider;
-
     private final SAML2Validator saml2Validator;
+    private final ServerContext serverContext;
 
-    public JwtSamlInterceptor(TokenProvider tokenProvider, SAML2Validator saml2Validator) {
-        this.tokenProvider = tokenProvider;
-        this.saml2Validator = saml2Validator;
+    static {
+        try {
+            org.opensaml.core.config.InitializationService.initialize();
+        } catch (final InitializationException e) {
+            throw new RuntimeException("Could not initialize the opensaml InitializationService", e);
+        }
+    }
+
+    public JwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator, final ServerContext serverContext) {
+        this.tokenProvider = Validate.notNull(tokenProvider, "tokenProvider must not be null");
+        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
+        this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
+    }
+
+    private String getRequestSummary(final HttpServletRequest request) {
+        final StringBuilder summary = new StringBuilder();
+
+        // Basic request details
+        summary.append("HTTP Method: ").append(request.getMethod()).append(StringUtils.LF)
+                .append("Request URI: ").append(request.getRequestURI()).append(StringUtils.LF)
+                .append("Protocol: ").append(request.getProtocol()).append(StringUtils.LF)
+                .append("Remote Address: ").append(request.getRemoteAddr()).append(StringUtils.LF + StringUtils.LF);
+
+        // Headers
+        summary.append("Headers:\n");
+        Collections.list(request.getHeaderNames())
+                .forEach(headerName -> {
+                    final String headerValues = String.join(",", Collections.list(request.getHeaders(headerName)));
+                    summary.append(String.format(" - Header [%s] - Value [%s]", headerName, headerValues)).append(StringUtils.LF);
+                });
+
+        // Parameters
+        summary.append("\nParameters:\n");
+        Collections.list(request.getParameterNames())
+                .forEach(paramName -> {
+                    final String paramValues = String.join(",", request.getParameterValues(paramName));
+                    summary.append(String.format(" - Parameter [%s] - Value [%s]", paramName, paramValues)).append(StringUtils.LF);
+                });
+
+        return summary.toString();
     }
 
     @Override
-    public boolean incomingRequestPreProcessed(HttpServletRequest theRequest, HttpServletResponse theResponse) {
-        String authorization = theRequest.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!StringUtils.startsWith(authorization, "Bearer ")) {
-            return super.incomingRequestPreProcessed(theRequest, theResponse);
+    public boolean incomingRequestPreProcessed(final HttpServletRequest theRequest, final HttpServletResponse theResponse) {
+        LOGGER.info("Validating the incoming JWT bearer token from the request.");
+        final Optional<JwtToken> jwtToken = JwtToken.extractFrom(theRequest);
+        if (jwtToken.isEmpty()) {
+            LOGGER.error("No jwt token found in request with serverContext [{}] \n the request summary: \n {}", serverContext, getRequestSummary(theRequest));
+            throw new AuthenticationException("A bearer token is mandatory to initiate a request.");
         }
 
-        String token = StringUtils.remove(authorization, "Bearer ");
-        DecodedJWT jwt = tokenProvider.verifyToken(token);
+        final DecodedJWT jwt = tokenProvider.verifyToken(jwtToken.get().getToken());
+        final String saml = jwt.getClaim(AssertionType.HCP.name()).asString();
 
-        String saml = jwt.getClaim(AssertionType.HCP.name()).asString();
-
-
-        Base64.Decoder decoder = Base64.getDecoder();
+        final Base64.Decoder decoder = Base64.getDecoder();
         final AuditSecurityInfo auditSecurityInfo;
         try {
             auditSecurityInfo = validateSaml(new String(decoder.decode(saml)));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Invalid SAML token", e);
-            throw new AuthenticationException("Invalid SAML token.");
+            throw new AuthenticationException("Invalid SAML token.", e);
         }
 
         if(auditSecurityInfo != null) {
@@ -82,8 +124,8 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
 
             InetAddress hostIp = null;
             try {
-                 hostIp =InetAddress.getLocalHost();
-            } catch (UnknownHostException e) {
+                hostIp = InetAddress.getLocalHost();
+            } catch (final UnknownHostException e) {
                 throw new RuntimeException(e);
             }
 
@@ -91,35 +133,32 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
         }else{
             throw new AuthenticationException("Invalid SAML token: empty assertion.");
         }
-
         return true;
     }
 
 
-    private AuditSecurityInfo validateSaml(String saml) throws AuthenticationException, InitializationException {
+    private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException {
 
         Assertion hcpIdentityAssertion = null;
 
-        org.opensaml.core.config.InitializationService.initialize();
-
         LOGGER.info("SAML token: {}", saml);
 
-        if(saml != null && !saml.isEmpty()) {
+        if (saml != null && !saml.isEmpty()) {
             try {
-                BasicParserPool ppMgr = new BasicParserPool();
+                final BasicParserPool ppMgr = new BasicParserPool();
                 ppMgr.setNamespaceAware(true);
-                if(!ppMgr.isInitialized()) {
+                if (!ppMgr.isInitialized()) {
                     ppMgr.initialize();
                 }
 
-                InputStream in = new ByteArrayInputStream(saml.getBytes());
+                final InputStream in = new ByteArrayInputStream(saml.getBytes());
                 Document samlas = null;
                 samlas = ppMgr.parse(in);
-                Element samlasRoot = samlas.getDocumentElement();
+                final Element samlasRoot = samlas.getDocumentElement();
                 // Get apropriate unmarshaller
 
-                UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-                Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(samlasRoot);
+                final UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
+                final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(samlasRoot);
                 // Unmarshall using the document root element, an EntitiesDescriptor in this case
                 hcpIdentityAssertion = (Assertion) unmarshaller.unmarshall(samlasRoot);
 
@@ -127,25 +166,25 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
 
                 return AuditSecurityInfo.from(hcpIdentityAssertion, samlasRoot, "", "");
 
-            } catch (UnmarshallingException | XMLParserException | ComponentInitializationException ex) {
+            } catch (final UnmarshallingException | XMLParserException | ComponentInitializationException ex) {
                 throw new AuthenticationException(Msg.code(333) + ex.getMessage());
-            } catch (MissingFieldException e) {
+            } catch (final MissingFieldException e) {
                 throw new RuntimeException(e);
-            } catch (InsufficientRightsException e) {
+            } catch (final InsufficientRightsException e) {
                 throw new RuntimeException(e);
-            } catch (InvalidFieldException e) {
+            } catch (final InvalidFieldException e) {
                 throw new RuntimeException(e);
-            } catch (SMgrException e) {
+            } catch (final SMgrException e) {
                 throw new RuntimeException(e);
-            } catch (XSDValidationException e) {
+            } catch (final XSDValidationException e) {
                 throw new RuntimeException(e);
             }
         }
         return null;
     }
 
-    public void addAssertionToSecurityContext(AuditSecurityInfo auditSecurityInfo) {
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(auditSecurityInfo.getAssertion().getSubject().getNameID().getValue(), auditSecurityInfo.getAssertion().getIssuer().getValue(), null);
+    public void addAssertionToSecurityContext(final AuditSecurityInfo auditSecurityInfo) {
+        final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(auditSecurityInfo.getAssertion().getSubject().getNameID().getValue(), auditSecurityInfo.getAssertion().getIssuer().getValue(), null);
         authentication.setDetails(auditSecurityInfo);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }

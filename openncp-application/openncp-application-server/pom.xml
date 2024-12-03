@@ -28,27 +28,13 @@
             <artifactId>axis2-webapp</artifactId>
             <version>${axis2.version}</version>
             <type>war</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <!--dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-api</artifactId>
-            <version>${axiom-api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-compat</artifactId>
-            <version>${axiom-api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-dom</artifactId>
-            <version>${axiom-api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-impl</artifactId>
-            <version>${axiom-api.version}</version>
-        </dependency-->
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
@@ -153,6 +139,7 @@
                         WEB-INF/lib/log4j-api-2.17.2.jar,
                         WEB-INF/lib/log4j-core-2.17.2.jar,
                         WEB-INF/lib/log4j-jcl-2.17.2.jar,
+                        WEB-INF/lib/commons-lang3-3.12.0.jar
                     </dependentWarExcludes>
                     <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -202,6 +189,7 @@
                         WEB-INF/lib/txw2-2.3.1.jar,
                         WEB-INF/lib/xalan-2.7.2.jar,
                         WEB-INF/lib/xercesImpl-${xerces.version}.jar
+                        WEB-INF/lib/commons-lang3-3.12.0.jar
                     </packagingExcludes>
                 </configuration>
             </plugin>

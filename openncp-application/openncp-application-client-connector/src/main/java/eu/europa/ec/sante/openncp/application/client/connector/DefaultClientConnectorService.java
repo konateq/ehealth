@@ -146,14 +146,14 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         } catch (final KeyStoreException e) {
             throw new ClientConnectorException("Error creating the truststore instance", e);
         }
-        InputStream trustStoreStream;
+        final InputStream trustStoreStream;
         try {
-            trustStoreStream = new FileInputStream(configurationManager.getProperty("SC_KEYSTORE_PATH"));
+            trustStoreStream = new FileInputStream(configurationManager.getProperty("TRUSTSTORE_PATH"));
         } catch (final FileNotFoundException e) {
             throw new ClientConnectorException("Could not find the truststore", e);
         }
         try {
-            trustStore.load(trustStoreStream, configurationManager.getProperty(DCCS_SC_KEYSTORE_PASSWORD).toCharArray());
+            trustStore.load(trustStoreStream, configurationManager.getProperty("TRUSTSTORE_PASSWORD").toCharArray());
         } catch (final IOException | NoSuchAlgorithmException | CertificateException e) {
             throw new ClientConnectorException("Error loading the truststore", e);
         }
@@ -267,7 +267,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryDocumentReferenceFhir(Map<AssertionType, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+    public ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
     }
@@ -280,7 +280,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryBundleFhir(Map<AssertionType, Assertion> assertions, String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
+    public ResponseEntity<String> queryBundleFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, searchParams, "Bundle");
     }
@@ -293,7 +293,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryBundleFhirById(Map<AssertionType, Assertion> assertions, String countryCode, String id) throws ClientConnectorException {
+    public ResponseEntity<String> queryBundleFhirById(final Map<AssertionType, Assertion> assertions, final String countryCode, final String id) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" +id);
     }
