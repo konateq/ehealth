@@ -105,7 +105,7 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
     ) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
-        final Bundle handledBundle = bundleHandler.handle(serverResponse);
+        final Bundle handledBundle = bundleHandler.handle(serverResponse, null);
 
         return handledBundle;
     }
