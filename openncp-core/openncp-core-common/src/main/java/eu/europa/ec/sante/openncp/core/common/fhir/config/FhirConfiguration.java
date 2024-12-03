@@ -11,6 +11,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.IServerInterceptor;
 import ca.uhn.fhir.validation.FhirValidator;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuFhirContextFactory;
 import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
@@ -99,8 +100,8 @@ public class FhirConfiguration {
 
 
     @Bean
-    public JwtSamlInterceptor getJwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator) {
-        return new JwtSamlInterceptor(tokenProvider, saml2Validator);
+    public JwtSamlInterceptor getJwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator, final ServerContext serverContext) {
+        return new JwtSamlInterceptor(tokenProvider, saml2Validator, serverContext);
     }
 
     @Configuration
