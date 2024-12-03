@@ -39,7 +39,7 @@ class ServiceRequestTranscodingServiceTest extends AbstractTranscodingServiceTes
         assertThat(serviceRequestTranscodingService).isNotNull();
 
         final ServiceRequestLabMyHealthEu input = parser.parseResource(ServiceRequestLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/serviceRequest-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("transcodings/in/serviceRequest-in.json"),
                 StandardCharsets.UTF_8));
 
         /** Code **/
@@ -67,7 +67,7 @@ class ServiceRequestTranscodingServiceTest extends AbstractTranscodingServiceTes
         final ServiceRequestLabMyHealthEu transcoded = serviceRequestTranscodingService.transcode(input, errors, warnings);
 
         final ServiceRequestLabMyHealthEu output = parser.parseResource(ServiceRequestLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/serviceRequest-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("transcodings/out/serviceRequest-out.json"),
                 StandardCharsets.UTF_8));
 
         assertFhirResourcesAreEqual(output, transcoded);

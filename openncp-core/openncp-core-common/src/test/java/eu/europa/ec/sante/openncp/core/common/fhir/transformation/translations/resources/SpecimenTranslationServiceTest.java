@@ -37,7 +37,7 @@ class SpecimenTranslationServiceTest extends AbstractTranslationServiceTest {
         assertThat(specimenTranslationService).isNotNull();
 
         final SpecimenMyHealthEu input = parser.parseResource(SpecimenMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/specimen-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/in/specimen-in.json"),
                 StandardCharsets.UTF_8));
 
         // Type
@@ -52,7 +52,7 @@ class SpecimenTranslationServiceTest extends AbstractTranslationServiceTest {
         final SpecimenMyHealthEu translated = specimenTranslationService.translate(input, errors, warnings, targetLanguageCode);
 
         final SpecimenMyHealthEu expectedOutput = parser.parseResource(SpecimenMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/specimen-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/out/specimen-out.json"),
                 StandardCharsets.UTF_8));
         assertFhirResourcesAreEqual(expectedOutput, translated);
     }

@@ -39,7 +39,7 @@ class DiagnosticReportTranscodingServiceTest extends AbstractTranscodingServiceT
         assertThat(diagnosticReportResourceTranscodingService).isNotNull();
 
         final DiagnosticReportLabMyHealthEu input = parser.parseResource(DiagnosticReportLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/diagnosticReport-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("transcodings/in/diagnosticReport-in.json"),
                 StandardCharsets.UTF_8));
 
         // Language
@@ -68,7 +68,7 @@ class DiagnosticReportTranscodingServiceTest extends AbstractTranscodingServiceT
         final DiagnosticReportLabMyHealthEu transcoded = diagnosticReportResourceTranscodingService.transcode(input, errors, warnings);
 
         final DiagnosticReportLabMyHealthEu output = parser.parseResource(DiagnosticReportLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/diagnosticReport-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("transcodings/out/diagnosticReport-out.json"),
                 StandardCharsets.UTF_8));
 
         assertFhirResourcesAreEqual(output, transcoded);

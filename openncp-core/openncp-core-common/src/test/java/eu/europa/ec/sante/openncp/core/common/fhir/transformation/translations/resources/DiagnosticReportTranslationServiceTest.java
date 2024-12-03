@@ -37,7 +37,7 @@ class DiagnosticReportTranslationServiceTest extends AbstractTranslationServiceT
         assertThat(diagnosticReportTranslationService).isNotNull();
 
         final DiagnosticReportLabMyHealthEu input = parser.parseResource(DiagnosticReportLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/diagnosticReport-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/in/diagnosticReport-in.json"),
                 StandardCharsets.UTF_8));
 
         // Category: studyType
@@ -52,7 +52,7 @@ class DiagnosticReportTranslationServiceTest extends AbstractTranslationServiceT
         final DiagnosticReportLabMyHealthEu translated = diagnosticReportTranslationService.translate(input, errors, warnings, targetLanguageCode);
 
         final DiagnosticReportLabMyHealthEu expectedOutput = parser.parseResource(DiagnosticReportLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/diagnosticReport-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/out/diagnosticReport-out.json"),
                 StandardCharsets.UTF_8));
         assertFhirResourcesAreEqual(expectedOutput, translated);
     }

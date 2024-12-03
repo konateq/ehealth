@@ -37,7 +37,7 @@ class ServiceRequestTranslationServiceTest extends AbstractTranslationServiceTes
         assertThat(serviceRequestTranslationService).isNotNull();
 
         final ServiceRequestLabMyHealthEu input = parser.parseResource(ServiceRequestLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/serviceRequest-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/in/serviceRequest-in.json"),
                 StandardCharsets.UTF_8));
 
         // Code
@@ -55,7 +55,7 @@ class ServiceRequestTranslationServiceTest extends AbstractTranslationServiceTes
         System.out.println(parser.encodeResourceToString(translated));
 
         final ServiceRequestLabMyHealthEu expectedOutput = parser.parseResource(ServiceRequestLabMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/serviceRequest-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/out/serviceRequest-out.json"),
                 StandardCharsets.UTF_8));
         assertFhirResourcesAreEqual(expectedOutput, translated);
     }

@@ -37,7 +37,7 @@ class DeviceSpecimenTranslationServiceTest extends AbstractTranslationServiceTes
         assertThat(deviceSpecimenTranslationService).isNotNull();
 
         final DeviceSpecimenMyHealthEu input = parser.parseResource(DeviceSpecimenMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/deviceSpecimen-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/in/deviceSpecimen-in.json"),
                 StandardCharsets.UTF_8));
 
         // Type
@@ -49,7 +49,7 @@ class DeviceSpecimenTranslationServiceTest extends AbstractTranslationServiceTes
         final DeviceSpecimenMyHealthEu translated = deviceSpecimenTranslationService.translate(input, errors, warnings, targetLanguageCode);
 
         final DeviceSpecimenMyHealthEu expectedOutput = parser.parseResource(DeviceSpecimenMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/deviceSpecimen-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("translations/out/deviceSpecimen-out.json"),
                 StandardCharsets.UTF_8));
         System.out.println(parser.encodeResourceToString(expectedOutput));
         System.out.println(parser.encodeResourceToString(translated));

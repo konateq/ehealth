@@ -39,7 +39,7 @@ class DeviceSpecimenTranscodingServiceTest extends AbstractTranscodingServiceTes
         assertThat(deviceSpecimenTranscodingService).isNotNull();
 
         final DeviceSpecimenMyHealthEu input = parser.parseResource(DeviceSpecimenMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("in/deviceSpecimen-in.json"),
+                this.getClass().getClassLoader().getResourceAsStream("transcodings/in/deviceSpecimen-in.json"),
                 StandardCharsets.UTF_8));
 
         // Type
@@ -59,7 +59,7 @@ class DeviceSpecimenTranscodingServiceTest extends AbstractTranscodingServiceTes
         System.out.println(parser.encodeResourceToString(transcoded));
 
         final DeviceSpecimenMyHealthEu output = parser.parseResource(DeviceSpecimenMyHealthEu.class, IOUtils.toString(
-                this.getClass().getClassLoader().getResourceAsStream("out/deviceSpecimen-out.json"),
+                this.getClass().getClassLoader().getResourceAsStream("transcodings/out/deviceSpecimen-out.json"),
                 StandardCharsets.UTF_8));
 
         assertFhirResourcesAreEqual(output, transcoded);
