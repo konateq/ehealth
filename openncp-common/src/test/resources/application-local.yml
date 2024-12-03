@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    properties:
+      url: jdbc:mysql://localhost:3307/ehealth_properties?allowPublicKeyRetrieval=true&useSSL=false
+      username: root
+      password: Password1
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    tsam:
+      url: jdbc:mysql://localhost:3307/ehealth_ltrdb?allowPublicKeyRetrieval=true&useSSL=false
+      username: root
+      password: Password1
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+############################################
+# Change the webserver's port if you need. #
+############################################
+#server:
+#  port: 8888
+
