@@ -202,7 +202,6 @@ public class ValidatorUtil {
     }
 
     /**
-     *
      * This method will look into an XDR message and obtain the proper model to validate it at Gazelle
      *
      * @param message    the XDR message to be validated
