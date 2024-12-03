@@ -1,0 +1,156 @@
+{
+  "resourceType": "Bundle",
+  "id": "69546a24-096f-4f33-b9a8-fbafe53272b6",
+  "meta": {
+    "lastUpdated": "2024-06-24T14:32:55.626+00:00"
+  },
+  "type": "searchset",
+  "total": 2,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://sandbox.hl7europe.eu/laboratory/fhir/DocumentReference?date=ge2022-02-20&type=http%3A%2F%2Floinc.org%7C11502-2"
+    }
+  ],
+  "entry": [
+    {
+      "fullUrl": "http://sandbox.hl7europe.eu/laboratory/fhir/DocumentReference/SimpleChemistryResultDocRef",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "SimpleChemistryResultDocRef",
+        "meta": {
+          "versionId": "2",
+          "lastUpdated": "2024-03-20T13:44:36.527+00:00",
+          "source": "#t2gKPxvHpgl28u8S"
+        },
+        "masterIdentifier": {
+          "system": "urn:oid:2.16.840.1.113883.2.51.1.1",
+          "value": "8ccab76a-82ed-403e-b974-6b28022b0997"
+        },
+        "identifier": [
+          {
+            "system": "urn:oid:2.16.840.1.113883.2.9.2.120.4.4",
+            "value": "c030702.TSTSMN63A01F205H.20220325112426.TSS1Tkju"
+          }
+        ],
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11502-2",
+              "display": "Laboratory report"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "18719-5",
+                "display": "Chemistry studies (set)"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/de17bfd2-8d73-45fa-b0bb-8eb0e463ddb8"
+        },
+        "date": "2022-03-30T11:24:26+01:00",
+        "description": "Laboratorní zpráva",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "application/fhir+json",
+              "url": "http://sandbox.hl7europe.eu/laboratory/fhir/Bundle/SimpleChemistryResultReport"
+            }
+          },
+          {
+            "attachment": {
+              "contentType": "application/pdf",
+              "url": "http.example.org/pdf/SimpleChemistryResultReport.pdf"
+            }
+          }
+        ]
+      },
+      "search": {
+        "mode": "match"
+      }
+    },
+    {
+      "fullUrl": "http://sandbox.hl7europe.eu/laboratory/fhir/DocumentReference/1169",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "1169",
+        "meta": {
+          "versionId": "1",
+          "lastUpdated": "2024-06-24T12:55:44.660+00:00",
+          "source": "#soqVHoeKG8fF7FgI",
+          "profile": [
+            "http://myhealth.eu/fhir/ncp-api/StructureDefinition/DocumentReference-minimal-myhealtheu"
+          ]
+        },
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: DocumentReference </b><a name=\"SimpleChemistryResultDocRef\"> </a><a name=\"hcSimpleChemistryResultDocRef\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">ResourceDocumentReference &quot;SimpleChemistryResultDocRef&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-DocumentReference-minimal-myhealtheu.html\">DocumentReference: Minimal</a></p></div><p><b>masterIdentifier</b>: <code>urn:oid:2.16.840.1.113883.2.51.1.1</code>/8ccab76a-82ed-403e-b974-6b28022b0997</p><p><b>identifier</b>: <code>urn:oid:2.16.840.1.113883.2.9.2.120.4.4</code>/c030702.TSTSMN63A01F205H.20220325112426.TSS1Tkju</p><p><b>status</b>: current</p><p><b>type</b>: Laboratory report <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#11502-2)</span></p><p><b>category</b>: Chemistry studies (set) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#18719-5)</span></p><p><b>subject</b>: <a href=\"Bundle-SimpleChemistryResultReport.html#urn-uuid-de17bfd2-8d73-45fa-b0bb-8eb0e463ddb8\">urn:uuid:de17bfd2-8d73-45fa-b0bb-8eb0e463ddb8</a></p><p><b>date</b>: Mar 30, 2022, 10:24:26 AM</p><p><b>description</b>: Laboratorní zpráva</p><blockquote><p><b>content</b></p><h3>Attachments</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>ContentType</b></td><td><b>Language</b></td><td><b>Url</b></td></tr><tr><td style=\"display: none\">*</td><td>application/fhir+json</td><td>cs</td><td><a href=\"http://sandbox.hl7europe.eu:8080/fhir/Bundle/SimpleChemistryResultReport\">http://sandbox.hl7europe.eu:8080/fhir/Bundle/SimpleChemistryResultReport</a></td></tr></table></blockquote><blockquote><p><b>content</b></p><h3>Attachments</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>ContentType</b></td><td><b>Language</b></td><td><b>Url</b></td></tr><tr><td style=\"display: none\">*</td><td>application/pdf</td><td>cs</td><td><code>http.example.org/pdf/SimpleChemistryResultReport.pdf</code></td></tr></table></blockquote></div>"
+        },
+        "masterIdentifier": {
+          "system": "urn:oid:2.16.840.1.113883.2.51.1.1",
+          "value": "8ccab76a-82ed-403e-b974-6b28022b0997"
+        },
+        "identifier": [
+          {
+            "system": "urn:oid:2.16.840.1.113883.2.9.2.120.4.4",
+            "value": "c030702.TSTSMN63A01F205H.20220325112426.TSS1Tkju"
+          }
+        ],
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11502-2",
+              "display": "Laboratory report"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "18719-5",
+                "display": "Chemistry studies (set)"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/1166"
+        },
+        "date": "2022-03-30T11:24:26+01:00",
+        "description": "Laboratorní zpráva",
+        "content": [
+          {
+            "attachment": {
+              "contentType": "application/fhir+json",
+              "language": "cs",
+              "url": "http://sandbox.hl7europe.eu:8080/fhir/Bundle/SimpleChemistryResultReport"
+            }
+          },
+          {
+            "attachment": {
+              "contentType": "application/pdf",
+              "language": "cs",
+              "url": "http.example.org/pdf/SimpleChemistryResultReport.pdf"
+            }
+          }
+        ]
+      },
+      "search": {
+        "mode": "match"
+      }
+    }
+  ]
+}
