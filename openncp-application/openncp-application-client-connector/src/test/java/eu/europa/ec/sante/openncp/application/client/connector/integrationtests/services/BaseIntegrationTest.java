@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.SpringConfigurati
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerImpl;
 import eu.europa.ec.sante.openncp.common.property.PropertyService;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.spy;
 @ActiveProfiles({"local", "test"})
 @TestPropertySource(locations = "classpath:application-local.properties")
 @Configuration
+@Disabled("Disabled for now until we can implement test profiles")
 public class BaseIntegrationTest {
 
     @Bean
