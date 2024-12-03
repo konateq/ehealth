@@ -8,13 +8,15 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.api.server.ResponseDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher.AuditDispatcher;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher.DispatchResult;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.AuditEventProducer;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.AuditableEvent;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.FallbackAuditEventProducer;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler.ImmutableAuditableEvent;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.FhirCustomInterceptor;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -37,12 +39,14 @@ public class AuditInterceptor implements FhirCustomInterceptor {
     private final List<AuditEventProducer> auditEventProducers;
     private final FallbackAuditEventProducer fallbackAuditEventProducer;
     private final List<AuditDispatcher> auditDispatchers;
+    private final ServerContext serverContext;
 
-    public AuditInterceptor(final FhirContext fhirContext, final List<AuditEventProducer> auditEventProducers, final FallbackAuditEventProducer fallbackAuditEventProducer, final List<AuditDispatcher> auditDispatchers) {
+    public AuditInterceptor(final FhirContext fhirContext, final List<AuditEventProducer> auditEventProducers, final FallbackAuditEventProducer fallbackAuditEventProducer, final List<AuditDispatcher> auditDispatchers, final ServerContext serverContext) {
         this.fhirContext = Validate.notNull(fhirContext, "fhirContext cannot be null.");
         this.auditEventProducers = Validate.notNull(auditEventProducers, "auditEventProducers cannot be null.");
         this.fallbackAuditEventProducer = Validate.notNull(fallbackAuditEventProducer, "fallbackAuditEventProducer cannot be null.");
         this.auditDispatchers = Validate.notNull(auditDispatchers, "auditDispatchers cannot be null.");
+        this.serverContext = Validate.notNull(serverContext, "serverContext cannot be null.");
     }
 
     @Hook(Pointcut.SERVER_OUTGOING_RESPONSE)
@@ -52,11 +56,15 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                                       final ResponseDetails responseDetails,
                                       final HttpServletRequest httpServletRequest,
                                       final HttpServletResponse httpServletResponse) {
-        final EuRequestDetails euRequestDetails = EuRequestDetails.of(requestDetails);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.builder()
+                .ncpSide(serverContext.getNcpSide())
+                .hapiRequestDetails(requestDetails)
+                .servletRequest(httpServletRequest)
+                .servletResponse(httpServletResponse).build();
         final AuditableEvent auditableEvent = ImmutableAuditableEvent.builder()
                 .pointcut(Pointcut.SERVER_OUTGOING_RESPONSE)
                 .fhirContext(fhirContext)
-                .euRequestDetails(euRequestDetails)
+                .dispatchContext(dispatchContext)
                 .resource(baseResource)
                 .build();
         final List<AuditEvent> auditEvents = auditEventProducers.stream()
@@ -72,12 +80,12 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                 LOGGER.debug("Audit event dispatching using dispatcher [{}] for audit event [{}]", auditDispatcher.getClass().getSimpleName(), auditEventAsJsonString);
             }
 
-            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, euRequestDetails.getResourceType());
+            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, dispatchContext.getResourceType());
             LOGGER.debug("Audit event dispatched with result [{}]", dispatchResult);
             if (dispatchResult.isSuccess()) {
                 LOGGER.info("Audit event successfully dispatched: [{}]", dispatchResult.getMessage());
             } else {
-                DispatchResult.DispatchError dispatchError = dispatchResult.getError();
+                final DispatchResult.DispatchError dispatchError = dispatchResult.getError();
                 final String errorMessage = String.format("Dispatching the audit event FAILED: [%s]", dispatchError.getErrorMessage());
                 dispatchError.getThrowable().ifPresentOrElse(throwable -> LOGGER.error(errorMessage, throwable), () -> LOGGER.error(errorMessage));
             }

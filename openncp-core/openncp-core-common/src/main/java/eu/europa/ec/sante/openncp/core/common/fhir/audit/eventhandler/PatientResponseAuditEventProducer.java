@@ -1,10 +1,11 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
+import eu.europa.ec.sante.openncp.common.IpInformation;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
-import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
-import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
+import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.AssertionHelper;
+import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -33,7 +34,7 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
     @Override
     public boolean accepts(final AuditableEvent auditableEvent) {
         final boolean accepts = auditableEvent != null
-                && auditableEvent.getEuRequestDetails().isPatient()
+                && auditableEvent.getDispatchContext().isPatient()
                 && auditableEvent.resourceIsOfType(FhirSupportedResourceType.BUNDLE, FhirSupportedResourceType.PATIENT);
 
         LOGGER.debug("[{}] auditable event [{}]", BooleanUtils.toString(accepts, "Accepted", "Rejected"), auditableEvent);
@@ -43,7 +44,7 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
     @Override
     public List<AuditEvent> produce(final AuditableEvent auditableEvent) {
         final List<AuditEventData> auditEventDataList;
-        switch (auditableEvent.getEuRequestDetails().getRestOperationType()) {
+        switch (auditableEvent.getDispatchContext().getRestOperationType()) {
             case SEARCH_TYPE:
             case SEARCH_SYSTEM:
             case GET_PAGE:
@@ -54,7 +55,7 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 auditEventDataList = handleRead(auditableEvent);
                 break;
             default:
-                LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getEuRequestDetails().getRestOperationType());
+                LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getDispatchContext().getRestOperationType());
                 //TODO what to do here exactly? create a file with the error? we cannot let the audit event create exceptions that will interfere with the response.
                 return Collections.emptyList();
         }
@@ -69,30 +70,6 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 .build();
     }
 
-    private List<AuditEventData.ParticipantData> createParticipants() {
-
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
-
-
-
-        //TODO build proper participant data
-        final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
-                .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlAsRoot()))
-                .requestor(false)
-                .network(auditSecurityInfo.getRequestIp())
-                .build();
-
-        final AuditEventData.ParticipantData serviceProvider = ImmutableParticipantData.builder()
-                .id((String)usernamePasswordAuthenticationToken.getCredentials())
-                .roleCode("provider role unknown")
-                .requestor(true)
-                .network(auditSecurityInfo.getHostIp())
-                .build();
-
-        return List.of(serviceConsumer, serviceProvider);
-    }
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {
         final List<AuditEventData.ParticipantData> participants = createParticipants();
@@ -109,17 +86,17 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
         if (patientEntities.isEmpty()) {
             auditEventData = ImmutableAuditEventData.builder()
                     .metaData(createMetaData(auditableEvent))
-                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
+                    .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
                     .profile(BalpProfileEnum.BASIC_QUERY)
-                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
+                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
                     .addAllParticipants(participants)
                     .build();
         } else {
             auditEventData = ImmutableAuditEventData.builder()
                     .metaData(createMetaData(auditableEvent))
-                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
+                    .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
                     .profile(BalpProfileEnum.PATIENT_QUERY)
-                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
+                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
                     .addAllParticipants(participants)
                     .addAllEntities(patientEntities)
                     .build();
@@ -132,7 +109,7 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
         final List<AuditEventData.ParticipantData> participants = createParticipants();
 
         return auditableEvent.getResource().map(resource -> {
-            final String dataResourceId = auditableEvent.getEuRequestDetails().createFullyQualifiedResourceReference(resource.getIdElement());
+            final String dataResourceId = auditableEvent.getDispatchContext().createFullyQualifiedResourceReference(resource.getIdElement());
             final Set<String> patientIds = auditableEvent.extractResourceIds(RESOURCE_IS_PATIENT);
 
             final List<AuditEventData> auditEventDataList = new ArrayList<>();
@@ -141,9 +118,9 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 final AuditEventData.EntityData resourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
                 auditEventDataList.add(ImmutableAuditEventData.builder()
                         .metaData(createMetaData(auditableEvent))
-                        .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
+                        .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
                         .profile(BalpProfileEnum.BASIC_READ)
-                        .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
+                        .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
                         .addAllParticipants(participants)
                         .addEntity(resourceEntity)
                         .build());
@@ -156,9 +133,9 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
 
                             return ImmutableAuditEventData.builder()
                                     .metaData(createMetaData(auditableEvent))
-                                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
+                                    .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
                                     .profile(BalpProfileEnum.PATIENT_READ)
-                                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
+                                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
                                     .addAllParticipants(participants)
                                     .addEntity(resourceEntityData)
                                     .addEntity(patientEntityData)

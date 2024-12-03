@@ -1,14 +1,18 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
+import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
@@ -29,9 +33,10 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ValidationService validationService) {
-        super(validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService);
+
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+        super(serverContext, validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
     }
 
     @Override
@@ -58,10 +63,16 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
                               @Description(shortDefinition = "Date range for the search") @OptionalParam(
                                       name = "date") final DateRangeParam dateRange) {
 
-        final String JWTToken = getJwtFromRequest(theServletRequest);
-
-        final Bundle serverResponse = dispatchingService.dispatchSearch(EuRequestDetails.of(theRequestDetails), JWTToken);
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
+    }
+
+    @Create
+    public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        return dispatchingService.dispatchWrite(dispatchContext, documentReference);
+
     }
 }
