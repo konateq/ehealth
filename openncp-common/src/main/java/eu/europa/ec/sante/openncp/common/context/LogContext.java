@@ -87,6 +87,7 @@ public final class LogContext {
         MDC.remove("CountryCode");
         MDC.remove("ipInformationHostIp");
         MDC.remove("ipInformationRequestIp");
+        MDC.remove("authorization");
     }
 
     public static void setCountryCode(final String countryCode) {
@@ -95,6 +96,14 @@ public final class LogContext {
 
     public static String getCountryCode() {
         return MDC.get("CountryCode");
+    }
+
+    public static void setAuthorization(final String authorization) {
+        MDC.put("authorization", authorization);
+    }
+
+    public static String getAuthorization() {
+        return MDC.get("authorization");
     }
 
     public static void setIpInformation(final IpInformation ipInformation) {

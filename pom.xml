@@ -108,7 +108,7 @@
         <saxon-he.version>10.9</saxon-he.version>
         <spring-boot.version>2.7.18</spring-boot.version>
         <spring-tx.version>5.3.39</spring-tx.version>
-        <spring-ws.version>3.0.9.RELEASE</spring-ws.version>
+        <spring-ws.version>3.1.8</spring-ws.version>
         <spring.version>5.3.39</spring.version>
         <spring.security.version>5.5.8</spring.security.version>
         <javamelody.version>1.99.0</javamelody.version>
@@ -137,6 +137,7 @@
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <sonar.organization>abc123s</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <testcontainers.version>1.20.4</testcontainers.version>
 
     </properties>
 
@@ -734,6 +735,25 @@
                 <artifactId>junit-jupiter-params</artifactId>
                 <version>${junit.jupiter.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>mysql</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>javax.xml.bind</groupId>
+                        <artifactId>jaxb-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
