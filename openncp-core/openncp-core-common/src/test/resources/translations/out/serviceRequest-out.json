@@ -1,0 +1,113 @@
+{
+  "resourceType": "ServiceRequestLabMyHealthEu",
+  "id": "SampleServiceRequest",
+  "meta": {
+    "profile": [
+      "http://fhir.ehdsi.eu/laboratory/StructureDefinition/ServiceRequest-lab-myhealtheu",
+      "http://fhir.ehdsi.eu/laboratory/StructureDefinition/DiagnosticReport-lab-myhealtheu"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: ServiceRequest</b><a name=\"SampleServiceRequest\"> </a><a name=\"hcSampleServiceRequest\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource ServiceRequest &quot;SampleServiceRequest&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-ServiceRequest-lab-myhealtheu.html\">ServiceRequest: Laboratory</a></p></div><p><b>identifier</b>: <code>http://example.org</code>/a4310756-a193-4a48-8feb-598c87a1d3f</p><p><b>status</b>: active</p><p><b>intent</b>: order</p><p><b>code</b>: Hemoglobin and Hematocrit panel - Blood <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#24360-0)</span></p><p><b>subject</b>: <a href=\"Patient-SamplePatient.html\">Patient/SamplePatient</a> &quot; DOE&quot;</p><p><b>insurance</b>: <a name=\"hcSampleCoverage\"> </a></p><blockquote><p/><p><a name=\"SampleCoverage\"> </a></p><p><a name=\"hcSampleCoverage\"> </a></p><p><b>status</b>: active</p><p><b>beneficiary</b>: <a href=\"Patient-SamplePatient.html\">Patient/SamplePatient</a> &quot; DOE&quot;</p><p><b>payor</b>: <span>: Best Insurance</span></p></blockquote><p><b>specimen</b>: <a href=\"Specimen-SampleSpecimen.html\">Specimen/SampleSpecimen</a></p><hr/><blockquote><p><b>Generated Narrative: Coverage #SampleCoverage</b><a name=\"SampleCoverage\"> </a><a name=\"hcSampleCoverage\"> </a></p><p><b>status</b>: active</p><p><b>beneficiary</b>: <a href=\"Patient-SamplePatient.html\">Patient/SamplePatient</a> &quot; DOE&quot;</p><p><b>payor</b>: <span>: Best Insurance</span></p></blockquote></div>"
+  },
+  "contained": [
+    {
+      "resourceType": "Coverage",
+      "id": "SampleCoverage",
+      "meta": {
+        "profile": [
+          "http://fhir.ehdsi.eu/laboratory/StructureDefinition/Coverage-lab-myhealtheu"
+        ]
+      },
+      "status": "active",
+      "beneficiary": {
+        "reference": "Patient/SamplePatient"
+      },
+      "payor": [
+        {
+          "display": "Best Insurance"
+        }
+      ]
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://example.org",
+      "value": "a4310756-a193-4a48-8feb-598c87a1d3f"
+    }
+  ],
+  "status": "active",
+  "intent": "order",
+  "code": {
+    "coding": [
+      {
+        "id": "1",
+        "system": "http://loinc.org",
+        "version": "2024",
+        "code": "24360-0",
+        "display": "Hemoglobin and Hematocrit panel - Blood",
+        "_display": {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/translation",
+              "extension": [
+                {
+                  "url": "lang",
+                  "valueString": "nl-BE"
+                },
+                {
+                  "url": "content",
+                  "valueString": "Hemoglobine- en hematocrietpaneel - Bloed"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/SamplePatient"
+  },
+  "reasonCode": [
+    {
+      "coding": [
+        {
+          "id": "1.3.6.1.4.1.12559.11.10.1.3.1.44.2",
+          "system": "http://hl7.org/fhir/sid/icd-10",
+          "version": "2019",
+          "code": "A95",
+          "display": "Yellow fever",
+          "_display": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueString": "nl-BE"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Gele koorts"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "insurance": [
+    {
+      "reference": "#SampleCoverage"
+    }
+  ],
+  "specimen": [
+    {
+      "reference": "Specimen/SampleSpecimen"
+    }
+  ]
+}

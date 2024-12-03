@@ -1,0 +1,49 @@
+{
+  "resourceType": "DeviceSpecimenMyHealthEu",
+  "id": "example",
+  "meta": {
+    "profile": [
+      "http://fhir.ehdsi.eu/laboratory/StructureDefinition/DiagnosticReport-lab-myhealtheu"
+    ]
+  },
+  "identifier": [
+    {
+      "system": "urn:ietf:rfc:3986",
+      "value": "urn:uuid:3f69e0a5-2177-4540-baab-7a5d0877428f"
+    }
+  ],
+  "deviceName": [
+    {
+      "name": "Name of the device"
+    }
+  ],
+  "type": {
+    "coding": [
+      {
+        "id": "2.16.840.1.113883.6.96",
+        "system": "http://snomed.info/sct",
+        "version": "2023-07-31",
+        "code": "118375008",
+        "display": "Cardiac septum prosthesis",
+        "_display": {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/translation",
+              "extension": [
+                {
+                  "url": "lang",
+                  "valueString": "nl-BE"
+                },
+                {
+                  "url": "content",
+                  "valueString": "Cardiale septum prothese"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "text": "Albumin (24H U) [Mass/Time]"
+  }
+}

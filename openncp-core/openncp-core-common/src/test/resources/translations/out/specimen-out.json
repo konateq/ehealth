@@ -1,0 +1,96 @@
+{
+  "resourceType": "SpecimenMyHealthEu",
+  "id": "Specimen-device-example",
+  "meta": {
+    "profile": [
+      "http://fhir.ehdsi.eu/laboratory/StructureDefinition/Specimen-lab-myhealtheu"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Specimen</b><a name=\"Specimen-device-example\"> </a><a name=\"hcSpecimen-device-example\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Specimen &quot;Specimen-device-example&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-Specimen-lab-myhealtheu.html\">Specimen: Laboratory</a></p></div><p><b>status</b>: available</p><p><b>type</b>: Blood specimen <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT</a>#119297000)</span></p><p><b>subject</b>: <a name=\"hcDeviceSpecimenSubject\"> </a></p><blockquote><p/><p><a name=\"DeviceSpecimenSubject\"> </a></p><p><a name=\"hcDeviceSpecimenSubject\"> </a></p><p><b>type</b>: blood bag <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-NullFlavor.html\">NullFlavor</a>#UNC)</span></p></blockquote><h3>Collections</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Collected[x]</b></td></tr><tr><td style=\"display: none\">*</td><td>2022-10-25 13:35:00+0100</td></tr></table><hr/><blockquote><p><b>Generated Narrative: Device #DeviceSpecimenSubject</b><a name=\"DeviceSpecimenSubject\"> </a><a name=\"hcDeviceSpecimenSubject\"> </a></p><p><b>type</b>: blood bag <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-v3-NullFlavor.html\">NullFlavor</a>#UNC)</span></p></blockquote></div>"
+  },
+  "contained": [
+    {
+      "resourceType": "Device",
+      "id": "DeviceSpecimenSubject",
+      "meta": {
+        "profile": [
+          "http://fhir.ehdsi.eu/laboratory/StructureDefinition/Device-specimen-lab-myhealtheu"
+        ]
+      },
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+            "code": "UNC"
+          }
+        ],
+        "text": "blood bag"
+      }
+    }
+  ],
+  "status": "available",
+  "type": {
+    "coding": [
+      {
+        "id": "2.16.840.1.113883.6.96",
+        "system": "http://snomed.info/sct",
+        "version": "2023-07-31",
+        "code": "119297000",
+        "display": "Blood specimen",
+        "_display": {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/translation",
+              "extension": [
+                {
+                  "url": "lang",
+                  "valueString": "nl-BE"
+                },
+                {
+                  "url": "content",
+                  "valueString": "Bloedmonster"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "subject": {
+    "reference": "#DeviceSpecimenSubject"
+  },
+  "collection": {
+    "collectedDateTime": "2022-10-25T13:35:00+01:00",
+    "bodySite": {
+      "coding": [
+        {
+          "id": "2.16.840.1.113883.6.96",
+          "system": "http://snomed.info/sct",
+          "version": "2023-07-31",
+          "code": "443283007",
+          "display": "Neoaortic valve",
+          "_display": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueString": "nl-BE"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Neoaortaklep"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
