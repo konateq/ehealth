@@ -2,13 +2,12 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <!--pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern-->
-            <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %highlight(%-5level) %logger{36}.%M\(%line\) - %msg%n</pattern>
+            <pattern>[%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}] [%thread] %highlight(%-5level) %logger{36}.%M\(%line\) - %msg%n</pattern>
         </layout>
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${catalina.base}/logs/openncp-ws-server.log</file>
+        <file>${catalina.base}/logs/openncp-client.log</file>
         <append>true</append>
         <encoder>
             <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %highlight(%-5level) %logger{36}.%M\(%line\) - %msg%n</pattern>
@@ -16,7 +15,7 @@
     </appender>
 
     <appender name="FILE_CLINICAL" class="ch.qos.logback.core.FileAppender">
-        <file>${catalina.base}/logs/openncp-ws-server-clinical.log</file>
+        <file>${catalina.base}/logs/openncp-client-clinical.log</file>
         <append>true</append>
         <encoder>
             <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %cyan([%logger{36}]) %highlight(%-5level) %C{36}.%M\(%line\) - %msg%n</pattern>
@@ -35,14 +34,6 @@
         <appender-ref ref="FILE_CLINICAL"/>
     </logger>
 
-    <logger name="ee.affecto.epsos.util" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="org.springframework.jdbc.datasource.DataSourceTransactionManager" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
     <!-- Spring Web Service Payload Logging - Uncomment to enable MessageTracing Request/Response-->
     <!--<logger name="org.springframework.ws.client.MessageTracing" level="TRACE" additivity="false">-->
     <!--<appender-ref ref="FILE_CLINICAL"/>-->
@@ -56,11 +47,7 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="ee.affecto.epsos.util" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="ee.affecto.epsos.ws.handler" level="INFO" additivity="false">
+    <logger name="org.apache.http.client" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
@@ -68,55 +55,27 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.epsos.protocolterminators.ws.server" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.common.validation" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.epsos.protocolterminators.ws.server.xca.impl" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.dynamicdiscovery" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.sante.ehdsi.gazelle.validation" level="INFO" additivity="false">
+    <logger name="org.springframework.jdbc.datasource.DataSourceTransactionManager" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="com.spirit.epsos.cc.adc" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core.client.ihe" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="tr.com.srdc.epsos.util.http" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core.client.fhir" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="tr.com.srdc.epsos.ws.server" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="_2007.xds_b.iti.ihe" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="_2009.xcpd.iti.ihe" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.esens.abb.nonrep" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="epsos.ccd.gnomon.configmanager" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="epsos.ccd.gnomon.auditmanager" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="epsos.ccd.gnomon.auditmanager.ssl" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.openncp.core.common.tm.service" level="INFO" additivity="false">
+    <logger name="eu.epsos.pt.ws.client.xdr" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
@@ -124,19 +83,18 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.epsos.util" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core.common.tm.service" level="INFO" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.sante.openncp.core.common.tsam.dao" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.common.configuration" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.sante.ehdsi.openncp" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="eu.europa.ec.sante.ehdsi.openncp.abusedetection" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core.client.abusedetection" level="INFO" additivity="false">
         <appender-ref ref="FILE_ABUSE"/>
         <appender-ref ref="STDOUT"/>
     </logger>
