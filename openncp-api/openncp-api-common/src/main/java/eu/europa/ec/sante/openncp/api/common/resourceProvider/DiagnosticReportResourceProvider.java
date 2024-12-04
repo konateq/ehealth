@@ -63,7 +63,7 @@ public class DiagnosticReportResourceProvider extends AbstractResourceProvider i
                                       name = "date") final DateRangeParam dateRange) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
-        final Bundle handledBundle = bundleHandler.handle(serverResponse, null);
+        final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
         validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;
     }

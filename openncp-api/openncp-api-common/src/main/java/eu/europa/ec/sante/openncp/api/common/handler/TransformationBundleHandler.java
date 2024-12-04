@@ -4,7 +4,9 @@ import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.r4.model.Bundle;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TransformationBundleHandler implements BundleHandler {
 
     private final TranscodeBundleHandler transcodeBundleHandler;
@@ -17,6 +19,8 @@ public class TransformationBundleHandler implements BundleHandler {
 
     @Override
     public Bundle handle(Bundle bundle, DispatchContext dispatchContext) {
+        Validate.notNull(bundle, "bundle must not be null");
+        Validate.notNull(dispatchContext, "dispatchContext must not be null");
         switch (dispatchContext.getNcpSide()) {
             case NCP_B:
                 return  (dispatchContext.getRestOperationType() == RestOperationTypeEnum.CREATE)

@@ -99,7 +99,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
             final SearchContainedModeEnum theSearchContainedMode) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
-        final Bundle handledBundle = bundleHandler.handle(serverResponse, null);
+        final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
 
         return handledBundle;
     }
