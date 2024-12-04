@@ -115,9 +115,21 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
             throw new AuthenticationException("Invalid SAML token.", e);
         }
 
-        if (auditSecurityInfo != null) {
-            addAssertionToSecurityContext(AuditSecurityInfo.from(auditSecurityInfo.getAssertion(), auditSecurityInfo.getSamlAsRoot()));
-        } else {
+        if(auditSecurityInfo != null) {
+            String ipAddress = theRequest.getHeader("X-FORWARDED-FOR");
+            if (ipAddress == null) {
+                ipAddress = theRequest.getRemoteAddr();
+            }
+
+            InetAddress hostIp = null;
+            try {
+                hostIp = InetAddress.getLocalHost();
+            } catch (final UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+
+            addAssertionToSecurityContext(AuditSecurityInfo.from(auditSecurityInfo.getAssertion(), auditSecurityInfo.getSamlAsRoot(), ipAddress, hostIp.getHostAddress()));
+        }else{
             throw new AuthenticationException("Invalid SAML token: empty assertion.");
         }
         LogContext.setAuthorization(jwtToken.map(JwtToken::getAuthorizationHeaderValue).orElse(null));
