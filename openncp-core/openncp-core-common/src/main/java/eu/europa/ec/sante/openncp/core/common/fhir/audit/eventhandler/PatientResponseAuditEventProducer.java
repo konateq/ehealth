@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
-import eu.europa.ec.sante.openncp.common.IpInformation;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
@@ -13,8 +12,6 @@ import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
