@@ -72,6 +72,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     @Create
     public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+
         return dispatchingService.dispatchWrite(dispatchContext, documentReference);
 
     }

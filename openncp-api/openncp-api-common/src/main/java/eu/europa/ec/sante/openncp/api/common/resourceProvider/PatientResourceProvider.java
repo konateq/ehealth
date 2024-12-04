@@ -82,7 +82,7 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
 
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
-        final Bundle handledBundle = bundleHandler.handle(serverResponse);
+        final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
         validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;
     }
