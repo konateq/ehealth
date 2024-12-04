@@ -11,10 +11,16 @@ public interface AuditSecurityInfo {
 
     Element getSamlAsRoot();
 
-    static AuditSecurityInfo from(final Assertion assertion, final Element samlAsRoot) {
-             return ImmutableAuditSecurityInfo.builder()
+    String getRequestIp();
+
+    String getHostIp();
+
+    static AuditSecurityInfo from(final Assertion assertion, final Element samlAsRoot, final String requestIp, final String hostIp) {
+        return ImmutableAuditSecurityInfo.builder()
                 .assertion(assertion)
                 .samlAsRoot(samlAsRoot)
+                .requestIp(requestIp)
+                .hostIp(hostIp)
                 .build();
     }
 
