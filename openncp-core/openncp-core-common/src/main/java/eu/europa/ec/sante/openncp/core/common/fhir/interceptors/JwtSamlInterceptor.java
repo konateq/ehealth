@@ -39,6 +39,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Optional;
@@ -115,9 +117,21 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
             throw new AuthenticationException("Invalid SAML token.", e);
         }
 
-        if (auditSecurityInfo != null) {
-            addAssertionToSecurityContext(AuditSecurityInfo.from(auditSecurityInfo.getAssertion(), auditSecurityInfo.getSamlAsRoot()));
-        } else {
+        if(auditSecurityInfo != null) {
+            String ipAddress = theRequest.getHeader("X-FORWARDED-FOR");
+            if (ipAddress == null) {
+                ipAddress = theRequest.getRemoteAddr();
+            }
+
+            InetAddress hostIp = null;
+            try {
+                hostIp = InetAddress.getLocalHost();
+            } catch (final UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+
+            addAssertionToSecurityContext(AuditSecurityInfo.from(auditSecurityInfo.getAssertion(), auditSecurityInfo.getSamlAsRoot(), ipAddress, hostIp.getHostAddress()));
+        }else{
             throw new AuthenticationException("Invalid SAML token: empty assertion.");
         }
         LogContext.setAuthorization(jwtToken.map(JwtToken::getAuthorizationHeaderValue).orElse(null));
@@ -152,7 +166,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
 
                 saml2Validator.validateXCPDHeader(hcpIdentityAssertion);
 
-                return AuditSecurityInfo.from(hcpIdentityAssertion, samlasRoot);
+                return AuditSecurityInfo.from(hcpIdentityAssertion, samlasRoot, "", "");
 
             } catch (final UnmarshallingException | XMLParserException | ComponentInitializationException ex) {
                 throw new AuthenticationException(Msg.code(333) + ex.getMessage());
