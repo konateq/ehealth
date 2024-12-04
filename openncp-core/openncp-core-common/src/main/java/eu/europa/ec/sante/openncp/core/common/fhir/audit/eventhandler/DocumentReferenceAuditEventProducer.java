@@ -109,3 +109,4 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
         }
     }
 }
+

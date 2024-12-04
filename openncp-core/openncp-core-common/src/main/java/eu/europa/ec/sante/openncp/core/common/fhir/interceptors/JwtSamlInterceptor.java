@@ -4,6 +4,8 @@ import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.interceptor.InterceptorAdapter;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import eu.europa.ec.sante.openncp.common.context.LogContext;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
@@ -17,6 +19,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2V
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -28,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -36,8 +40,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 
+@Component
 public class JwtSamlInterceptor extends InterceptorAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
@@ -46,23 +52,59 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
     private final SAML2Validator saml2Validator;
     private final ServerContext serverContext;
 
+    static {
+        try {
+            org.opensaml.core.config.InitializationService.initialize();
+        } catch (final InitializationException e) {
+            throw new RuntimeException("Could not initialize the opensaml InitializationService", e);
+        }
+    }
+
     public JwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator, final ServerContext serverContext) {
-        this.tokenProvider = tokenProvider;
-        this.saml2Validator = saml2Validator;
+        this.tokenProvider = Validate.notNull(tokenProvider, "tokenProvider must not be null");
+        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
+    }
+
+    private String getRequestSummary(final HttpServletRequest request) {
+        final StringBuilder summary = new StringBuilder();
+
+        // Basic request details
+        summary.append("HTTP Method: ").append(request.getMethod()).append(StringUtils.LF)
+                .append("Request URI: ").append(request.getRequestURI()).append(StringUtils.LF)
+                .append("Protocol: ").append(request.getProtocol()).append(StringUtils.LF)
+                .append("Remote Address: ").append(request.getRemoteAddr()).append(StringUtils.LF + StringUtils.LF);
+
+        // Headers
+        summary.append("Headers:\n");
+        Collections.list(request.getHeaderNames())
+                .forEach(headerName -> {
+                    final String headerValues = String.join(",", Collections.list(request.getHeaders(headerName)));
+                    summary.append(String.format(" - Header [%s] - Value [%s]", headerName, headerValues)).append(StringUtils.LF);
+                });
+
+        // Parameters
+        summary.append("\nParameters:\n");
+        Collections.list(request.getParameterNames())
+                .forEach(paramName -> {
+                    final String paramValues = String.join(",", request.getParameterValues(paramName));
+                    summary.append(String.format(" - Parameter [%s] - Value [%s]", paramName, paramValues)).append(StringUtils.LF);
+                });
+
+        return summary.toString();
     }
 
     @Override
     public boolean incomingRequestPreProcessed(final HttpServletRequest theRequest, final HttpServletResponse theResponse) {
-        LOGGER.info("Validating the incoming JWT bearer token.");
+        LOGGER.info("Validating the incoming JWT bearer token from the request.");
         final Optional<JwtToken> jwtToken = JwtToken.extractFrom(theRequest);
         if (jwtToken.isEmpty()) {
-            LOGGER.error("No jwt token found in request [{}] with serverContext [{}]", theRequest, serverContext);
+            LOGGER.error("No jwt token found in request with serverContext [{}] \n the request summary: \n {}", serverContext, getRequestSummary(theRequest));
             throw new AuthenticationException("A bearer token is mandatory to initiate a request.");
         }
 
         final DecodedJWT jwt = tokenProvider.verifyToken(jwtToken.get().getToken());
-        final String saml = jwt.getClaim("saml").asString();
+        final String saml = jwt.getClaim(AssertionType.HCP.name()).asString();
 
         final Base64.Decoder decoder = Base64.getDecoder();
         final AuditSecurityInfo auditSecurityInfo;
@@ -70,7 +112,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
             auditSecurityInfo = validateSaml(new String(decoder.decode(saml)));
         } catch (final Exception e) {
             LOGGER.error("Invalid SAML token", e);
-            throw new AuthenticationException("Invalid SAML token.");
+            throw new AuthenticationException("Invalid SAML token.", e);
         }
 
         if (auditSecurityInfo != null) {
@@ -78,16 +120,14 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
         } else {
             throw new AuthenticationException("Invalid SAML token: empty assertion.");
         }
-
+        LogContext.setAuthorization(jwtToken.map(JwtToken::getAuthorizationHeaderValue).orElse(null));
         return true;
     }
 
 
-    private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException, InitializationException {
+    private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException {
 
         Assertion hcpIdentityAssertion = null;
-
-        org.opensaml.core.config.InitializationService.initialize();
 
         LOGGER.info("SAML token: {}", saml);
 

@@ -3,6 +3,8 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
+import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.AssertionHelper;
+import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -64,7 +66,6 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 .correlationId(LogContext.getCorrelationId())
                 .build();
     }
-
 
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {

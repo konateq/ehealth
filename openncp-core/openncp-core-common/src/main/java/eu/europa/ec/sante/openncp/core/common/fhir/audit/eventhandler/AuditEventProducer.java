@@ -38,7 +38,7 @@ public interface AuditEventProducer {
                 .id(usernamePasswordAuthenticationToken.getName())
                 .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlAsRoot()))
                 .requestor(false)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getRequestIp).orElse(null))
+                .network(LogContext.getIpInformation().flatMap(IpInformation::getRequestIp))
                 .build();
     }
 
@@ -49,8 +49,9 @@ public interface AuditEventProducer {
                 .id((String) usernamePasswordAuthenticationToken.getCredentials())
                 .roleCode("provider role unknown")
                 .requestor(true)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getHostIp).orElse(null))
+                .network(LogContext.getIpInformation().flatMap(IpInformation::getRequestIp))
                 .build();
     }
 }
+
 

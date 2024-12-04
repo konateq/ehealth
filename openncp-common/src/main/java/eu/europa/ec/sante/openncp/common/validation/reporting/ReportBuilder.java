@@ -27,10 +27,10 @@ public class ReportBuilder {
     private static final boolean GAZELLE_FORMATTED_REPORT;
 
     static {
-        GAZELLE_HTML_REPORT = Boolean.parseBoolean((String) GazelleConfiguration.getInstance()
-                .getConfiguration().getProperty("GAZELLE_HTML_REPORT"));
-        GAZELLE_FORMATTED_REPORT = Boolean.parseBoolean((String) GazelleConfiguration.getInstance()
-                .getConfiguration().getProperty("GAZELLE_FORMATTED_REPORT"));
+        GAZELLE_HTML_REPORT = Boolean.parseBoolean(GazelleConfiguration.getInstance()
+                .getProperty("GAZELLE_HTML_REPORT"));
+        GAZELLE_FORMATTED_REPORT = Boolean.parseBoolean(GazelleConfiguration.getInstance()
+                .getProperty("GAZELLE_FORMATTED_REPORT"));
     }
 
     private ReportBuilder() {

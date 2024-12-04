@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.transformation.service.impl.resources;
 
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.SpecimenMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.SpecimenMyHealthEu;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.ITMTSAMError;
 import eu.europa.ec.sante.openncp.core.common.tsam.service.TerminologyService;
 import org.apache.commons.io.IOUtils;

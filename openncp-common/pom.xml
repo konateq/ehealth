@@ -4,7 +4,7 @@
     <parent>
         <groupId>eu.europa.ec.sante</groupId>
         <artifactId>openncp</artifactId>
-        <version>8.0.1-SNAPSHOT</version>
+        <version>9.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>openncp-common</artifactId>
     <name>openncp-common</name>
@@ -90,20 +90,16 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-configuration2</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-text</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <artifactId>xmlsec</artifactId>
@@ -113,6 +109,15 @@
         <dependency>
             <groupId>org.dom4j</groupId>
             <artifactId>dom4j</artifactId>
+        </dependency>
+        <!-- FHIR dependencies -->
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-structures-r4</artifactId>
         </dependency>
         <!-- Jaxen dependencies -->
         <dependency>

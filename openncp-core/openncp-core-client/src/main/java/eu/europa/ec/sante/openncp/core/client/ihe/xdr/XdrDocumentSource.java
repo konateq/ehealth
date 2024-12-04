@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xdr;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
@@ -41,7 +41,7 @@ public final class XdrDocumentSource {
      * @param countryCode - Country code of the requesting country in ISO format.
      */
     public XdrResponse discard(final XdrRequest request, final String countryCode,
-                                      final Map<AssertionEnum, Assertion> assertionMap) throws XDRException {
+                                      final Map<AssertionType, Assertion> assertionMap) throws XDRException {
 
         return provideAndRegisterDocSet(request, countryCode, assertionMap, ClassCode.EDD_CLASSCODE);
     }
@@ -53,7 +53,7 @@ public final class XdrDocumentSource {
      * @param countryCode - Country code of the requesting country in ISO format.
      */
     public XdrResponse initialize(final XdrRequest request, final String countryCode,
-                                         final Map<AssertionEnum, Assertion> assertionMap) throws XDRException {
+                                         final Map<AssertionType, Assertion> assertionMap) throws XDRException {
 
         return provideAndRegisterDocSet(request, countryCode, assertionMap, ClassCode.ED_CLASSCODE);
     }
@@ -65,7 +65,7 @@ public final class XdrDocumentSource {
      * @param countryCode - Country code of the requesting country in ISO format.
      */
     public XdrResponse provideAndRegisterDocSet(final XdrRequest request, final String countryCode,
-                                                final Map<AssertionEnum, Assertion> assertionMap, final ClassCode docClassCode)
+                                                final Map<AssertionType, Assertion> assertionMap, final ClassCode docClassCode)
             throws XDRException {
 
         final RegistryResponseType response;

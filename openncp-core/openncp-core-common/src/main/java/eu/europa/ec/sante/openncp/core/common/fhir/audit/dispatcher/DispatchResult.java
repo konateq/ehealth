@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface DispatchResult {
     DispatchMetadata getDispatchingMetadata();
 
-    String getMessage();
+    Optional<String> getMessage();
 
     DispatchStatus getDispatchStatus();
 
@@ -28,11 +28,24 @@ public interface DispatchResult {
         return !isSuccess();
     }
 
+    static DispatchResult success(final DispatchMetadata dispatchMetadata) {
+        Validate.notNull(dispatchMetadata, "dispatchMetadata must not be null");
+
+        return ImmutableDispatchResult.builder()
+                .dispatchingMetadata(dispatchMetadata)
+                .dispatchStatus(DispatchStatus.SUCCESS)
+                .build();
+    }
+
     static DispatchResult success(final DispatchMetadata dispatchMetadata, final String message) {
         Validate.notNull(dispatchMetadata, "dispatchMetadata must not be null");
         Validate.notNull(message, "message must not be null");
 
-        return ImmutableDispatchResult.builder().dispatchingMetadata(dispatchMetadata).message(message).dispatchStatus(DispatchStatus.SUCCESS).build();
+        return ImmutableDispatchResult.builder()
+                .dispatchingMetadata(dispatchMetadata)
+                .dispatchStatus(DispatchStatus.SUCCESS)
+                .message(message)
+                .build();
     }
 
     static DispatchResult failure(final DispatchMetadata dispatchMetadata, final Throwable cause) {
@@ -40,7 +53,11 @@ public interface DispatchResult {
         Validate.notNull(cause, "throwable cause must not be null");
 
         final DispatchError dispatchError = DispatchError.of(cause);
-        return ImmutableDispatchResult.builder().dispatchingMetadata(dispatchMetadata).message("No message supplied").dispatchStatus(DispatchStatus.FAILED).error(dispatchError).build();
+        return ImmutableDispatchResult.builder()
+                .dispatchingMetadata(dispatchMetadata)
+                .dispatchStatus(DispatchStatus.FAILED)
+                .error(dispatchError)
+                .build();
     }
 
     static DispatchResult failure(final DispatchMetadata dispatchMetadata, final String errorMessage, final Throwable cause) {
@@ -51,9 +68,9 @@ public interface DispatchResult {
         final DispatchError dispatchError = DispatchError.of(errorMessage, cause);
         return ImmutableDispatchResult.builder()
                 .dispatchingMetadata(dispatchMetadata)
-                .message(errorMessage)
                 .dispatchStatus(DispatchStatus.FAILED)
                 .error(dispatchError)
+                .message(errorMessage)
                 .build();
     }
 
@@ -64,9 +81,9 @@ public interface DispatchResult {
         final DispatchError dispatchError = DispatchError.of(errorMessage);
         return ImmutableDispatchResult.builder()
                 .dispatchingMetadata(dispatchMetadata)
-                .message(errorMessage)
                 .dispatchStatus(DispatchStatus.FAILED)
                 .error(dispatchError)
+                .message(errorMessage)
                 .build();
     }
 
@@ -95,7 +112,7 @@ public interface DispatchResult {
         static DispatchError of(final Throwable throwable) {
             Validate.notNull(throwable, "throwable must not be null");
 
-            return ImmutableDispatchError.builder().throwable(throwable).build();
+            return ImmutableDispatchError.builder().throwable(throwable).errorMessage(throwable.getMessage()).build();
         }
 
         static DispatchError of(final String errorMessage) {
