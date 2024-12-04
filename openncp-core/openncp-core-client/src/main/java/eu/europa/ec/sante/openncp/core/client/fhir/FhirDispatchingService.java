@@ -1,8 +1,9 @@
 package eu.europa.ec.sante.openncp.core.client.fhir;
 
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import eu.europa.ec.sante.openncp.core.common.fhir.FhirDispatchingClient;
 import eu.europa.ec.sante.openncp.core.common.fhir.HapiWebClientFactory;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
@@ -23,22 +24,30 @@ public class FhirDispatchingService implements DispatchingService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IBaseResource> T dispatchSearch(final EuRequestDetails requestDetails, String JWTToken) {
+    public <T extends IBaseResource> T dispatchSearch(final DispatchContext requestDetails) {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
-        final Bundle result = hapiWebClient.dispatch(requestDetails, JWTToken);
+        final Bundle result = hapiWebClient.dispatchSearch(requestDetails);
         return (T) result;
     }
 
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IBaseResource> T dispatchRead(final EuRequestDetails requestDetails, String JWTToken) {
+    public <T extends IBaseResource> T dispatchRead(final DispatchContext requestDetails) {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
         final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
-        final Bundle result = hapiWebClient.dispatch(requestDetails, JWTToken);
+        final Bundle result = hapiWebClient.dispatchRead(requestDetails);
         return (T) result;
+    }
+
+    @Override
+    public MethodOutcome dispatchWrite(final DispatchContext requestDetails, final IBaseResource resourceToCreate) {
+        Validate.notNull(requestDetails, "The request details cannot be null");
+
+        final FhirDispatchingClient hapiWebClient = hapiWebClientFactory.createClient(requestDetails);
+        return hapiWebClient.dispatchWrite(requestDetails, resourceToCreate);
     }
 }

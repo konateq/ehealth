@@ -72,6 +72,14 @@ public interface AuditEventData {
                     .build();
         }
 
+        static EntityData ofDocumentReferenceResource(final String resourceId) {
+            return ImmutableEntityData.builder()
+                    .id(resourceId)
+                    .type(ImmutableEntityType.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_2_SYSTEM_OBJECT, Optional.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_2_SYSTEM_OBJECT_DISPLAY)))
+                    .role(ImmutableEntityRole.of(BalpConstants.CS_OBJECT_ROLE_4_DOMAIN_RESOURCE, Optional.of(BalpConstants.CS_OBJECT_ROLE_4_DOMAIN_RESOURCE_DISPLAY)))
+                    .build();
+        }
+
         @Domain
         interface EntityType {
             String getCode();

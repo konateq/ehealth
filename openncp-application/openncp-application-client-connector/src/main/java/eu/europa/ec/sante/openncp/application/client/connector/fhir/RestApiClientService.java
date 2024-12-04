@@ -49,20 +49,33 @@ public class RestApiClientService {
     }
 
     public ResponseEntity<String> search(final String countryCode, final String jwtToken, final Map<String, String> searchParams, String resourcePath) {
-        HttpHeaders headers = getHeaders();
+        final HttpHeaders headers = getHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
         headers.set("CountryCode", countryCode);
 
-        HttpEntity<Map<String, Object>> newRequest;
-        newRequest = new HttpEntity<>(headers);
+        final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
 
-        String urlWithParams = configurationManager.getProperty("FHIR_REST_CLIENT_API") + resourcePath + "?" + searchParams.entrySet()
+        final String urlWithParams = configurationManager.getProperty("FHIR_REST_CLIENT_API") + resourcePath + "?" + searchParams.entrySet()
                 .stream()
                 .map(entry -> entry.getKey() + "=" + entry.getValue())
                 .reduce((param1, param2) -> param1 + "&" + param2)
                 .orElse("");
 
-        ResponseEntity<String> response =  this.restTemplate.exchange(urlWithParams, HttpMethod.GET, newRequest, String.class);
+        final ResponseEntity<String> response =  this.restTemplate.exchange(urlWithParams, HttpMethod.GET, newRequest, String.class);
+
+        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+    }
+
+    public ResponseEntity<String> post(final String countryCode, final String jwtToken, final Map<String, Object> payload, String resourcePath) {
+        final HttpHeaders headers = getHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        headers.set("CountryCode", countryCode);
+
+        final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(payload, headers);
+
+        final String urlWithParams = configurationManager.getProperty("FHIR_REST_CLIENT_API") + resourcePath;
+
+        final ResponseEntity<String> response =  this.restTemplate.exchange(urlWithParams, HttpMethod.POST, newRequest, String.class);
 
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }

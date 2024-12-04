@@ -83,7 +83,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     @Override
     public void XSPARoleValidator(Assertion assertion, ClassCode classCode) throws MissingFieldException, InvalidFieldException {
 
-        String structuralRole = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
+        String structuralRole = getRoleCodeFromAssertion(assertion);
         logger.debug("HCP Identity Assertion XSPA Structural Role: '{}'", structuralRole);
 
         if (XSPARole.containsCode(structuralRole)) {
@@ -139,7 +139,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     @Override
     public void PurposeOfUseValidator(Assertion assertion, ClassCode classCode) throws MissingFieldException, InsufficientRightsException {
 
-        String resourceId = getPurposeOfUseFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
+        String resourceId = getPurposeOfUseCodeFromAssertion(assertion);
         logger.info("*** PurposeOfUse ***: '{}'", resourceId);
         //String resourceId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
         if (!StringUtils.equals(resourceId, PurposeOfUse.EMERGENCY.toString())
@@ -160,7 +160,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     @Override
     public void PurposeOfUseValidatorForTRC(Assertion assertion, ClassCode classCode) throws MissingFieldException, InsufficientRightsException {
 
-        String resourceId = getPurposeOfUseFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
+        String resourceId = getPurposeOfUseCodeFromAssertion(assertion);
         if (StringUtils.isEmpty(resourceId)) {
             logger.warn("Purpose of Use for TRC is not specified [optional]");
             return;
@@ -215,8 +215,8 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         //Check allowed roles
         try {
-            String role = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
-            String roleName = getRoleNameFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
+            String role = getRoleCodeFromAssertion(assertion);
+            String roleName = getRoleNameFromAssertion(assertion);
             logger.debug("HCP with role: '{}'", role);
             if (!XSPARole.validateRole(role, roleName)) {
 
@@ -292,7 +292,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         //Check allowed roles
         try {
-            role = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
+            role = getRoleCodeFromAssertion(assertion);
         } catch (MissingFieldException ex) {
             logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
             throw new InsufficientRightsException();
@@ -355,7 +355,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         //Check allowed roles
         try {
-            role = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
+            role = getRoleCodeFromAssertion(assertion);
         } catch (MissingFieldException ex) {
             logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
             throw new InsufficientRightsException();
@@ -452,7 +452,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         //Check allowed roles
         try {
-            role = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
+            role = getRoleCodeFromAssertion(assertion);
         } catch (MissingFieldException ex) {
             logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
             throw new InsufficientRightsException();
@@ -503,7 +503,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         //Check allowed roles
         try {
-            role = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
+            role = getRoleCodeFromAssertion(assertion);
         } catch (MissingFieldException ex) {
             logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
             throw new InsufficientRightsException();

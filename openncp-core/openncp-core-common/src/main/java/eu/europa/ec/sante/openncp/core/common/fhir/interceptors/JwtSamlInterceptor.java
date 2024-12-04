@@ -4,6 +4,7 @@ import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.interceptor.InterceptorAdapter;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
@@ -133,6 +134,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
         }else{
             throw new AuthenticationException("Invalid SAML token: empty assertion.");
         }
+        LogContext.setAuthorization(jwtToken.map(JwtToken::getAuthorizationHeaderValue).orElse(null));
         return true;
     }
 

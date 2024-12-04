@@ -1,9 +1,5 @@
 package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator;
 
-import java.text.MessageFormat;
-import java.time.Instant;
-import java.util.List;
-
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +10,13 @@ import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 public class AssertionHelper {
 
@@ -32,21 +35,31 @@ public class AssertionHelper {
      * @throws MissingFieldException If attribute is missing
      */
     public static String getAttributeFromAssertion(final Assertion assertion, final String attributeName) throws MissingFieldException {
+        final Optional<String> valueForAttribute = getValueForAttribute(assertion, attributeName);
+
+        return valueForAttribute.orElseThrow(() -> {
+            final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
+            return new MissingFieldException(errorMessage);
+        });
+    }
+
+    public static Optional<String> getValueForAttribute(final Assertion assertion, final String attributeName) {
 
         for (final AttributeStatement attributeStatement : assertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        return attribute.getAttributeValues().get(0).getDOM().getTextContent();
-                    } else {
-                        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-                        throw new MissingFieldException(errorMessage);
+                        final Optional<String> textContentOfFirstAttributeValue = Optional.ofNullable(attribute.getAttributeValues().get(0)).map(XMLObject::getDOM).map(Element::getTextContent);
+
+                        if (textContentOfFirstAttributeValue.isPresent()) {
+                            return textContentOfFirstAttributeValue;
+                        }
+
                     }
                 }
             }
         }
-        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-        throw new MissingFieldException(errorMessage);
+        return Optional.empty();
     }
 
     /**
@@ -89,79 +102,49 @@ public class AssertionHelper {
         }
     }
 
-    public static String getPurposeOfUseFromAssertion(final Assertion assertion, final String attributeName) throws MissingFieldException {
-
-        for (final AttributeStatement attributeStatement : assertion.getAttributeStatements()) {
-            for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equals(attribute.getName(), attributeName)) {
-                    if (!attribute.getAttributeValues().isEmpty()) {
-                        return attribute.getAttributeValues()
-                                        .get(0)
-                                        .getDOM()
-                                        .getElementsByTagName("PurposeOfUse")
-                                        .item(0)
-                                        .getAttributes()
-                                        .getNamedItem("code")
-                                        .getTextContent();
-                    } else {
-                        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-                        throw new MissingFieldException(errorMessage);
-                    }
-                }
-            }
-        }
-        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-        throw new MissingFieldException(errorMessage);
+    public static String getPurposeOfUseCodeFromAssertion(final Assertion assertion) throws MissingFieldException {
+        final String attributeName = AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE;
+        return extractAttributeValueFromAssertion(assertion, attributeName, "PurposeOfUse", "code").orElseThrow(() -> {
+            final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
+            return new MissingFieldException(errorMessage);
+        });
     }
 
-    public static String getRoleFromAssertion(final Assertion assertion, final String attributeName) throws MissingFieldException {
-
-        for (final AttributeStatement attributeStatement : assertion.getAttributeStatements()) {
-            for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equals(attribute.getName(), attributeName)) {
-                    if (!attribute.getAttributeValues().isEmpty()) {
-                        return attribute.getAttributeValues()
-                                        .get(0)
-                                        .getDOM()
-                                        .getElementsByTagName("Role")
-                                        .item(0)
-                                        .getAttributes()
-                                        .getNamedItem("code")
-                                        .getTextContent();
-                    } else {
-                        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-                        throw new MissingFieldException(errorMessage);
-                    }
-                }
-            }
-        }
-        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-        throw new MissingFieldException(errorMessage);
+    public static String getRoleCodeFromAssertion(final Assertion assertion) throws MissingFieldException {
+        final String attributeName = AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE;
+        return extractAttributeValueFromAssertion(assertion, attributeName, "Role", "code").orElseThrow(() -> {
+            final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
+            return new MissingFieldException(errorMessage);
+        });
     }
 
-    public static String getRoleNameFromAssertion(final Assertion assertion, final String attributeName) throws MissingFieldException {
+    public static String getRoleNameFromAssertion(final Assertion assertion) throws MissingFieldException {
+        final String attributeName = AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE;
+        return extractAttributeValueFromAssertion(assertion, attributeName, "Role", "displayName").orElseThrow(() -> {
+            final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
+            return new MissingFieldException(errorMessage);
+        });
+    }
 
+    public static Optional<String> extractAttributeValueFromAssertion(final Assertion assertion, final String attributeName, final String elementName, final String elementAttributeName) {
         for (final AttributeStatement attributeStatement : assertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equals(attribute.getName(), attributeName)) {
                     if (!attribute.getAttributeValues().isEmpty()) {
-                        return attribute.getAttributeValues()
-                                        .get(0)
-                                        .getDOM()
-                                        .getElementsByTagName("Role")
-                                        .item(0)
-                                        .getAttributes()
-                                        .getNamedItem("displayName")
-                                        .getTextContent();
-                    } else {
-                        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-                        throw new MissingFieldException(errorMessage);
+                        return attribute.getAttributeValues().stream()
+                                .findFirst() // Get the first value defensively
+                                .map(XMLObject::getDOM)
+                                .map(dom -> dom.getElementsByTagName(elementName))
+                                .filter(nodeList -> nodeList.getLength() > 0) // Ensure the node list is not empty
+                                .map(nodeList -> nodeList.item(0))
+                                .map(Node::getAttributes)
+                                .map(attributes -> attributes.getNamedItem(elementAttributeName))
+                                .map(Node::getTextContent);
                     }
                 }
             }
         }
-        final String errorMessage = MessageFormat.format(ERROR_MESSAGE, attributeName);
-        throw new MissingFieldException(errorMessage);
+        return Optional.empty();
     }
 
     public static boolean isExpired(final Assertion assertion) {
@@ -171,6 +154,6 @@ public class AssertionHelper {
         }
 
         return assertion.getConditions().getNotOnOrAfter() != null && (assertion.getConditions().getNotOnOrAfter().isBefore(DateTime.now()) ||
-                                                                       assertion.getConditions().getNotOnOrAfter().equals(Instant.now()));
+                assertion.getConditions().getNotOnOrAfter().equals(Instant.now()));
     }
 }

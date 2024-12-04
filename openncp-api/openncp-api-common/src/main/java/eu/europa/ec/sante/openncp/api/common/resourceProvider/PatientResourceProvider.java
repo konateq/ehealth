@@ -12,7 +12,8 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
@@ -37,10 +38,10 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
-        super(validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService);
-        this.bundleHandler = Validate.notNull(bundleHandler);
+    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+        super(serverContext, validationService);
+        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
     @Override
@@ -79,10 +80,9 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
 
                               @RawParam final Map<String, List<String>> theAdditionalRawParams) {
 
-        final String jwt = getJwtFromRequest(theServletRequest);
-
-        final Bundle serverResponse = dispatchingService.dispatchSearch(EuRequestDetails.of(theRequestDetails), jwt);
-        final Bundle handledBundle = bundleHandler.handle(serverResponse);
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
         validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;
     }

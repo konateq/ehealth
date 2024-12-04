@@ -90,6 +90,16 @@ public interface ClientConnectorService {
             throws ClientConnectorException;
 
     /**
+     * @param assertions      - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode     - ISO Country code of the patient country of origin.
+     * @param payload         - REST API Body.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    ResponseEntity<String> postDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, Object> payload)
+            throws ClientConnectorException;
+
+    /**
      * @param assertions       - Map of assertions required by the transaction (HCP, TRC, NoK optional).
      * @param countryCode      - ISO Country code of the patient country of origin.
      * @param searchParams     - Search parameters to identify the Bundle.

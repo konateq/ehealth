@@ -272,6 +272,12 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
     }
 
+    @Override
+    public ResponseEntity<String> postDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, Object> payload) throws ClientConnectorException {
+        final String jwtToken = jwtTokenGenerator.generate(assertions);
+        return restApiClientService.post(countryCode, jwtToken, payload, "DocumentReference");
+    }
+
     /**
      * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
      * @param countryCode   - ISO Country code of the patient country of origin.
