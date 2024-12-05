@@ -6,7 +6,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
 import org.opensaml.saml.saml2.core.Assertion;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,18 +29,18 @@ public interface MedicalImagingStudyRequest extends OpenNcpRequest {
 
     Optional<String> getBodyPartCode();
 
-    Optional<LocalDate> getStudyDate();
+    Optional<LocalDateTime> getStudyDate();
 
     Optional<DateRange> getCreatedBetweenRange();
 
     default Map<String, Set<String>> getSearchParameters() {
         final Map<String, Set<String>> payload = new HashMap<>();
-        payload.put("patient", Set.of(getPatientId().getRoot() + "|" + getPatientId().getExtension()));
+        payload.put("patient.identifier", Set.of(getPatientId().getRoot() + "|" + getPatientId().getExtension()));
         payload.put("type", Set.of(Loinc.MEDICAL_IMAGE_STUDY.getFhirReference()));
 
         final Set<String> specificSearchParameters = Stream.of(
                         getModalityCode().map(modality -> "urn:oid:1.2.840.10008.6.1.19|" + modality),
-                        getBodyPartCode().map(bodyPart -> "http://snomed.info/sct|" + bodyPart)
+                        getBodyPartCode().map(bodyPart -> "http://snomed.org/sct|" + bodyPart)
                 )
                 .flatMap(Optional::stream)
                 .collect(Collectors.toSet());

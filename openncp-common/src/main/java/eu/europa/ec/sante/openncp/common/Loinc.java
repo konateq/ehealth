@@ -7,7 +7,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.util.Objects;
 
 public class Loinc {
-    private static final String LOINC_PREFIX = "http://loinc.org/";
+    private static final String LOINC_PREFIX = "http://loinc.org";
+    public static final String PIPE = "|";
 
     private final String code;
 
@@ -32,7 +33,7 @@ public class Loinc {
     }
 
     public String getFhirReference() {
-        return LOINC_PREFIX + code;
+        return LOINC_PREFIX + PIPE + code;
     }
 
     @Override

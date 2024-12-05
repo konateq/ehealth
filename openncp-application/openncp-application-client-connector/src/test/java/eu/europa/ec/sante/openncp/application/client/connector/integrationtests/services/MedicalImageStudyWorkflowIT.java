@@ -30,8 +30,8 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
 
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
-        patientId.setRoot("1.3.6.1.4.1.48336");
-        patientId.setExtension("2-1234-W8");
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
 
         final MedicalImagingStudyRequest medicalImagingStudyRequest = ImmutableMedicalImagingStudyRequest.builder()
                 .countryCode("BE")
@@ -50,15 +50,15 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
 
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
-        patientId.setRoot("1.3.6.1.4.1.48336");
-        patientId.setExtension("2-1234-W8");
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
 
         final MedicalImagingStudyRequest medicalImagingStudyRequest = ImmutableMedicalImagingStudyRequest.builder()
                 .countryCode("BE")
                 .patientId(patientId)
                 .putAssertion(AssertionType.HCP, clinicalAssertion)
                 .modalityCode("CT")
-                .bodyPartCode("63337009") // SNOMED CT code for Abdominopelvic segment of trunk
+                .bodyPartCode("38266002") // SNOMED CT code for whole body
                 .build();
 
         final ResponseEntity<String> responseEntity = clientConnectorService.queryMedicalImagingStudyDocumentReferences(medicalImagingStudyRequest);
