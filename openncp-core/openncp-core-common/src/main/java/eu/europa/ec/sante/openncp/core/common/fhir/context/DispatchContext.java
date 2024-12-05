@@ -42,14 +42,21 @@ public interface DispatchContext {
         return getHapiRequestDetails().getRestOperationType();
     }
 
-    default Optional<FhirSupportedResourceType> getSupportedResourceType() {
-        return FhirSupportedResourceType.ofRequestPath(getHapiRequestDetails().getResourceName());
+    default Optional<String[]> getParameter(final String parameterName) {
+        return Optional.ofNullable(getHapiRequestDetails().getParameters().get(parameterName));
     }
 
-    default String getResourceType() {
-        return getSupportedResourceType()
-                .map(FhirSupportedResourceType::getRestRequestPath)
-                .map(FhirSupportedResourceType.RestRequestPath::getValue)
+    default Optional<FhirSupportedResourceType> getSupportedResourceType() {
+        return FhirSupportedResourceType.findFhirSupportedResourceType(getHapiRequestDetails());
+    }
+
+    default String getResourcePath() {
+        return getHapiRequestDetails().getResourceName();
+    }
+
+    default String getSpecificResourceType() {
+        return FhirSupportedResourceType.findFhirSupportedResourceType(getHapiRequestDetails())
+                .map(FhirSupportedResourceType::name)
                 .orElseGet(() -> getHapiRequestDetails().getResourceName());
     }
 

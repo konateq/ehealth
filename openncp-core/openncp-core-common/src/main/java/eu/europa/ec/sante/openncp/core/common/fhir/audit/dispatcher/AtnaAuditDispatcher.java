@@ -25,7 +25,7 @@ public class AtnaAuditDispatcher implements AuditDispatcher {
     }
 
     @Override
-    public DispatchResult dispatch(final AuditEvent auditEvent, String resourceType) {
+    public DispatchResult dispatch(final AuditEvent auditEvent, final String resourceType) {
         final AuditMessage iheAuditMessage = auditMessageAdapter.convertFhirAuditEventToIHEAuditMessage(auditEvent);
         final SerializableMessage serializableMessage = new SerializableMessage(iheAuditMessage, "13", "2");
 
@@ -40,7 +40,7 @@ public class AtnaAuditDispatcher implements AuditDispatcher {
             } else {
                 return DispatchResult.failure(dispatchingMetadata, "The handling of the message returned false");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             return DispatchResult.failure(dispatchingMetadata, e);
         }
     }

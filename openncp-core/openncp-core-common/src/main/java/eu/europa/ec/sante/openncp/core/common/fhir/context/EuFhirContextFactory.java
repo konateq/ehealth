@@ -21,10 +21,10 @@ public class EuFhirContextFactory {
         ctx.setParserErrorHandler(new LenientErrorHandler());
 
         Arrays.stream(FhirSupportedResourceType.values()).forEach(fhirSupportedResourceType -> {
-            final FhirSupportedResourceType.CustomResource customType = fhirSupportedResourceType.getCustomType();
-            if (customType.isCustomResource()) {
-                final Class<? extends CustomResource> resourceClass = customType.getCustomResourceClass().orElseThrow();
-                final String resourceProfile = customType.getProfile().orElseThrow();
+            final CustomFhirResource customFhirResource = fhirSupportedResourceType.getCustomFhirResource();
+            if (customFhirResource.isCustomResource()) {
+                final Class<? extends CustomResource> resourceClass = customFhirResource.getCustomResourceClass().orElseThrow();
+                final String resourceProfile = customFhirResource.getProfile().orElseThrow();
                 LOGGER.info("Registering default FHIR type [{}] for profile [{}]", resourceClass.getSimpleName(), resourceProfile);
                 ctx.setDefaultTypeForProfile(resourceProfile, resourceClass);
             }

@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -98,6 +99,8 @@ public interface ClientConnectorService {
      */
     ResponseEntity<String> postDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, Object> payload)
             throws ClientConnectorException;
+
+    ResponseEntity<String> queryMedicalImagingStudyDocumentReferences(MedicalImagingStudyRequest medicalImagingStudyRequest) throws ClientConnectorException;
 
     /**
      * @param assertions       - Map of assertions required by the transaction (HCP, TRC, NoK optional).
