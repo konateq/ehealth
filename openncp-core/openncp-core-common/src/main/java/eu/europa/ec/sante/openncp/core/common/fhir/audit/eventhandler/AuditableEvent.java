@@ -57,8 +57,8 @@ public interface AuditableEvent {
         }
 
         final List<String> supportedResourceValues = Arrays.stream(types)
-                .map(FhirSupportedResourceType::getRestRequestPath)
-                .map(FhirSupportedResourceType.RestRequestPath::getValue)
+                .map(FhirSupportedResourceType::getRequest)
+                .map(FhirSupportedResourceType.Request::getPath)
                 .collect(Collectors.toList());
         return resourceIsOfType(supportedResourceValues);
     }
