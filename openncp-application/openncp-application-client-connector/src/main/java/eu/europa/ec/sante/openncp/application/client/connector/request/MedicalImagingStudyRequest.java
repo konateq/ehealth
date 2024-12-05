@@ -40,7 +40,7 @@ public interface MedicalImagingStudyRequest extends OpenNcpRequest {
 
         final Set<String> specificSearchParameters = Stream.of(
                         getModalityCode().map(modality -> "urn:oid:1.2.840.10008.6.1.19|" + modality),
-                        getBodyPartCode().map(bodyPart -> "http://snomed.org/sct|" + bodyPart)
+                        getBodyPartCode().map(bodyPart -> "http://snomed.info/sct|" + bodyPart)
                 )
                 .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
