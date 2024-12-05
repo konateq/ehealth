@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClien
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
+import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
@@ -37,6 +38,8 @@ import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /*
  *  Client Service class providing access to the MyHealth@EU workflows (Patient Summary, ePrescription, OrCD etc.).
@@ -247,29 +250,30 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param searchParams  - Search parameters to uniquely define the patient.
+     * @param assertions   - Map of assertions required by the transaction (HCP, NoK optional).
+     * @param countryCode  - ISO Country code of the patient country of origin.
+     * @param searchParams - Search parameters to uniquely define the patient.
      * @return List of PatientMyHealthEu resources
      * @throws ClientConnectorException
      */
     @Override
     public ResponseEntity<String> queryPatientFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, searchParams, "Patient");
+
+        return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "Patient");
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param searchParams  - Search parameters to match the DocumentReferences.
+     * @param assertions   - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode  - ISO Country code of the patient country of origin.
+     * @param searchParams - Search parameters to match the DocumentReferences.
      * @return List of DocumentReference Resources
      * @throws ClientConnectorException
      */
     @Override
     public ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
+        return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "DocumentReference");
     }
 
     @Override
@@ -278,30 +282,38 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         return restApiClientService.post(countryCode, jwtToken, payload, "DocumentReference");
     }
 
+    @Override
+    public ResponseEntity<String> queryMedicalImagingStudyDocumentReferences(final MedicalImagingStudyRequest medicalImagingStudyRequest) throws ClientConnectorException {
+        Validate.notNull(medicalImagingStudyRequest, "medicalImagingStudyRequest must not be null");
+
+        final String jwtToken = jwtTokenGenerator.generate(medicalImagingStudyRequest.getAssertions());
+        return restApiClientService.search(medicalImagingStudyRequest.getCountryCode(), jwtToken, medicalImagingStudyRequest.getSearchParameters(), "DocumentReference");
+    }
+
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param searchParams  - Search parameters to identify the Bundle.
+     * @param assertions   - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode  - ISO Country code of the patient country of origin.
+     * @param searchParams - Search parameters to identify the Bundle.
      * @return List of Bundle resources
      * @throws ClientConnectorException
      */
     @Override
     public ResponseEntity<String> queryBundleFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, searchParams, "Bundle");
+        return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "Bundle");
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param id            - Identifier of the bundle
+     * @param assertions  - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode - ISO Country code of the patient country of origin.
+     * @param id          - Identifier of the bundle
      * @return List of Bundle resources
      * @throws ClientConnectorException
      */
     @Override
     public ResponseEntity<String> queryBundleFhirById(final Map<AssertionType, Assertion> assertions, final String countryCode, final String id) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" +id);
+        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" + id);
     }
 
 
@@ -357,5 +369,13 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         final SubmitDocumentResponse submitDocumentResponse = objectFactory.createSubmitDocumentResponse();
         submitDocumentResponse.setResponseStatus(clientConnectorService.getClientConnectorServicePortType().submitDocument(submitDocumentRequest));
         return submitDocumentResponse;
+    }
+
+    private Map<String, Set<String>> toMultiValueMap(final Map<String, String> singleValueMap) {
+        return singleValueMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> Set.of(entry.getValue())
+                ));
     }
 }

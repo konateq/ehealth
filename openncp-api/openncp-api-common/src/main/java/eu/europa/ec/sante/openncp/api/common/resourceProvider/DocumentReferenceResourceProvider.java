@@ -82,7 +82,8 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     }
 
     private Bundle getResponseAndValidate(RequestDetails theRequestDetails, DispatchContext dispatchContext) {
-        validate(dispatchContext.getHapiRequestDetails().getResource(), theRequestDetails.getRestOperationType());
+        //FIXME the validate fails as the dispatchContext.getHapiRequestDetails().getResource() is null (not WRITE)
+        //validate(dispatchContext.getHapiRequestDetails().getResource(), theRequestDetails.getRestOperationType());
         final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
         return serverResponse;
     }

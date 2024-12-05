@@ -11,11 +11,7 @@ import org.hl7.fhir.instance.model.api.IIdType;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Wrapper around the {@link RequestDetails}
@@ -46,18 +42,21 @@ public interface DispatchContext {
         return getHapiRequestDetails().getRestOperationType();
     }
 
-    default Optional<String[]> getParameter(String parameterName) {
+    default Optional<String[]> getParameter(final String parameterName) {
         return Optional.ofNullable(getHapiRequestDetails().getParameters().get(parameterName));
     }
 
     default Optional<FhirSupportedResourceType> getSupportedResourceType() {
-        return FhirSupportedResourceType.ofRequestPath(getHapiRequestDetails());
+        return FhirSupportedResourceType.findFhirSupportedResourceType(getHapiRequestDetails());
     }
 
-    default String getResourceType() {
-        return getSupportedResourceType()
-                .map(FhirSupportedResourceType::getRequest)
-                .map(FhirSupportedResourceType.Request::getPath)
+    default String getResourcePath() {
+        return getHapiRequestDetails().getResourceName();
+    }
+
+    default String getSpecificResourceType() {
+        return FhirSupportedResourceType.findFhirSupportedResourceType(getHapiRequestDetails())
+                .map(FhirSupportedResourceType::name)
                 .orElseGet(() -> getHapiRequestDetails().getResourceName());
     }
 

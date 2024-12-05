@@ -53,7 +53,7 @@ public class FhirDispatchingClient {
                 RestOperationTypeEnum.READ,
                 (jwtToken, dispatchUri) -> {
                     IReadExecutable<IBaseResource> readExecutable = genericClient.read()
-                            .resource(dispatchContext.getResourceType())
+                            .resource(dispatchContext.getResourcePath())
                             .withUrl(dispatchUri.toString());
                     if (jwtToken != null) {
                         readExecutable = readExecutable.withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue());

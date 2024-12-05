@@ -5,6 +5,7 @@ import ca.uhn.fhir.interceptor.api.Pointcut;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.RequestMatcher;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -57,8 +58,8 @@ public interface AuditableEvent {
         }
 
         final List<String> supportedResourceValues = Arrays.stream(types)
-                .map(FhirSupportedResourceType::getRequest)
-                .map(FhirSupportedResourceType.Request::getPath)
+                .map(FhirSupportedResourceType::getRequestMatcher)
+                .map(RequestMatcher::getPath)
                 .collect(Collectors.toList());
         return resourceIsOfType(supportedResourceValues);
     }
