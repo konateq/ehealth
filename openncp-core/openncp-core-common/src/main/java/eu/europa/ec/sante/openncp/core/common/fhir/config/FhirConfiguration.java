@@ -76,6 +76,9 @@ public class FhirConfiguration {
             npmPackageSupport.loadPackageFromClasspath("classpath:package/hl7.fhir.uv.ips.1.1.0.tgz");
             LOG.info("Loading myhealtheu_lab_0.0.1.tgz package");
             npmPackageSupport.loadPackageFromClasspath("classpath:package/myhealtheu_lab_0.0.1.tgz");
+            LOG.info("Loading hl7.fhir.eu.hdr-0.0.1-ci.tgz package");
+            npmPackageSupport.loadPackageFromClasspath("classpath:package/hl7.fhir.eu.hdr-0.0.1-ci.tgz");
+
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }

@@ -11,20 +11,22 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
+import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.DocumentReference;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Base64;
 
 @Component
 public class DocumentReferenceResourceProvider extends AbstractResourceProvider implements IResourceProvider {
@@ -72,6 +74,25 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     @Create
     public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+
+        documentReference.getContent().stream()
+                .filter(DocumentReference.DocumentReferenceContentComponent::hasAttachment)
+                .forEach(content -> {
+            if (content.getAttachment().hasData()) {
+                LOGGER.info("Attachment data is present");
+                Base64BinaryType base64BinaryType = content.getAttachment().getDataElement();
+                if (base64BinaryType != null) {
+                    LOGGER.info("Base64 data is present {}", base64BinaryType.getValueAsString());
+                    String jsonBundle = new String(Base64.getDecoder().decode(base64BinaryType.getValueAsString()));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    try {
+                        Bundle bundle = objectMapper.readValue(jsonBundle, Bundle.class);
+                        validate(bundle, theRequestDetails.getRestOperationType());
+                    } catch (Exception e) {
+                        LOGGER.error("Error while decoding the bundle", e);
+                    }
+                }
+            }});
 
         return dispatchingService.dispatchWrite(dispatchContext, documentReference);
 
