@@ -1,6 +1,8 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
@@ -75,6 +77,8 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
 
+        final FhirContext ctx = FhirContext.forR4();
+
         documentReference.getContent().stream()
                 .filter(DocumentReference.DocumentReferenceContentComponent::hasAttachment)
                 .forEach(content -> {
@@ -84,9 +88,9 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
                 if (base64BinaryType != null) {
                     LOGGER.info("Base64 data is present {}", base64BinaryType.getValueAsString());
                     String jsonBundle = new String(Base64.getDecoder().decode(base64BinaryType.getValueAsString()));
-                    ObjectMapper objectMapper = new ObjectMapper();
+                    IParser parser = ctx.newJsonParser();
                     try {
-                        Bundle bundle = objectMapper.readValue(jsonBundle, Bundle.class);
+                        Bundle bundle = parser.parseResource(Bundle.class, jsonBundle);
                         validate(bundle, theRequestDetails.getRestOperationType());
                     } catch (Exception e) {
                         LOGGER.error("Error while decoding the bundle", e);
