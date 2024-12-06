@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
+import eu.europa.ec.sante.openncp.application.client.connector.request.ImmutableDateRange;
 import eu.europa.ec.sante.openncp.application.client.connector.request.ImmutableMedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -12,6 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+
+import java.time.LocalDate;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,6 +60,11 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
         final MedicalImagingStudyRequest medicalImagingStudyRequest = ImmutableMedicalImagingStudyRequest.builder()
                 .countryCode("BE")
                 .patientId(patientId)
+                .procedureDateBetweenRange(ImmutableDateRange.builder()
+                        .from(LocalDate.of(2024, Month.DECEMBER, 5))
+                        .to(LocalDate.of(2024, Month.DECEMBER, 5))
+                        .build()
+                )
                 .putAssertion(AssertionType.HCP, clinicalAssertion)
                 .modalityCode("CT")
                 .bodyPartCode("38266002") // SNOMED CT code for whole body
