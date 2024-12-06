@@ -13,12 +13,10 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
-import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.*;
@@ -37,10 +35,12 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
+    private final FhirContext fhirContext;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService, final FhirContext fhirContext) {
         super(serverContext, validationService);
         this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirContext = Validate.notNull(fhirContext, "fhirContext must not be null");
     }
 
     @Override
@@ -77,8 +77,6 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
 
-        final FhirContext ctx = FhirContext.forR4();
-
         documentReference.getContent().stream()
                 .filter(DocumentReference.DocumentReferenceContentComponent::hasAttachment)
                 .forEach(content -> {
@@ -88,10 +86,11 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
                 if (base64BinaryType != null) {
                     LOGGER.info("Base64 data is present {}", base64BinaryType.getValueAsString());
                     String jsonBundle = new String(Base64.getDecoder().decode(base64BinaryType.getValueAsString()));
-                    IParser parser = ctx.newJsonParser();
+                    IParser parser = fhirContext.newJsonParser();
                     try {
                         Bundle bundle = parser.parseResource(Bundle.class, jsonBundle);
                         validate(bundle, theRequestDetails.getRestOperationType());
+                        LOGGER.info("Bundle is successfully validated");
                     } catch (Exception e) {
                         LOGGER.error("Error while decoding the bundle", e);
                     }
