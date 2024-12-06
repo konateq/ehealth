@@ -1,6 +1,8 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
@@ -17,14 +19,14 @@ import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.DocumentReference;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Base64;
 
 @Component
 public class DocumentReferenceResourceProvider extends AbstractResourceProvider implements IResourceProvider {
@@ -33,10 +35,12 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final DispatchingService dispatchingService;
 
+    private final FhirContext fhirContext;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService, final FhirContext fhirContext) {
         super(serverContext, validationService);
         this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirContext = Validate.notNull(fhirContext, "fhirContext must not be null");
     }
 
     @Override
@@ -72,6 +76,26 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     @Create
     public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+
+        documentReference.getContent().stream()
+                .filter(DocumentReference.DocumentReferenceContentComponent::hasAttachment)
+                .forEach(content -> {
+            if (content.getAttachment().hasData()) {
+                LOGGER.info("Attachment data is present");
+                Base64BinaryType base64BinaryType = content.getAttachment().getDataElement();
+                if (base64BinaryType != null) {
+                    LOGGER.info("Base64 data is present {}", base64BinaryType.getValueAsString());
+                    String jsonBundle = new String(Base64.getDecoder().decode(base64BinaryType.getValueAsString()));
+                    IParser parser = fhirContext.newJsonParser();
+                    try {
+                        Bundle bundle = parser.parseResource(Bundle.class, jsonBundle);
+                        validate(bundle, theRequestDetails.getRestOperationType());
+                        LOGGER.info("Bundle is successfully validated");
+                    } catch (Exception e) {
+                        LOGGER.error("Error while decoding the bundle", e);
+                    }
+                }
+            }});
 
         return dispatchingService.dispatchWrite(dispatchContext, documentReference);
 
