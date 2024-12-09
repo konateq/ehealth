@@ -1,0 +1,97 @@
+{
+  "LimitFindInstances": 0,
+  "LimitJobs": 10,
+  "LogExportedResources": false,
+  "KeepAlive": true,
+  "TcpNoDelay": true,
+  "HttpThreadsCount": 50,
+  "StoreDicom": true,
+  "DicomAssociationCloseDelay": 5,
+  "QueryRetrieveSize": 100,
+  "CaseSensitivePN": false,
+  "LoadPrivateDictionary": true,
+  "Dictionary": {},
+  "SynchronousCMove": true,
+  "JobsHistorySize": 10,
+  "SaveJobs": true,
+  "OverwriteInstances": false,
+  "MediaArchiveSize": 1,
+
+  "PostgreSQL": {
+    "EnableIndex": true,
+    "EnableStorage": true,
+    "Host": "localhost",
+    "Port": 5432,
+    "Username": "postgress",
+    "Password": "postgress",
+    "Database": "orthanc_db"
+  },
+
+  "DicomWeb": {
+    "Enable": true,
+    "Root": "/dicom-web/",
+    "PublicRoot": "/dicom-web/",
+    "EnableWado": true,
+    "WadoRoot": "/wado",
+    "Ssl": true,
+    "Host": "your-dicomweb-host",
+    "QidoCaseSensitive": true,
+    "StudiesMetadata": "Extrapolate",
+    "StudiesMetadataExtrapolatedTags": [
+      "AcquisitionDate"
+    ],
+    "SeriesMetadata": "Extrapolate",
+    "SeriesMetadataExtrapolatedTags": [
+      "BitsAllocated",
+      "BitsStored",
+      "Columns",
+      "HighBit",
+      "PhotometricInterpretation",
+      "PixelSpacing",
+      "PlanarConfiguration",
+      "RescaleIntercept",
+      "RescaleSlope",
+      "Rows",
+      "SOPClassUID",
+      "SamplesPerPixel",
+      "SliceThickness"
+    ],
+    "EnableMetadataCache": true,
+    "MetadataWorkerThreadsCount": 4,
+    "StowMaxInstances": 10,
+    "StowMaxSize": 10,
+    "Servers": {
+      "sample": ["http://localhost:8042/dicom-web/", "user", "user"]
+    },
+    "ServersInDatabase": true
+  },
+
+  "Logs": {
+    "Level": "INFO",
+    "Path": "/var/log/orthanc/orthanc.log"
+  },
+
+  "RestApiWriteToFileSystemEnabled": true,
+
+  "RemoteAccessAllowed": false,
+  "AuthenticationEnabled": true,
+  "RegisteredUsers": {
+    "admin": "admin",
+    "user": "admin"
+  },
+
+  "DicomModalities": {
+    "PACS": [ "PACS_AET", "127.0.0.1", 104 ]
+  },
+
+  "LuaScripts": {
+    "ScriptEnabled": false
+  },
+
+  "HttpServer": {
+    "SslCertificate": "/path/to/cert.pem",
+    "SslPrivateKey": "/path/to/key.pem",
+    "SslDHParameters": "/path/to/dhparam.pem"
+  }
+}
+
