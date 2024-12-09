@@ -1,5 +1,36 @@
 version: '3'
 services:
+  orthanc:
+    image: jodogne/orthanc-plugins:latest
+    container_name: openncp-dicom-server
+    ports:
+      - "8042:8042"  # Web interface
+      - "4242:4242"  # DICOM port
+    volumes:
+      - ./openncp-dicom-server/orthanc.json:/openncp-dicom-server/orthanc.json
+      - ./openncp-dicom-server/var/lib/orthanc/db-v6:/openncp-dicom-server/var/lib/orthanc/db-v6
+    depends_on:
+      - postgres
+    environment:
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USERNAME=postgress
+      - PG_PASSWORD=postgress
+      - PG_DATABASE=orthanc_db
+    networks:
+      - openncp
+
+  postgres:
+    image: postgres:13
+    container_name: postgres-dicom
+    environment:
+      POSTGRES_USER: postgress
+      POSTGRES_PASSWORD: postgress
+      POSTGRES_DB: orthanc_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  # Persistent PostgreSQL storage
+    networks:
+      - openncp
   mysql:
     container_name: openncp_db
     hostname: ${DB_HOST}
@@ -309,6 +340,8 @@ services:
     networks:
       - openncp
 volumes:
+  orthanc-data:
+  postgres-data:
   db-data:
   tsam-exporter-data:
     name: tsam-exporter-data
