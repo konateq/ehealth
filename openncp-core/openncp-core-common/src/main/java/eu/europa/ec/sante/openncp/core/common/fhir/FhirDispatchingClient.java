@@ -53,7 +53,7 @@ public class FhirDispatchingClient {
                 RestOperationTypeEnum.READ,
                 (jwtToken, dispatchUri) -> {
                     IReadExecutable<IBaseResource> readExecutable = genericClient.read()
-                            .resource(dispatchContext.getResourcePath())
+                            .resource(dispatchContext.getResourceName())
                             .withUrl(dispatchUri.toString());
                     if (jwtToken != null) {
                         readExecutable = readExecutable.withAdditionalHeader("Authorization", jwtToken.getAuthorizationHeaderValue());
@@ -69,7 +69,7 @@ public class FhirDispatchingClient {
         );
     }
 
-    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, IBaseResource resourceToCreate) {
+    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, final IBaseResource resourceToCreate) {
         return dispatchOperation(
                 dispatchContext,
                 RestOperationTypeEnum.CREATE,
@@ -87,19 +87,18 @@ public class FhirDispatchingClient {
     }
 
     private <R> R dispatchOperation(
-            DispatchContext dispatchContext,
-            RestOperationTypeEnum expectedOperation,
-            BiFunction<JwtToken, URI, R> fhirDispatchOperation) {
+            final DispatchContext dispatchContext,
+            final RestOperationTypeEnum expectedOperation,
+            final BiFunction<JwtToken, URI, R> fhirDispatchOperation) {
 
         Validate.notNull(dispatchContext, "dispatchContext must not be null");
         Validate.notNull(expectedOperation, "expectedOperation must not be null");
         Validate.notNull(fhirDispatchOperation, "fhirDispatchOperation must not be null");
-
         // Validate the expected operation type
-        if (dispatchContext.getRestOperationType() != expectedOperation) {
+        if (dispatchContext.getHapiRestOperationType().isEmpty() || dispatchContext.getHapiRestOperationType().get() != expectedOperation) {
             throw new UnsupportedOperationException(String.format(
                     "This method only supports the \"%s\" operation but the dispatchContext has a [%s] operation",
-                    expectedOperation, dispatchContext.getRestOperationType()));
+                    expectedOperation, dispatchContext.getHapiRestOperationType()));
         }
 
         final Optional<JwtToken> jwtToken = dispatchContext.getNcpSide() == NcpSide.NCP_B ? dispatchContext.getJwtTokenFromRequest() : Optional.empty();
@@ -109,10 +108,10 @@ public class FhirDispatchingClient {
 
     private URI getDispatchUri(final DispatchContext dispatchContext) {
         final MultiValueMap<String, String> parameterMap = new LinkedMultiValueMap<>(
-                dispatchContext.getHapiRequestDetails().getParameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Arrays.asList(e.getValue()))));
+                dispatchContext.getHapiRequestDetails().get().getParameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Arrays.asList(e.getValue()))));
 
         return UriComponentsBuilder.fromHttpUrl(genericClient.getServerBase())
-                .path(dispatchContext.getHapiRequestDetails().getRequestPath())
+                .path(dispatchContext.getRequestPath())
                 .queryParams(parameterMap)
                 .build()
                 .toUri();

@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.context;
 
-import ca.uhn.fhir.rest.api.server.RequestDetails;
 import eu.europa.ec.sante.openncp.common.Loinc;
 import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
 import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.DiagnosticReportLabMyHealthEu;
@@ -21,6 +20,7 @@ public enum FhirSupportedResourceType {
     DOCUMENT_REFERENCE(new PathRequestMatcher("DocumentReference"), CustomFhirResource.none()),
     LAB_RESULT(new PathAndFhirTypeLoincRequestMatcher("DocumentReference", Loinc.LAB_RESULT), CustomFhirResource.none()),
     MEDICAL_IMAGING(new PathAndFhirTypeLoincRequestMatcher("DocumentReference", Loinc.MEDICAL_IMAGE_STUDY), CustomFhirResource.none()),
+    DICOM(new PathRequestMatcher("Dicom"), CustomFhirResource.none()),
     METADATA(new PathRequestMatcher("metadata"), CustomFhirResource.none());
 
     private final RequestMatcher requestMatcher;
@@ -40,15 +40,15 @@ public enum FhirSupportedResourceType {
     }
 
     /**
-     * Finds the first matching FhirSupportedResourceType based on the RequestDetails.
+     * Finds the first matching FhirSupportedResourceType based on the DispatchContext.
      * Matches from PathAndFhirTypeRequestMatcher are prioritized over PathRequestMatcher.
      *
-     * @param requestDetails the RequestDetails to match
+     * @param dispatchContext the DispatchContext to match
      * @return an Optional containing the prioritized matching FhirSupportedResourceType, if any
      */
-    public static Optional<FhirSupportedResourceType> findFhirSupportedResourceType(final RequestDetails requestDetails) {
+    public static Optional<FhirSupportedResourceType> findFhirSupportedResourceType(final DispatchContext dispatchContext) {
         return Arrays.stream(values())
-                .filter(resourceType -> resourceType.getRequestMatcher().matches(requestDetails))
+                .filter(resourceType -> resourceType.getRequestMatcher().matches(dispatchContext))
                 .min(Comparator.comparingInt(resourceType ->
                         resourceType.getRequestMatcher() instanceof PathAndFhirTypeLoincRequestMatcher ? 0 : 1));
     }

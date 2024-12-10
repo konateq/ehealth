@@ -177,11 +177,11 @@ public class MessageSender {
         final int port = Integer.parseInt(ConfigurationManagerFactory.getConfigurationManager().getProperty(AUDIT_REPOSITORY_PORT));
 
         final File u = new File(ConfigurationManagerFactory.getConfigurationManager().getProperty(TRUSTSTORE));
-        final KeystoreDetails trust = new KeystoreDetails(u.toString(),
+        final KeystoreDetails trust = KeystoreDetails.of(u.toString(),
                 ConfigurationManagerFactory.getConfigurationManager().getProperty(Configuration.TRUSTSTORE_PWD.getValue()),
                 ConfigurationManagerFactory.getConfigurationManager().getProperty(KEY_ALIAS));
         final File uu = new File(ConfigurationManagerFactory.getConfigurationManager().getProperty(Configuration.TLS_KEYSTORE_FILE.getValue()));
-        final KeystoreDetails key = new KeystoreDetails(uu.toString(),
+        final KeystoreDetails key = KeystoreDetails.of(uu.toString(),
                 ConfigurationManagerFactory.getConfigurationManager().getProperty(Configuration.TLS_KEYSTORE_PWD.getValue()),
                 ConfigurationManagerFactory.getConfigurationManager().getProperty(Configuration.TLS_PRIVATE_KEY_ALIAS.getValue()),
                 ConfigurationManagerFactory.getConfigurationManager().getProperty(Configuration.TLS_PRIVATE_KEY_PWD.getValue()));

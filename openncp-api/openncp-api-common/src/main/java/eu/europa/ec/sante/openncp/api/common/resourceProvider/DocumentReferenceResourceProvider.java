@@ -10,7 +10,7 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -28,12 +28,12 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceResourceProvider.class);
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
 
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+    public DocumentReferenceResourceProvider(final FhirDispatchingService fhirDispatchingService, final ServerContext serverContext, final ValidationService validationService) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
     }
 
     @Override
@@ -82,7 +82,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     }
 
     private Bundle getResponseAndValidate(final RequestDetails theRequestDetails, final DispatchContext dispatchContext) {
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
     }
@@ -93,7 +93,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
                                                  final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
 
-        return dispatchingService.dispatchWrite(dispatchContext, documentReference);
+        return fhirDispatchingService.dispatchWrite(dispatchContext, documentReference);
 
     }
 }

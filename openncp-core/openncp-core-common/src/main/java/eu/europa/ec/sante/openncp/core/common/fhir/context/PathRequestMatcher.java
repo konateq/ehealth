@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.context;
 
-import ca.uhn.fhir.rest.api.server.RequestDetails;
 import org.apache.commons.lang3.Validate;
 
 public class PathRequestMatcher implements RequestMatcher {
@@ -16,10 +15,11 @@ public class PathRequestMatcher implements RequestMatcher {
     }
 
     @Override
-    public boolean matches(final RequestDetails requestDetails) {
-        if (requestDetails == null) {
+    public boolean matches(final DispatchContext dispatchContext) {
+        if (dispatchContext == null) {
             return false;
         }
-        return path.equals(requestDetails.getResourceName());
+
+        return path.equals(dispatchContext.getResourceName());
     }
 }

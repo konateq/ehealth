@@ -13,6 +13,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,7 +26,7 @@ import java.util.UUID;
  */
 @Interceptor(order = Integer.MIN_VALUE)
 @Component
-public class CorrelationIdInterceptor implements FhirCustomInterceptor, IClientInterceptor {
+public class CorrelationIdInterceptor implements FhirCustomInterceptor, IClientInterceptor, HandlerInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(CorrelationIdInterceptor.class);
     public static final String X_CORRELATION_ID_HEADER_KEY = "X-Correlation-ID";
 
@@ -48,6 +49,14 @@ public class CorrelationIdInterceptor implements FhirCustomInterceptor, IClientI
             final ServletRequestDetails servletRequestDetails
     ) {
         servletRequestDetails.getServletResponse().setHeader(X_CORRELATION_ID_HEADER_KEY, StringEscapeUtils.escapeJava(LogContext.getCorrelationId()));
+    }
+
+    @Override
+    public boolean preHandle(final HttpServletRequest request,
+                             final HttpServletResponse response,
+                             final Object handler) throws Exception {
+        setIncomingCorrelationIdToLogContext(request, response);
+        return true;
     }
 
     @Override

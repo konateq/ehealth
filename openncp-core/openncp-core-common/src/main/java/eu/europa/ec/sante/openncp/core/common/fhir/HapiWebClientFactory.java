@@ -59,7 +59,7 @@ public class HapiWebClientFactory {
         return createClient(endpointUrl);
     }
 
-    public FhirDispatchingClient createClient(final DispatchContext requestDetails) {
-        return createClient(requestDetails.getCountryCode());
+    public FhirDispatchingClient createClient(final DispatchContext dispatchContext) {
+        return createClient(dispatchContext.getCountryCode());
     }
 }

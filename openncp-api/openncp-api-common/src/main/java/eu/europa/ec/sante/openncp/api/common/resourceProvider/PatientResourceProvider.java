@@ -14,7 +14,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -35,12 +35,12 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PatientResourceProvider.class);
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
     private final BundleHandler bundleHandler;
 
-    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+    public PatientResourceProvider(final FhirDispatchingService fhirDispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
         this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
@@ -81,7 +81,7 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
                               @RawParam final Map<String, List<String>> theAdditionalRawParams) {
 
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
         validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;

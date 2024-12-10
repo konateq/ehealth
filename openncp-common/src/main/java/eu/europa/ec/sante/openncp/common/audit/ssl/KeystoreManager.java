@@ -16,10 +16,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  *
@@ -36,13 +33,13 @@ public class KeystoreManager {
     }
 
     private KeystoreDetails defaultKeyDetails;
-    private HashMap<String, KeystoreDetails> allKeys = new HashMap<>();
-    private HashMap<String, KeystoreDetails> allStores = new HashMap<>();
+    private final HashMap<String, KeystoreDetails> allKeys = new HashMap<>();
+    private final HashMap<String, KeystoreDetails> allStores = new HashMap<>();
     private File keysDir;
     private File certsDir;
     private String home;
 
-    public KeystoreManager(String home) {
+    public KeystoreManager(final String home) {
 
         if (home != null) {
             this.home = home;
@@ -54,14 +51,14 @@ public class KeystoreManager {
 
         try {
             File certs;
-            String definedcerts = System.getProperty("javax.net.ssl.trustStore");
+            final String definedcerts = System.getProperty("javax.net.ssl.trustStore");
             String pass = System.getProperty("javax.net.ssl.trustStorePassword");
             if (definedcerts != null) {
                 certs = new File(definedcerts);
             } else {
-                String common = System.getProperty("java.home") + File.separator + "lib" + File.separator + "security" + File.separator;
-                String cacerts = common + "cacerts";
-                String jssecacerts = common + "jssecacerts";
+                final String common = System.getProperty("java.home") + File.separator + "lib" + File.separator + "security" + File.separator;
+                final String cacerts = common + "cacerts";
+                final String jssecacerts = common + "jssecacerts";
                 certs = new File(jssecacerts);
                 if (!certs.exists() || certs.length() == 0) {
                     certs = new File(cacerts);
@@ -71,13 +68,13 @@ public class KeystoreManager {
                 pass = "changeit";
             }
             if (certs.exists()) {
-                KeyStore ks = KeyStore.getInstance("jks");
-                try (FileInputStream inputStream = new FileInputStream(certs)) {
+                final KeyStore ks = KeyStore.getInstance("jks");
+                try (final FileInputStream inputStream = new FileInputStream(certs)) {
                     ks.load(inputStream, pass.toCharArray());
-                    TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
+                    final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
                     tmf.init(ks);
-                    TrustManager tms[] = tmf.getTrustManagers();
-                    for (TrustManager tm : tms) {
+                    final TrustManager[] tms = tmf.getTrustManagers();
+                    for (final TrustManager tm : tms) {
                         if (tm instanceof X509TrustManager) {
                             LOGGER.info("Found default trust manager.");
                             sunTrustManager = (X509TrustManager) tm;
@@ -86,7 +83,8 @@ public class KeystoreManager {
                     }
                 }
             }
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | NoSuchProviderException | IOException e) {
+        } catch (final KeyStoreException | NoSuchAlgorithmException | CertificateException | NoSuchProviderException |
+                       IOException e) {
             LOGGER.warn("Exception thrown trying to create default trust manager: '{}'", e.getMessage());
         }
     }
@@ -97,15 +95,15 @@ public class KeystoreManager {
 
     private static String trimPort(String host) {
 
-        int colon = host.indexOf(":");
+        final int colon = host.indexOf(":");
         if (colon > 0 && colon < host.length() - 1) {
             try {
-                int port = Integer.parseInt(host.substring(colon + 1, host.length()), host.length());
+                final int port = Integer.parseInt(host.substring(colon + 1, host.length()), host.length());
                 host = host.substring(0, colon);
                 LOGGER.info("KeystoreManager.trimPort up to colon: '{}' and port: '{}'", host, port);
 
                 return host;
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 LOGGER.error("NumberFormatException: '{}'", e.getMessage());
             }
         }
@@ -114,9 +112,9 @@ public class KeystoreManager {
 
     private static String getAnyPort(String auth) {
 
-        int star = auth.indexOf("*");
+        final int star = auth.indexOf("*");
         if (star == auth.length() - 1) {
-            int colon = auth.indexOf(":");
+            final int colon = auth.indexOf(":");
             if (colon == star - 1) {
                 auth = auth.substring(0, colon);
                 return auth;
@@ -125,85 +123,87 @@ public class KeystoreManager {
         return null;
     }
 
-    private void loadKeys(String home) {
+    private void loadKeys(final String home) {
 
-        File sec = new File(home);
+        final File sec = new File(home);
         if (!sec.exists()) {
             return;
         }
 
         keysDir = new File(sec, "keys");
         if (!keysDir.exists()) {
-            boolean keyFolderCreated = keysDir.mkdir();
+            final boolean keyFolderCreated = keysDir.mkdir();
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Keys directory creation result: '{}'", keyFolderCreated);
             }
         }
         certsDir = new File(sec, "certs");
         if (!certsDir.exists()) {
-            boolean certFolderCreated = certsDir.mkdir();
+            final boolean certFolderCreated = certsDir.mkdir();
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Keys directory creation result: '{}'", certFolderCreated);
             }
         }
         File[] keyFiles = keysDir.listFiles();
         if (keyFiles != null) {
-            for (File keyFile : keyFiles) {
+            for (final File keyFile : keyFiles) {
                 try {
-                    KeystoreDetails kd = load(new FileInputStream(keyFile));
-                    if (kd.getAuthority() != null && kd.getAuthority().trim().equalsIgnoreCase(DEFAULT)) {
-                        defaultKeyDetails = kd;
-                    }
+                    final KeystoreDetails kd = load(new FileInputStream(keyFile));
+                    kd.getAuthority()
+                            .map(String::trim)
+                            .filter(authority -> authority.equalsIgnoreCase(DEFAULT))
+                            .ifPresent(authority -> defaultKeyDetails = kd);
+
                     allKeys.put(keyFile.getName(), kd);
 
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.info("IOException thrown while loading details from '{}'", keyFile.getAbsolutePath());
                 }
             }
         }
         keyFiles = certsDir.listFiles();
         if (keyFiles != null) {
-            for (File keyFile : keyFiles) {
+            for (final File keyFile : keyFiles) {
                 try {
-                    KeystoreDetails kd = load(new FileInputStream(keyFile));
+                    final KeystoreDetails kd = load(new FileInputStream(keyFile));
                     allStores.put(keyFile.getName(), kd);
 
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.info("IOException thrown while loading details from '{}'", keyFile.getAbsolutePath());
                 }
             }
         }
     }
 
-    public void addKeyDetails(String fileName, KeystoreDetails details) throws IOException {
+    public void addKeyDetails(final String fileName, final KeystoreDetails details) throws IOException {
         storeAsKey(details, fileName);
         allKeys.put(fileName, details);
     }
 
-    public void addTrustDetails(String fileName, KeystoreDetails details) throws IOException {
+    public void addTrustDetails(final String fileName, final KeystoreDetails details) throws IOException {
         storeAsCert(details, fileName);
         allStores.put(fileName, details);
     }
 
-    public void deleteKeyDetails(String fileName) {
+    public void deleteKeyDetails(final String fileName) {
         allKeys.remove(fileName);
         deleteKey(fileName);
     }
 
-    public void deleteTrustDetails(String fileName) {
+    public void deleteTrustDetails(final String fileName) {
         allStores.remove(fileName);
         deleteCert(fileName);
     }
 
-    public KeystoreDetails getKeyDetails(String fileName) {
+    public KeystoreDetails getKeyDetails(final String fileName) {
         return allKeys.get(fileName);
     }
 
-    public KeystoreDetails getTrustStoreDetails(String fileName) {
+    public KeystoreDetails getTrustStoreDetails(final String fileName) {
         return allStores.get(fileName);
     }
 
-    public void setDefaultKeystoreDetails(KeystoreDetails details) {
+    public void setDefaultKeystoreDetails(final KeystoreDetails details) {
         defaultKeyDetails = details;
     }
 
@@ -219,11 +219,11 @@ public class KeystoreManager {
         return certsDir;
     }
 
-    public KeystoreDetails getKeyFileDetails(String fileName) {
+    public KeystoreDetails getKeyFileDetails(final String fileName) {
         return allKeys.get(fileName);
     }
 
-    public KeystoreDetails getStoreFileDetails(String fileName) {
+    public KeystoreDetails getStoreFileDetails(final String fileName) {
         return allStores.get(fileName);
     }
 
@@ -238,15 +238,15 @@ public class KeystoreManager {
     public KeystoreDetails getKeyFileForHost(String host) {
 
         KeystoreDetails def = null;
-        for (KeystoreDetails keystoreDetails : allKeys.values()) {
+        for (final KeystoreDetails keystoreDetails : allKeys.values()) {
             LOGGER.info("KeystoreManager.getKeyFileForHost getting next key authority: '{}'", keystoreDetails.getAuthority());
-            String auth = keystoreDetails.getAuthority();
+            String auth = keystoreDetails.getAuthority().orElse(null);
             if (auth != null) {
                 if (auth.endsWith("*")) {
-                    String s = trimPort(host);
+                    final String s = trimPort(host);
                     if (s != null) {
                         LOGGER.info("KeystoreManager.getKeyFileForHost trimmed port: '{}'", s);
-                        String a = getAnyPort(auth);
+                        final String a = getAnyPort(auth);
                         if (a != null) {
                             LOGGER.info("KeystoreManager.getKeyFileForHost trimmed auth: '{}'", a);
                             auth = a;
@@ -267,13 +267,13 @@ public class KeystoreManager {
     public KeystoreDetails getTrustFileForHost(String host) {
 
         KeystoreDetails def = null;
-        for (KeystoreDetails keystoreDetails : allStores.values()) {
-            String auth = keystoreDetails.getAuthority();
+        for (final KeystoreDetails keystoreDetails : allStores.values()) {
+            String auth = keystoreDetails.getAuthority().orElse(null);
             if (auth != null) {
                 if (auth.endsWith("*")) {
-                    String s = trimPort(host);
+                    final String s = trimPort(host);
                     if (s != null) {
-                        String a = getAnyPort(auth);
+                        final String a = getAnyPort(auth);
                         if (a != null) {
                             auth = a;
                             host = s;
@@ -290,19 +290,19 @@ public class KeystoreManager {
         return def;
     }
 
-    public KeystoreDetails load(InputStream in) throws IOException {
+    public KeystoreDetails load(final InputStream in) throws IOException {
 
-        Properties props = new Properties();
+        final Properties props = new Properties();
         props.load(in);
-        String keystoreLocation = props.getProperty("keystoreLocation");
+        final String keystoreLocation = props.getProperty("keystoreLocation");
         if (keystoreLocation == null || keystoreLocation.length() == 0) {
             throw new IOException("no location defined");
         }
-        String keystorePassword = props.getProperty("keystorePassword");
+        final String keystorePassword = props.getProperty("keystorePassword");
         if (keystorePassword == null || keystorePassword.length() == 0) {
             throw new IOException("no keystore password defined");
         }
-        String alias = props.getProperty("alias");
+        final String alias = props.getProperty("alias");
         String keyPassword = props.getProperty("keyPassword");
         if (keyPassword == null || keyPassword.length() == 0) {
             keyPassword = keystorePassword;
@@ -320,69 +320,67 @@ public class KeystoreManager {
             authority = "";
         }
 
-        String dns = props.getProperty("authorizedDNs");
-        List<String> authorizedDNs = new ArrayList<>();
+        final String dns = props.getProperty("authorizedDNs");
+        final List<String> authorizedDNs = new ArrayList<>();
         if (dns != null && dns.length() > 0) {
-            String[] dn = dns.split("&");
-            for (String s : dn) {
-                String decoded = URLDecoder.decode(s, StandardCharsets.UTF_8);
+            final String[] dn = dns.split("&");
+            for (final String s : dn) {
+                final String decoded = URLDecoder.decode(s, StandardCharsets.UTF_8);
                 if (decoded.length() > 0) {
                     authorizedDNs.add(decoded);
                 }
             }
         }
-        KeystoreDetails details = new KeystoreDetails(keystoreLocation, keystorePassword, alias, keyPassword);
-        details.setAlgType(algType);
-        details.setKeystoreType(keystoreType);
-        details.setAuthority(authority);
-        for (String authorizedDN : authorizedDNs) {
-            details.addAuthorizedDN(authorizedDN);
-        }
-        return details;
+        return ImmutableKeystoreDetails.builder()
+                .keystoreLocation(keystoreLocation)
+                .keystorePassword(keystorePassword)
+                .alias(alias)
+                .keyPassword(keyPassword)
+                .algType(algType)
+                .keystoreType(keystoreType)
+                .authority(authority)
+                .addAllAuthorizedDNs(authorizedDNs)
+                .build();
     }
 
-    public void storeAsKey(KeystoreDetails details, String name) throws IOException {
+    public void storeAsKey(final KeystoreDetails details, final String name) throws IOException {
         store(details, name, true);
     }
 
-    public void storeAsCert(KeystoreDetails details, String name) throws IOException {
+    public void storeAsCert(final KeystoreDetails details, final String name) throws IOException {
         store(details, name, false);
     }
 
-    public boolean deleteKey(String name) {
+    public boolean deleteKey(final String name) {
         return delete(name, true);
     }
 
-    public boolean deleteCert(String name) {
+    public boolean deleteCert(final String name) {
         return delete(name, false);
     }
 
-    private boolean delete(String name, boolean key) {
+    private boolean delete(final String name, final boolean key) {
 
         File f = key ? getKeysDirectory() : getCertsDirectory();
         f = new File(f, name);
         return f.delete();
     }
 
-    private void store(KeystoreDetails details, String name, boolean key) throws IOException {
+    private void store(final KeystoreDetails details, final String name, final boolean key) throws IOException {
 
-        Properties props = new Properties();
+        final Properties props = new Properties();
         props.setProperty("keystoreLocation", details.getKeystoreLocation());
         props.setProperty("keystorePassword", details.getKeystorePassword());
-        props.setProperty("alias", details.getAlias());
-        if (details.getKeyPassword() == null) {
-            details.setKeyPassword("");
-        }
-        props.setProperty("keyPassword", details.getKeyPassword());
+        details.getAlias().ifPresent(alias -> props.setProperty("alias", alias));
+        details.getKeyPassword().ifPresent(keyPassword -> props.setProperty("keyPassword", keyPassword));
         props.setProperty("keystoreType", details.getKeystoreType());
         props.setProperty("algType", details.getAlgType());
-        if (details.getAuthority() != null) {
-            props.setProperty("authority", details.getAuthority());
-        }
-        List<String> authorizedDNs = details.getAuthorizedDNs();
+        details.getAuthority().ifPresent(authority -> props.setProperty("authority", authority));
+
+        final Set<String> authorizedDNs = details.getAuthorizedDNs();
         if (!authorizedDNs.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            for (String dn : authorizedDNs) {
+            final StringBuilder sb = new StringBuilder();
+            for (final String dn : authorizedDNs) {
                 sb.append(URLEncoder.encode(dn, StandardCharsets.UTF_8)).append("&");
             }
             props.setProperty("authorizedDNs", sb.toString());
@@ -394,10 +392,10 @@ public class KeystoreManager {
             out = new FileOutputStream(f);
             props.store(out, "Details for " + details.getAlias() + " keystore access.");
             out.close();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw e;
         } finally {
-            if(out != null) {
+            if (out != null) {
                 out.close();
             }
         }
