@@ -46,7 +46,10 @@ public class RewriteUrlInterceptor implements FhirCustomInterceptor {
                         .flatMap(Collection::stream)
                         .map(DocumentReference.DocumentReferenceContentComponent::getAttachment)
                         .filter(attachment -> attachment.getContentType().equalsIgnoreCase(Constants.CT_FHIR_JSON_NEW))
-                        .forEach(attachment -> rewriteUrl(attachment, replaceUrl, "Bundle"));
+                        .forEach(attachment -> {
+                            rewriteUrl(attachment, replaceUrl, "Bundle");
+                            rewriteUrl(attachment, replaceUrl, "DocumentReference");
+                        });
             }
         }
     }

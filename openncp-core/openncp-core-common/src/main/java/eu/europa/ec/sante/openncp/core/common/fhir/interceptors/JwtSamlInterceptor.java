@@ -141,7 +141,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
 
     private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException {
 
-        Assertion hcpIdentityAssertion = null;
+        Assertion hcpIdentityAssertion;
 
         LOGGER.info("SAML token: {}", saml);
 
