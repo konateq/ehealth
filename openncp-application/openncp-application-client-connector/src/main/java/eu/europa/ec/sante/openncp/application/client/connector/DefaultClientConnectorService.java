@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClien
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
+import eu.europa.ec.sante.openncp.application.client.connector.request.DocumentReferenceByIdRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyManifestRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
@@ -277,6 +278,19 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "DocumentReference");
     }
 
+    /**
+     * @param documentReferenceByIdRequest - Object containing the parameters needed for the query of a DocumentReference by id.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    @Override
+    public ResponseEntity<String> queryDocumentReferenceByIdFhir(DocumentReferenceByIdRequest documentReferenceByIdRequest) throws ClientConnectorException {
+        Validate.notNull(documentReferenceByIdRequest, "documentReferenceByIdRequest must not be null");
+
+        final String jwtToken = jwtTokenGenerator.generate(documentReferenceByIdRequest.getAssertions());
+        return restApiClientService.read(documentReferenceByIdRequest.getCountryCode(), jwtToken, documentReferenceByIdRequest.getId(), "DocumentReference");
+    }
+
     @Override
     public ResponseEntity<String> postDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, Object> payload) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
@@ -291,14 +305,6 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         return restApiClientService.search(medicalImagingStudyRequest.getCountryCode(), jwtToken, medicalImagingStudyRequest.getSearchParameters(), "DocumentReference");
     }
 
-    @Override
-    public ResponseEntity<String> queryMedicalImagingStudyManifest(MedicalImagingStudyManifestRequest medicalImagingStudyManifestRequest) throws ClientConnectorException {
-        Validate.notNull(medicalImagingStudyManifestRequest, "medicalImagingStudyManifestRequest must not be null");
-
-        final String jwtToken = jwtTokenGenerator.generate(medicalImagingStudyManifestRequest.getAssertions());
-
-        return restApiClientService.search(medicalImagingStudyManifestRequest.getCountryCode(), jwtToken, medicalImagingStudyManifestRequest.getSearchParameters(), "DocumentReference");
-    }
 
     /**
      * @param assertions   - Map of assertions required by the transaction (HCP, TRC, NoK optional).

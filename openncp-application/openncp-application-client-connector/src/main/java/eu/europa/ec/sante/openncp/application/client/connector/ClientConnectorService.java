@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import eu.europa.ec.sante.openncp.application.client.connector.request.DocumentReferenceByIdRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyManifestRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -92,6 +93,14 @@ public interface ClientConnectorService {
             throws ClientConnectorException;
 
     /**
+     * @param documentReferenceByIdRequest - Object containing the parameters needed for the query of a DocumentReference by id.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    ResponseEntity<String> queryDocumentReferenceByIdFhir(final DocumentReferenceByIdRequest documentReferenceByIdRequest)
+            throws ClientConnectorException;
+
+    /**
      * @param assertions      - Map of assertions required by the transaction (HCP, TRC, NoK optional).
      * @param countryCode     - ISO Country code of the patient country of origin.
      * @param payload         - REST API Body.
@@ -102,8 +111,6 @@ public interface ClientConnectorService {
             throws ClientConnectorException;
 
     ResponseEntity<String> queryMedicalImagingStudyDocumentReferences(MedicalImagingStudyRequest medicalImagingStudyRequest) throws ClientConnectorException;
-
-    ResponseEntity<String> queryMedicalImagingStudyManifest(MedicalImagingStudyManifestRequest medicalImagingStudyManifestRequest) throws ClientConnectorException;
 
     /**
      * @param assertions       - Map of assertions required by the transaction (HCP, TRC, NoK optional).

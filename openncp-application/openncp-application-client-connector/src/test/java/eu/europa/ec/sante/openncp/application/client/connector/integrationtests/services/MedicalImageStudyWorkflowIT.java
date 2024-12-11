@@ -2,9 +2,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
-import eu.europa.ec.sante.openncp.application.client.connector.request.ImmutableDateRange;
-import eu.europa.ec.sante.openncp.application.client.connector.request.ImmutableMedicalImagingStudyRequest;
-import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.request.*;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.ObjectFactory;
