@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClien
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
+import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyManifestRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -288,6 +289,15 @@ public class DefaultClientConnectorService implements ClientConnectorService {
 
         final String jwtToken = jwtTokenGenerator.generate(medicalImagingStudyRequest.getAssertions());
         return restApiClientService.search(medicalImagingStudyRequest.getCountryCode(), jwtToken, medicalImagingStudyRequest.getSearchParameters(), "DocumentReference");
+    }
+
+    @Override
+    public ResponseEntity<String> queryMedicalImagingStudyManifest(MedicalImagingStudyManifestRequest medicalImagingStudyManifestRequest) throws ClientConnectorException {
+        Validate.notNull(medicalImagingStudyManifestRequest, "medicalImagingStudyManifestRequest must not be null");
+
+        final String jwtToken = jwtTokenGenerator.generate(medicalImagingStudyManifestRequest.getAssertions());
+
+        return restApiClientService.search(medicalImagingStudyManifestRequest.getCountryCode(), jwtToken, medicalImagingStudyManifestRequest.getSearchParameters(), "DocumentReference");
     }
 
     /**
