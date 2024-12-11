@@ -16,6 +16,7 @@ import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.DocumentReference;
+import org.hl7.fhir.r4.model.IdType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,14 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     @Override
     public Class<DocumentReference> getResourceType() {
         return DocumentReference.class;
+    }
+
+    @Read
+    public DocumentReference find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        final DocumentReference documentReference = dispatchingService.dispatchRead(dispatchContext);
+        validate(documentReference, theRequestDetails.getRestOperationType());
+        return documentReference;
     }
 
     @Search(allowUnknownParams = true)
