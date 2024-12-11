@@ -45,7 +45,7 @@ public class NcpDicomDispatchingService implements DicomDispatchingService {
 
 
     @Override
-    public String dispatchDicomMetadata(final DispatchContext dispatchContext, final String studyUID, final String seriesUID) {
+    public String dispatchDicomMetadata(final DispatchContext dispatchContext, final String studyUID, final String seriesUID, final String instanceUID) {
         //the dispatch method will use the same path params as the incoming request for the outgoing response, so we currently don't need the dicom UID variables
         return dispatch(dispatchContext, String.class);
     }

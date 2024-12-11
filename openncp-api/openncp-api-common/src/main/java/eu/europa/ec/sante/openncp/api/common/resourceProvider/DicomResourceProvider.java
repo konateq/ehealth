@@ -39,13 +39,14 @@ public class DicomResourceProvider extends AbstractResourceProvider {
         return dicomDispatchingService.dispatchDicomFile(dispatchContext, studyUID, seriesUID, instanceUID);
     }
 
-    @GetMapping(value = "/studies/{studyUID}/series/{seriesUID}/instances", produces = {"application/dicom+json"})
+    @GetMapping(value = "/studies/{studyUID}/series/{seriesUID}/instances/{instanceUID}/metadata", produces = {"application/dicom+json"})
     public String getDicomMetadata(@PathVariable("studyUID") final String studyUID,
                                    @PathVariable("seriesUID") final String seriesUID,
+                                   @PathVariable("instanceUID") final String instanceUID,
                                    final HttpServletRequest servletRequest,
                                    final HttpServletResponse servletResponse) {
         final DispatchContext dispatchContext = createDispatchContext(servletRequest, servletResponse);
-        return dicomDispatchingService.dispatchDicomMetadata(dispatchContext, studyUID, seriesUID);
+        return dicomDispatchingService.dispatchDicomMetadata(dispatchContext, studyUID, seriesUID, instanceUID);
     }
 
     @GetMapping(value = "/studies/{studyUID}/series/{seriesUID}/instances/{instanceUID}/frames/{frameNumber}",

@@ -8,7 +8,7 @@ public interface DicomDispatchingService {
 
     byte[] dispatchDicomFile(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID);
 
-    String dispatchDicomMetadata(DispatchContext dispatchContext, String studyUID, String seriesUID);
+    String dispatchDicomMetadata(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID);
 
     byte[] dispatchDicomRenderedImage(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID, String frameNumber);
 
