@@ -46,7 +46,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     public DocumentReference find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final DocumentReference documentReference = dispatchingService.dispatchRead(dispatchContext);
-        validate(documentReference, theRequestDetails.getRestOperationType());
+        //validate(documentReference, theRequestDetails.getRestOperationType());
         return documentReference;
     }
 
