@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.application.client.connector.dicom;
+package eu.europa.ec.sante.openncp.api.server.dicom;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;

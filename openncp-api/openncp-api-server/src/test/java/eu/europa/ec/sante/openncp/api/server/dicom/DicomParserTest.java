@@ -1,5 +1,6 @@
-package eu.europa.ec.sante.openncp.application.client.connector.dicom;
+package eu.europa.ec.sante.openncp.api.server.dicom;
 
+import eu.europa.ec.sante.openncp.api.server.dicom.DicomParser;
 import org.junit.Assert;
 import org.junit.Test;
 
