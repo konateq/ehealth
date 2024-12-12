@@ -61,12 +61,18 @@ public class FhirDispatchingClient {
                     }
 
                     final IBaseResource response = readExecutable.execute();
-                    return (R) response;
+                    if (response instanceof Bundle) {
+                        return (R) response;
+                    } else if (response instanceof DocumentReference) {
+                        return (R) response;
+                    } else {
+                        throw new IllegalArgumentException(String.format("Response resource is expected to be a bundle, but was [%s]", response.getClass().getSimpleName()));
+                    }
                 }
         );
     }
 
-    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, IBaseResource resourceToCreate) {
+    public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, final IBaseResource resourceToCreate) {
         return dispatchOperation(
                 dispatchContext,
                 RestOperationTypeEnum.CREATE,
@@ -84,9 +90,9 @@ public class FhirDispatchingClient {
     }
 
     private <R> R dispatchOperation(
-            DispatchContext dispatchContext,
-            RestOperationTypeEnum expectedOperation,
-            BiFunction<JwtToken, URI, R> fhirDispatchOperation) {
+            final DispatchContext dispatchContext,
+            final RestOperationTypeEnum expectedOperation,
+            final BiFunction<JwtToken, URI, R> fhirDispatchOperation) {
 
         Validate.notNull(dispatchContext, "dispatchContext must not be null");
         Validate.notNull(expectedOperation, "expectedOperation must not be null");
