@@ -45,9 +45,7 @@ public class FhirMockDispatchingService implements DispatchingService {
     public <T extends IBaseResource> T dispatchRead(final DispatchContext dispatchContext) {
         Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
         final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
-        final Bundle result = hapiWebClient.dispatchRead(dispatchContext);
-
-        return (T) result;
+        return hapiWebClient.dispatchRead(dispatchContext);
     }
 
     @Override
