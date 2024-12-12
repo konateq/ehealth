@@ -72,4 +72,25 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
     }
+
+    @Test
+    public void findDocumentReferenceById() {
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
+
+        final DocumentReferenceByIdRequest documentReferenceByIdRequest = ImmutableDocumentReferenceByIdRequest.builder()
+                .countryCode("BE")
+                .patientId(patientId)
+                .id("110053")
+                .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .build();
+
+        final ResponseEntity<String> responseEntity = clientConnectorService.queryDocumentReferenceByIdFhir(documentReferenceByIdRequest);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
+    }
 }

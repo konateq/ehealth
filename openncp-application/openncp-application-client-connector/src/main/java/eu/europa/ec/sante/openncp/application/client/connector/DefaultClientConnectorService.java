@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import ca.uhn.fhir.context.FhirContext;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
@@ -54,7 +55,6 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     // URL of the targeted NCP-B - ClientService.wsdl
     private final String endpointReference;
 
-
     private final RestApiClientService restApiClientService;
 
     private final JwtTokenGenerator jwtTokenGenerator;
@@ -75,10 +75,10 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     public DefaultClientConnectorService(final ConfigurationManager configurationManager,
                                          final RestApiClientService restApiClientService,
                                          final JwtTokenGenerator jwtTokenGenerator) {
-        this.configurationManager = Validate.notNull(configurationManager);
+        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
         this.endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
-        this.restApiClientService = Validate.notNull(restApiClientService);
-        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator);
+        this.restApiClientService = Validate.notNull(restApiClientService, "restApiClientService must not be null");
+        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator, "jwtTokenGenerator must not be null");
 
         final ClientService ss = new ClientService();
         clientConnectorService = new ClientConnectorServicePortTypeWrapper(ss.getClientServicePort());
