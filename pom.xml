@@ -237,26 +237,8 @@
             <!-- Dcm4Che dependencies -->
             <dependency>
                 <groupId>org.dcm4che</groupId>
-                <artifactId>dcm4che-imageio</artifactId>
+                <artifactId>dcm4che-core</artifactId>
                 <version>${dcm4che.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.dcm4che</groupId>
-                <artifactId>dcm4che-imageio-rle</artifactId>
-                <version>${dcm4che.version}</version>
-                <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.sun.media</groupId>
-                <artifactId>jai_imageio</artifactId>
-                <version>${jai.imageio.version}</version>
-                <scope>runtime</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.dcm4che.tool</groupId>
-                <artifactId>dcm4che-tool-common</artifactId>
-                <version>${dcm4che.version}</version>
-                <scope>compile</scope>
             </dependency>
             <!-- Dynamic Discovery Client dependecies -->
             <dependency>
