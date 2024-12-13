@@ -11,6 +11,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,15 +22,23 @@ import java.io.IOException;
  */
 @Interceptor(order = Integer.MIN_VALUE + 1)
 @Component
-public class CountryCodeInterceptor implements FhirCustomInterceptor, IClientInterceptor {
+public class CountryCodeInterceptor implements FhirCustomInterceptor, IClientInterceptor, HandlerInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(CountryCodeInterceptor.class);
     public static final String COUNTRY_CODE_HEADER_KEY = "CountryCode";
 
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_PROCESSED)
-    public void setIncomingCorrelationIdToLogContext(final HttpServletRequest httpServletRequest, final HttpServletResponse httpServletResponse) {
+    public void setIncomingCountryCodeToLogContext(final HttpServletRequest httpServletRequest, final HttpServletResponse httpServletResponse) {
         final String countryCode = httpServletRequest.getHeader(COUNTRY_CODE_HEADER_KEY);
         LogContext.setCountryCode(countryCode);
         httpServletResponse.setHeader(COUNTRY_CODE_HEADER_KEY, StringEscapeUtils.escapeJava(LogContext.getCountryCode()));
+    }
+
+    @Override
+    public boolean preHandle(final HttpServletRequest request,
+                             final HttpServletResponse response,
+                             final Object handler) throws Exception {
+        setIncomingCountryCodeToLogContext(request, response);
+        return true;
     }
 
     @Override

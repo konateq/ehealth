@@ -315,7 +315,7 @@ package your.ni.packages;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 
 @Service
-public class YourNIDispatchingService implements DispatchingService {
+public class YourNIFhirDispatchingService implements DispatchingService {
     // your implementation here
 }
 ----

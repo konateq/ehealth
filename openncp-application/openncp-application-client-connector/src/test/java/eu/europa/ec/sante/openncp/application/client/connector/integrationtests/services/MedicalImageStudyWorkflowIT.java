@@ -93,4 +93,88 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
     }
+
+    /**
+     * For now this test only works if you upload the dicom file (.dcm) from
+     * <a href="https://citnet.tech.ec.europa.eu/CITnet/jira/browse/EHEALTH-12584">EHEALTH-12584</a> to the dicom docker
+     * instance (orthanc) since it contains the correct UIDs to make this test work.
+     */
+    @Test
+    public void getMedicalImage_wadors_only_study() {
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
+
+        final FetchMedicalImagesRequest fetchMedicalImagesRequest = ImmutableFetchMedicalImagesRequest.builder()
+                .countryCode("BE")
+                .patientId(patientId)
+                .studyUid("1.2.276.0.7230010.3.1.2.296485376.1.1521713414.1800996")
+                .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .build();
+
+        final ResponseEntity<byte[]> responseEntity = clientConnectorService.fetchMedicalImagesRequest(fetchMedicalImagesRequest);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(responseEntity.getBody()).isNotNull();
+    }
+
+    /**
+     * For now this test only works if you upload the dicom file (.dcm) from
+     * <a href="https://citnet.tech.ec.europa.eu/CITnet/jira/browse/EHEALTH-12584">EHEALTH-12584</a> to the dicom docker
+     * instance (orthanc) since it contains the correct UIDs to make this test work.
+     */
+    @Test
+    public void getMedicalImage_wadors_study_and_series() {
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
+
+        final FetchMedicalImagesRequest fetchMedicalImagesRequest = ImmutableFetchMedicalImagesRequest.builder()
+                .countryCode("BE")
+                .patientId(patientId)
+                .studyUid("1.2.276.0.7230010.3.1.2.296485376.1.1521713414.1800996")
+                .seriesUid("1.2.276.0.7230010.3.1.3.296485376.1.1521713419.1802493")
+                .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .build();
+
+        final ResponseEntity<byte[]> responseEntity = clientConnectorService.fetchMedicalImagesRequest(fetchMedicalImagesRequest);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(responseEntity.getBody()).isNotNull();
+    }
+
+    /**
+     * For now this test only works if you upload the dicom file (.dcm) from
+     * <a href="https://citnet.tech.ec.europa.eu/CITnet/jira/browse/EHEALTH-12584">EHEALTH-12584</a> to the dicom docker
+     * instance (orthanc) since it contains the correct UIDs to make this test work.
+     */
+    @Test
+    public void getMedicalImage_wadors_study_series_and_instance() {
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
+
+        final FetchMedicalImagesRequest fetchMedicalImagesRequest = ImmutableFetchMedicalImagesRequest.builder()
+                .countryCode("BE")
+                .patientId(patientId)
+                .studyUid("1.2.276.0.7230010.3.1.2.296485376.1.1521713414.1800996")
+                .seriesUid("1.2.276.0.7230010.3.1.3.296485376.1.1521713419.1802493")
+                .instanceUid("1.2.276.0.7230010.3.1.4.296485376.1.1521713419.1802510")
+                .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .build();
+
+        final ResponseEntity<byte[]> responseEntity = clientConnectorService.fetchMedicalImagesRequest(fetchMedicalImagesRequest);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(responseEntity.getBody()).isNotNull();
+    }
 }

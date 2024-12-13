@@ -58,9 +58,10 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                                       final HttpServletResponse httpServletResponse) {
         final DispatchContext dispatchContext = ImmutableDispatchContext.builder()
                 .ncpSide(serverContext.getNcpSide())
-                .hapiRequestDetails(requestDetails)
                 .servletRequest(httpServletRequest)
-                .servletResponse(httpServletResponse).build();
+                .servletResponse(httpServletResponse)
+                .hapiRequestDetails(requestDetails)
+                .build();
         final AuditableEvent auditableEvent = ImmutableAuditableEvent.builder()
                 .pointcut(Pointcut.SERVER_OUTGOING_RESPONSE)
                 .fhirContext(fhirContext)

@@ -1,12 +1,11 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
-import ca.uhn.fhir.context.FhirContext;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.request.DocumentReferenceByIdRequest;
-import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyManifestRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.request.FetchMedicalImagesRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -26,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
@@ -262,7 +263,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     public ResponseEntity<String> queryPatientFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
 
-        return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "Patient");
+        return restApiClientService.fhirSearch(countryCode, jwtToken, toMultiValueMap(searchParams), "Patient");
     }
 
     /**
@@ -275,7 +276,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     @Override
     public ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "DocumentReference");
+        return restApiClientService.fhirSearch(countryCode, jwtToken, toMultiValueMap(searchParams), "DocumentReference");
     }
 
     /**
@@ -284,17 +285,17 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @throws ClientConnectorException
      */
     @Override
-    public ResponseEntity<String> queryDocumentReferenceByIdFhir(DocumentReferenceByIdRequest documentReferenceByIdRequest) throws ClientConnectorException {
+    public ResponseEntity<String> queryDocumentReferenceByIdFhir(final DocumentReferenceByIdRequest documentReferenceByIdRequest) throws ClientConnectorException {
         Validate.notNull(documentReferenceByIdRequest, "documentReferenceByIdRequest must not be null");
 
         final String jwtToken = jwtTokenGenerator.generate(documentReferenceByIdRequest.getAssertions());
-        return restApiClientService.read(documentReferenceByIdRequest.getCountryCode(), jwtToken, documentReferenceByIdRequest.getId(), "DocumentReference");
+        return restApiClientService.fhirRead(documentReferenceByIdRequest.getCountryCode(), jwtToken, documentReferenceByIdRequest.getId(), "DocumentReference");
     }
 
     @Override
     public ResponseEntity<String> postDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, Object> payload) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.post(countryCode, jwtToken, payload, "DocumentReference");
+        return restApiClientService.fhirPost(countryCode, jwtToken, payload, "DocumentReference");
     }
 
     @Override
@@ -302,7 +303,32 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         Validate.notNull(medicalImagingStudyRequest, "medicalImagingStudyRequest must not be null");
 
         final String jwtToken = jwtTokenGenerator.generate(medicalImagingStudyRequest.getAssertions());
-        return restApiClientService.search(medicalImagingStudyRequest.getCountryCode(), jwtToken, medicalImagingStudyRequest.getSearchParameters(), "DocumentReference");
+        return restApiClientService.fhirSearch(medicalImagingStudyRequest.getCountryCode(), jwtToken, medicalImagingStudyRequest.getSearchParameters(), "DocumentReference");
+    }
+
+    @Override
+    public ResponseEntity<byte[]> fetchMedicalImagesRequest(final FetchMedicalImagesRequest fetchMedicalImagesRequest) throws ClientConnectorException {
+        Validate.notNull(fetchMedicalImagesRequest, "fetchMedicalImagesRequest must not be null");
+
+        final String jwtToken = jwtTokenGenerator.generate(fetchMedicalImagesRequest.getAssertions());
+
+        final Map<String, String> uriVariables = new HashMap<>();
+        final UriComponentsBuilder uriBuilder = restApiClientService.getUriBuilderForBasePath();
+        uriBuilder.pathSegment("dicom", "studies", "{studyUID}");
+        uriVariables.put("studyUID", fetchMedicalImagesRequest.getStudyUid());
+
+        fetchMedicalImagesRequest.getSeriesUid().ifPresent(seriesUID -> {
+            uriBuilder.pathSegment("series", "{seriesUID}");
+            uriVariables.put("seriesUID", seriesUID);
+        });
+
+        fetchMedicalImagesRequest.getInstanceUid().ifPresent(instanceUID -> {
+            uriBuilder.pathSegment("instances", "{instanceUID}");
+            uriVariables.put("instanceUID", instanceUID);
+        });
+
+        final URI uri = uriBuilder.encode().build(uriVariables);
+        return restApiClientService.doGet(fetchMedicalImagesRequest.getCountryCode(), jwtToken, uri, byte[].class);
     }
 
 
@@ -316,7 +342,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     @Override
     public ResponseEntity<String> queryBundleFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "Bundle");
+        return restApiClientService.fhirSearch(countryCode, jwtToken, toMultiValueMap(searchParams), "Bundle");
     }
 
     /**
@@ -329,7 +355,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     @Override
     public ResponseEntity<String> queryBundleFhirById(final Map<AssertionType, Assertion> assertions, final String countryCode, final String id) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" + id);
+        return restApiClientService.fhirSearch(countryCode, jwtToken, new HashMap<>(), "Bundle/" + id);
     }
 
 

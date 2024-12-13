@@ -14,7 +14,7 @@ import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -36,12 +36,12 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CompositionResourceProvider.class);
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
     private final BundleHandler bundleHandler;
 
-    public CompositionResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+    public CompositionResourceProvider(final FhirDispatchingService fhirDispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
         this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
@@ -55,7 +55,7 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
     public CompositionLabReportMyHealthEu find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse,
                                                final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final CompositionLabReportMyHealthEu handledCompositionLabReportEu = dispatchingService.dispatchRead(dispatchContext);
+        final CompositionLabReportMyHealthEu handledCompositionLabReportEu = fhirDispatchingService.dispatchRead(dispatchContext);
         validate(handledCompositionLabReportEu, theRequestDetails.getRestOperationType());
         return handledCompositionLabReportEu;
     }
@@ -104,7 +104,7 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
 
     ) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
 
         return handledBundle;
@@ -134,7 +134,7 @@ public class CompositionResourceProvider extends AbstractResourceProvider implem
             final RequestDetails theRequestDetails) {
 
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle handledCompositionLabReportEu = dispatchingService.dispatchRead(dispatchContext);
+        final Bundle handledCompositionLabReportEu = fhirDispatchingService.dispatchRead(dispatchContext);
 
         return handledCompositionLabReportEu;
     }

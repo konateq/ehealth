@@ -1,11 +1,12 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
+import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.AssertionHelper;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AuditEvent;
@@ -41,23 +42,26 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
     @Override
     public List<AuditEvent> produce(final AuditableEvent auditableEvent) {
         final List<AuditEventData> auditEventDataList;
-        switch (auditableEvent.getDispatchContext().getRestOperationType()) {
-            case SEARCH_TYPE:
-            case SEARCH_SYSTEM:
-            case GET_PAGE:
-                auditEventDataList = List.of(handleSearch(auditableEvent));
-                break;
-            case VREAD:
-            case READ:
-                auditEventDataList = handleRead(auditableEvent);
-                break;
-            default:
-                LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getDispatchContext().getRestOperationType());
-                //TODO what to do here exactly? create a file with the error? we cannot let the audit event create exceptions that will interfere with the response.
-                return Collections.emptyList();
+        if (auditableEvent.getDispatchContext().getHapiRequestDetails().isPresent()) {
+            switch (auditableEvent.getDispatchContext().getHapiRestOperationType().get()) {
+                case SEARCH_TYPE:
+                case SEARCH_SYSTEM:
+                case GET_PAGE:
+                    auditEventDataList = List.of(handleSearch(auditableEvent));
+                    break;
+                case VREAD:
+                case READ:
+                    auditEventDataList = handleRead(auditableEvent);
+                    break;
+                default:
+                    LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getDispatchContext().getHapiRestOperationType());
+                    //TODO what to do here exactly? create a file with the error? we cannot let the audit event create exceptions that will interfere with the response.
+                    return Collections.emptyList();
+            }
+            return auditEventDataList.stream().map(auditEventBuilder::build).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
         }
-
-        return auditEventDataList.stream().map(auditEventBuilder::build).collect(Collectors.toList());
     }
 
     private AuditEventData.MetaData createMetaData(final AuditableEvent auditableEvent) {
@@ -83,17 +87,17 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
         if (patientEntities.isEmpty()) {
             auditEventData = ImmutableAuditEventData.builder()
                     .metaData(createMetaData(auditableEvent))
-                    .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
+                    .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
                     .profile(BalpProfileEnum.BASIC_QUERY)
-                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
+                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().map(RequestDetails::getFhirServerBase).orElse(StringUtils.EMPTY))
                     .addAllParticipants(participants)
                     .build();
         } else {
             auditEventData = ImmutableAuditEventData.builder()
                     .metaData(createMetaData(auditableEvent))
-                    .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
+                    .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
                     .profile(BalpProfileEnum.PATIENT_QUERY)
-                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
+                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().map(RequestDetails::getFhirServerBase).orElse(StringUtils.EMPTY))
                     .addAllParticipants(participants)
                     .addAllEntities(patientEntities)
                     .build();
@@ -115,9 +119,9 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
                 final AuditEventData.EntityData resourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
                 auditEventDataList.add(ImmutableAuditEventData.builder()
                         .metaData(createMetaData(auditableEvent))
-                        .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
+                        .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
                         .profile(BalpProfileEnum.BASIC_READ)
-                        .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
+                        .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().map(RequestDetails::getFhirServerBase).orElse(StringUtils.EMPTY))
                         .addAllParticipants(participants)
                         .addEntity(resourceEntity)
                         .build());
@@ -130,9 +134,9 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
 
                             return ImmutableAuditEventData.builder()
                                     .metaData(createMetaData(auditableEvent))
-                                    .restOperationType(auditableEvent.getDispatchContext().getRestOperationType())
+                                    .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
                                     .profile(BalpProfileEnum.PATIENT_READ)
-                                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().getFhirServerBase())
+                                    .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().map(RequestDetails::getFhirServerBase).orElse(StringUtils.EMPTY))
                                     .addAllParticipants(participants)
                                     .addEntity(resourceEntityData)
                                     .addEntity(patientEntityData)

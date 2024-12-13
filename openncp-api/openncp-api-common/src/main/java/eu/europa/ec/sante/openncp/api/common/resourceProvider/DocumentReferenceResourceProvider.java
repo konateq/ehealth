@@ -11,11 +11,10 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.ResourceHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.IdType;
@@ -26,22 +25,22 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Component
 public class DocumentReferenceResourceProvider extends AbstractResourceProvider implements IResourceProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceResourceProvider.class);
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
 
     private final List<ResourceHandler> resourceHandlers;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService,
+    public DocumentReferenceResourceProvider(final FhirDispatchingService fhirDispatchingService,
                                              final ServerContext serverContext,
-                                             final ValidationService validationService, List<ResourceHandler> resourceHandlers) {
+                                             final ValidationService validationService,
+                                             final List<ResourceHandler> resourceHandlers) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
         this.resourceHandlers = Validate.notNull(resourceHandlers, "resourceHandlers must not be null");
     }
 
@@ -53,7 +52,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     @Read
     public DocumentReference find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final DocumentReference documentReference = dispatchingService.dispatchRead(dispatchContext);
+        final DocumentReference documentReference = fhirDispatchingService.dispatchRead(dispatchContext);
         //validate(documentReference, theRequestDetails.getRestOperationType());
         resourceHandlers.stream()
                 .filter(resourceHandler -> resourceHandler.accepts(dispatchContext, documentReference))
@@ -102,7 +101,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
     }
 
     private Bundle getResponseAndValidate(final RequestDetails theRequestDetails, final DispatchContext dispatchContext) {
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
     }
@@ -113,7 +112,7 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
                                                  final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
 
-        return dispatchingService.dispatchWrite(dispatchContext, documentReference);
+        return fhirDispatchingService.dispatchWrite(dispatchContext, documentReference);
 
     }
 }

@@ -38,11 +38,13 @@ public class RestApiClientService {
     private final KeyStoreManager keyStoreManager;
 
     private final String basePath;
+    private final String fhirBasePath;
 
     public RestApiClientService(final RestTemplateBuilder restTemplateBuilder, final ConfigurationManager configurationManager, final KeyStoreManager keyStoreManager) {
         this.configurationManager = configurationManager;
         this.keyStoreManager = keyStoreManager;
-        this.basePath = configurationManager.getProperty("FHIR_REST_CLIENT_API");
+        this.basePath = configurationManager.getProperty("CLIENT_URL");
+        this.fhirBasePath = configurationManager.getProperty("FHIR_REST_CLIENT_API");
         final SSLContext sslContext = getSSLContext();
 
         final CloseableHttpClient client = HttpClients.custom()
@@ -54,14 +56,28 @@ public class RestApiClientService {
                 .build();
     }
 
-    public ResponseEntity<String> search(final String countryCode, final String jwtToken, final Map<String, Set<String>> searchParams, final String resourcePath) {
+    public UriComponentsBuilder getUriBuilderForBasePath() {
+        return UriComponentsBuilder.fromHttpUrl(basePath);
+
+    }
+
+    public <R> ResponseEntity<R> doGet(final String countryCode, final String jwtToken, final URI uri, final Class<R> responseType) {
+        final HttpHeaders headers = getDefaultHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        headers.set("CountryCode", countryCode);
+
+        return this.restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), responseType);
+    }
+
+    public ResponseEntity<String> fhirSearch(final String countryCode, final String jwtToken, final Map<String, Set<String>> searchParams, final String resourcePath) {
         final HttpHeaders headers = getDefaultHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
         headers.set("CountryCode", countryCode);
 
         final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
 
-        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(basePath + resourcePath);
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
+        uriBuilder.pathSegment(resourcePath);
         searchParams.forEach((key, values) -> values.forEach(value -> uriBuilder.queryParam(key, value)));
         final URI uri = uriBuilder.encode().build().toUri();
 
@@ -70,14 +86,15 @@ public class RestApiClientService {
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
-    public ResponseEntity<String> read(final String countryCode, final String jwtToken, final String id, final String resourcePath) {
+    public ResponseEntity<String> fhirRead(final String countryCode, final String jwtToken, final String id, final String resourcePath) {
         final HttpHeaders headers = getDefaultHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
         headers.set("CountryCode", countryCode);
 
         final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
 
-        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(basePath + resourcePath + "/" + id);
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
+        uriBuilder.pathSegment(resourcePath, id);
         final URI uri = uriBuilder.encode().build().toUri();
 
         final ResponseEntity<String> response = this.restTemplate.exchange(uri, HttpMethod.GET, newRequest, String.class);
@@ -85,24 +102,24 @@ public class RestApiClientService {
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
-    public ResponseEntity<String> post(final String countryCode, final String jwtToken, final Map<String, Object> payload, final String resourcePath) {
+    public ResponseEntity<String> fhirPost(final String countryCode, final String jwtToken, final Map<String, Object> payload, final String resourcePath) {
         final HttpHeaders headers = getDefaultHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
         headers.set("CountryCode", countryCode);
 
         final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(payload, headers);
 
-        final String urlWithParams = basePath + resourcePath;
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
+        uriBuilder.pathSegment(resourcePath);
+        final URI uri = uriBuilder.encode().build().toUri();
 
-        final ResponseEntity<String> response = this.restTemplate.exchange(urlWithParams, HttpMethod.POST, newRequest, String.class);
+        final ResponseEntity<String> response = this.restTemplate.exchange(uri, HttpMethod.POST, newRequest, String.class);
 
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
     private HttpHeaders getDefaultHeaders(final String correlationId) {
         final HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
         headers.set("X-Correlation-ID", correlationId);
         return headers;
     }
