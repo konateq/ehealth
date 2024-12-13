@@ -8,12 +8,14 @@ import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import eu.europa.ec.sante.openncp.api.common.handler.ResourceHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.IdType;
@@ -23,6 +25,8 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class DocumentReferenceResourceProvider extends AbstractResourceProvider implements IResourceProvider {
@@ -31,10 +35,14 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     private final FhirDispatchingService fhirDispatchingService;
 
+    private final List<ResourceHandler> resourceHandlers;
 
-    public DocumentReferenceResourceProvider(final FhirDispatchingService fhirDispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+    public DocumentReferenceResourceProvider(final FhirDispatchingService fhirDispatchingService,
+                                             final ServerContext serverContext,
+                                             final ValidationService validationService, List<ResourceHandler> resourceHandlers) {
         super(serverContext, validationService);
         this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
+        this.resourceHandlers = Validate.notNull(resourceHandlers, "resourceHandlers must not be null");
     }
 
     @Override
@@ -47,6 +55,9 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final DocumentReference documentReference = fhirDispatchingService.dispatchRead(dispatchContext);
         //validate(documentReference, theRequestDetails.getRestOperationType());
+        resourceHandlers.stream()
+                .filter(resourceHandler -> resourceHandler.accepts(dispatchContext, documentReference))
+                .forEach(resourceHandler -> resourceHandler.handle(dispatchContext, documentReference));
         return documentReference;
     }
 
