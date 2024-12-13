@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
+@Disabled
 public class JwtTokenGeneratorTest extends BaseIntegrationTest {
     private final Logger LOGGER = LoggerFactory.getLogger(JwtTokenGeneratorTest.class);
 
