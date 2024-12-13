@@ -15,7 +15,6 @@ import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingServi
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.IdType;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Component
 public class DocumentReferenceResourceProvider extends AbstractResourceProvider implements IResourceProvider {
@@ -39,7 +37,8 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
 
     public DocumentReferenceResourceProvider(final FhirDispatchingService fhirDispatchingService,
                                              final ServerContext serverContext,
-                                             final ValidationService validationService, List<ResourceHandler> resourceHandlers) {
+                                             final ValidationService validationService,
+                                             final List<ResourceHandler> resourceHandlers) {
         super(serverContext, validationService);
         this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
         this.resourceHandlers = Validate.notNull(resourceHandlers, "resourceHandlers must not be null");

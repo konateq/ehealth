@@ -282,12 +282,12 @@ should now be updated to +
 *New FHIR interface*
 
 We have introduced a new service that enables FHIR communication between NCP-B and NCP-A. From NCP-B, a FHIR request is sent to NCP-A, which utilizes the methods defined in the newly added interface:
-`eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService`
+`eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService`
 
 IMPORTANT: If your national infrastructure does not support FHIR capabilities, this dispatching service will function as a proxy between NCP-A's FHIR capabilities and the national infrastructure. However, it is essential that a valid (HAPI) FHIR Resource is returned. It is the responsibility of the national infrastructure to map its own response to the equivalent (HAPI) FHIR Resource.
 
 For instance, if you are using a Service Loader, you will need to add the following entry: +
-`META-INF/services/eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService` +
+`META-INF/services/eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService` +
 similar to the existing IHE services.
 
 ===== Some spring implementation examples:
@@ -312,10 +312,10 @@ And the actual implementation:
 [source,java]
 ----
 package your.ni.packages;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 
 @Service
-public class YourNIFhirDispatchingService implements FhirDispatchingService {
+public class YourNIFhirDispatchingService implements DispatchingService {
     // your implementation here
 }
 ----
@@ -329,8 +329,8 @@ public class YourNIConfigurationClass {
 
     @Bean
     @Primary
-    public FhirDispatchingService fhirDispatchingService() {
-        return new YourNIFhirDispatchingService();
+    public DispatchingService dispatchingService() {
+        return new YourNIDispatchingService();
     }
 }
 ----
