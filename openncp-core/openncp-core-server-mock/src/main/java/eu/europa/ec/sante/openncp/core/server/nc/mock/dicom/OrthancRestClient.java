@@ -3,7 +3,10 @@ package eu.europa.ec.sante.openncp.core.server.nc.mock.dicom;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,7 +30,7 @@ public class OrthancRestClient {
 
     public byte[] downloadDicomFile(final String studyUid, final String seriesUid, final String instanceUid) {
         final HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.ACCEPT, "application/dicom");
+        //headers.set(HttpHeaders.CONTENT_TYPE, "application/dicom");
 
         final List<String> pathSegments = getDefaultPathSegments(seriesUid, instanceUid);
         final Map<String, String> uriVariables = getDefaultUriVariables(studyUid, seriesUid, instanceUid);
@@ -43,7 +46,7 @@ public class OrthancRestClient {
 
     public String downloadDicomMetadata(final String studyUid, final String seriesUid, final String instanceUid) {
         final HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+        //headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
         final List<String> pathSegments = getDefaultPathSegments(seriesUid, instanceUid);
         pathSegments.add("/metadata");
@@ -56,7 +59,7 @@ public class OrthancRestClient {
 
     public byte[] downloadDicomRenderedImage(final String studyUid, final String seriesUid, final String instanceUid, final String frameNumber) {
         final HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.ACCEPT, MediaType.IMAGE_JPEG_VALUE);
+        //headers.set(HttpHeaders.ACCEPT, MediaType.IMAGE_JPEG_VALUE);
 
         final List<String> pathSegments = getDefaultPathSegments(seriesUid, instanceUid);
         pathSegments.add("/frames/{frameNumber}");

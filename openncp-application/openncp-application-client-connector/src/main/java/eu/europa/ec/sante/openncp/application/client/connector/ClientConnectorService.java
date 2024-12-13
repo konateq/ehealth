@@ -1,7 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
 import eu.europa.ec.sante.openncp.application.client.connector.request.DocumentReferenceByIdRequest;
-import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyManifestRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.FetchMedicalImagesRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;

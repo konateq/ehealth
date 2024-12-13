@@ -1,6 +1,7 @@
-package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
+package eu.europa.ec.sante.openncp.application.client.connector;
 
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services.BaseIntegrationTest;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;

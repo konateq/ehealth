@@ -5,7 +5,6 @@ import eu.europa.ec.sante.openncp.core.common.fhir.FhirDispatchingClient;
 import eu.europa.ec.sante.openncp.core.common.fhir.HapiWebClientFactory;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -32,7 +31,6 @@ public class NcpFhirDispatchingService implements FhirDispatchingService {
 
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T extends IBaseResource> T dispatchRead(final DispatchContext requestDetails) {
         Validate.notNull(requestDetails, "The request details cannot be null");
 
