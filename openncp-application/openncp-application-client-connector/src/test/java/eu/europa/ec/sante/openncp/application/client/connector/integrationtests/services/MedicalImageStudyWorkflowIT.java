@@ -73,6 +73,27 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
         assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
     }
 
+    @Test
+    public void findDocumentReferenceById() {
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
+        patientId.setExtension("89121210976");
+
+        final DocumentReferenceByIdRequest documentReferenceByIdRequest = ImmutableDocumentReferenceByIdRequest.builder()
+                .countryCode("BE")
+                .patientId(patientId)
+                .id("110053")
+                .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .build();
+
+        final ResponseEntity<String> responseEntity = clientConnectorService.queryDocumentReferenceByIdFhir(documentReferenceByIdRequest);
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
+    }
+
     /**
      * For now this test only works if you upload the dicom file (.dcm) from
      * <a href="https://citnet.tech.ec.europa.eu/CITnet/jira/browse/EHEALTH-12584">EHEALTH-12584</a> to the dicom docker

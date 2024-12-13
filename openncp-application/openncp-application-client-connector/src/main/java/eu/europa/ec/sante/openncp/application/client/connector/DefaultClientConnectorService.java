@@ -1,10 +1,13 @@
 package eu.europa.ec.sante.openncp.application.client.connector;
 
+import ca.uhn.fhir.context.FhirContext;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClientService;
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.request.FetchMedicalImagesRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.request.DocumentReferenceByIdRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyManifestRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -54,7 +57,6 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     private final ConfigurationManager configurationManager;
     // URL of the targeted NCP-B - ClientService.wsdl
     private final String endpointReference;
-
 
     private final RestApiClientService restApiClientService;
 
@@ -277,6 +279,19 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     public ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
         return restApiClientService.search(countryCode, jwtToken, toMultiValueMap(searchParams), "DocumentReference");
+    }
+
+    /**
+     * @param documentReferenceByIdRequest - Object containing the parameters needed for the query of a DocumentReference by id.
+     * @return ResponseEntity with the results
+     * @throws ClientConnectorException
+     */
+    @Override
+    public ResponseEntity<String> queryDocumentReferenceByIdFhir(DocumentReferenceByIdRequest documentReferenceByIdRequest) throws ClientConnectorException {
+        Validate.notNull(documentReferenceByIdRequest, "documentReferenceByIdRequest must not be null");
+
+        final String jwtToken = jwtTokenGenerator.generate(documentReferenceByIdRequest.getAssertions());
+        return restApiClientService.read(documentReferenceByIdRequest.getCountryCode(), jwtToken, documentReferenceByIdRequest.getId(), "DocumentReference");
     }
 
     @Override

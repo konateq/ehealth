@@ -82,6 +82,21 @@ public class RestApiClientService {
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
+    public ResponseEntity<String> read(final String countryCode, final String jwtToken, final String id, final String resourcePath) {
+        final HttpHeaders headers = getDefaultHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        headers.set("CountryCode", countryCode);
+
+        final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
+
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(basePath + resourcePath + "/" + id);
+        final URI uri = uriBuilder.encode().build().toUri();
+
+        final ResponseEntity<String> response = this.restTemplate.exchange(uri, HttpMethod.GET, newRequest, String.class);
+
+        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+    }
+
     public ResponseEntity<String> post(final String countryCode, final String jwtToken, final Map<String, Object> payload, final String resourcePath) {
         final HttpHeaders headers = getDefaultHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
