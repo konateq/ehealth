@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.server.nc.mock.dicom;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
@@ -26,9 +27,9 @@ public class OrthancRestClient {
 
     public byte[] downloadDicomFile(final String studyUid, final String seriesUid, final String instanceUid) {
         final HttpHeaders headers = new HttpHeaders();
-        //headers.set(HttpHeaders.ACCEPT, "application/dicom");
+        headers.set(HttpHeaders.ACCEPT, "application/dicom");
 
-        final List<String> pathSegments = getDefaultPathSegments();
+        final List<String> pathSegments = getDefaultPathSegments(seriesUid, instanceUid);
         final Map<String, String> uriVariables = getDefaultUriVariables(studyUid, seriesUid, instanceUid);
 
         final ResponseEntity<byte[]> response = getResponse(headers, pathSegments, uriVariables, byte[].class);
@@ -44,7 +45,7 @@ public class OrthancRestClient {
         final HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
-        final List<String> pathSegments = getDefaultPathSegments();
+        final List<String> pathSegments = getDefaultPathSegments(seriesUid, instanceUid);
         pathSegments.add("/metadata");
         final Map<String, String> uriVariables = getDefaultUriVariables(studyUid, seriesUid, instanceUid);
 
@@ -53,11 +54,11 @@ public class OrthancRestClient {
     }
 
 
-    public byte[] downloadDicomRenderedImage(String studyUid, String seriesUid, String instanceUid, String frameNumber) {
+    public byte[] downloadDicomRenderedImage(final String studyUid, final String seriesUid, final String instanceUid, final String frameNumber) {
         final HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.ACCEPT, MediaType.IMAGE_JPEG_VALUE);
 
-        final List<String> pathSegments = getDefaultPathSegments();
+        final List<String> pathSegments = getDefaultPathSegments(seriesUid, instanceUid);
         pathSegments.add("/frames/{frameNumber}");
         final Map<String, String> uriVariables = getDefaultUriVariables(studyUid, seriesUid, instanceUid);
         uriVariables.put("frameNumber", frameNumber);
@@ -66,7 +67,7 @@ public class OrthancRestClient {
         return response.getBody();
     }
 
-    private <T> ResponseEntity<T> getResponse(final HttpHeaders headers, final List<String> pathSegments, Map<String, String> uriVariables, final Class<T> responseType) {
+    private <T> ResponseEntity<T> getResponse(final HttpHeaders headers, final List<String> pathSegments, final Map<String, String> uriVariables, final Class<T> responseType) {
 
 
         final UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(DICOM_SERVER_URL)
@@ -81,21 +82,29 @@ public class OrthancRestClient {
         return response;
     }
 
-    private List<String> getDefaultPathSegments() {
+    private List<String> getDefaultPathSegments(final String seriesUid, final String instanceUid) {
         final List<String> pathSegments = new ArrayList<>();
         pathSegments.add("/studies/{studyUid}");
-        pathSegments.add("/series/{seriesUid}");
-        pathSegments.add("/instances/{instanceUid}");
+        if (StringUtils.isNotBlank(seriesUid)) {
+            pathSegments.add("/series/{seriesUid}");
+        }
+        if (StringUtils.isNotBlank(instanceUid)) {
+            pathSegments.add("/instances/{instanceUid}");
+        }
 
         return pathSegments;
     }
 
     private Map<String, String> getDefaultUriVariables(final String studyUid, final String seriesUid, final String instanceUid) {
+        Validate.notNull(studyUid, "study uid must not be null");
         final Map<String, String> uriVariables = new HashMap<>();
         uriVariables.put("studyUid", studyUid);
-        uriVariables.put("seriesUid", seriesUid);
-        uriVariables.put("instanceUid", instanceUid);
-
+        if (StringUtils.isNotBlank(seriesUid)) {
+            uriVariables.put("seriesUid", seriesUid);
+        }
+        if (StringUtils.isNotBlank(instanceUid)) {
+            uriVariables.put("instanceUid", instanceUid);
+        }
         return uriVariables;
     }
 }

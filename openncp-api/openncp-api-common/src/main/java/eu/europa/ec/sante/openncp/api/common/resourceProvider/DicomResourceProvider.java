@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 import java.io.InputStream;
 
 @RestController
@@ -29,14 +30,29 @@ public class DicomResourceProvider extends AbstractResourceProvider {
         this.dicomDispatchingService = Validate.notNull(dicomDispatchingService, "dicomDispatchingService must not be null");
     }
 
+    @GetMapping(value = "/studies/{studyUID}", produces = {"application/dicom"})
+    public byte[] getDicomFile(@PathVariable("studyUID") final String studyUID,
+                               final HttpServletRequest servletRequest,
+                               final HttpServletResponse servletResponse) {
+        return getDicomFile(servletRequest, servletResponse, studyUID, null, null);
+    }
+
+    @GetMapping(value = "/studies/{studyUID}/series/{seriesUID}", produces = {"application/dicom"})
+    public byte[] getDicomFile(@PathVariable("studyUID") @NotBlank final String studyUID,
+                               @PathVariable("seriesUID") @NotBlank final String seriesUID,
+                               final HttpServletRequest servletRequest,
+                               final HttpServletResponse servletResponse) {
+        return getDicomFile(servletRequest, servletResponse, studyUID, seriesUID, null);
+    }
+
+
     @GetMapping(value = "/studies/{studyUID}/series/{seriesUID}/instances/{instanceUID}", produces = {"application/dicom"})
     public byte[] getDicomFile(@PathVariable("studyUID") final String studyUID,
                                @PathVariable("seriesUID") final String seriesUID,
                                @PathVariable("instanceUID") final String instanceUID,
                                final HttpServletRequest servletRequest,
                                final HttpServletResponse servletResponse) {
-        final DispatchContext dispatchContext = createDispatchContext(servletRequest, servletResponse);
-        return dicomDispatchingService.dispatchDicomFile(dispatchContext, studyUID, seriesUID, instanceUID);
+        return getDicomFile(servletRequest, servletResponse, studyUID, seriesUID, instanceUID);
     }
 
     @GetMapping(value = "/studies/{studyUID}/series/{seriesUID}/instances/{instanceUID}/metadata", produces = {"application/dicom+json"})
@@ -119,5 +135,10 @@ public class DicomResourceProvider extends AbstractResourceProvider {
             return ResponseEntity.internalServerError()
                     .body(errorResponseBody);
         }
+    }
+
+    private byte[] getDicomFile(final HttpServletRequest servletRequest, final HttpServletResponse servletResponse, final String studyUID, final String seriesUID, final String instanceUID) {
+        final DispatchContext dispatchContext = createDispatchContext(servletRequest, servletResponse);
+        return dicomDispatchingService.dispatchDicomFile(dispatchContext, studyUID, seriesUID, instanceUID);
     }
 }

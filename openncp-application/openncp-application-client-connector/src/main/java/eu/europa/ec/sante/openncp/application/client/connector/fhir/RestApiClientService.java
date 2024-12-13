@@ -42,7 +42,7 @@ public class RestApiClientService {
     public RestApiClientService(final RestTemplateBuilder restTemplateBuilder, final ConfigurationManager configurationManager, final KeyStoreManager keyStoreManager) {
         this.configurationManager = configurationManager;
         this.keyStoreManager = keyStoreManager;
-        this.basePath = configurationManager.getProperty("FHIR_REST_CLIENT_API");
+        this.basePath = configurationManager.getProperty("CLIENT_URL");
         final SSLContext sslContext = getSSLContext();
 
         final CloseableHttpClient client = HttpClients.custom()
@@ -52,6 +52,18 @@ public class RestApiClientService {
         this.restTemplate = restTemplateBuilder
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .build();
+    }
+
+    public UriComponentsBuilder getUriBuilder() {
+        return UriComponentsBuilder.fromHttpUrl(basePath);
+    }
+
+    public <R> ResponseEntity<R> doGet(final String countryCode, final String jwtToken, final URI uri, final Class<R> responseType) {
+        final HttpHeaders headers = getDefaultHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        headers.set("CountryCode", countryCode);
+
+        return this.restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), responseType);
     }
 
     public ResponseEntity<String> search(final String countryCode, final String jwtToken, final Map<String, Set<String>> searchParams, final String resourcePath) {

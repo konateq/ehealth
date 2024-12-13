@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.fhir.RestApiClien
 import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.JwtTokenGenerator;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
+import eu.europa.ec.sante.openncp.application.client.connector.request.FetchMedicalImagesRequest;
 import eu.europa.ec.sante.openncp.application.client.connector.request.MedicalImagingStudyRequest;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -33,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
@@ -73,10 +76,10 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     public DefaultClientConnectorService(final ConfigurationManager configurationManager,
                                          final RestApiClientService restApiClientService,
                                          final JwtTokenGenerator jwtTokenGenerator) {
-        this.configurationManager = Validate.notNull(configurationManager);
+        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
         this.endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
-        this.restApiClientService = Validate.notNull(restApiClientService);
-        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator);
+        this.restApiClientService = Validate.notNull(restApiClientService, "restApiClientService must not be null");
+        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator, "jwtTokenGenerator must not be null");
 
         final ClientService ss = new ClientService();
         clientConnectorService = new ClientConnectorServicePortTypeWrapper(ss.getClientServicePort());
@@ -289,6 +292,34 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         final String jwtToken = jwtTokenGenerator.generate(medicalImagingStudyRequest.getAssertions());
         return restApiClientService.search(medicalImagingStudyRequest.getCountryCode(), jwtToken, medicalImagingStudyRequest.getSearchParameters(), "DocumentReference");
     }
+
+    @Override
+    public ResponseEntity<byte[]> fetchMedicalImagesRequest(final FetchMedicalImagesRequest fetchMedicalImagesRequest) throws ClientConnectorException {
+        Validate.notNull(fetchMedicalImagesRequest, "fetchMedicalImagesRequest must not be null");
+
+        final String jwtToken = jwtTokenGenerator.generate(fetchMedicalImagesRequest.getAssertions());
+
+        final Map<String, String> uriVariables = new HashMap<>();
+        final UriComponentsBuilder uriBuilder = restApiClientService.getUriBuilder();
+
+
+        uriBuilder.pathSegment("dicom", "studies", "{studyUID}");
+        uriVariables.put("studyUID", fetchMedicalImagesRequest.getStudyUid());
+
+        fetchMedicalImagesRequest.getSeriesUid().ifPresent(seriesUID -> {
+            uriBuilder.pathSegment("series", "{seriesUID}");
+            uriVariables.put("seriesUID", seriesUID);
+        });
+
+        fetchMedicalImagesRequest.getInstanceUid().ifPresent(instanceUID -> {
+            uriBuilder.pathSegment("instances", "{instanceUID}");
+            uriVariables.put("instanceUID", instanceUID);
+        });
+
+        final URI uri = uriBuilder.encode().build(uriVariables);
+        return restApiClientService.doGet(fetchMedicalImagesRequest.getCountryCode(), jwtToken, uri, byte[].class);
+    }
+
 
     /**
      * @param assertions   - Map of assertions required by the transaction (HCP, TRC, NoK optional).
