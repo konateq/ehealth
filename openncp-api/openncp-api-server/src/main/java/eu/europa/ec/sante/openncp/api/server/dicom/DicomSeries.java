@@ -9,5 +9,11 @@ public interface DicomSeries {
 
     String getUID();
 
+    String getDescription();
+
+    String getModality();
+
+    String getEndpoint();
+
     List<DicomInstance> getInstances();
 }

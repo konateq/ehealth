@@ -6,4 +6,6 @@ import eu.europa.ec.sante.openncp.common.immutables.Domain;
 public interface DicomInstance {
 
     String getUID();
+
+    String getClassUID();
 }

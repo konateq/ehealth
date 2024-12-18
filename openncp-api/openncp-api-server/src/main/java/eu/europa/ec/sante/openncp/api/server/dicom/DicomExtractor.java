@@ -48,6 +48,10 @@ public class DicomExtractor {
 
     private DicomSeries extractDicomSeries(Attributes attributes) {
         final String seriesInstanceUID = attributes.getString(Tag.SeriesInstanceUID);
+        final String description = attributes.getString(Tag.SeriesDescription);
+        final String modality = attributes.getString(Tag.Modality);
+        final String endPoint = attributes.getString(Tag.RetrieveURL);
+        final String number = attributes.getString(Tag.SeriesNumber);
         List<DicomInstance> dicomInstances = new ArrayList<>();
         final Sequence referencedSOPSequence = attributes.getSequence(Tag.ReferencedSOPSequence);
         for (Attributes instance: referencedSOPSequence) {
@@ -55,6 +59,9 @@ public class DicomExtractor {
         }
         DicomSeries dicomSeries = ImmutableDicomSeries.builder()
                 .uID(seriesInstanceUID)
+                .description(description)
+                .modality(modality)
+                .endpoint(endPoint)
                 .addAllInstances(dicomInstances)
                 .build();
         return dicomSeries;
@@ -63,6 +70,7 @@ public class DicomExtractor {
     private DicomInstance extractDicomInstance(Attributes attributes) {
         DicomInstance dicomInstance = ImmutableDicomInstance.builder()
                 .uID(attributes.getString(Tag.ReferencedSOPInstanceUID))
+                .classUID(attributes.getString(Tag.ReferencedSOPClassUID))
                 .build();
         return dicomInstance;
     }
