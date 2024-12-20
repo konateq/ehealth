@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.server.nc.mock.dicom;
 
+import eu.europa.ec.sante.openncp.core.server.nc.mock.util.MimeProcessor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,7 +42,7 @@ public class OrthancRestClient {
         final String contentDisposition = responseHeaders.getFirst(HttpHeaders.CONTENT_DISPOSITION);
 
         // Get the response body
-        return response.getBody();
+        return MimeProcessor.removeMimeHeadersAndFooters(response.getBody());
     }
 
     public String downloadDicomMetadata(final String studyUid, final String seriesUid, final String instanceUid) {
