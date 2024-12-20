@@ -88,6 +88,7 @@
         <immutables.version>2.10.1</immutables.version>
         <jai.imageio.version>1.2-pre-dr-b04</jai.imageio.version>
         <javamelody.version>1.94.0</javamelody.version>
+        <javax.mail.version>1.6.2</javax.mail.version>
         <jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
         <jaxb2-plugin.version>2.3.1</jaxb2-plugin.version>
         <jackson.version>2.15.4</jackson.version>
@@ -719,6 +720,16 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.mail</groupId>
+                <artifactId>javax.mail-api</artifactId>
+                <version>${javax.mail.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${javax.mail.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.assertj</groupId>
