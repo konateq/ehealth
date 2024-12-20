@@ -103,6 +103,12 @@ public interface DispatchContext {
                 .isPresent();
     }
 
+    default boolean isMedicalImaging() {
+        return getSupportedResourceType()
+                .filter(fhirSupportedResourceType -> FhirSupportedResourceType.MEDICAL_IMAGING == fhirSupportedResourceType)
+                .isPresent();
+    }
+
     /**
      * Creates a fully qualified resource reference from an {@link IIdType} by injecting the server's base URL into the ID
      */
