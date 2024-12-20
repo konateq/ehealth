@@ -6,7 +6,6 @@ import eu.europa.ec.sante.openncp.api.server.dicom.DicomExtractor;
 import eu.europa.ec.sante.openncp.api.server.dicom.DicomStudy;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.ApplicationMediaType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Attachment;
