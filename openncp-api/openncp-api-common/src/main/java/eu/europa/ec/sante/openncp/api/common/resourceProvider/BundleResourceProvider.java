@@ -12,7 +12,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -27,12 +27,12 @@ import java.util.Set;
 @Component
 public class BundleResourceProvider extends AbstractResourceProvider implements IResourceProvider {
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
     private final BundleHandler bundleHandler;
 
-    public BundleResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+    public BundleResourceProvider(final FhirDispatchingService fhirDispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
         this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
@@ -44,7 +44,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     @Read
     public Bundle find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle bundle = dispatchingService.dispatchRead(dispatchContext);
+        final Bundle bundle = fhirDispatchingService.dispatchRead(dispatchContext);
         validate(bundle, theRequestDetails.getRestOperationType());
         return bundle;
     }
@@ -52,7 +52,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     @Create
     public MethodOutcome createBundle(@ResourceParam final Bundle bundleToCreate, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        return dispatchingService.dispatchWrite(dispatchContext, bundleToCreate);
+        return fhirDispatchingService.dispatchWrite(dispatchContext, bundleToCreate);
 
     }
 
@@ -98,7 +98,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
 
             final SearchContainedModeEnum theSearchContainedMode) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
 
         return handledBundle;

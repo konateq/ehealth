@@ -5,7 +5,7 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import eu.europa.ec.sante.openncp.core.common.fhir.FhirDispatchingClient;
 import eu.europa.ec.sante.openncp.core.common.fhir.HapiWebClientFactory;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -14,16 +14,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FhirMockDispatchingService implements DispatchingService {
+public class FhirMockFhirDispatchingService implements FhirDispatchingService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FhirMockDispatchingService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FhirMockFhirDispatchingService.class);
 
     private final FhirContext fhirContext;
 
     private final HapiWebClientFactory webClientFactory;
 
 
-    public FhirMockDispatchingService(final FhirContext fhirContext, final HapiWebClientFactory webClientFactory) {
+    public FhirMockFhirDispatchingService(final FhirContext fhirContext, final HapiWebClientFactory webClientFactory) {
         this.fhirContext = Validate.notNull(fhirContext, "FhirContext cannot be null");
         this.webClientFactory = Validate.notNull(webClientFactory, "WebClientFactory cannot be null");
     }
@@ -45,9 +45,7 @@ public class FhirMockDispatchingService implements DispatchingService {
     public <T extends IBaseResource> T dispatchRead(final DispatchContext dispatchContext) {
         Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
         final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
-        final Bundle result = hapiWebClient.dispatchRead(dispatchContext);
-
-        return (T) result;
+        return hapiWebClient.dispatchRead(dispatchContext);
     }
 
     @Override

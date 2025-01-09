@@ -34,7 +34,16 @@ public abstract class AbstractResourceProvider {
                                                     final RequestDetails theRequestDetails) {
         return ImmutableDispatchContext.builder()
                 .ncpSide(serverContext.getNcpSide())
+                .servletRequest(theServletRequest)
+                .servletResponse(theServletResponse)
                 .hapiRequestDetails(theRequestDetails)
+                .build();
+    }
+
+    protected DispatchContext createDispatchContext(final HttpServletRequest theServletRequest,
+                                                    final HttpServletResponse theServletResponse) {
+        return ImmutableDispatchContext.builder()
+                .ncpSide(serverContext.getNcpSide())
                 .servletRequest(theServletRequest)
                 .servletResponse(theServletResponse)
                 .build();

@@ -1,42 +1,47 @@
 package eu.europa.ec.sante.openncp.api.common.resourceProvider;
 
 import ca.uhn.fhir.model.api.annotation.Description;
-import ca.uhn.fhir.rest.annotation.Create;
-import ca.uhn.fhir.rest.annotation.OptionalParam;
-import ca.uhn.fhir.rest.annotation.ResourceParam;
-import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import eu.europa.ec.sante.openncp.api.common.handler.ResourceHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.DocumentReference;
+import org.hl7.fhir.r4.model.IdType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Component
 public class DocumentReferenceResourceProvider extends AbstractResourceProvider implements IResourceProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceResourceProvider.class);
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
 
+    private final List<ResourceHandler> resourceHandlers;
 
-    public DocumentReferenceResourceProvider(final DispatchingService dispatchingService, final ServerContext serverContext, final ValidationService validationService) {
+    public DocumentReferenceResourceProvider(final FhirDispatchingService fhirDispatchingService,
+                                             final ServerContext serverContext,
+                                             final ValidationService validationService,
+                                             final List<ResourceHandler> resourceHandlers) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
+        this.resourceHandlers = Validate.notNull(resourceHandlers, "resourceHandlers must not be null");
     }
 
     @Override
@@ -44,36 +49,70 @@ public class DocumentReferenceResourceProvider extends AbstractResourceProvider 
         return DocumentReference.class;
     }
 
+    @Read
+    public DocumentReference find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+        final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
+        final DocumentReference documentReference = fhirDispatchingService.dispatchRead(dispatchContext);
+        //validate(documentReference, theRequestDetails.getRestOperationType());
+        resourceHandlers.stream()
+                .filter(resourceHandler -> resourceHandler.accepts(dispatchContext, documentReference))
+                .forEach(resourceHandler -> resourceHandler.handle(dispatchContext, documentReference));
+        return documentReference;
+    }
+
     @Search(allowUnknownParams = true)
     public IBaseBundle search(final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse,
                               final RequestDetails theRequestDetails,
 
-                              @Description(shortDefinition = "The type of the Document") @OptionalParam(
-                                      name = "type") final TokenParam type,
+                              @Description(shortDefinition = "Patient business identifier")
+                              @RequiredParam(name = "patient") final ReferenceParam patient,
 
-                              @Description(shortDefinition = "The type of the content") @OptionalParam(
-                                      name = "contenttype") final TokenParam contentType,
+                              @Description(shortDefinition = "The type of the Document")
+                              @RequiredParam(name = "type") final TokenParam type,
 
-                              @Description(shortDefinition = "Study type") @OptionalParam(
-                                      name = "category") final TokenParam studyType,
+                              @Description(shortDefinition = "Date range for the search")
+                              @OptionalParam(name = "date") final DateRangeParam dateRange,
 
-                              @Description(shortDefinition = "Patient business identifier") @OptionalParam(
-                                      name = "patient") final ReferenceParam patient,
+                              // Lab result
+                              @Description(shortDefinition = "The type of the content for the lab result")
+                              @OptionalParam(name = "contenttype") final TokenParam contentType,
 
-                              @Description(shortDefinition = "Date range for the search") @OptionalParam(
-                                      name = "date") final DateRangeParam dateRange) {
+                              @Description(shortDefinition = "Lab result study type")
+                              @OptionalParam(name = "category") final TokenParam studyType,
+
+                              // Medical imaging
+                              @Description(shortDefinition = "Modality used for imaging")
+                              @OptionalParam(name = "modality") final TokenParam modality,
+
+                              @Description(shortDefinition = "Body site imaged")
+                              @OptionalParam(name = "bodysite") final TokenParam bodySite
+    ) {
 
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        return dispatchContext.getSupportedResourceType().map(fhirSupportedResourceType -> {
+            switch (fhirSupportedResourceType) {
+                case LAB_RESULT:
+                    return getResponseAndValidate(theRequestDetails, dispatchContext);
+                case MEDICAL_IMAGING:
+                    return getResponseAndValidate(theRequestDetails, dispatchContext);
+            }
+            return null;
+        }).orElseGet(() -> getResponseAndValidate(theRequestDetails, dispatchContext));
+    }
+
+    private Bundle getResponseAndValidate(final RequestDetails theRequestDetails, final DispatchContext dispatchContext) {
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         validate(serverResponse, theRequestDetails.getRestOperationType());
         return serverResponse;
     }
 
     @Create
-    public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
+    public MethodOutcome createDocumentReference(@ResourceParam final DocumentReference documentReference,
+                                                 final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse,
+                                                 final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
 
-        return dispatchingService.dispatchWrite(dispatchContext, documentReference);
+        return fhirDispatchingService.dispatchWrite(dispatchContext, documentReference);
 
     }
 }

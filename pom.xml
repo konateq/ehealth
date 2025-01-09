@@ -73,6 +73,7 @@
         <commons-lang3.version>3.17.0</commons-lang3.version>
         <commons-text.version>1.12.0</commons-text.version>
         <commons-validator.version>1.9.0</commons-validator.version>
+        <dcm4che.version>3.3.7</dcm4che.version>
         <dom4j.version>2.1.4</dom4j.version>
         <dynamic-discovery-client.version>1.13</dynamic-discovery-client.version>
         <ehealth.termservice.rest.model.version>2.1.2</ehealth.termservice.rest.model.version>
@@ -85,7 +86,9 @@
         <ibatis-sqlmap.version>2.3.4.726</ibatis-sqlmap.version>
         <ihe.gazelle.version>1.6</ihe.gazelle.version>
         <immutables.version>2.10.1</immutables.version>
+        <jai.imageio.version>1.2-pre-dr-b04</jai.imageio.version>
         <javamelody.version>1.94.0</javamelody.version>
+        <javax.mail.version>1.6.2</javax.mail.version>
         <jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
         <jaxb2-plugin.version>2.3.1</jaxb2-plugin.version>
         <jackson.version>2.15.4</jackson.version>
@@ -231,6 +234,12 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql-connector.version}</version>
+            </dependency>
+            <!-- Dcm4Che dependencies -->
+            <dependency>
+                <groupId>org.dcm4che</groupId>
+                <artifactId>dcm4che-core</artifactId>
+                <version>${dcm4che.version}</version>
             </dependency>
             <!-- Dynamic Discovery Client dependecies -->
             <dependency>
@@ -713,6 +722,16 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
+                <groupId>javax.mail</groupId>
+                <artifactId>javax.mail-api</artifactId>
+                <version>${javax.mail.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${javax.mail.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>3.24.2</version>
@@ -788,6 +807,11 @@
         <repository>
             <id>gazelle</id>
             <url>https://gazelle.ihe.net/nexus/content/repositories/public/</url>
+        </repository>
+        <repository>
+            <id>www.dcm4che.org</id>
+            <name>dcm4che Repository</name>
+            <url>http://www.dcm4che.org/maven2</url>
         </repository>
     </repositories>
 

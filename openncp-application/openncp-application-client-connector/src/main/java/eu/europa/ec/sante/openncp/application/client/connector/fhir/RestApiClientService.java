@@ -5,7 +5,6 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -13,15 +12,19 @@ import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class RestApiClientService {
@@ -34,9 +37,14 @@ public class RestApiClientService {
 
     private final KeyStoreManager keyStoreManager;
 
-    public RestApiClientService(RestTemplateBuilder restTemplateBuilder, ConfigurationManager configurationManager, KeyStoreManager keyStoreManager) {
+    private final String basePath;
+    private final String fhirBasePath;
+
+    public RestApiClientService(final RestTemplateBuilder restTemplateBuilder, final ConfigurationManager configurationManager, final KeyStoreManager keyStoreManager) {
         this.configurationManager = configurationManager;
         this.keyStoreManager = keyStoreManager;
+        this.basePath = configurationManager.getProperty("CLIENT_URL");
+        this.fhirBasePath = configurationManager.getProperty("FHIR_REST_CLIENT_API");
         final SSLContext sslContext = getSSLContext();
 
         final CloseableHttpClient client = HttpClients.custom()
@@ -48,63 +56,97 @@ public class RestApiClientService {
                 .build();
     }
 
-    public ResponseEntity<String> search(final String countryCode, final String jwtToken, final Map<String, String> searchParams, String resourcePath) {
-        final HttpHeaders headers = getHeaders();
+    public UriComponentsBuilder getUriBuilderForBasePath() {
+        return UriComponentsBuilder.fromHttpUrl(basePath);
+
+    }
+
+    public <R> ResponseEntity<R> doGet(final String countryCode, final String jwtToken, final URI uri, final Class<R> responseType) {
+        final HttpHeaders headers = getDefaultHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        headers.set("CountryCode", countryCode);
+
+        return this.restTemplate.exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), responseType);
+    }
+
+    public ResponseEntity<String> fhirSearch(final String countryCode, final String jwtToken, final Map<String, Set<String>> searchParams, final String resourcePath) {
+        final HttpHeaders headers = getDefaultHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
         headers.set("CountryCode", countryCode);
 
         final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
 
-        final String urlWithParams = configurationManager.getProperty("FHIR_REST_CLIENT_API") + resourcePath + "?" + searchParams.entrySet()
-                .stream()
-                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                .reduce((param1, param2) -> param1 + "&" + param2)
-                .orElse("");
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
+        uriBuilder.pathSegment(resourcePath);
+        searchParams.forEach((key, values) -> values.forEach(value -> uriBuilder.queryParam(key, value)));
+        final URI uri = uriBuilder.encode().build().toUri();
 
-        final ResponseEntity<String> response =  this.restTemplate.exchange(urlWithParams, HttpMethod.GET, newRequest, String.class);
+        final ResponseEntity<String> response = this.restTemplate.exchange(uri, HttpMethod.GET, newRequest, String.class);
 
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
-    public ResponseEntity<String> post(final String countryCode, final String jwtToken, final Map<String, Object> payload, String resourcePath) {
-        final HttpHeaders headers = getHeaders();
+    public ResponseEntity<String> fhirRead(final String countryCode, final String jwtToken, final String id, final String resourcePath) {
+        final HttpHeaders headers = getDefaultHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        headers.set("CountryCode", countryCode);
+
+        final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
+
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
+        uriBuilder.pathSegment(resourcePath, id);
+        final URI uri = uriBuilder.encode().build().toUri();
+
+        final ResponseEntity<String> response = this.restTemplate.exchange(uri, HttpMethod.GET, newRequest, String.class);
+
+        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+    }
+
+    public ResponseEntity<String> fhirPost(final String countryCode, final String jwtToken, final Map<String, Object> payload, final String resourcePath) {
+        final HttpHeaders headers = getDefaultHeaders();
         headers.set("Authorization", "Bearer " + jwtToken);
         headers.set("CountryCode", countryCode);
 
         final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(payload, headers);
 
-        final String urlWithParams = configurationManager.getProperty("FHIR_REST_CLIENT_API") + resourcePath;
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
+        uriBuilder.pathSegment(resourcePath);
+        final URI uri = uriBuilder.encode().build().toUri();
 
-        final ResponseEntity<String> response =  this.restTemplate.exchange(urlWithParams, HttpMethod.POST, newRequest, String.class);
+        final ResponseEntity<String> response = this.restTemplate.exchange(uri, HttpMethod.POST, newRequest, String.class);
 
         return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
-    private HttpHeaders getHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+    private HttpHeaders getDefaultHeaders(final String correlationId) {
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Correlation-ID", correlationId);
         return headers;
+    }
+
+    private HttpHeaders getDefaultHeaders() {
+        return getDefaultHeaders(UUID.randomUUID().toString());
     }
 
     private SSLContext getSSLContext() {
 
-        SSLContext sslContext;
+        final SSLContext sslContext;
         try {
-            String sigKeystorePassword = configurationManager.getProperty(Constant.NCP_SIG_KEYSTORE_PASSWORD);
+            final String sigKeystorePassword = configurationManager.getProperty(Constant.NCP_SIG_KEYSTORE_PASSWORD);
 
             sslContext = SSLContext.getInstance("TLSv1.2");
 
-            var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+            final var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
             keyManagerFactory.init(keyStoreManager.getKeyStore(), sigKeystorePassword.toCharArray());
 
-            var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+            final var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStoreManager.getTrustStore());
 
             sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
             return sslContext;
 
-        } catch (KeyManagementException | UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+        } catch (final KeyManagementException | UnrecoverableKeyException | KeyStoreException |
+                       NoSuchAlgorithmException e) {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
             return null;
         }

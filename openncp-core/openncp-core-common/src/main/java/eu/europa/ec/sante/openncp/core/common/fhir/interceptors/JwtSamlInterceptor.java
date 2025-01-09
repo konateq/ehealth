@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -46,7 +47,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 @Component
-public class JwtSamlInterceptor extends InterceptorAdapter {
+public class JwtSamlInterceptor extends InterceptorAdapter implements HandlerInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
 
@@ -117,7 +118,7 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
             throw new AuthenticationException("Invalid SAML token.", e);
         }
 
-        if(auditSecurityInfo != null) {
+        if (auditSecurityInfo != null) {
             String ipAddress = theRequest.getHeader("X-FORWARDED-FOR");
             if (ipAddress == null) {
                 ipAddress = theRequest.getRemoteAddr();
@@ -131,20 +132,25 @@ public class JwtSamlInterceptor extends InterceptorAdapter {
             }
 
             addAssertionToSecurityContext(AuditSecurityInfo.from(auditSecurityInfo.getAssertion(), auditSecurityInfo.getSamlAsRoot(), ipAddress, hostIp.getHostAddress()));
-        }else{
+        } else {
             throw new AuthenticationException("Invalid SAML token: empty assertion.");
         }
         LogContext.setAuthorization(jwtToken.map(JwtToken::getAuthorizationHeaderValue).orElse(null));
         return true;
     }
 
+    @Override
+    public boolean preHandle(final HttpServletRequest request,
+                             final HttpServletResponse response,
+                             final Object handler) throws Exception {
+        incomingRequestPreProcessed(request, response);
+        return true;
+    }
+
 
     private AuditSecurityInfo validateSaml(final String saml) throws AuthenticationException {
-
-        Assertion hcpIdentityAssertion = null;
-
+        Assertion hcpIdentityAssertion;
         LOGGER.info("SAML token: {}", saml);
-
         if (saml != null && !saml.isEmpty()) {
             try {
                 final BasicParserPool ppMgr = new BasicParserPool();

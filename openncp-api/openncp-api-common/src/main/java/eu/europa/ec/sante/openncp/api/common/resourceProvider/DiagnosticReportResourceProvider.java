@@ -11,7 +11,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -29,12 +29,12 @@ public class DiagnosticReportResourceProvider extends AbstractResourceProvider i
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticReportResourceProvider.class);
 
-    private final DispatchingService dispatchingService;
+    private final FhirDispatchingService fhirDispatchingService;
     private final BundleHandler bundleHandler;
 
-    public DiagnosticReportResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
+    public DiagnosticReportResourceProvider(final FhirDispatchingService fhirDispatchingService, final BundleHandler bundleHandler, final ServerContext serverContext, final ValidationService validationService) {
         super(serverContext, validationService);
-        this.dispatchingService = Validate.notNull(dispatchingService, "dispatchingService must not be null");
+        this.fhirDispatchingService = Validate.notNull(fhirDispatchingService, "fhirDispatchingService must not be null");
         this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
@@ -62,7 +62,7 @@ public class DiagnosticReportResourceProvider extends AbstractResourceProvider i
                               @Description(shortDefinition = "Date range for the search") @OptionalParam(
                                       name = "date") final DateRangeParam dateRange) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
-        final Bundle serverResponse = dispatchingService.dispatchSearch(dispatchContext);
+        final Bundle serverResponse = fhirDispatchingService.dispatchSearch(dispatchContext);
         final Bundle handledBundle = bundleHandler.handle(serverResponse, dispatchContext);
         validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;

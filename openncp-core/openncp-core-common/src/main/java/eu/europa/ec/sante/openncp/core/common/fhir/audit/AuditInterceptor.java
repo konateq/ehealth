@@ -58,9 +58,10 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                                       final HttpServletResponse httpServletResponse) {
         final DispatchContext dispatchContext = ImmutableDispatchContext.builder()
                 .ncpSide(serverContext.getNcpSide())
-                .hapiRequestDetails(requestDetails)
                 .servletRequest(httpServletRequest)
-                .servletResponse(httpServletResponse).build();
+                .servletResponse(httpServletResponse)
+                .hapiRequestDetails(requestDetails)
+                .build();
         final AuditableEvent auditableEvent = ImmutableAuditableEvent.builder()
                 .pointcut(Pointcut.SERVER_OUTGOING_RESPONSE)
                 .fhirContext(fhirContext)
@@ -80,7 +81,7 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                 LOGGER.debug("Audit event dispatching using dispatcher [{}] for audit event [{}]", auditDispatcher.getClass().getSimpleName(), auditEventAsJsonString);
             }
 
-            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, dispatchContext.getResourceType());
+            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, dispatchContext.getSpecificResourceType());
             LOGGER.debug("Audit event dispatched with result [{}]", dispatchResult);
             if (dispatchResult.isSuccess()) {
                 LOGGER.info("Audit event successfully dispatched: [{}]", dispatchResult.getMessage());
