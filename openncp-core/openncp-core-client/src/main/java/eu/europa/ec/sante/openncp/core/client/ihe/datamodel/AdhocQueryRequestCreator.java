@@ -67,7 +67,7 @@ public class AdhocQueryRequestCreator {
         documentEntryClassCodeBuilder.append("('");
         for(GenericDocumentCode documentCode : documentCodes) {
             if(documentEntryClassCodeBuilder.length() > 2) {
-                documentEntryClassCodeBuilder.append("','");
+                documentEntryClassCodeBuilder.append('\'').append(',').append('\'');
             }
             documentEntryClassCodeBuilder.append(documentCode.getValue()).append("^^").append(documentCode.getSchema());
         }
