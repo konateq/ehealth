@@ -94,7 +94,7 @@ public class AbuseDetectionService implements Job {
                                 "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
                                 "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41', '110152', '110153', '110106', '110107', '110112') " +
                                 "and eventDateTime > TO_DATE('" + lastDateTimeFileAnalyzed + "', 'YYYY-MM-DD HH24:MI:SS') " +
-                                "order by eventDateTime ASC";
+                                "order by eventDateTime ASC;";
                     } else {
                         query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
                                 "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
@@ -108,7 +108,7 @@ public class AbuseDetectionService implements Job {
                         query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
                                 "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
                                 "where codes.code IN ('ITI-55', 'ITI-38', 'ITI-39', 'ITI-41', '110152', '110153', '110106', '110107', '110112') " +
-                                "and messages.id > " + lastIdAnalyzed + " order by id ASC";
+                                "and messages.id > " + lastIdAnalyzed + " order by id ASC;";
                     } else {
                         query = "select messages.id, eventActionCode, eventDateTime, eventOutcome, messageContent, sourceAddress, " +
                                 "eventId_id, code from messages inner join codes on (messages.eventId_id = codes.id) " +
@@ -246,7 +246,7 @@ public class AbuseDetectionService implements Job {
                         "TO_DATE('" + datetime + "', 'YYYY-MM-DD HH24:MI:SS'),\n " +
                         "TO_DATE('" + eventStartDate + "', 'YYYY-MM-DD HH24:MI:SS'),\n " +
                         "TO_DATE('" + eventEndDate + "', 'YYYY-MM-DD HH24:MI:SS') " +
-                        ")"; // FIX ORA-00933: SQL command not properly ended
+                        ");"; // FIX ORA-00933: SQL command not properly ended
             } else {
                 sqlInsertStatementError = "INSERT INTO EHNCP_ANOMALY( " +
                         "DESCRIPTION, " +
