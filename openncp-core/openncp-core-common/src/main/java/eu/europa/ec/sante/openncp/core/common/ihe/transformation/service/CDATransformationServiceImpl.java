@@ -35,6 +35,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class CDATransformationServiceImpl implements CDATransformationService, TMConstants {
@@ -63,10 +64,10 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
     private final Validator validator;
 
     public CDATransformationServiceImpl(final TMConfiguration config, final CodedElementList codedElementList, final TerminologyService terminologyService, final Validator validator) {
-        this.config = Validate.notNull(config);
-        this.codedElementList = Validate.notNull(codedElementList, "CodedElementList cannot be null");
-        this.terminologyService = Validate.notNull(terminologyService);
-        this.validator = Validate.notNull(validator);
+        this.config = Validate.notNull(config, "TMConfiguration must not be null");
+        this.codedElementList = Validate.notNull(codedElementList, "CodedElementList must not be null");
+        this.terminologyService = Validate.notNull(terminologyService, "TerminologyService must not be null");
+        this.validator = Validate.notNull(validator, "Validator must not be null");
 
         fillServiceTypeMaps();
     }
@@ -91,6 +92,8 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
         watch.stop();
         logger.info("Translation of CDA executed in: '{}ms'", watch.getTotalTimeMillis());
         logger.info("Translating OpenNCP CDA Document [END]");
+        logger.info("Translation of OpenNCP CDA Document ended with status [{}]", responseStructure.getStatus().name());
+        logTransformationResult(responseStructure);
         return responseStructure;
     }
 
@@ -115,6 +118,8 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
         watch.stop();
         logger.info("Transformation of CDA executed in: '{}ms'", watch.getTotalTimeMillis());
         logger.info("Transcoding OpenNCP CDA Document [END]");
+        logger.info("Transcoding of OpenNCP CDA Document ended with status [{}]", responseStructure.getStatus().name());
+        logTransformationResult(responseStructure);
         return responseStructure;
     }
 
@@ -145,7 +150,6 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
         logger.info("Processing CDA Document: '{}', Target Language: '{}', Transcoding: '{}'",
                 inputDocument.toString(), targetLanguageCode, isTranscode);
         TMResponseStructure responseStructure;
-        String status;
         final List<ITMTSAMError> errors = new ArrayList<>();
         final List<ITMTSAMError> warnings = new ArrayList<>();
         final byte[] inputDocbytes;
@@ -156,8 +160,7 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
             final Document namespaceAwareDoc = XmlUtil.getNamespaceAwareDocument(inputDocbytes);
 
             // Checking Document type and if the Document is structured or unstructured
-            final Document namespaceNotAwareDoc = inputDocument;
-            final String cdaDocumentType = getCDADocumentType(namespaceNotAwareDoc);
+            final String cdaDocumentType = getCDADocumentType(inputDocument);
 
             // XSD Validation disabled: boolean schemaValid = Validator.validateToSchema(namespaceAwareDoc);
 
@@ -187,8 +190,7 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
             if (config.isSchematronValidationEnabled()) {
                 // if transcoding, validate against friendly scheme,
                 // else against pivot scheme
-                final boolean validateFriendly = isTranscode;
-                final SchematronResult result = validator.validateSchematron(inputDocument, cdaDocumentType, validateFriendly);
+                final SchematronResult result = validator.validateSchematron(inputDocument, cdaDocumentType, isTranscode);
                 if (result == null || !result.isValid()) {
                     warnings.add(TMError.WARNING_INPUT_SCHEMATRON_VALIDATION_FAILED);
                     logger.error("Schematron validation error, input document is invalid!");
@@ -202,12 +204,12 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
             logger.info(isTranscode ? "Transcoding of the CDA Document: '{}'" : "Translating of the CDA Document: '{}'", cdaDocumentType);
             // transcode/translate document
             if (isTranscode) {
-                transcodeDocument(namespaceNotAwareDoc, errors, warnings, cdaDocumentType);
+                transcodeDocument(inputDocument, errors, warnings, cdaDocumentType);
             } else {
-                translateDocument(namespaceNotAwareDoc, targetLanguageCode, errors, warnings, cdaDocumentType);
+                translateDocument(inputDocument, targetLanguageCode, errors, warnings, cdaDocumentType);
             }
 
-            final Document finalDoc = XmlUtil.removeEmptyXmlns(namespaceNotAwareDoc);
+            final Document finalDoc = XmlUtil.removeEmptyXmlns(inputDocument);
 
             if (config.isModelValidationEnabled()) {
                 final ModelValidatorResult validateMDA = validator.validateMDA(XmlUtil.xmlToString(finalDoc),
@@ -294,22 +296,8 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
         final boolean level3Doc;
         // check if structuredDocument
         final Node nodeStructuredBody = XmlUtil.getNode(document, XPATH_STRUCTUREDBODY);
-        if (nodeStructuredBody != null) {
-
-            // LEVEL 3 document
-            level3Doc = true;
-        } else {
-            // check if unstructured document
-            final Node nodeNonXMLBody = XmlUtil.getNode(document, XPATH_NONXMLBODY);
-            if (nodeNonXMLBody != null) {
-
-                // LEVEL 1 document
-                level3Doc = false;
-            } else {
-                // NO BODY - Document will be processed as LEVEL 1
-                level3Doc = false;
-            }
-        }
+        // LEVEL 3 document
+        level3Doc = nodeStructuredBody != null;
 
         final String docTypeConstant;
         // find constant for Document type
@@ -335,7 +323,6 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
      * @param targetLanguageCode - language Code
      * @param errors             empty list for TMErrors
      * @param warnings           empty list for TMWarnings
-     * @return
      */
     private void translateDocument ( final Document document, final String targetLanguageCode,
                                      final List<ITMTSAMError> errors,
@@ -354,7 +341,6 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
      * @param errors          Empty list for TMErrors
      * @param warnings        Empty list for TMWarnings
      * @param cdaDocumentType Type of CDA document to process
-     * @return
      */
     private void transcodeDocument ( final Document document, final List<ITMTSAMError> errors,
                                      final List<ITMTSAMError> warnings, final String cdaDocumentType){
@@ -370,7 +356,6 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
      * @param warnings
      * @param cdaDocumentType
      * @param isTranscode
-     * @return
      */
     private void processDocument ( final Document document, final String targetLanguageCode,
                                    final List<ITMTSAMError> errors,
@@ -815,5 +800,32 @@ public class CDATransformationServiceImpl implements CDATransformationService, T
         level3Type.put(config.getPatientSummaryCode(), PATIENT_SUMMARY3);
         level3Type.put(config.geteDispensationCode(), EDISPENSATION3);
         level3Type.put(config.getePrescriptionCode(), EPRESCRIPTION3);
+    }
+
+    private void logTransformationResult(TMResponseStructure responseStructure) {
+        logErrorMessages(responseStructure.getErrors());
+        logWarningMessages(responseStructure.getWarnings());
+    }
+
+    private void logErrorMessages(List<ITMTSAMError> errors) {
+        if (!errors.isEmpty()) {
+            logger.error("[{}] errors encountered during transformation process", errors.size());
+            AtomicInteger counter = new AtomicInteger(1);
+            errors.forEach(error ->
+                    logger.error("Error {} : Code [{}] and description [{}]",
+                            counter.getAndIncrement(), error.getCode(), error.getDescription())
+            );
+        }
+    }
+
+    private void logWarningMessages(List<ITMTSAMError> warnings) {
+        if (!warnings.isEmpty()) {
+            logger.warn("[{}] warnings encountered during transformation process", warnings.size());
+            AtomicInteger counter = new AtomicInteger(1);
+            warnings.forEach(warning ->
+                    logger.warn("Warning {} : Code [{}] and description [{}]",
+                            counter.getAndIncrement(), warning.getCode(), warning.getDescription())
+            );
+        }
     }
 }

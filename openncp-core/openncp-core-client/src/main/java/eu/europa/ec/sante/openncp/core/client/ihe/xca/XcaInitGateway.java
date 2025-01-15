@@ -190,7 +190,6 @@ public class XcaInitGateway {
                     final var domDocument = tmResponseStructure.getResponseCDA();
                     final byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                     queryResponse.getDocumentResponse().get(0).setDocument(translatedCDA);
-
                 }
 
             } catch (final Exception e) {
