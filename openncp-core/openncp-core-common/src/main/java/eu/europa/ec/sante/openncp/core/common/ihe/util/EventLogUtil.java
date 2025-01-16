@@ -103,27 +103,27 @@ public class EventLogUtil {
      * @param response
      * @param classCode
      */
-    public static void prepareXCACommonLogQuery(final EventLog eventLog, final MessageContext msgContext, final AdhocQueryRequest request, final AdhocQueryResponse response, final ClassCode classCode) {
+    public static void prepareXCACommonLogQuery(final EventLog eventLog, final MessageContext msgContext, final AdhocQueryRequest request, final AdhocQueryResponse response, final List<ClassCode> classCodes) {
+        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
 
-        switch (classCode) {
-            case PS_CLASSCODE:
-                eventLog.setEventType(EventType.PATIENT_SERVICE_LIST);
-                eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_LIST);
-                eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-                break;
-            case EP_CLASSCODE:
-                eventLog.setEventType(EventType.ORDER_SERVICE_LIST);
-                eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_LIST);
-                eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-                break;
-            case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
-            case ORCD_LABORATORY_RESULTS_CLASSCODE:
-            case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
-            case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                eventLog.setEventType(EventType.ORCD_SERVICE_LIST);
-                eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_LIST);
-                eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-                break;
+        for (ClassCode classCode : classCodes) {
+            switch (classCode) {
+                case PS_CLASSCODE:
+                    eventLog.setEventType(EventType.PATIENT_SERVICE_LIST);
+                    eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_LIST);
+                    break;
+                case EP_CLASSCODE:
+                    eventLog.setEventType(EventType.ORDER_SERVICE_LIST);
+                    eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_LIST);
+                    break;
+                case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
+                case ORCD_LABORATORY_RESULTS_CLASSCODE:
+                case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
+                case ORCD_MEDICAL_IMAGES_CLASSCODE:
+                    eventLog.setEventType(EventType.ORCD_SERVICE_LIST);
+                    eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_LIST);
+                    break;
+            }
         }
 
         eventLog.setPT_ParticipantObjectIDs(getDocumentEntryPatientId(request));
@@ -156,8 +156,8 @@ public class EventLogUtil {
             for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
                 if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                     String documentType = slotType1.getValueList().getValue().get(0);
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "('");
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "')");
+                    documentType = StringUtils.remove(documentType, "('");
+                    documentType = StringUtils.remove(documentType, "')");
                     eventLog.getEventTargetParticipantObjectIds().add(documentType);
                 }
             }
@@ -170,8 +170,8 @@ public class EventLogUtil {
             for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
                 if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                     String documentType = slotType1.getValueList().getValue().get(0);
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "('");
-                    documentType = org.apache.commons.lang3.StringUtils.remove(documentType, "')");
+                    documentType = StringUtils.remove(documentType, "('");
+                    documentType = StringUtils.remove(documentType, "')");
                     eventLog.getEventTargetParticipantObjectIds().add(documentType);
                 }
             }
