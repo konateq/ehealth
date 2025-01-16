@@ -494,7 +494,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 //            }
 
             //  Invoke eADC
-            if(!EadcUtilWrapper.hasTransactionErrors(_returnEnv)) {
+            if (!EadcUtilWrapper.hasTransactionErrors(_returnEnv)) {
                 EadcUtilWrapper.invokeEadc(_messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                         EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY);
@@ -518,12 +518,10 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final String dstHomeCommunityId = OidUtil.getHomeCommunityId(countryCode.toLowerCase(Locale.ENGLISH));
 
-            for (final ClassCode classCode : classCodes) {
-                createAndSendEventLogQuery(adhocQueryRequest, adhocQueryResponse,
-                        _messageContext, _returnEnv, env, assertionMap.get(AssertionType.HCP), assertionMap.get(AssertionType.TRC),
-                        this._getServiceClient().getOptions().getTo().getAddress(),
-                        classCode, dstHomeCommunityId); // Audit
-            }
+            createAndSendEventLogQuery(adhocQueryRequest, adhocQueryResponse,
+                    _messageContext, _returnEnv, env, assertionMap.get(AssertionType.HCP), assertionMap.get(AssertionType.TRC),
+                    this._getServiceClient().getOptions().getTo().getAddress(),
+                    classCodes, dstHomeCommunityId);
             // TMP
             // Audit end time
             end = System.currentTimeMillis();
@@ -567,7 +565,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
             }
-            if(!eadcError.isEmpty()) {
+            if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(_messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                         EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY, eadcError);
@@ -919,7 +917,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
             }
-            if(!eadcError.isEmpty()) {
+            if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(_messageContext, _returnMessageContext, this._getServiceClient(), cda,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                         EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY, eadcError);
@@ -1090,12 +1088,12 @@ public class RespondingGateway_ServiceStub extends Stub {
 
     private EventLog createAndSendEventLogQuery(final AdhocQueryRequest request, final AdhocQueryResponse response, final MessageContext msgContext,
                                                 final SOAPEnvelope _returnEnv, final SOAPEnvelope env, final Assertion idAssertion, final Assertion trcAssertion,
-                                                final String address, final ClassCode classCode, final String dstHomeCommunityId) {
+                                                final String address, final List<ClassCode> classCodes, final String dstHomeCommunityId) {
 
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, classCode);
+        EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, classCodes);
         eventLog.setNcpSide(NcpSide.NCP_B);
         EventLogClientUtil.sendEventLog(eventLog);
 
