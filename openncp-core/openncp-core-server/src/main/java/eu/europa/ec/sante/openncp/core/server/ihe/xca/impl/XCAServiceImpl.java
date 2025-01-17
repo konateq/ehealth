@@ -427,7 +427,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
         final AdhocQueryResponse adhocQueryResponse = objectFactory.createAdhocQueryResponse();
         // Create Registry Object List
         adhocQueryResponse.setRegistryObjectList(ofRim.createRegistryObjectListType());
-        adhocQueryResponse.setRegistryErrorList(registryErrorList);
 
         final RequestData requestData = extractAndValidateRequestData(soapHeader, classCodeValues, registryErrorList);
         if (requestData.isEmpty()) {
@@ -454,6 +453,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             }
             RegistryErrorUtils.addErrorMessage(registryErrorList, code, code.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
             adhocQueryResponse.setStatus(AdhocQueryResponseStatus.FAILURE);
+            adhocQueryResponse.setRegistryErrorList(registryErrorList);
             prepareEventLogForQuery(eventLog, request, adhocQueryResponse, requestData.getShElement(), classCode);
             return adhocQueryResponse;
         }
@@ -637,12 +637,18 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {
                 try {
+                    if (!registryErrorList.getRegistryError().isEmpty()) {
+                        adhocQueryResponse.setRegistryErrorList(registryErrorList);
+                    }
                     prepareEventLogForQuery(eventLog, request, adhocQueryResponse, requestData.getShElement(), classCodeValue);
                 } catch (final Exception e) {
                     logger.error("Prepare Audit log failed: '{}'", e.getMessage(), e);
                     // Is this fatal?
                 }
             }
+        }
+        if (!registryErrorList.getRegistryError().isEmpty()) {
+            adhocQueryResponse.setRegistryErrorList(registryErrorList);
         }
 
         adhocQueryResponse.setStatus(responseStatus);
