@@ -38,6 +38,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
+import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.ITMTSAMError;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.TMError;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
@@ -59,6 +60,7 @@ import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
@@ -108,8 +110,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
      * @see ServiceLoader
      */
     public XCAServiceImpl(final DocumentSearchInterface documentSearchService, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
-        this.documentSearchService = Validate.notNull(documentSearchService);
-        this.saml2Validator = Validate.notNull(saml2Validator);
+        this.documentSearchService = Validate.notNull(documentSearchService, "documentSearchService must not be null");
+        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
         this.cdaTransformationService = cdaTransformationService;
     }
 
@@ -155,44 +157,15 @@ public class XCAServiceImpl implements XCAServiceInterface {
             eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
             eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
         } else {
-            switch (classCode) {
-                case EP_CLASSCODE:
-                    eventLog.setEventType(EventType.ORDER_SERVICE_LIST);
-                    eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_LIST);
-                    break;
-                case PS_CLASSCODE:
-                    eventLog.setEventType(EventType.PATIENT_SERVICE_LIST);
-                    eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_LIST);
-                    break;
-                case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
-                case ORCD_LABORATORY_RESULTS_CLASSCODE:
-                case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
-                case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                    eventLog.setEventType(EventType.ORCD_SERVICE_LIST);
-                    eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_LIST);
-                    break;
-                default:
-                    logger.warn(NO_EVENT_IDENTIFICATION_INFORMATION_FOUND);
-                    break;
-            }
+            eventLog.setEventType(EventType.determineEventTypeForXCAQuery(List.of(classCode)));
+            eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCAQuery(List.of(classCode)));
         }
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
-        eventLog.setPS_ParticipantObjectIDs(getDocumentEntryPatientId(request));
+        eventLog.setPS_ParticipantObjectIDs(EventLogUtil.getDocumentEntryPatientId(request));
 
         if (response.getRegistryObjectList() != null) {
-            final List<String> documentIds = new ArrayList<>();
-            for (var i = 0; i < response.getRegistryObjectList().getIdentifiable().size(); i++) {
-                if (!(response.getRegistryObjectList().getIdentifiable().get(i).getValue() instanceof ExtrinsicObjectType)) {
-                    continue;
-                }
-                final ExtrinsicObjectType eot = (ExtrinsicObjectType) response.getRegistryObjectList().getIdentifiable().get(i).getValue();
-                for (final ExternalIdentifierType externalIdentifierType : eot.getExternalIdentifier()) {
-                    if (externalIdentifierType.getIdentificationScheme().equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME)) {
-                        documentIds.add(externalIdentifierType.getValue());
-                    }
-                }
-            }
+            final List<String> documentIds = getDocumentIds(response);
             eventLog.setEventTargetParticipantObjectIds(documentIds);
         }
 
@@ -205,7 +178,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         eventLog.setHR_AlternativeUserID(SoapElementHelper.getAlternateUserID(sh));
         eventLog.setHR_RoleID(SoapElementHelper.getRoleID(sh));
         eventLog.setSP_UserID(HttpUtil.getSubjectDN(true));
-        eventLog.setPT_ParticipantObjectIDs(getDocumentEntryPatientId(request));
+        eventLog.setPT_ParticipantObjectIDs(EventLogUtil.getDocumentEntryPatientId(request));
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 
         if (response.getRegistryErrorList() != null) {
@@ -215,32 +188,37 @@ public class XCAServiceImpl implements XCAServiceInterface {
         }
     }
 
+    @NotNull
+    private static List<String> getDocumentIds(AdhocQueryResponse response) {
+        final List<String> documentIds = new ArrayList<>();
+        for (var i = 0; i < response.getRegistryObjectList().getIdentifiable().size(); i++) {
+            if (!(response.getRegistryObjectList().getIdentifiable().get(i).getValue() instanceof ExtrinsicObjectType)) {
+                continue;
+            }
+            final ExtrinsicObjectType eot = (ExtrinsicObjectType) response.getRegistryObjectList().getIdentifiable().get(i).getValue();
+            for (final ExternalIdentifierType externalIdentifierType : eot.getExternalIdentifier()) {
+                if (externalIdentifierType.getIdentificationScheme().equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME)) {
+                    documentIds.add(externalIdentifierType.getValue());
+                }
+            }
+        }
+        return documentIds;
+    }
+
     private void handleEventLogStatus(final EventLog eventLog, final AdhocQueryResponse queryResponse, final AdhocQueryRequest queryRequest) {
 
         if (queryResponse.getRegistryObjectList() == null) {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
             // In case of failure, the document class code has been provided to the event log as event target as there is no
             // reference available as resources (document ID etc.).
-            addDocumentClassCodeToEventLog(eventLog, queryRequest);
+            EventLogUtil.setDocumentType(eventLog, queryRequest);
         } else if (queryResponse.getRegistryErrorList() == null) {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
         } else {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
             // In case of failure, the document class code has been provided to the event log as event target as there is no
             // reference available as resources (document ID etc.).
-            addDocumentClassCodeToEventLog(eventLog, queryRequest);
-        }
-    }
-
-    private void addDocumentClassCodeToEventLog(final EventLog eventLog, final AdhocQueryRequest queryRequest) {
-
-        for (final SlotType1 slotType1 : queryRequest.getAdhocQuery().getSlot()) {
-            if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
-                String documentType = slotType1.getValueList().getValue().get(0);
-                documentType = StringUtils.remove(documentType, "('");
-                documentType = StringUtils.remove(documentType, "')");
-                eventLog.getEventTargetParticipantObjectIds().add(documentType);
-            }
+            EventLogUtil.setDocumentType(eventLog, queryRequest);
         }
     }
 
@@ -254,26 +232,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
             eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
             eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
         } else {
-            switch (classCode) {
-                case EP_CLASSCODE:
-                    eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
-                    eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
-                    break;
-                case PS_CLASSCODE:
-                    eventLog.setEventType(EventType.PATIENT_SERVICE_RETRIEVE);
-                    eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_RETRIEVE);
-                    break;
-                case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
-                case ORCD_LABORATORY_RESULTS_CLASSCODE:
-                case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
-                case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                    eventLog.setEventType(EventType.ORCD_SERVICE_RETRIEVE);
-                    eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_RETRIEVE);
-                    break;
-                default:
-                    logger.warn(NO_EVENT_IDENTIFICATION_INFORMATION_FOUND);
-                    break;
-            }
+            eventLog.setEventType(EventType.determineEventTypeForXCARetrieve(classCode));
+            eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCARetrieve(classCode));
         }
         eventLog.setEI_EventActionCode(EventActionCode.READ);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
@@ -333,24 +293,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
 
     private ClassCode getFirstClassCode(final List<ClassCode> classCodeList) {
         return classCodeList.stream().findFirst().orElse(null);
-    }
-
-    /**
-     * Util method extracting the XDS Patient Identifiers from the XCA query.
-     *
-     * @return List of HL7v2 Patient Identifier formatted Strings.
-     */
-    private List<String> getDocumentEntryPatientId(final AdhocQueryRequest request) {
-
-        final List<String> patientIds = new ArrayList<>();
-        for (final SlotType1 slot : request.getAdhocQuery().getSlot()) {
-            if (slot.getName().equals("$XDSDocumentEntryPatientId")) {
-                String patientId = slot.getValueList().getValue().get(0);
-                patientId = patientId.substring(1, patientId.length() - 1);
-                patientIds.add(patientId);
-            }
-        }
-        return patientIds;
     }
 
     private FilterParams getFilterParams(final AdhocQueryRequest request) {
@@ -433,7 +375,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             return adhocQueryResponse;
         }
 
-        if (!getDocumentEntryPatientId(request).contains(requestData.getFullPatientId())) {
+        if (!EventLogUtil.getDocumentEntryPatientId(request).contains(requestData.getFullPatientId())) {
             // Patient ID in TRC assertion does not match the one given in the request. Return "No documents found".
             OpenNCPErrorCode code = OpenNCPErrorCode.ERROR_DOCUMENT_NOT_FOUND;
             final ClassCode classCode = getFirstClassCode(classCodeValues);
@@ -494,7 +436,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         try {
             //  e-Sens: we MUST generate NRO when NCPA sends to NI. This was throwing errors because we were not
             //  passing an XML document. We're passing data like:"SearchCriteria: {patientId = 12445ASD}".
-            //  So we provided a XML representation of such data.
+            //  So we provided an XML representation of such data.
             final Assertion assertionTRC = SoapElementHelper.getTRCAssertion(requestData.getShElement());
             final String messageUUID = UUIDHelper.encodeAsURN(assertionTRC.getID()) + "_" + assertionTRC.getIssueInstant();
 
@@ -823,7 +765,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             }
 
             // Evidence for call to NI for XCA Retrieve
-            /* Joao: we MUST generate NRO when NCPA sends to NI.This was throwing errors because we were not passing a XML document.
+            /* Joao: we MUST generate NRO when NCPA sends to NI.This was throwing errors because we were not passing an XML document.
                 We're passing data like:
                 "SearchCriteria: {patientId = 12445ASD}"
                 So we provided an XML representation of such data */
@@ -859,9 +801,9 @@ public class XCAServiceImpl implements XCAServiceInterface {
             if (epsosDoc == null) {
 
                 //  Evidence for response from NI in case of failure
-                //  This should be NRR of NCPA receiving from NI. This was throwing errors because we were not passing a XML document.
+                //  This should be NRR of NCPA receiving from NI. This was throwing errors because we were not passing an XML document.
                 //  We're passing data like: "SearchCriteria: {patientId = 12445ASD}"
-                //  So we provided a XML representation of such data. Still, evidence is generated based on request data, not response.
+                //  So we provided an XML representation of such data. Still, evidence is generated based on request data, not response.
                 //  This NRR is optional as per the CP. So we leave this commented.
                 //                try {
                 //                    EvidenceUtils.createEvidenceREMNRR(DocumentFactory.createSearchCriteria().add(Criteria.PatientId, patientId)
@@ -887,10 +829,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
 
             // Evidence for response from NI in case of success
             /* Joao: This should be NRR of NCPA receiving from NI.
-                    This was throwing errors because we were not passing a XML document.
+                    This was throwing errors because we were not passing an XML document.
                     We're passing data like:
                     "SearchCriteria: {patientId = 12445ASD}"
-                    So we provided a XML representation of such data. Still, evidence is generated based on request data, not response.
+                    So we provided an XML representation of such data. Still, evidence is generated based on request data, not response.
                     This NRR is optional as per the CP. So we leave this commented */
             //            try {
             //                EvidenceUtils.createEvidenceREMNRR(DocumentFactory.createSearchCriteria().add(Criteria.PatientId, patientId).asXml(),
