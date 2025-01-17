@@ -19,7 +19,6 @@
 package eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3;
 
 import javax.xml.bind.annotation.*;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,7 +79,7 @@ public class RegistryErrorList {
      */
     public List<RegistryError> getRegistryError() {
         if (registryError == null) {
-            registryError = new ArrayList<RegistryError>();
+            registryError = new ArrayList<>();
         }
         return this.registryError;
     }
@@ -105,7 +104,7 @@ public class RegistryErrorList {
      *     {@link String }
      *     
      */
-    public void setHighestSeverity(String value) {
+    public void setHighestSeverity(final String value) {
         this.highestSeverity = value;
     }
 

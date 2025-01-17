@@ -297,7 +297,6 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     registryErrorList,
                     e.getOpenncpErrorCode(),
                     e.getMessage(),
-                    null,
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
 
