@@ -36,14 +36,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
-
 import javax.xml.bind.*;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.OutputStream;
-import java.io.Writer;
 import java.util.*;
 
 /**
@@ -67,7 +64,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                     AdhocQueryResponse.class,
                     RetrieveDocumentSetRequestType.class,
                     RetrieveDocumentSetResponseType.class);
-        } catch (JAXBException ex) {
+        } catch (final JAXBException ex) {
             LOGGER.error("Unable to create JAXBContext: '{}'", ex.getMessage(), ex);
             Runtime.getRuntime().exit(-1);
         } finally {
@@ -77,9 +74,9 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
 
-    private String getMessageID(SOAPEnvelope envelope) {
+    private String getMessageID(final SOAPEnvelope envelope) {
 
-        Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
+        final Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
         if (it.hasNext()) {
             return it.next().getText();
         } else {
@@ -87,11 +84,11 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         }
     }
 
-    public void invokeBusinessLogic(MessageContext msgContext, MessageContext newMsgContext) throws AxisFault {
+    public void invokeBusinessLogic(final MessageContext msgContext, final MessageContext newMsgContext) throws AxisFault {
         String eadcError = "";
 
         // Start Date for eADC
-        Date startTime = new Date();
+        final Date startTime = new Date();
 
         // End Date for eADC
         Date endTime = new Date();
@@ -99,20 +96,20 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         // Out Envelop
         SOAPEnvelope envelope = null;
 
-        RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = null;
+        final RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = null;
         ServiceType serviceType = null;
         Document clinicalDocument = null;
         try {
             // get the implementation class for the Web Service
-            Object obj = getTheImplementationObject(msgContext);
+            final Object obj = getTheImplementationObject(msgContext);
 
-            XCA_ServiceSkeleton skel = (XCA_ServiceSkeleton) obj;
+            final XCA_ServiceSkeleton skel = (XCA_ServiceSkeleton) obj;
 
             // Find the axisOperation that has been set by the Dispatch phase.
-            AxisOperation op = msgContext.getOperationContext().getAxisOperation();
+            final AxisOperation op = msgContext.getOperationContext().getAxisOperation();
 
             if (op == null) {
-                String err = "Operation is not located, if this is doclit style the SOAP-ACTION should specified via the SOAP Action to use the RawXMLProvider";
+                final String err = "Operation is not located, if this is doclit style the SOAP-ACTION should specified via the SOAP Action to use the RawXMLProvider";
 
                 //eadcFailure(msgContext, err, ServiceType.DOCUMENT_LIST_RESPONSE);
                 eadcError = err;
@@ -121,16 +118,16 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                 throw new AxisFault(err);
             }
 
-            String randomUUID = Constants.UUID_PREFIX + UUID.randomUUID();
-            String methodName;
+            final String randomUUID = Constants.UUID_PREFIX + UUID.randomUUID();
+            final String methodName;
 
             if ((op.getName() != null) && ((methodName = JavaUtils.xmlNameToJavaIdentifier(op.getName().getLocalPart())) != null)) {
 
-                SOAPHeader sh = msgContext.getEnvelope().getHeader();
+                final SOAPHeader sh = msgContext.getEnvelope().getHeader();
                 //  Identification of the TLS Common Name of the client.
-                String clientCommonName = EventLogUtil.getClientCommonName(msgContext);
+                final String clientCommonName = EventLogUtil.getClientCommonName(msgContext);
 
-                EventLog eventLog = new EventLog();
+                final EventLog eventLog = new EventLog();
                 eventLog.setReqM_ParticipantObjectID(getMessageID(msgContext.getEnvelope()));
                 eventLog.setReqM_ParticipantObjectDetail(msgContext.getEnvelope().getHeader().toString().getBytes());
                 eventLog.setSC_UserID(clientCommonName);
@@ -144,14 +141,14 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                     LOGGER.info("[ITI-38] Incoming XCA List from '{}'", clientCommonName);
                     /* Validate incoming query request */
-                    String requestMessage = XMLUtil.prettyPrintForValidation(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
+                    final String requestMessage = XMLUtil.prettyPrintForValidation(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
 
-                    AdhocQueryResponse adhocQueryResponse1;
-                    AdhocQueryRequest wrappedParam = (AdhocQueryRequest) fromOM(
+                    final AdhocQueryResponse adhocQueryResponse1;
+                    final AdhocQueryRequest wrappedParam = (AdhocQueryRequest) fromOM(
                             msgContext.getEnvelope().getBody().getFirstElement(), AdhocQueryRequest.class,
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
-                    List<ClassCode> classCodes = extractClassCodesFromQueryRequest(wrappedParam);
+                    final List<ClassCode> classCodes = extractClassCodesFromQueryRequest(wrappedParam);
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A, classCodes);
                     }
@@ -174,7 +171,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                     AuditServiceFactory.getInstance().write(eventLog, "", "1");
 
                     /* Validate outgoing query response */
-                    String responseMessage = XMLUtil.prettyPrintForValidation(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
+                    final String responseMessage = XMLUtil.prettyPrintForValidation(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A, classCodes);
                     }
@@ -189,9 +186,9 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                     LOGGER.info("[ITI-39] Incoming XCA Retrieve from '{}'", clientCommonName);
                     /* Validate incoming retrieve request */
-                    String requestMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
+                    final String requestMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
 
-                    RetrieveDocumentSetRequestType wrappedParam = (RetrieveDocumentSetRequestType) fromOM(
+                    final RetrieveDocumentSetRequestType wrappedParam = (RetrieveDocumentSetRequestType) fromOM(
                             msgContext.getEnvelope().getBody().getFirstElement(), RetrieveDocumentSetRequestType.class,
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
@@ -199,9 +196,9 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                         OpenNCPValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A, null);
                     }
 
-                    OMFactory factory = OMAbstractFactory.getOMFactory();
-                    OMNamespace ns = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", "");
-                    OMElement omElement = factory.createOMElement("RetrieveDocumentSetResponse", ns);
+                    final OMFactory factory = OMAbstractFactory.getOMFactory();
+                    final OMNamespace ns = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", "");
+                    final OMElement omElement = factory.createOMElement("RetrieveDocumentSetResponse", ns);
                     skel.respondingGateway_CrossGatewayRetrieve(wrappedParam, sh, eventLog, omElement);
 
                     envelope = toEnvelope(getSOAPFactory(msgContext), omElement);
@@ -221,24 +218,24 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                         loggerClinical.debug("Outgoing XCA Response Message:\n{}", XMLUtil.prettyPrint(XMLUtils.toDOM(envelope)));
                     }
 
-                    Options options = new Options();
+                    final Options options = new Options();
                     options.setProperty(org.apache.axis2.Constants.Configuration.ENABLE_MTOM, org.apache.axis2.Constants.VALUE_TRUE);
                     newMsgContext.setOptions(options);
 
                     /* Validate outgoing retrieve response */
-                    String responseMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
+                    final String responseMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A, null);
                     }
 
-                    RetrieveDocumentSetResponseType responseType = (RetrieveDocumentSetResponseType) fromOM(
+                    final RetrieveDocumentSetResponseType responseType = (RetrieveDocumentSetResponseType) fromOM(
                             omElement, RetrieveDocumentSetResponseType.class, null);
 
                     clinicalDocument = EadcUtilWrapper.getCDA(responseType);
 
                     serviceType = ServiceType.DOCUMENT_EXCHANGED_RESPONSE;
                 } else {
-                    String err = "Method not found: '"+ methodName + "'";
+                    final String err = "Method not found: '"+ methodName + "'";
                     LOGGER.error(err);
 
                     //eadcFailure(msgContext, err, ServiceType.DOCUMENT_EXCHANGED_RESPONSE);
@@ -260,7 +257,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                 }
 
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
 
             //eadcFailure(msgContext, e.getMessage(), ServiceType.DOCUMENT_LIST_RESPONSE);
@@ -277,14 +274,14 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         }
     }
 
-    private List<ClassCode> extractClassCodesFromQueryRequest(AdhocQueryRequest wrappedParam) {
-        ArrayList<ClassCode> list = new ArrayList<>();
+    private List<ClassCode> extractClassCodesFromQueryRequest(final AdhocQueryRequest wrappedParam) {
+        final ArrayList<ClassCode> list = new ArrayList<>();
         if (wrappedParam != null) {
             wrappedParam.getAdhocQuery().getSlot().forEach(slot -> {
                 if (StringUtils.equals(XCAConstants.AdHocQueryRequest.XDS_DOCUMENT_ENTRY_CLASSCODE_SLOT_NAME, slot.getName())) {
                     if (slot.getValueList() != null && slot.getValueList().getValue().size() > 0) {
                         for (int i = 0; i < slot.getValueList().getValue().size(); i++) {
-                            String item = StringUtils.substringBetween(slot.getValueList().getValue().get(i), "('", "^^");
+                            final String item = StringUtils.substringBetween(slot.getValueList().getValue().get(i), "('", "^^");
                             if (StringUtils.isNotBlank(item)) {
                                 list.add(ClassCode.getByCode(item));
                             }
@@ -296,121 +293,121 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         return list;
     }
 
-    private OMElement toOM(AdhocQueryRequest param, boolean optimizeContent) throws AxisFault {
+    private OMElement toOM(final AdhocQueryRequest param, final boolean optimizeContent) throws AxisFault {
 
         try {
 
-            Marshaller marshaller = wsContext.createMarshaller();
+            final Marshaller marshaller = wsContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
 
-            OMFactory factory = OMAbstractFactory.getOMFactory();
+            final OMFactory factory = OMAbstractFactory.getOMFactory();
 
-            JaxbRIDataSource source = new JaxbRIDataSource(AdhocQueryRequest.class,
+            final JaxbRIDataSource source = new JaxbRIDataSource(AdhocQueryRequest.class,
                     param, marshaller, "urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", "AdhocQueryRequest");
-            OMNamespace namespace = factory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", null);
+            final OMNamespace namespace = factory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", null);
 
             return factory.createOMElement(source, "AdhocQueryRequest", namespace);
 
-        } catch (JAXBException bex) {
+        } catch (final JAXBException bex) {
             throw AxisFault.makeFault(bex);
         }
     }
 
-    private SOAPEnvelope toEnvelope(SOAPFactory factory, AdhocQueryRequest param,
-                                    boolean optimizeContent) throws AxisFault {
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final AdhocQueryRequest param,
+                                    final boolean optimizeContent) throws AxisFault {
 
-        SOAPEnvelope envelope = factory.getDefaultEnvelope();
+        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
         envelope.getBody().addChild(toOM(param, optimizeContent));
 
         return envelope;
     }
 
-    private OMElement toOM(AdhocQueryResponse param, boolean optimizeContent) throws AxisFault {
+    private OMElement toOM(final AdhocQueryResponse param, final boolean optimizeContent) throws AxisFault {
 
         try {
 
-            Marshaller marshaller = wsContext.createMarshaller();
+            final Marshaller marshaller = wsContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
 
-            OMFactory factory = OMAbstractFactory.getOMFactory();
+            final OMFactory factory = OMAbstractFactory.getOMFactory();
 
-            JaxbRIDataSource source = new JaxbRIDataSource(AdhocQueryResponse.class,
+            final JaxbRIDataSource source = new JaxbRIDataSource(AdhocQueryResponse.class,
                     param, marshaller, "urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", "AdhocQueryResponse");
-            OMNamespace namespace = factory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", null);
+            final OMNamespace namespace = factory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", null);
 
             return factory.createOMElement(source, "AdhocQueryResponse", namespace);
 
-        } catch (JAXBException bex) {
+        } catch (final JAXBException bex) {
             throw AxisFault.makeFault(bex);
         }
     }
 
-    private SOAPEnvelope toEnvelope(SOAPFactory factory, AdhocQueryResponse param, boolean optimizeContent) throws AxisFault {
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final AdhocQueryResponse param, final boolean optimizeContent) throws AxisFault {
 
-        SOAPEnvelope envelope = factory.getDefaultEnvelope();
+        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
         envelope.getBody().addChild(toOM(param, optimizeContent));
 
         return envelope;
     }
 
-    private OMElement toOM(RetrieveDocumentSetRequestType param, boolean optimizeContent) throws AxisFault {
+    private OMElement toOM(final RetrieveDocumentSetRequestType param, final boolean optimizeContent) throws AxisFault {
 
         try {
 
-            Marshaller marshaller = wsContext.createMarshaller();
+            final Marshaller marshaller = wsContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-            OMFactory factory = OMAbstractFactory.getOMFactory();
+            final OMFactory factory = OMAbstractFactory.getOMFactory();
 
-            JaxbRIDataSource source = new JaxbRIDataSource(RetrieveDocumentSetRequestType.class, param,
+            final JaxbRIDataSource source = new JaxbRIDataSource(RetrieveDocumentSetRequestType.class, param,
                     marshaller, "urn:ihe:iti:xds-b:2007", "RetrieveDocumentSetRequest");
-            OMNamespace namespace = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", null);
+            final OMNamespace namespace = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", null);
 
             return factory.createOMElement(source, "RetrieveDocumentSetRequest", namespace);
 
-        } catch (JAXBException bex) {
+        } catch (final JAXBException bex) {
             throw AxisFault.makeFault(bex);
         }
     }
 
-    private SOAPEnvelope toEnvelope(SOAPFactory factory, RetrieveDocumentSetRequestType param, boolean optimizeContent) throws AxisFault {
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final RetrieveDocumentSetRequestType param, final boolean optimizeContent) throws AxisFault {
 
-        SOAPEnvelope envelope = factory.getDefaultEnvelope();
+        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
         envelope.getBody().addChild(toOM(param, optimizeContent));
 
         return envelope;
     }
 
-    private OMElement toOM(RetrieveDocumentSetResponseType param, boolean optimizeContent) throws AxisFault {
+    private OMElement toOM(final RetrieveDocumentSetResponseType param, final boolean optimizeContent) throws AxisFault {
 
         try {
 
-            Marshaller marshaller = wsContext.createMarshaller();
+            final Marshaller marshaller = wsContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
 
-            OMFactory factory = OMAbstractFactory.getOMFactory();
-            JaxbRIDataSource source = new JaxbRIDataSource(RetrieveDocumentSetResponseType.class,
+            final OMFactory factory = OMAbstractFactory.getOMFactory();
+            final JaxbRIDataSource source = new JaxbRIDataSource(RetrieveDocumentSetResponseType.class,
                     param, marshaller, "urn:ihe:iti:xds-b:2007", "RetrieveDocumentSetResponse");
 
-            OMNamespace namespace = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", null);
+            final OMNamespace namespace = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", null);
 
             return factory.createOMElement(source, "RetrieveDocumentSetResponse", namespace);
 
-        } catch (JAXBException bex) {
+        } catch (final JAXBException bex) {
             throw AxisFault.makeFault(bex);
         }
     }
 
-    private SOAPEnvelope toEnvelope(SOAPFactory factory, RetrieveDocumentSetResponseType param, boolean optimizeContent) throws AxisFault {
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final RetrieveDocumentSetResponseType param, final boolean optimizeContent) throws AxisFault {
 
-        SOAPEnvelope envelope = factory.getDefaultEnvelope();
+        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
         envelope.getBody().addChild(toOM(param, optimizeContent));
 
         return envelope;
     }
 
-    private SOAPEnvelope toEnvelope(SOAPFactory factory, OMElement param) {
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final OMElement param) {
 
-        SOAPEnvelope envelope = factory.getDefaultEnvelope();
+        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
         envelope.getBody().addChild(param);
 
         return envelope;
@@ -419,19 +416,19 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
     /**
      * get the default envelope
      */
-    private SOAPEnvelope toEnvelope(SOAPFactory factory) {
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory) {
 
         return factory.getDefaultEnvelope();
     }
 
-    private Object fromOM(OMElement param, Class type, Map extraNamespaces) throws AxisFault {
+    private Object fromOM(final OMElement param, final Class type, final Map extraNamespaces) throws AxisFault {
 
         try {
-            Unmarshaller unmarshaller = wsContext.createUnmarshaller();
+            final Unmarshaller unmarshaller = wsContext.createUnmarshaller();
 
             return unmarshaller.unmarshal(param.getXMLStreamReaderWithoutCaching(), type).getValue();
 
-        } catch (JAXBException bex) {
+        } catch (final JAXBException bex) {
             throw AxisFault.makeFault(bex);
         }
     }
@@ -439,23 +436,23 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
     /**
      * A utility method that copies the namespaces from the SOAPEnvelope
      */
-    private Map getEnvelopeNamespaces(SOAPEnvelope env) {
+    private Map getEnvelopeNamespaces(final SOAPEnvelope env) {
 
-        Map returnMap = new HashMap();
-        Iterator namespaceIterator = env.getAllDeclaredNamespaces();
+        final Map returnMap = new HashMap();
+        final Iterator namespaceIterator = env.getAllDeclaredNamespaces();
 
         while (namespaceIterator.hasNext()) {
 
-            OMNamespace ns = (OMNamespace) namespaceIterator.next();
+            final OMNamespace ns = (OMNamespace) namespaceIterator.next();
             returnMap.put(ns.getPrefix(), ns.getNamespaceURI());
         }
         return returnMap;
     }
 
-    private AxisFault createAxisFault(Exception e) {
+    private AxisFault createAxisFault(final Exception e) {
 
-        AxisFault f;
-        Throwable cause = e.getCause();
+        final AxisFault f;
+        final Throwable cause = e.getCause();
         if (cause != null) {
             f = new AxisFault(e.getMessage(), cause);
         } else {
@@ -494,7 +491,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
          * @param obj
          * @param marshaller
          */
-        public JaxbRIDataSource(Class clazz, Object obj, Marshaller marshaller, String nsuri, String name) {
+        public JaxbRIDataSource(final Class clazz, final Object obj, final Marshaller marshaller, final String nsuri, final String name) {
             this.outClazz = clazz;
             this.outObject = obj;
             this.marshaller = marshaller;
@@ -503,12 +500,12 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         }
 
 
-        public void serialize(XMLStreamWriter xmlWriter) throws XMLStreamException {
+        public void serialize(final XMLStreamWriter xmlWriter) throws XMLStreamException {
 
             try {
                 marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), xmlWriter);
 
-            } catch (JAXBException e) {
+            } catch (final JAXBException e) {
                 throw new XMLStreamException("Error in JAXB marshalling", e);
             }
         }
@@ -517,13 +514,13 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
             try {
 
-                OMDocument omDocument = OMAbstractFactory.getOMFactory().createOMDocument();
-                Marshaller marshaller = wsContext.createMarshaller();
+                final OMDocument omDocument = OMAbstractFactory.getOMFactory().createOMDocument();
+                final Marshaller marshaller = wsContext.createMarshaller();
                 marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), omDocument.getSAXResult());
 
                 return omDocument.getOMDocumentElement().getXMLStreamReader();
 
-            } catch (JAXBException e) {
+            } catch (final JAXBException e) {
                 throw new XMLStreamException("Error in JAXB marshalling", e);
             }
         }
