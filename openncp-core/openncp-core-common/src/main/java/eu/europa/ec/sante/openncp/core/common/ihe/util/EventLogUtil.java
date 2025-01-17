@@ -21,6 +21,7 @@ import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.kernel.http.HTTPConstants;
 import org.apache.axis2.transport.http.TransportHeaders;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,6 @@ import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 // Common part for client and server logging
 // TODO A.R. Should be moved into openncp-util later to avoid duplication
@@ -101,50 +101,22 @@ public class EventLogUtil {
      * @param msgContext
      * @param request
      * @param response
-     * @param classCode
+     * @param eventType
+     * @param transactionName
      */
-    public static void prepareXCACommonLogQuery(final EventLog eventLog, final MessageContext msgContext, final AdhocQueryRequest request, final AdhocQueryResponse response, final List<ClassCode> classCodes) {
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-
-        for (ClassCode classCode : classCodes) {
-            switch (classCode) {
-                case PS_CLASSCODE:
-                    eventLog.setEventType(EventType.PATIENT_SERVICE_LIST);
-                    eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_LIST);
-                    break;
-                case EP_CLASSCODE:
-                    eventLog.setEventType(EventType.ORDER_SERVICE_LIST);
-                    eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_LIST);
-                    break;
-                case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
-                case ORCD_LABORATORY_RESULTS_CLASSCODE:
-                case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
-                case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                    eventLog.setEventType(EventType.ORCD_SERVICE_LIST);
-                    eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_LIST);
-                    break;
-            }
-        }
-
+    public static void prepareXCACommonLogQuery(final EventLog eventLog,
+                                                final MessageContext msgContext,
+                                                final AdhocQueryRequest request,
+                                                final AdhocQueryResponse response,
+                                                final EventType eventType,
+                                                final TransactionName transactionName) {
+        eventLog.setEventType(eventType);
+        eventLog.setEI_TransactionName(transactionName);
         eventLog.setPT_ParticipantObjectIDs(getDocumentEntryPatientId(request));
 
         if (response.getRegistryObjectList() != null) {
 
-            final List<String> documentIds = new ArrayList<>();
-            final List<JAXBElement<? extends IdentifiableType>> registryObjectList = response.getRegistryObjectList().getIdentifiable();
-            for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
-
-                if (!(identifiable.getValue() instanceof ExtrinsicObjectType)) {
-                    continue;
-                }
-                final ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
-                for (final ExternalIdentifierType eit : eot.getExternalIdentifier()) {
-
-                    if (eit.getIdentificationScheme().equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME)) {
-                        documentIds.add(eit.getValue());
-                    }
-                }
-            }
+            final List<String> documentIds = getDocumentIds(response);
             //TODO: Audit - Event Target
             eventLog.setEventTargetParticipantObjectIds(documentIds);
         }
@@ -153,28 +125,14 @@ public class EventLogUtil {
         if (response.getRegistryObjectList() == null) {
 
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
-            for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
-                if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
-                    String documentType = slotType1.getValueList().getValue().get(0);
-                    documentType = StringUtils.remove(documentType, "('");
-                    documentType = StringUtils.remove(documentType, "')");
-                    eventLog.getEventTargetParticipantObjectIds().add(documentType);
-                }
-            }
+            setDocumentType(eventLog, request);
         } else if (response.getRegistryErrorList() == null) {
 
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
         } else {
 
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
-            for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
-                if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
-                    String documentType = slotType1.getValueList().getValue().get(0);
-                    documentType = StringUtils.remove(documentType, "('");
-                    documentType = StringUtils.remove(documentType, "')");
-                    eventLog.getEventTargetParticipantObjectIds().add(documentType);
-                }
-            }
+            setDocumentType(eventLog, request);
         }
 
         if (response.getRegistryErrorList() != null) {
@@ -188,35 +146,54 @@ public class EventLogUtil {
         extractHCIIdentifierFromHeader(eventLog, msgContext);
     }
 
+    @NotNull
+    private static List<String> getDocumentIds(AdhocQueryResponse response) {
+        final List<String> documentIds = new ArrayList<>();
+        final List<JAXBElement<? extends IdentifiableType>> registryObjectList = response.getRegistryObjectList().getIdentifiable();
+        for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
+
+            if (!(identifiable.getValue() instanceof ExtrinsicObjectType)) {
+                continue;
+            }
+            final ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
+            for (final ExternalIdentifierType eit : eot.getExternalIdentifier()) {
+
+                if (eit.getIdentificationScheme().equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME)) {
+                    documentIds.add(eit.getValue());
+                }
+            }
+        }
+        return documentIds;
+    }
+
+    public static void setDocumentType(EventLog eventLog, AdhocQueryRequest request) {
+        for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
+            if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
+                String documentType = slotType1.getValueList().getValue().get(0);
+                documentType = StringUtils.remove(documentType, "('");
+                documentType = StringUtils.remove(documentType, "')");
+                eventLog.getEventTargetParticipantObjectIds().add(documentType);
+            }
+        }
+    }
+
     /**
      * @param eventLog
      * @param msgContext
      * @param request
      * @param response
-     * @param classCode
+     * @param eventType
+     * @param transactionName
      */
-    public static void prepareXCACommonLogRetrieve(final EventLog eventLog, final MessageContext msgContext, final RetrieveDocumentSetRequestType request, final RetrieveDocumentSetResponseType response, final ClassCode classCode) {
+    public static void prepareXCACommonLogRetrieve(final EventLog eventLog,
+                                                   final MessageContext msgContext,
+                                                   final RetrieveDocumentSetRequestType request,
+                                                   final RetrieveDocumentSetResponseType response,
+                                                   final EventType eventType,
+                                                   final TransactionName transactionName) {
 
-        switch (classCode) {
-            case PS_CLASSCODE:
-                eventLog.setEventType(EventType.PATIENT_SERVICE_RETRIEVE);
-                eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_RETRIEVE);
-                eventLog.setEI_EventActionCode(EventActionCode.CREATE);
-                break;
-            case EP_CLASSCODE:
-                eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
-                eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
-                eventLog.setEI_EventActionCode(EventActionCode.CREATE);
-                break;
-            case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
-            case ORCD_LABORATORY_RESULTS_CLASSCODE:
-            case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
-            case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                eventLog.setEventType(EventType.ORCD_SERVICE_RETRIEVE);
-                eventLog.setEI_TransactionName(TransactionName.ORCD_SERVICE_RETRIEVE);
-                eventLog.setEI_EventActionCode(EventActionCode.CREATE);
-                break;
-        }
+        eventLog.setEventType(eventType);
+        eventLog.setEI_TransactionName(transactionName);
 
         //  TODO: Audit - Event Target
         eventLog.getEventTargetParticipantObjectIds().add(request.getDocumentRequest().get(0).getDocumentUniqueId());
@@ -302,7 +279,6 @@ public class EventLogUtil {
      */
     public static void prepareXDRCommonLog(final EventLog eventLog, final ProvideAndRegisterDocumentSetRequestType request, final RegistryErrorList registryErrorList) {
 
-        String id = null;
         String classCode = null;
         String eventCode = null;
         String countryCode = null;
@@ -335,7 +311,6 @@ public class EventLogUtil {
                     continue;
                 }
                 final ExtrinsicObjectType eot = (ExtrinsicObjectType) identifiable.getValue();
-                id = eot.getId();
                 for (final ClassificationType classif : eot.getClassification()) {
                     switch (classif.getClassificationScheme()) {
                         case XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_SCHEME:
@@ -413,7 +388,7 @@ public class EventLogUtil {
      * @param request
      * @return
      */
-    private static List<String> getDocumentEntryPatientId(final AdhocQueryRequest request) {
+    public static List<String> getDocumentEntryPatientId(final AdhocQueryRequest request) {
 
         final List<String> patientIds = new ArrayList<>();
         for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
@@ -426,18 +401,6 @@ public class EventLogUtil {
         return patientIds;
     }
 
-    /**
-     * @param message
-     * @return
-     */
-    private static boolean isUUIDValid(final String message) {
-        try {
-            UUID.fromString(message);
-            return true;
-        } catch (final IllegalArgumentException e) {
-            return false;
-        }
-    }
 
     /**
      * @param messageContext - JAXWS Axis2 MessageContext used by the request.

@@ -1,8 +1,11 @@
 package eu.europa.ec.sante.openncp.common.audit;
 
+import eu.europa.ec.sante.openncp.common.ClassCode;
 import net.RFC3881.dicom.AuditMessage;
 
 import eu.europa.ec.sante.openncp.common.audit.auditmessagebuilders.*;
+
+import java.util.List;
 
 public enum EventType {
 
@@ -63,5 +66,37 @@ public enum EventType {
 
     public AuditMessage buildAuditMessage(EventLog eventLog) {
         return getBuilder().build(eventLog);
+    }
+
+    public static EventType determineEventTypeForXCAQuery(List<ClassCode> classCodes) {
+        for (ClassCode classCode : classCodes) {
+            switch (classCode) {
+                case PS_CLASSCODE:
+                    return EventType.PATIENT_SERVICE_LIST;
+                case EP_CLASSCODE:
+                    return EventType.ORDER_SERVICE_LIST;
+                case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
+                case ORCD_LABORATORY_RESULTS_CLASSCODE:
+                case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
+                case ORCD_MEDICAL_IMAGES_CLASSCODE:
+                    return EventType.ORCD_SERVICE_LIST;
+            }
+        }
+        throw new RuntimeException(String.format("EventType for XCA List cannot be determined based on classCodes [%s]", classCodes));
+    }
+
+    public static EventType determineEventTypeForXCARetrieve(ClassCode classCode) {
+        switch (classCode) {
+            case PS_CLASSCODE:
+                return EventType.PATIENT_SERVICE_RETRIEVE;
+            case EP_CLASSCODE:
+                return EventType.ORDER_SERVICE_RETRIEVE;
+            case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
+            case ORCD_LABORATORY_RESULTS_CLASSCODE:
+            case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
+            case ORCD_MEDICAL_IMAGES_CLASSCODE:
+                return EventType.ORCD_SERVICE_RETRIEVE;
+        }
+        throw new RuntimeException(String.format("EventType for XCA Retrieve cannot be determined based on classCode [%s]", classCode));
     }
 }
