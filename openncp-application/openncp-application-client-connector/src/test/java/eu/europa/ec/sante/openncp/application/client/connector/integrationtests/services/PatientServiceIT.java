@@ -28,7 +28,6 @@ public class PatientServiceIT extends BaseIntegrationTest {
     @Autowired
     private KeyStoreManager keyStoreManager;
 
-
     @Test
     void queryPatient() throws ClientConnectorException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
