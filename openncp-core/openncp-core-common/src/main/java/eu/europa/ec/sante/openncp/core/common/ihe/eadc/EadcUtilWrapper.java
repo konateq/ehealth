@@ -105,8 +105,10 @@ public class EadcUtilWrapper {
             final var watch = new StopWatch();
             watch.start();
             try {
+                final Date fallbackEndTime = new Date();
+                Date effectiveEndTime = (endTime == null) ? fallbackEndTime : endTime;
                 EadcUtil.invokeEadcFailure(requestMsgCtx, responseMsgCtx, cda,
-                                           buildTransactionInfo(requestMsgCtx, responseMsgCtx, serviceClient, direction, startTime, endTime,
+                                           buildTransactionInfo(requestMsgCtx, responseMsgCtx, serviceClient, direction, startTime, effectiveEndTime,
                                                                 receivingIso, serviceType), dsType, errorDescription);
             } catch (final Exception e) {
                 LOGGER.error("[EADC Failure] Invocation Failed - Exception: '{}'", e.getMessage(), e);
