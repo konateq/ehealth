@@ -22,6 +22,7 @@ import org.openhealthtools.openatna.audit.persistence.model.codes.CodeEntity;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -42,7 +43,7 @@ public class CodesUtils {
         String code1 = ce1.getCode();
         String code2 = ce2.getCode();
         // if codes don't match then we're done
-        if (!code1.equals(code2)) {
+        if (!Objects.equals(code1, code2)) {
             return false;
         }
         String codeSystem1 = ce1.getCodeSystem();
