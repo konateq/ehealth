@@ -15,7 +15,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -267,7 +267,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final SOAPHeaderBlock replyTo = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("ReplyTo", ns2);
             final OMElement address = OMAbstractFactory.getSOAP12Factory().createOMElement("Address", ns2);
-            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ADDRESSING_NAMESPACE);
+            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ANONYMOUS_ADDRESSING_OM_TEXT);
             address.addChild(node4);
             replyTo.addChild(address);
 
@@ -644,7 +644,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             final SOAPFactory soapFactory = getFactory(_operationClient.getOptions().getSoapVersionURI());
             final OMFactory factory = OMAbstractFactory.getOMFactory();
 
-            final OMNamespace ns2 = factory.createOMNamespace(XCAConstants.SOAP_HEADERS.ADDRESSING_NAMESPACE, "addressing");
+            final OMNamespace ns2 = factory.createOMNamespace(XCAConstants.SOAP_HEADERS.QUERY.OM_NAMESPACE, "addressing");
 
             final OMElement action = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("Action", ns2);
             final OMNode node = factory.createOMText(XCAConstants.SOAP_HEADERS.RETRIEVE.REQUEST_ACTION);
@@ -660,7 +660,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final OMElement replyTo = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("ReplyTo", ns2);
             final OMElement address = OMAbstractFactory.getSOAP12Factory().createOMElement("Address", ns2);
-            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ADDRESSING_NAMESPACE);
+            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ANONYMOUS_ADDRESSING_OM_TEXT);
             address.addChild(node4);
             replyTo.addChild(address);
 

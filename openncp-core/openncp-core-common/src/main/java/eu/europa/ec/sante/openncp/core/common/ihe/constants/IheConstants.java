@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.constants.ihe;
+package eu.europa.ec.sante.openncp.core.common.ihe.constants;
 
 /**
  * Holds multiple IHE Constants.

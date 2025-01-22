@@ -1,7 +1,7 @@
-package eu.europa.ec.sante.openncp.core.common.constants.ihe.xdr;
+package eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr;
 
 
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 
 /**
  * Holds all the fixed properties used in the XDR Profile transactions.
