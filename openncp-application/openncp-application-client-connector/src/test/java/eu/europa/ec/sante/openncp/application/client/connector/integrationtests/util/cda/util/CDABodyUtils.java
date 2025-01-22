@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.util;
 
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.Identifier;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Element;
