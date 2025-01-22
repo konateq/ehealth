@@ -2,10 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.ihe.eadc;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -105,11 +102,9 @@ public class EadcUtilWrapper {
             final var watch = new StopWatch();
             watch.start();
             try {
-                final Date fallbackEndTime = new Date();
-                Date effectiveEndTime = (endTime == null) ? fallbackEndTime : endTime;
                 EadcUtil.invokeEadcFailure(requestMsgCtx, responseMsgCtx, cda,
-                                           buildTransactionInfo(requestMsgCtx, responseMsgCtx, serviceClient, direction, startTime, effectiveEndTime,
-                                                                receivingIso, serviceType), dsType, errorDescription);
+                        buildTransactionInfo(requestMsgCtx, responseMsgCtx, serviceClient, direction, startTime, Objects.requireNonNullElseGet(endTime, Date::new),
+                                receivingIso, serviceType), dsType, errorDescription);
             } catch (final Exception e) {
                 LOGGER.error("[EADC Failure] Invocation Failed - Exception: '{}'", e.getMessage(), e);
             } finally {
