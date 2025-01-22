@@ -1,15 +1,14 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util;
 
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.ImmutableTrcAssertionRequest;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.TrcAssertionRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.assertion.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
@@ -76,7 +75,7 @@ public class AssertionUtils {
 
         return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
-                "eHDSI EU Testing MedCare Center", permissions, null);
+                "eHDSI EU Testing MedCare Center", permissions, "On Behalf");
     }
 
     private static Assertion createHCPAssertion(KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
@@ -181,7 +180,6 @@ public class AssertionUtils {
             if (StringUtils.isNotBlank(onBehalfId)) {
                 final var attrPID41 = createAttribute(builderFactory, "OnBehalfOf", "urn:epsos:names:wp3.4:subject:on-behalf-of", onBehalfId,
                         role.getDisplayName());
-                attrStmt.getAttributes().add(attrPID41);
                 attrStmt.getAttributes().add(attrPID41);
             }
 
@@ -306,6 +304,22 @@ public class AssertionUtils {
             Signer.signObject(sig);
         } catch (final SignatureException e) {
             throw new Exception(e);
+        }
+    }
+
+    public static Assertion createNextOfKin(final AssertionService assertionService, final ConfigurationManager configurationManager, Assertion assertionHCP, NextOfKinDetail nextOfKinDetail) throws MalformedURLException {
+        final URL nokServerUrl = new URL(configurationManager.getProperty("secman.nextOfKin.url"));
+        try {
+            final NokAssertionRequest nokAssertionRequest = ImmutableNokAssertionRequest.builder().location(nokServerUrl).assertion(assertionHCP).checkForHostname(false).validationEnabled(false).nextOfKinAddressCountry(nextOfKinDetail.getAddressCountry()).nextOfKinPostalCode(nextOfKinDetail.getAddressPostalCode()).nextOfKinAddressCity(nextOfKinDetail.getAddressCity()).nextOfKinAddressStreet(nextOfKinDetail.getAddressStreet()).nextOfKinBirthDate(nextOfKinDetail.getBirthDate().toString()).nextOfKinGender(nextOfKinDetail.getGender()).nextOfKinFirstName(nextOfKinDetail.getFirstName()).nextOfKinFamilyName(nextOfKinDetail.getFamilyName()).nextOfKinId(nextOfKinDetail.getLivingSubjectIds().get(0)).build();
+            final Assertion assertionNOK = assertionService.request(nokAssertionRequest);
+            final var marshaller = new AssertionMarshaller();
+            final Element element = marshaller.marshall(assertionNOK);
+            final Document document = element.getOwnerDocument();
+            LOGGER.info("NOK Assertion: '{}'\n'{}'", assertionNOK.getID(), XmlUtils.getDocumentAsXml(document, false));
+            return assertionNOK;
+        } catch (Exception e) {
+            LOGGER.error(ExceptionUtils.getStackTrace(e));
+            return null;
         }
     }
 

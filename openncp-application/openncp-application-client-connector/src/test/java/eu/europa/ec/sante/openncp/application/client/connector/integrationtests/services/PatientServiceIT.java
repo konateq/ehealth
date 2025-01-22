@@ -2,7 +2,10 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
+import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.NextOfKinDetail;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.ObjectFactory;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +32,18 @@ public class PatientServiceIT extends BaseIntegrationTest {
     @Autowired
     private KeyStoreManager keyStoreManager;
 
-    @Test
-    void queryPatient() throws ClientConnectorException {
-        final Map<AssertionType, Assertion> assertions = new HashMap<>();
-        assertions.put(AssertionType.HCP, AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
+    @Autowired
+    private AssertionService assertionService;
 
+    @Autowired
+    private ConfigurationManager configurationManager;
+
+    @Test
+    void queryPatient() throws ClientConnectorException, MalformedURLException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        Assertion assertionHCP = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+        assertions.put(AssertionType.HCP, assertionHCP);
+        assertions.put(AssertionType.NOK, AssertionUtils.createNextOfKin(assertionService, configurationManager, assertionHCP, getnextOfKinDetail()));
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("1.3.6.1.4.1.48336");
@@ -50,5 +61,9 @@ public class PatientServiceIT extends BaseIntegrationTest {
                 .containsExactly(
                         tuple(patientId.getRoot() + ".1000", patientId.getExtension())
                 );
+    }
+
+    private NextOfKinDetail getnextOfKinDetail() {
+    return null;
     }
 }

@@ -74,9 +74,12 @@ public class ClientServiceImpl implements ClientService {
             final String countryCode = submitDocumentRequest.getCountryCode();
             final GenericDocumentCode classCode = submitDocument.getClassCode();
             final Map<AssertionType, Assertion> assertionMap = submitDocumentOperation.getAssertions();
+
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
+                OpenNCPValidation.validateNoKAssertion(assertionMap.get(AssertionType.NOK), NcpSide.NCP_B);
             }
+
             if (!classCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
                 throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + classCode.getSchema());
             }
@@ -123,6 +126,7 @@ public class ClientServiceImpl implements ClientService {
             final Map<AssertionType, Assertion> assertionMap = queryDocumentOperation.getAssertions();
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
+                OpenNCPValidation.validateNoKAssertion(assertionMap.get(AssertionType.NOK), NcpSide.NCP_B);
             }
 
             final QueryResponse response;
@@ -187,7 +191,9 @@ public class ClientServiceImpl implements ClientService {
             final Map<AssertionType, Assertion> assertionMap = retrieveDocumentOperation.getAssertions();
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
+                OpenNCPValidation.validateNoKAssertion(assertionMap.get(AssertionType.NOK), NcpSide.NCP_B);
             }
+
 
             if (!documentCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
                 throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + documentCode.getSchema());
@@ -234,6 +240,10 @@ public class ClientServiceImpl implements ClientService {
             final PatientDemographics patientDemographics = queryPatientOperation.getRequest().getPatientDemographics();
             final String countryCode = queryPatientOperation.getRequest().getCountryCode();
             final Map<AssertionType, Assertion> assertionMap = queryPatientOperation.getAssertions();
+
+            if (OpenNCPValidation.isValidationEnable()) {
+                OpenNCPValidation.validateNoKAssertion(assertionMap.get(AssertionType.NOK), NcpSide.NCP_B);
+            }
 
             final List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics> patientDemographicsList =
                     identificationService.findIdentityByTraits(
