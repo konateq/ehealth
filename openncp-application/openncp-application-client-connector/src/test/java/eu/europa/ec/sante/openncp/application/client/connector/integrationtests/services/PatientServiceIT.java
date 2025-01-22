@@ -32,7 +32,6 @@ public class PatientServiceIT extends BaseIntegrationTest {
     void queryPatient() throws ClientConnectorException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         assertions.put(AssertionType.HCP, AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
-
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("1.3.6.1.4.1.48336");

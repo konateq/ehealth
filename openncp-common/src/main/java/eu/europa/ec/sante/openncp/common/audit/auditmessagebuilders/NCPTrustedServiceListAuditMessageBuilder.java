@@ -21,7 +21,7 @@ public class NCPTrustedServiceListAuditMessageBuilder extends AbstractAuditMessa
             addAuditSource(message, eventLog.getAS_AuditSourceId());
             // Event Identification
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                    eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
+                    eventLog.getEI_EventActionCode(), AuditConstant.EVENT_ID_IHE_TRANSACTIONS_CODE_SYSTEM, eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());

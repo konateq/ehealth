@@ -36,7 +36,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
             final ObjectFactory of = new ObjectFactory();
             message = of.createAuditMessage();
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                    eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
+                    eventLog.getEI_EventActionCode(), AuditConstant.EVENT_ID_IHE_TRANSACTIONS_CODE_SYSTEM, eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     true, eventLog.getSourceip());

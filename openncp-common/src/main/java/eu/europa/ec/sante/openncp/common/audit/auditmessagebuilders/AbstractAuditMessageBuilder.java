@@ -68,7 +68,7 @@ public abstract class AbstractAuditMessageBuilder {
             final ObjectFactory of = new ObjectFactory();
             message = of.createAuditMessage();
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                    eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
+                    eventLog.getEI_EventActionCode(), AuditConstant.EVENT_ID_IHE_TRANSACTIONS_CODE_SYSTEM, eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
@@ -286,6 +286,7 @@ public abstract class AbstractAuditMessageBuilder {
                                         final EventType eventType,
                                         final String transactionName,
                                         final String eventActionCode,
+                                        final String codeSystemName,
                                         final XMLGregorianCalendar eventDateTime,
                                         final BigInteger eventOutcomeIndicator,
                                         final NcpSide ncpSide) {
@@ -293,7 +294,7 @@ public abstract class AbstractAuditMessageBuilder {
         final EventID eventID = buildEventID(eventType, ncpSide, transactionName);
 
         final EventTypeCode eventTypeCode = new EventTypeCodeBuilder()
-                .codeSystemName("IHE Transactions")
+                .codeSystemName(codeSystemName)
                 .csdCode(eventType.getIheCode())
                 .displayName(transactionName)
                 .originalText(eventType.getIheTransactionName())

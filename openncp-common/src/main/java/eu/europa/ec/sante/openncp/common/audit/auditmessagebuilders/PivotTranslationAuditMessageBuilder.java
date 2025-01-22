@@ -20,7 +20,7 @@ public class PivotTranslationAuditMessageBuilder extends AbstractAuditMessageBui
             final ObjectFactory of = new ObjectFactory();
             message = of.createAuditMessage();
             addAuditSource(message, eventLog.getAS_AuditSourceId());
-            addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(),
+            addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(), AuditConstant.EVENT_ID_EHDSI_TRANSACTIONS_CODE_SYSTEM,
                     eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
 
             addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
