@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.datamodel;
 
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
@@ -8,7 +8,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.Respons
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.AdhocQueryType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ValueListType;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
-package eu.europa.ec.sante.openncp.core.common.constants.ihe.xcpd;
+package eu.europa.ec.sante.openncp.core.common.ihe.constants.xcpd;
 
 
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 
 /**
  * Holds all the fixed properties used in the XCPD Profile transactions.
