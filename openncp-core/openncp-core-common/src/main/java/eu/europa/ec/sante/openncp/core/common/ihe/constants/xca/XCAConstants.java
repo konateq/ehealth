@@ -1,6 +1,6 @@
-package eu.europa.ec.sante.openncp.core.common.constants.ihe.xca;
+package eu.europa.ec.sante.openncp.core.common.ihe.constants.xca;
 
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 
 /**
  * Holds all the fixed properties used in the XCA Profile transactions.
@@ -50,7 +50,7 @@ public final class XCAConstants {
 
         public static final String NAMESPACE_URI = "urn:ihe:iti:xds-b:2007";
         public static final String MUST_UNDERSTAND = "mustUnderstand";
-        public static final String ADDRESSING_NAMESPACE = "http://www.w3.org/2005/08/addressing/anonymous";
+        public static final String ANONYMOUS_ADDRESSING_OM_TEXT= "http://www.w3.org/2005/08/addressing/anonymous";
         public static final String SECURITY_XSD = IheConstants.SOAP_HEADERS.SECURITY_XSD;
 
         private SOAP_HEADERS() {
