@@ -78,6 +78,24 @@ public class AssertionUtils {
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
                 "eHDSI EU Testing MedCare Center", permissions, null);
     }
+    public static Assertion createClinicalAssertionPharmacist(final KeyStoreManager keyStoreManager, final String username, final String fullName,
+                                                              final String email) {
+        final List<String> permissions = new ArrayList<>();
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-006");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-010");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-046");
+
+        final AssertionUtils.Concept conceptRole = new AssertionUtils.Concept();
+        conceptRole.setCode("2262");
+        conceptRole.setCodeSystemId("2.16.840.1.113883.2.9.6.2.7");
+        conceptRole.setCodeSystemName("ISCO");
+        conceptRole.setDisplayName("Pharmacists");
+
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+                "MyHealth@EU Integration Test", "urn:hl7ii:1.2.3.4:ABCD", "Pharmacy", "TREATMENT",
+                "MyHealth@EU Pharmacy", permissions, null);
+    }
 
     private static Assertion createHCPAssertion(KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
                                                final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
