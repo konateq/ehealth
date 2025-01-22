@@ -1,8 +1,8 @@
 package eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.ep;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPSOSDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory;
