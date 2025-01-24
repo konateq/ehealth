@@ -1,5 +1,9 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
@@ -9,6 +13,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.ObjectFactory;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
+import org.hl7.fhir.r4.model.Bundle;
 import org.junit.jupiter.api.Test;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,10 +38,13 @@ public class LabResultReportWorkflowIT extends BaseIntegrationTest {
     @Autowired
     private KeyStoreManager keyStoreManager;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     @Test
-    void queryBundle() throws ClientConnectorException {
+    void queryDocumentReference() throws ClientConnectorException, JsonProcessingException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
         assertions.put(AssertionType.HCP, clinicalAssertion);
@@ -45,13 +53,33 @@ public class LabResultReportWorkflowIT extends BaseIntegrationTest {
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
         patientId.setExtension("89121210976");
         final Map<String, String> params = Map.of(
-                "identifier", patientId.getRoot() + "|" + patientId.getExtension(),
-                "type", "http://loinc.org|18719-5");
+                "patient.identifier", patientId.getRoot() + "|" + patientId.getExtension(),
+                "category", "http://loinc.org|18719-5");
 
-        final ResponseEntity<String> responseEntity = clientConnectorService.queryBundleFhir(assertions, "BE", params);
+        final ResponseEntity<String> responseEntity = clientConnectorService.queryDocumentReferenceFhir(assertions, "BE", params);
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
 
+        final FhirContext fhirContext = FhirContext.forR4();
+        final IParser parser = fhirContext.newJsonParser();
+        final Bundle returnedBundle = parser.parseResource(Bundle.class, responseEntity.getBody());
+        assertThat(returnedBundle).isNotNull();
+    }
+
+    @Test
+    void queryBundle() {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+
+        final ResponseEntity<String> responseEntity = clientConnectorService.queryBundleFhirById(assertions, "BE", "SimpleChemistryResultReport");
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
+
+        final FhirContext fhirContext = FhirContext.forR4();
+        final IParser parser = fhirContext.newJsonParser();
+        final Bundle returnedBundle = parser.parseResource(Bundle.class, responseEntity.getBody());
+        assertThat(returnedBundle).isNotNull();
     }
 
 }
