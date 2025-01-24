@@ -74,9 +74,7 @@ public class ClientServiceImpl implements ClientService {
             final String countryCode = submitDocumentRequest.getCountryCode();
             final GenericDocumentCode classCode = submitDocument.getClassCode();
             final Map<AssertionType, Assertion> assertionMap = submitDocumentOperation.getAssertions();
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
-            }
+            validateAssertions(assertionMap);
             if (!classCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
                 throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + classCode.getSchema());
             }
@@ -121,10 +119,7 @@ public class ClientServiceImpl implements ClientService {
             final List<GenericDocumentCode> documentCodes = queryDocumentOperation.getRequest().getClassCode();
             final FilterParams filterParams = queryDocumentOperation.getRequest().getFilterParams();
             final Map<AssertionType, Assertion> assertionMap = queryDocumentOperation.getAssertions();
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
-            }
-
+            validateAssertions(assertionMap);
             final QueryResponse response;
             if (documentCodes.size() == 1) {
                 final String classCode = documentCodes.get(0).getNodeRepresentation();
@@ -185,10 +180,7 @@ public class ClientServiceImpl implements ClientService {
             final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode documentCode = GenericDocumentCodeDts.newInstance(
                     genericDocumentCode);
             final Map<AssertionType, Assertion> assertionMap = retrieveDocumentOperation.getAssertions();
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
-            }
-
+            validateAssertions(assertionMap);
             if (!documentCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
                 throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + documentCode.getSchema());
             }
@@ -234,7 +226,7 @@ public class ClientServiceImpl implements ClientService {
             final PatientDemographics patientDemographics = queryPatientOperation.getRequest().getPatientDemographics();
             final String countryCode = queryPatientOperation.getRequest().getCountryCode();
             final Map<AssertionType, Assertion> assertionMap = queryPatientOperation.getAssertions();
-
+            validateAssertions(assertionMap);
             final List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics> patientDemographicsList =
                     identificationService.findIdentityByTraits(
                     PatientDemographicsDts.toDataModel(patientDemographics), assertionMap, countryCode);
@@ -252,5 +244,17 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public String sayHello(final String who) {
         return "Hello " + who;
+    }
+
+    private void validateAssertions(Map<AssertionType, Assertion> assertionMap) {
+        if (OpenNCPValidation.isValidationEnable()) {
+            OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionType.HCP), NcpSide.NCP_B);
+            if (assertionMap.containsKey(AssertionType.TRC)) {
+                OpenNCPValidation.validateTRCAssertion(assertionMap.get(AssertionType.TRC), NcpSide.NCP_B);
+            }
+            if (assertionMap.containsKey(AssertionType.NOK)) {
+                OpenNCPValidation.validateNOKAssertion(assertionMap.get(AssertionType.NOK), NcpSide.NCP_B);
+            }
+        }
     }
 }
