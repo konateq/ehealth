@@ -16,9 +16,11 @@ import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -64,6 +66,16 @@ public class PatientServiceIT extends BaseIntegrationTest {
     }
 
     private NextOfKinDetail getnextOfKinDetail() {
-    return null;
+        NextOfKinDetail nextOfKinDetail = new NextOfKinDetail();
+        nextOfKinDetail.setLivingSubjectIds(Arrays.asList("ID123", "ID456"));
+        nextOfKinDetail.setFirstName("John");
+        nextOfKinDetail.setFamilyName("Doe");
+        nextOfKinDetail.setGender("Male");
+        nextOfKinDetail.setBirthDate(new Date());
+        nextOfKinDetail.setAddressStreet("123 Main St");
+        nextOfKinDetail.setAddressCity("Springfield");
+        nextOfKinDetail.setAddressPostalCode("12345");
+        nextOfKinDetail.setAddressCountry("BE");
+        return nextOfKinDetail;
     }
 }

@@ -308,7 +308,7 @@ public class AssertionUtils {
     }
 
     public static Assertion createNextOfKin(final AssertionService assertionService, final ConfigurationManager configurationManager, Assertion assertionHCP, NextOfKinDetail nextOfKinDetail) throws MalformedURLException {
-        final URL nokServerUrl = new URL(configurationManager.getProperty("secman.nextOfKin.url"));
+        final URL nokServerUrl = new URL("https://ehdsi.eu/assertion/nok");
         try {
             final NokAssertionRequest nokAssertionRequest = ImmutableNokAssertionRequest.builder().location(nokServerUrl).assertion(assertionHCP).checkForHostname(false).validationEnabled(false).nextOfKinAddressCountry(nextOfKinDetail.getAddressCountry()).nextOfKinPostalCode(nextOfKinDetail.getAddressPostalCode()).nextOfKinAddressCity(nextOfKinDetail.getAddressCity()).nextOfKinAddressStreet(nextOfKinDetail.getAddressStreet()).nextOfKinBirthDate(nextOfKinDetail.getBirthDate().toString()).nextOfKinGender(nextOfKinDetail.getGender()).nextOfKinFirstName(nextOfKinDetail.getFirstName()).nextOfKinFamilyName(nextOfKinDetail.getFamilyName()).nextOfKinId(nextOfKinDetail.getLivingSubjectIds().get(0)).build();
             final Assertion assertionNOK = assertionService.request(nokAssertionRequest);
