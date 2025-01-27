@@ -571,7 +571,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         patientSearchService.setSOAPHeader(shElement);
 
         try {
-            sigCountryCode = saml2Validator.validateXCPDHeader(shElement);
+            sigCountryCode = saml2Validator.validateHCPHeader(shElement);
 
             final String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
             final String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();
