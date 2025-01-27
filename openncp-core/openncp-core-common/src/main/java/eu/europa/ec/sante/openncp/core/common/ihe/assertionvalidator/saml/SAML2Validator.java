@@ -6,7 +6,9 @@ import java.util.List;
 import javax.xml.transform.dom.DOMSource;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
+import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
@@ -37,8 +39,8 @@ public class SAML2Validator {
     private final PolicyAssertionManager policyAssertionManager;
 
     private SAML2Validator(SignatureManager signatureManager, PolicyAssertionManager policyAssertionManager) {
-        this.signatureManager = Validate.notNull(signatureManager);
-        this.policyAssertionManager = Validate.notNull(policyAssertionManager);
+        this.signatureManager = Validate.notNull(signatureManager, "signatureManager must not be null");
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
 
     public String validateHCPHeader(final Element soapHeader)
@@ -74,6 +76,10 @@ public class SAML2Validator {
             }
             if (hcpAssertion == null) {
                 throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
+            } else {
+                if (OpenNCPValidation.isValidationEnable()) {
+                    OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
+                }
             }
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, null);
@@ -90,7 +96,6 @@ public class SAML2Validator {
 
     public void validateHCPHeader(Assertion assertion) throws MissingFieldException, InsufficientRightsException,
             InvalidFieldException, XSDValidationException, SMgrException {
-
         LOGGER.debug("[SAML] Validating HCP assertion.");
 
         try {
@@ -175,9 +180,17 @@ public class SAML2Validator {
             }
             if (hcpAssertion == null) {
                 throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
+            } else {
+                if (OpenNCPValidation.isValidationEnable()) {
+                    OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
+                }
             }
             if (trcAssertion == null) {
                 throw (new MissingFieldException("TRC Assertion element is required."));
+            } else {
+                if (OpenNCPValidation.isValidationEnable()) {
+                    OpenNCPValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_A);
+                }
             }
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
@@ -239,9 +252,17 @@ public class SAML2Validator {
             }
             if (hcpAssertion == null) {
                 throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
+            } else {
+                if (OpenNCPValidation.isValidationEnable()) {
+                    OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
+                }
             }
             if (trcAssertion == null) {
                 throw (new MissingFieldException("TRC Assertion element is required."));
+            } else {
+                if (OpenNCPValidation.isValidationEnable()) {
+                    OpenNCPValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_A);
+                }
             }
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
@@ -446,7 +467,7 @@ public class SAML2Validator {
 
             sigCountryCode = signatureManager.verifySAMLAssertion(hcpAssertion);
         } catch (final IOException | UnmarshallingException e) {
-            LOGGER.error("{}: '{}'", e.getMessage(), e);
+            LOGGER.error("'{}'", e.getMessage(), e);
         } catch (final SAXException e) {
             throw new XSDValidationException(e.getMessage());
         }
