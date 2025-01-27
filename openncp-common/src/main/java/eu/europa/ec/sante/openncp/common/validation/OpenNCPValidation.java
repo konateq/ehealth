@@ -90,6 +90,16 @@ public class OpenNCPValidation {
 
     /**
      * @param assertion
+     * @param ncpSide
+     */
+    public static void validateNOKAssertion(final Assertion assertion, final NcpSide ncpSide) {
+
+        LOGGER.info("validate NOK Assertion...");
+        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
+    }
+
+    /**
+     * @param assertion
      * @param schematron
      * @param ncpSide
      */
