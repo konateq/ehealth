@@ -74,13 +74,7 @@ public class SAML2Validator {
                     }
                 }
             }
-            if (hcpAssertion == null) {
-                throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
-            } else {
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
-                }
-            }
+            ValidateHcpAssertion(hcpAssertion);
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, null);
             //TODO: Next of Kin assertion should be checked
@@ -178,20 +172,8 @@ public class SAML2Validator {
                     }
                 }
             }
-            if (hcpAssertion == null) {
-                throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
-            } else {
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
-                }
-            }
-            if (trcAssertion == null) {
-                throw (new MissingFieldException("TRC Assertion element is required."));
-            } else {
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_A);
-                }
-            }
+            ValidateHcpAssertion(hcpAssertion);
+            validateTrcAssertion(trcAssertion);
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
             policyAssertionManager.XCAPermissionValidator(hcpAssertion, classCode);
@@ -250,20 +232,8 @@ public class SAML2Validator {
                     }
                 }
             }
-            if (hcpAssertion == null) {
-                throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
-            } else {
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
-                }
-            }
-            if (trcAssertion == null) {
-                throw (new MissingFieldException("TRC Assertion element is required."));
-            } else {
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_A);
-                }
-            }
+            ValidateHcpAssertion(hcpAssertion);
+            validateTrcAssertion(trcAssertion);
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
             policyAssertionManager.XDRPermissionValidator(hcpAssertion, classCode);
@@ -473,5 +443,25 @@ public class SAML2Validator {
         }
 
         return sigCountryCode;
+    }
+
+    private static void ValidateHcpAssertion(Assertion hcpAssertion) throws MissingFieldException {
+        if (hcpAssertion == null) {
+            throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
+        } else {
+            if (OpenNCPValidation.isValidationEnable()) {
+                OpenNCPValidation.validateHCPAssertion(hcpAssertion, NcpSide.NCP_A);
+            }
+        }
+    }
+
+    private static void validateTrcAssertion(Assertion trcAssertion) throws MissingFieldException {
+        if (trcAssertion == null) {
+            throw (new MissingFieldException("TRC Assertion element is required."));
+        } else {
+            if (OpenNCPValidation.isValidationEnable()) {
+                OpenNCPValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_A);
+            }
+        }
     }
 }
