@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.interceptors;
 
 import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.interceptor.api.Hook;
+import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import com.auth0.jwt.interfaces.Claim;
@@ -47,6 +48,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 
+@Interceptor(order = Integer.MIN_VALUE)
 @Component
 public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
