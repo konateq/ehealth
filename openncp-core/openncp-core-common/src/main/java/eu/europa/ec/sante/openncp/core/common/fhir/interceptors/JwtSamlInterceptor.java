@@ -6,6 +6,7 @@ import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
@@ -102,6 +103,7 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
         final AuditSecurityInfo auditSecurityInfo = AuditSecurityInfo.from(hcpSamlDetails.getAssertion(), hcpSamlDetails.getElement(), ipAddress, hostIp.getHostAddress());
         addAssertionToSecurityContext(auditSecurityInfo);
+        LogContext.setAuthorization(jwtToken.map(JwtToken::getAuthorizationHeaderValue).orElse(null));
     }
 
 
