@@ -75,7 +75,7 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
         final Optional<JwtToken> jwtToken = JwtToken.extractFrom(theRequest);
         if (jwtToken.isEmpty()) {
             LOGGER.error("No jwt token found in request with serverContext [{}] \n the request summary: \n {}", serverContext, getRequestSummary(theRequest));
-            throw new AuthenticationException("A bearer token is mandatory to initiate a request.");
+            throw new AuthenticationException(String.format("A bearer token is mandatory to initiate a request to [%s].", serverContext.getNcpSide().getName()));
         }
 
         final DecodedJWT jwt = tokenProvider.verifyToken(jwtToken.get().getToken());
