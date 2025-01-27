@@ -41,7 +41,7 @@ public class SAML2Validator {
         this.policyAssertionManager = Validate.notNull(policyAssertionManager);
     }
 
-    public String validateXCPDHeader(final Element soapHeader)
+    public String validateHCPHeader(final Element soapHeader)
             throws MissingFieldException, InsufficientRightsException, InvalidFieldException, XSDValidationException, SMgrException {
 
         LOGGER.debug("[SAML] Validating XCPD Header.");
@@ -88,10 +88,10 @@ public class SAML2Validator {
         return sigCountryCode;
     }
 
-    public void validateXCPDHeader(Assertion assertion) throws MissingFieldException, InsufficientRightsException,
+    public void validateHCPHeader(Assertion assertion) throws MissingFieldException, InsufficientRightsException,
             InvalidFieldException, XSDValidationException, SMgrException {
 
-        LOGGER.debug("[SAML] Validating XCPD Header.");
+        LOGGER.debug("[SAML] Validating HCP assertion.");
 
         try {
             RequiredFieldValidators.validateVersion(assertion);
