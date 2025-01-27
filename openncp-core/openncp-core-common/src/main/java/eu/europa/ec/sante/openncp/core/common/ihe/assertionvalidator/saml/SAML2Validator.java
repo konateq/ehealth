@@ -271,7 +271,7 @@ public class SAML2Validator {
             checkTRCAdviceIdReferenceAgainstHCPId(trcAssertion, hcpAssertion);
             //TODO: Next of Kin assertion should be checked
         } catch (final IOException | UnmarshallingException | SAXException e) {
-            LOGGER.error("", e);
+            LOGGER.error("Error when validating the XDR Header: [{}]",e.getMessage(), e);
             throw new InsufficientRightsException();
         }
 
