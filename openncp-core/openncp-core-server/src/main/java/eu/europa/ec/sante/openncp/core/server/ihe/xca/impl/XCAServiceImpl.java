@@ -111,7 +111,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
     public XCAServiceImpl(final DocumentSearchInterface documentSearchService, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
         this.documentSearchService = Validate.notNull(documentSearchService, "documentSearchService must not be null");
         this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
-        this.cdaTransformationService = cdaTransformationService;
+        this.cdaTransformationService = Validate.notNull(cdaTransformationService, "cdaTransformationService must not be null");
     }
 
     /**
