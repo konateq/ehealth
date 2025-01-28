@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
+import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -68,8 +69,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     private final SAML2Validator saml2Validator;
 
     public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final SAML2Validator saml2Validator) {
-        this.patientSearchService = Validate.notNull(patientSearchService);
-        this.saml2Validator = Validate.notNull(saml2Validator);
+        this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
+        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
     }
 
     private String getParticipantObjectID(final II id) {
@@ -84,7 +85,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         final String userIdAlias = SoapElementHelper.getAssertionsSPProvidedId(soapHeader);
-        eventLog.setHR_UserID(StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "" + "<" + SoapElementHelper.getUserID(soapHeader)
+        eventLog.setHR_UserID(StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "<" + SoapElementHelper.getUserID(soapHeader)
                 + "@" + SoapElementHelper.getAssertionsIssuer(soapHeader) + ">");
         eventLog.setHR_AlternativeUserID(SoapElementHelper.getAlternateUserID(soapHeader));
         eventLog.setHR_RoleID(SoapElementHelper.getRoleID(soapHeader));
