@@ -181,8 +181,8 @@ public class SAML2Validator {
             checkTRCAdviceIdReferenceAgainstHCPId(trcAssertion, hcpAssertion);
             //TODO: Next of Kin assertion should be checked
         } catch (final IOException | UnmarshallingException | SAXException e) {
-            LOGGER.error("", e);
-            throw new InsufficientRightsException();
+            LOGGER.error("Error validating XCA Header", e);
+            throw new InsufficientRightsException(e);
         }
 
         return sigCountryCode;
@@ -299,7 +299,7 @@ public class SAML2Validator {
                 schemaBuilder.getSAMLSchema().newValidator().validate(new DOMSource(ass));
                 result.add((Assertion) SAML.fromElement(ass));
             } catch (final UnmarshallingException | IOException | SAXException ex) {
-                LOGGER.error(null, ex);
+                LOGGER.error("Error validating Assertion according to SAML XSD", ex);
             }
         }
         return result;
