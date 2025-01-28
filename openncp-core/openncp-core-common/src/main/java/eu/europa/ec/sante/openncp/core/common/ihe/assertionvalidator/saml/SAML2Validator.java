@@ -74,7 +74,7 @@ public class SAML2Validator {
                     }
                 }
             }
-            ValidateHcpAssertion(hcpAssertion);
+            validateHcpAssertion(hcpAssertion);
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, null);
             //TODO: Next of Kin assertion should be checked
@@ -172,7 +172,7 @@ public class SAML2Validator {
                     }
                 }
             }
-            ValidateHcpAssertion(hcpAssertion);
+            validateHcpAssertion(hcpAssertion);
             validateTrcAssertion(trcAssertion);
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
@@ -232,7 +232,7 @@ public class SAML2Validator {
                     }
                 }
             }
-            ValidateHcpAssertion(hcpAssertion);
+            validateHcpAssertion(hcpAssertion);
             validateTrcAssertion(trcAssertion);
 
             sigCountryCode = checkHCPAssertion(hcpAssertion, classCode);
@@ -445,7 +445,7 @@ public class SAML2Validator {
         return sigCountryCode;
     }
 
-    private static void ValidateHcpAssertion(Assertion hcpAssertion) throws MissingFieldException {
+    private static void validateHcpAssertion(Assertion hcpAssertion) throws MissingFieldException {
         if (hcpAssertion == null) {
             throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
         } else {
