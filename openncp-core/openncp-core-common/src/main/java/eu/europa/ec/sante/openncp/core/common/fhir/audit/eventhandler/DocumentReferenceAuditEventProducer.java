@@ -13,16 +13,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@Component
 public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_DOCUMENT_REFERENCE = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.DocumentReference.getPath());
-    public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
     private final AuditEventBuilder auditEventBuilder;
 
 
@@ -34,9 +35,7 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
     @Override
     public boolean accepts(final AuditableEvent auditableEvent) {
         final boolean accepts = auditableEvent != null
-                && auditableEvent.getEuRequestDetails().isPatient()
-                && auditableEvent.resourceIsOfType(FhirSupportedResourceType.BUNDLE, FhirSupportedResourceType.PATIENT);
-
+                && auditableEvent.resourceIsOfType(FhirSupportedResourceType.DOCUMENT_REFERENCE);
         LOGGER.debug("[{}] auditable event [{}]", BooleanUtils.toString(accepts, "Accepted", "Rejected"), auditableEvent);
         return accepts;
     }
@@ -48,6 +47,8 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
             case SEARCH_TYPE:
             case SEARCH_SYSTEM:
             case GET_PAGE:
+                auditEventDataList = handleSearch(auditableEvent);
+                break;
             case VREAD:
             case CREATE:
                 auditEventDataList = handleCreate(auditableEvent);
@@ -95,6 +96,10 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
         return List.of(serviceConsumer, serviceProvider);
     }
 
+    private List<AuditEventData> handleSearch(final AuditableEvent auditableEvent) {
+        return commonHandler(auditableEvent, BalpProfileEnum.BASIC_QUERY);
+
+    }
 
     private List<AuditEventData> handleRead(final AuditableEvent auditableEvent) {
         return commonHandler(auditableEvent, BalpProfileEnum.BASIC_READ);
