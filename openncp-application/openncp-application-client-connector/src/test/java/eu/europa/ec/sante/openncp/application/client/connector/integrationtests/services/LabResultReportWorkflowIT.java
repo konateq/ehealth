@@ -2,7 +2,6 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
@@ -59,7 +58,7 @@ public class LabResultReportWorkflowIT extends BaseIntegrationTest {
 
         final Map<String, String> params = Map.of(
                 "patient.identifier", patientId.getRoot() + "|" + patientId.getExtension(),
-                "category", "http://loinc.org|18719-5");
+                "type", "http://loinc.org|11502-2");
 
         final ResponseEntity<String> responseEntity = clientConnectorService.queryDocumentReferenceFhir(assertions, "BE", params);
         assertThat(responseEntity).isNotNull();
