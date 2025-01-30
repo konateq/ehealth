@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.fhir.interceptors;
+package eu.europa.ec.sante.openncp.core.server;
 
 import ca.uhn.fhir.interceptor.api.Hook;
 import ca.uhn.fhir.interceptor.api.Interceptor;
@@ -14,6 +14,7 @@ import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.FhirCustomInterceptor;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
