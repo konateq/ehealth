@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.interceptors;
 
 import ca.uhn.fhir.interceptor.api.Hook;
 import ca.uhn.fhir.interceptor.api.Pointcut;
+import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -90,13 +91,13 @@ public class SimpleServerLoggingInterceptor implements FhirCustomInterceptor {
 //    }
 
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
-    public void interceptServerIncomingRequestPreHandled(final RequestDetails theRequestDetails) {
-        LOGGER.info("Pointcut [SERVER_INCOMING_REQUEST_PRE_HANDLED] with params:  RequestDetails={}", theRequestDetails);
+    public void interceptServerIncomingRequestPreHandled(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final RestOperationTypeEnum restOperationTypeEnum) {
+        LOGGER.info("Pointcut [SERVER_INCOMING_REQUEST_PRE_HANDLED] with params:  RequestDetails={}, ServletRequestDetails={}, RestOperationTypeEnum={}", theRequestDetails, servletRequestDetails, restOperationTypeEnum);
     }
 
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_POST_PROCESSED)
-    public void interceptServerIncomingRequestPostProcessed(final RequestDetails theRequestDetails, final HttpServletRequest theRequest, final HttpServletResponse theResponse) {
-        LOGGER.info("Pointcut [SERVER_INCOMING_REQUEST_POST_PROCESSED] with params:  RequestDetails={}, HttpServletRequest={}, HttpServletResponse={}", theRequestDetails, theRequest, theResponse);
+    public void interceptServerIncomingRequestPostProcessed(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final HttpServletRequest theRequest, final HttpServletResponse theResponse) {
+        LOGGER.info("Pointcut [SERVER_INCOMING_REQUEST_POST_PROCESSED] with params:  RequestDetails={}, ServletRequestDetails={}, HttpServletRequest={}, HttpServletResponse={}", theRequestDetails, servletRequestDetails, theRequest, theResponse);
     }
 
     @Hook(Pointcut.SERVER_OUTGOING_RESPONSE)
