@@ -1,7 +1,8 @@
 package eu.europa.ec.sante.openncp.application.client.config;
 
-import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionsInInterceptor;
 import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionReportingInterceptor;
+import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionsInInterceptor;
+import eu.europa.ec.sante.openncp.api.client.interceptor.HcpAssertionValidationInterceptor;
 import eu.europa.ec.sante.openncp.api.client.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
 import org.apache.cxf.Bus;
@@ -28,7 +29,7 @@ public class WebServiceConfig {
 
     @Bean
     public Endpoint endpoint(final Bus bus, final ClientServicePortType clientConnectorServicePortType,
-                             final LoggingFeature loggingFeature) {
+                             final LoggingFeature loggingFeature, final HcpAssertionValidationInterceptor hcpAssertionValidationInterceptor) {
         final EndpointImpl endpoint = new EndpointImpl(bus, clientConnectorServicePortType);
         endpoint.getFeatures().add(loggingFeature);
         endpoint.getFeatures().add(new WSAddressingFeature());
@@ -38,6 +39,7 @@ public class WebServiceConfig {
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
+        endpoint.getInInterceptors().add(hcpAssertionValidationInterceptor);
 
         endpoint.publish("/" + clientConnectorServicePortType.getClass().getAnnotation(WebService.class).serviceName());
 

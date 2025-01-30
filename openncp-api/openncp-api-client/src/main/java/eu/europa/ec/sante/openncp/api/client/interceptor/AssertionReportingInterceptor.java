@@ -33,7 +33,9 @@ public class AssertionReportingInterceptor extends AbstractPhaseInterceptor<Mess
         final AssertionContext assertionContext = AssertionContextProvider.getAssertionContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
         final SamlDetails samlDetails = assertionContext.getSamlDetails();
 
-        OpenNCPValidation.validateHCPAssertion(samlDetails.getHcpAssertion().getAssertion(), NcpSide.NCP_B);
+        samlDetails.getAssertion(AssertionType.HCP)
+                .map(AssertionDetails::getAssertion)
+                .ifPresent(assertion -> OpenNCPValidation.validateHCPAssertion(assertion, NcpSide.NCP_B));
         samlDetails.getAssertion(AssertionType.TRC)
                 .map(AssertionDetails::getAssertion)
                 .ifPresent(assertion -> OpenNCPValidation.validateTRCAssertion(assertion, NcpSide.NCP_B));

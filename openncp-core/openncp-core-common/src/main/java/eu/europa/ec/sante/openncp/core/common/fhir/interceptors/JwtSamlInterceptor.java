@@ -9,11 +9,11 @@ import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.JwtToken;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
-import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
@@ -92,14 +92,18 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
 
     public void addAssertionToSecurityContext(final AuditSecurityInfo auditSecurityInfo) {
-        final Assertion hcpAssertion = auditSecurityInfo.getSamlDetails().getHcpAssertion().getAssertion();
+        final Assertion hcpAssertion = auditSecurityInfo.getSamlDetails().getHcpAssertion()
+                .map(AssertionDetails::getAssertion)
+                .orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
         final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(hcpAssertion.getSubject().getNameID().getValue(), hcpAssertion.getIssuer().getValue(), null);
         authentication.setDetails(auditSecurityInfo);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private void validateAssertions(final SamlDetails samlDetails) {
-        final Assertion hcpAssertion = samlDetails.getHcpAssertion().getAssertion();
+        final Assertion hcpAssertion = samlDetails.getHcpAssertion()
+                .map(AssertionDetails::getAssertion)
+                .orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
 
         if (OpenNCPValidation.isValidationEnable()) {
             OpenNCPValidation.validateHCPAssertion(hcpAssertion, serverContext.getNcpSide());

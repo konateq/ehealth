@@ -37,12 +37,18 @@ public class HcpAssertionValidationInterceptor extends AbstractPhaseInterceptor<
 
     public void handleMessage(final Message message) {
         LOGGER.info("Validating HCP Assertion");
+
+        if ("sayHello".equalsIgnoreCase(message.getExchange().getBindingOperationInfo().getOperationInfo().getName().getLocalPart())) {
+            LOGGER.info("The sayHello operation should not validate the HCP Assertion");
+            return;
+        }
+
         final AssertionContext assertionContext = AssertionContextProvider.getAssertionContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
         final SamlDetails samlDetails = assertionContext.getSamlDetails();
-        final AssertionDetails hcpAssertion = samlDetails.getHcpAssertion();
+        final AssertionDetails hcpAssertionDetails = samlDetails.getHcpAssertion().orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
 
         try {
-            saml2Validator.validateHCPHeader(hcpAssertion.getAssertion());
+            saml2Validator.validateHCPHeader(hcpAssertionDetails.getAssertion());
         } catch (final MissingFieldException | InsufficientRightsException | InvalidFieldException | SMgrException |
                        XSDValidationException e) {
             throw new AuthenticationException(String.format("Invalid HCP assertion: Cause [%s] with message [%s]", e.getClass().getSimpleName(), e.getMessage()));
