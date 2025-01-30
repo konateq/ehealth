@@ -10,10 +10,10 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
-import eu.europa.ec.sante.openncp.core.common.fhir.security.ClaimDetails;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
@@ -52,8 +52,8 @@ public class TrcInterceptor implements FhirCustomInterceptor {
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
-        final Assertion trcAssertion = auditSecurityInfo.getSamlDetails().getClaim(AssertionType.TRC)
-                .map(ClaimDetails::getAssertion)
+        final Assertion trcAssertion = auditSecurityInfo.getSamlDetails().getAssertion(AssertionType.TRC)
+                .map(AssertionDetails::getAssertion)
                 .orElseThrow(() -> new AuthenticationException("No TRC assertion found"));
 
         try {

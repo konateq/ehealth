@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.application.client.config;
 
 import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionsInInterceptor;
-import eu.europa.ec.sante.openncp.api.client.interceptor.SamlAssertionInterceptor;
+import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionReportingInterceptor;
 import eu.europa.ec.sante.openncp.api.client.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
 import org.apache.cxf.Bus;
@@ -37,7 +37,7 @@ public class WebServiceConfig {
 
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
-        endpoint.getInInterceptors().add(new SamlAssertionInterceptor());
+        endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
 
         endpoint.publish("/" + clientConnectorServicePortType.getClass().getAnnotation(WebService.class).serviceName());
 

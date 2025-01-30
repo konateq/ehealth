@@ -1,37 +1,12 @@
 package eu.europa.ec.sante.openncp.core.client.ihe;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.client.api.DocumentId;
-import eu.europa.ec.sante.openncp.core.client.api.EpsosDocument;
-import eu.europa.ec.sante.openncp.core.client.api.FilterParams;
-import eu.europa.ec.sante.openncp.core.client.api.PatientDemographics;
-import eu.europa.ec.sante.openncp.core.client.api.PatientId;
-import eu.europa.ec.sante.openncp.core.client.api.QueryDocumentRequest;
-import eu.europa.ec.sante.openncp.core.client.api.QueryPatientRequest;
-import eu.europa.ec.sante.openncp.core.client.api.ReasonOfHospitalisation;
-import eu.europa.ec.sante.openncp.core.client.api.RetrieveDocumentRequest;
-import eu.europa.ec.sante.openncp.core.client.api.SubmitDocumentRequest;
+import eu.europa.ec.sante.openncp.core.client.api.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.QueryDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.QueryPatientOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.RetrieveDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.SubmitDocumentOperation;
-import eu.europa.ec.sante.openncp.core.client.ihe.service.DispensationService;
-import eu.europa.ec.sante.openncp.core.client.ihe.service.IdentificationService;
-import eu.europa.ec.sante.openncp.core.client.ihe.service.OrCDService;
-import eu.europa.ec.sante.openncp.core.client.ihe.service.OrderService;
-import eu.europa.ec.sante.openncp.core.client.ihe.service.PatientService;
+import eu.europa.ec.sante.openncp.core.client.ihe.service.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.OrCDDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
@@ -39,16 +14,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocumentAssociation;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
-
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -56,6 +21,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.opensaml.saml.saml2.core.Assertion;
+
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClientServiceImplTest {
@@ -84,7 +58,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments() throws XCAException {
         // Arrange
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(new ArrayList<>());
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -92,28 +66,29 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
 
-        QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
+        final QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act
-        List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
+        final List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
 
         // Assert
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
+        ;
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("42"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -127,26 +102,26 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments2() {
         // Arrange
-        FilterParams value = new FilterParams();
+        final FilterParams value = new FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        PatientId value2 = new PatientId();
+        final PatientId value2 = new PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
 
-        QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
+        final QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenThrow(new ClientConnectorException("An error occurred"));
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenThrow(new ClientConnectorException("An error occurred"));
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.queryDocuments(queryDocumentOperation));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
     }
 
@@ -157,15 +132,15 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments3() throws XCAException {
         // Arrange
-        GenericDocumentCode classCode = new GenericDocumentCode();
+        final GenericDocumentCode classCode = new GenericDocumentCode();
         classCode.setSchema("queryDocuments");
         classCode.setValue("42");
 
-        GenericDocumentCode formatCode = new GenericDocumentCode();
+        final GenericDocumentCode formatCode = new GenericDocumentCode();
         formatCode.setSchema("queryDocuments");
         formatCode.setValue("42");
 
-        XDSDocument cdaPDF = new XDSDocument();
+        final XDSDocument cdaPDF = new XDSDocument();
         cdaPDF.setAtcCode("queryDocuments");
         cdaPDF.setAtcText("queryDocuments");
         cdaPDF.setAuthors(new ArrayList<>());
@@ -191,15 +166,15 @@ public class ClientServiceImplTest {
         cdaPDF.setStrength("queryDocuments");
         cdaPDF.setSubstitution("queryDocuments");
 
-        GenericDocumentCode classCode2 = new GenericDocumentCode();
+        final GenericDocumentCode classCode2 = new GenericDocumentCode();
         classCode2.setSchema("queryDocuments");
         classCode2.setValue("42");
 
-        GenericDocumentCode formatCode2 = new GenericDocumentCode();
+        final GenericDocumentCode formatCode2 = new GenericDocumentCode();
         formatCode2.setSchema("queryDocuments");
         formatCode2.setValue("42");
 
-        XDSDocument cdaXML = new XDSDocument();
+        final XDSDocument cdaXML = new XDSDocument();
         cdaXML.setAtcCode("queryDocuments");
         cdaXML.setAtcText("queryDocuments");
         cdaXML.setAuthors(new ArrayList<>());
@@ -225,14 +200,14 @@ public class ClientServiceImplTest {
         cdaXML.setStrength("queryDocuments");
         cdaXML.setSubstitution("queryDocuments");
 
-        XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
+        final XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
         xdsDocumentAssociation.setCdaPDF(cdaPDF);
         xdsDocumentAssociation.setCdaXML(cdaXML);
 
-        ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
+        final ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
         documentAssociations.add(xdsDocumentAssociation);
 
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(documentAssociations);
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -240,26 +215,26 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
 
-        QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
+        final QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.queryDocuments(queryDocumentOperation));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("42"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -272,15 +247,15 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments4() throws XCAException {
         // Arrange
-        GenericDocumentCode classCode = new GenericDocumentCode();
+        final GenericDocumentCode classCode = new GenericDocumentCode();
         classCode.setSchema("queryDocuments");
         classCode.setValue("42");
 
-        GenericDocumentCode formatCode = new GenericDocumentCode();
+        final GenericDocumentCode formatCode = new GenericDocumentCode();
         formatCode.setSchema("queryDocuments");
         formatCode.setValue("42");
 
-        XDSDocument cdaPDF = new XDSDocument();
+        final XDSDocument cdaPDF = new XDSDocument();
         cdaPDF.setAtcCode("queryDocuments");
         cdaPDF.setAtcText("queryDocuments");
         cdaPDF.setAuthors(new ArrayList<>());
@@ -306,15 +281,15 @@ public class ClientServiceImplTest {
         cdaPDF.setStrength("queryDocuments");
         cdaPDF.setSubstitution("queryDocuments");
 
-        GenericDocumentCode classCode2 = new GenericDocumentCode();
+        final GenericDocumentCode classCode2 = new GenericDocumentCode();
         classCode2.setSchema("queryDocuments");
         classCode2.setValue("42");
 
-        GenericDocumentCode formatCode2 = new GenericDocumentCode();
+        final GenericDocumentCode formatCode2 = new GenericDocumentCode();
         formatCode2.setSchema("queryDocuments");
         formatCode2.setValue("42");
 
-        XDSDocument cdaXML = new XDSDocument();
+        final XDSDocument cdaXML = new XDSDocument();
         cdaXML.setAtcCode("queryDocuments");
         cdaXML.setAtcText("queryDocuments");
         cdaXML.setAuthors(new ArrayList<>());
@@ -340,19 +315,19 @@ public class ClientServiceImplTest {
         cdaXML.setStrength("queryDocuments");
         cdaXML.setSubstitution("queryDocuments");
 
-        XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
+        final XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
         xdsDocumentAssociation.setCdaPDF(cdaPDF);
         xdsDocumentAssociation.setCdaXML(cdaXML);
 
-        GenericDocumentCode classCode3 = new GenericDocumentCode();
+        final GenericDocumentCode classCode3 = new GenericDocumentCode();
         classCode3.setSchema("{} | {}");
         classCode3.setValue("queryDocuments");
 
-        GenericDocumentCode formatCode3 = new GenericDocumentCode();
+        final GenericDocumentCode formatCode3 = new GenericDocumentCode();
         formatCode3.setSchema("{} | {}");
         formatCode3.setValue("queryDocuments");
 
-        XDSDocument cdaPDF2 = new XDSDocument();
+        final XDSDocument cdaPDF2 = new XDSDocument();
         cdaPDF2.setAtcCode("{} | {}");
         cdaPDF2.setAtcText("{} | {}");
         cdaPDF2.setAuthors(new ArrayList<>());
@@ -378,15 +353,15 @@ public class ClientServiceImplTest {
         cdaPDF2.setStrength("{} | {}");
         cdaPDF2.setSubstitution("{} | {}");
 
-        GenericDocumentCode classCode4 = new GenericDocumentCode();
+        final GenericDocumentCode classCode4 = new GenericDocumentCode();
         classCode4.setSchema("{} | {}");
         classCode4.setValue("queryDocuments");
 
-        GenericDocumentCode formatCode4 = new GenericDocumentCode();
+        final GenericDocumentCode formatCode4 = new GenericDocumentCode();
         formatCode4.setSchema("{} | {}");
         formatCode4.setValue("queryDocuments");
 
-        XDSDocument cdaXML2 = new XDSDocument();
+        final XDSDocument cdaXML2 = new XDSDocument();
         cdaXML2.setAtcCode("{} | {}");
         cdaXML2.setAtcText("{} | {}");
         cdaXML2.setAuthors(new ArrayList<>());
@@ -412,15 +387,15 @@ public class ClientServiceImplTest {
         cdaXML2.setStrength("{} | {}");
         cdaXML2.setSubstitution("{} | {}");
 
-        XDSDocumentAssociation xdsDocumentAssociation2 = new XDSDocumentAssociation();
+        final XDSDocumentAssociation xdsDocumentAssociation2 = new XDSDocumentAssociation();
         xdsDocumentAssociation2.setCdaPDF(cdaPDF2);
         xdsDocumentAssociation2.setCdaXML(cdaXML2);
 
-        ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
+        final ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
         documentAssociations.add(xdsDocumentAssociation2);
         documentAssociations.add(xdsDocumentAssociation);
 
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(documentAssociations);
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -428,26 +403,26 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
 
-        QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
+        final QueryDocumentRequest queryDocumentRequest = new QueryDocumentRequest();
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.queryDocuments(queryDocumentOperation));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("42"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -460,15 +435,15 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments5() throws XCAException {
         // Arrange
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         classCode.setSchema("");
         classCode.setValue("");
 
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         formatCode.setSchema("");
         formatCode.setValue("");
 
-        XDSDocument cdaPDF = new XDSDocument();
+        final XDSDocument cdaPDF = new XDSDocument();
         cdaPDF.setAtcCode("");
         cdaPDF.setAtcText("");
         cdaPDF.setAuthors(new ArrayList<>());
@@ -494,15 +469,15 @@ public class ClientServiceImplTest {
         cdaPDF.setStrength("");
         cdaPDF.setSubstitution("");
 
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         classCode2.setSchema("");
         classCode2.setValue("");
 
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         formatCode2.setSchema("");
         formatCode2.setValue("");
 
-        XDSDocument cdaXML = new XDSDocument();
+        final XDSDocument cdaXML = new XDSDocument();
         cdaXML.setAtcCode("");
         cdaXML.setAtcText("");
         cdaXML.setAuthors(new ArrayList<>());
@@ -528,14 +503,14 @@ public class ClientServiceImplTest {
         cdaXML.setStrength("");
         cdaXML.setSubstitution("");
 
-        XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
+        final XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
         xdsDocumentAssociation.setCdaPDF(cdaPDF);
         xdsDocumentAssociation.setCdaXML(cdaXML);
 
-        ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
+        final ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
         documentAssociations.add(xdsDocumentAssociation);
 
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(documentAssociations);
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -544,24 +519,24 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         filterParams.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         patientId.setExtension("42");
         patientId.setRoot("42");
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -574,12 +549,12 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act
-        List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
+        final List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
 
         // Assert
         verify(queryDocumentRequest).getCountryCode();
@@ -589,20 +564,20 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(eu.europa.ec.sante.openncp.core.client.api.FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(eu.europa.ec.sante.openncp.core.client.api.PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("GB"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
         assertEquals(2, actualQueryDocumentsResult.size());
-        EpsosDocument getResult = actualQueryDocumentsResult.get(0);
-        List<EpsosDocument> associatedDocuments = getResult.getAssociatedDocuments();
+        final EpsosDocument getResult = actualQueryDocumentsResult.get(0);
+        final List<EpsosDocument> associatedDocuments = getResult.getAssociatedDocuments();
         assertEquals(1, associatedDocuments.size());
-        EpsosDocument getResult2 = associatedDocuments.get(0);
+        final EpsosDocument getResult2 = associatedDocuments.get(0);
         assertEquals("", getResult2.getAtcCode());
-        EpsosDocument getResult3 = actualQueryDocumentsResult.get(1);
-        List<EpsosDocument> associatedDocuments2 = getResult3.getAssociatedDocuments();
+        final EpsosDocument getResult3 = actualQueryDocumentsResult.get(1);
+        final List<EpsosDocument> associatedDocuments2 = getResult3.getAssociatedDocuments();
         assertEquals(1, associatedDocuments2.size());
-        EpsosDocument getResult4 = associatedDocuments2.get(0);
+        final EpsosDocument getResult4 = associatedDocuments2.get(0);
         assertEquals("", getResult4.getAtcCode());
         assertEquals("", getResult.getAtcCode());
         assertEquals("", getResult3.getAtcCode());
@@ -642,21 +617,21 @@ public class ClientServiceImplTest {
         assertEquals("", getResult4.getUuid());
         assertEquals("", getResult.getUuid());
         assertEquals("", getResult3.getUuid());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode3 = getResult2.getClassCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode3 = getResult2.getClassCode();
         assertEquals("", classCode3.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode4 = getResult4.getClassCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode4 = getResult4.getClassCode();
         assertEquals("", classCode4.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode5 = getResult.getClassCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode5 = getResult.getClassCode();
         assertEquals("", classCode5.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode6 = getResult3.getClassCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode classCode6 = getResult3.getClassCode();
         assertEquals("", classCode6.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode3 = getResult2.getFormatCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode3 = getResult2.getFormatCode();
         assertEquals("", formatCode3.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode4 = getResult4.getFormatCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode4 = getResult4.getFormatCode();
         assertEquals("", formatCode4.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode5 = getResult.getFormatCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode5 = getResult.getFormatCode();
         assertEquals("", formatCode5.getNodeRepresentation());
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode6 = getResult3.getFormatCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode formatCode6 = getResult3.getFormatCode();
         assertEquals("", formatCode6.getNodeRepresentation());
         assertEquals("", classCode3.getSchema());
         assertEquals("", classCode4.getSchema());
@@ -678,13 +653,13 @@ public class ClientServiceImplTest {
         assertEquals("42", getResult4.getDescription());
         assertEquals("42", getResult.getDescription());
         assertEquals("42", getResult3.getDescription());
-        ReasonOfHospitalisation reasonOfHospitalisation = getResult2.getReasonOfHospitalisation();
+        final ReasonOfHospitalisation reasonOfHospitalisation = getResult2.getReasonOfHospitalisation();
         assertEquals("Code", reasonOfHospitalisation.getCode());
-        ReasonOfHospitalisation reasonOfHospitalisation2 = getResult4.getReasonOfHospitalisation();
+        final ReasonOfHospitalisation reasonOfHospitalisation2 = getResult4.getReasonOfHospitalisation();
         assertEquals("Code", reasonOfHospitalisation2.getCode());
-        ReasonOfHospitalisation reasonOfHospitalisation3 = getResult.getReasonOfHospitalisation();
+        final ReasonOfHospitalisation reasonOfHospitalisation3 = getResult.getReasonOfHospitalisation();
         assertEquals("Code", reasonOfHospitalisation3.getCode());
-        ReasonOfHospitalisation reasonOfHospitalisation4 = getResult3.getReasonOfHospitalisation();
+        final ReasonOfHospitalisation reasonOfHospitalisation4 = getResult3.getReasonOfHospitalisation();
         assertEquals("Code", reasonOfHospitalisation4.getCode());
         assertEquals("Text", reasonOfHospitalisation.getText());
         assertEquals("Text", reasonOfHospitalisation2.getText());
@@ -733,7 +708,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments6() throws XCAException {
         // Arrange
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(new ArrayList<>());
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -742,15 +717,15 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
                 eu.europa.ec.sante.openncp.core.client.api.FilterParams.class);
         when(filterParams.getMaximumSize()).thenReturn(null);
         when(filterParams.getCreatedAfter()).thenReturn(new GregorianCalendar(1, 1, 1));
@@ -762,10 +737,10 @@ public class ClientServiceImplTest {
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         patientId.setExtension("42");
         patientId.setRoot("42");
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -778,12 +753,12 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act
-        List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
+        final List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
 
         // Assert
         verify(queryDocumentRequest).getCountryCode();
@@ -799,7 +774,7 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(eu.europa.ec.sante.openncp.core.client.api.FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(eu.europa.ec.sante.openncp.core.client.api.PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("GB"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -813,7 +788,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments7() throws XCAException {
         // Arrange
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(new ArrayList<>());
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -822,15 +797,15 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
                 eu.europa.ec.sante.openncp.core.client.api.FilterParams.class);
         when(filterParams.getMaximumSize()).thenReturn(BigInteger.valueOf(1L));
         when(filterParams.getCreatedAfter()).thenReturn(null);
@@ -842,10 +817,10 @@ public class ClientServiceImplTest {
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         patientId.setExtension("42");
         patientId.setRoot("42");
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -858,12 +833,12 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act
-        List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
+        final List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
 
         // Assert
         verify(queryDocumentRequest).getCountryCode();
@@ -879,7 +854,7 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(eu.europa.ec.sante.openncp.core.client.api.FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(eu.europa.ec.sante.openncp.core.client.api.PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("GB"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -893,7 +868,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments8() throws XCAException {
         // Arrange
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(new ArrayList<>());
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -902,15 +877,15 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
                 eu.europa.ec.sante.openncp.core.client.api.FilterParams.class);
         when(filterParams.getMaximumSize()).thenReturn(BigInteger.valueOf(1L));
         when(filterParams.getCreatedAfter()).thenReturn(new GregorianCalendar(1, 1, 1));
@@ -922,10 +897,10 @@ public class ClientServiceImplTest {
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         patientId.setExtension("42");
         patientId.setRoot("42");
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -938,12 +913,12 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act
-        List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
+        final List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
 
         // Assert
         verify(queryDocumentRequest).getCountryCode();
@@ -959,7 +934,7 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(eu.europa.ec.sante.openncp.core.client.api.FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(eu.europa.ec.sante.openncp.core.client.api.PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("GB"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -973,15 +948,15 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments9() throws XCAException {
         // Arrange
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         classCode.setSchema("42");
         classCode.setValue("Value");
 
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         formatCode.setSchema("42");
         formatCode.setValue("Value");
 
-        XDSDocument cdaPDF = new XDSDocument();
+        final XDSDocument cdaPDF = new XDSDocument();
         cdaPDF.setAtcCode("42");
         cdaPDF.setAtcText("42");
         cdaPDF.setAuthors(new ArrayList<>());
@@ -1007,15 +982,15 @@ public class ClientServiceImplTest {
         cdaPDF.setStrength("42");
         cdaPDF.setSubstitution("42");
 
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode classCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         classCode2.setSchema("42");
         classCode2.setValue("Value");
 
-        eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode formatCode2 = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode();
         formatCode2.setSchema("42");
         formatCode2.setValue("Value");
 
-        XDSDocument cdaXML = new XDSDocument();
+        final XDSDocument cdaXML = new XDSDocument();
         cdaXML.setAtcCode("42");
         cdaXML.setAtcText("42");
         cdaXML.setAuthors(new ArrayList<>());
@@ -1041,14 +1016,14 @@ public class ClientServiceImplTest {
         cdaXML.setStrength("42");
         cdaXML.setSubstitution("42");
 
-        XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
+        final XDSDocumentAssociation xdsDocumentAssociation = new XDSDocumentAssociation();
         xdsDocumentAssociation.setCdaPDF(cdaPDF);
         xdsDocumentAssociation.setCdaXML(cdaXML);
 
-        ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
+        final ArrayList<XDSDocumentAssociation> documentAssociations = new ArrayList<>();
         documentAssociations.add(xdsDocumentAssociation);
 
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(documentAssociations);
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -1057,15 +1032,15 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
                 eu.europa.ec.sante.openncp.core.client.api.FilterParams.class);
         when(filterParams.getMaximumSize()).thenReturn(BigInteger.valueOf(1L));
         when(filterParams.getCreatedAfter()).thenReturn(new GregorianCalendar(1, 1, 1));
@@ -1076,7 +1051,7 @@ public class ClientServiceImplTest {
         filterParams.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
-        eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientId.class);
         when(patientId.getExtension()).thenReturn("Extension");
         when(patientId.getRoot()).thenReturn("Root");
@@ -1084,7 +1059,7 @@ public class ClientServiceImplTest {
         doNothing().when(patientId).setRoot(Mockito.<String>any());
         patientId.setExtension("42");
         patientId.setRoot("42");
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -1097,8 +1072,8 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act and Assert
@@ -1120,7 +1095,7 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(eu.europa.ec.sante.openncp.core.client.api.FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(eu.europa.ec.sante.openncp.core.client.api.PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("GB"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -1133,35 +1108,35 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments10() {
         // Arrange
-        FilterParams value = new FilterParams();
+        final FilterParams value = new FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        PatientId value2 = new PatientId();
+        final PatientId value2 = new PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
-        FilterParams filterParams = mock(FilterParams.class);
+        final FilterParams filterParams = mock(FilterParams.class);
         doNothing().when(filterParams).setCreatedAfter(Mockito.<Calendar>any());
         doNothing().when(filterParams).setCreatedBefore(Mockito.<Calendar>any());
         doNothing().when(filterParams).setMaximumSize(Mockito.<BigInteger>any());
         filterParams.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
-        PatientId patientId = mock(PatientId.class);
+        final PatientId patientId = mock(PatientId.class);
         doNothing().when(patientId).setExtension(Mockito.<String>any());
         doNothing().when(patientId).setRoot(Mockito.<String>any());
         patientId.setExtension("42");
         patientId.setRoot("42");
 
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode genericDocumentCode = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode genericDocumentCode = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         genericDocumentCode.setNodeRepresentation("42");
         genericDocumentCode.setSchema("42");
         genericDocumentCode.setValue("42");
 
-        ArrayList<eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode> genericDocumentCodeList = new ArrayList<>();
+        final ArrayList<eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode> genericDocumentCodeList = new ArrayList<>();
         genericDocumentCodeList.add(genericDocumentCode);
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -1172,8 +1147,8 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act and Assert
@@ -1190,7 +1165,7 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
     }
 
@@ -1201,7 +1176,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryDocuments11() throws XCAException {
         // Arrange
-        QueryResponse queryResponse = new QueryResponse();
+        final QueryResponse queryResponse = new QueryResponse();
         queryResponse.setDocumentAssociations(new ArrayList<>());
         queryResponse.setFailureMessages(new ArrayList<>());
         when(orCDService.list(Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId>any(),
@@ -1210,15 +1185,15 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams>any(),
                 Mockito.<Map<AssertionType, Assertion>>any())).thenReturn(queryResponse);
 
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams value = new eu.europa.ec.sante.openncp.core.client.api.FilterParams();
         value.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         value.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         value.setMaximumSize(BigInteger.valueOf(1L));
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId value2 = new eu.europa.ec.sante.openncp.core.client.api.PatientId();
         value2.setExtension("42");
         value2.setRoot("42");
-        eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.FilterParams filterParams = mock(
                 eu.europa.ec.sante.openncp.core.client.api.FilterParams.class);
         when(filterParams.getMaximumSize()).thenReturn(BigInteger.valueOf(1L));
         when(filterParams.getCreatedAfter()).thenReturn(new GregorianCalendar(1, 1, 1));
@@ -1229,7 +1204,7 @@ public class ClientServiceImplTest {
         filterParams.setCreatedAfter(new GregorianCalendar(1, 1, 1));
         filterParams.setCreatedBefore(new GregorianCalendar(1, 1, 1));
         filterParams.setMaximumSize(BigInteger.valueOf(1L));
-        eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientId patientId = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientId.class);
         when(patientId.getExtension()).thenReturn("Extension");
         when(patientId.getRoot()).thenReturn("Root");
@@ -1238,20 +1213,20 @@ public class ClientServiceImplTest {
         patientId.setExtension("42");
         patientId.setRoot("42");
 
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode genericDocumentCode = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode genericDocumentCode = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         genericDocumentCode.setNodeRepresentation("42");
         genericDocumentCode.setSchema("42");
         genericDocumentCode.setValue("42");
 
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode genericDocumentCode2 = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode genericDocumentCode2 = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         genericDocumentCode2.setNodeRepresentation("queryDocuments");
         genericDocumentCode2.setSchema("queryDocuments");
         genericDocumentCode2.setValue("queryDocuments");
 
-        ArrayList<eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode> genericDocumentCodeList = new ArrayList<>();
+        final ArrayList<eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode> genericDocumentCodeList = new ArrayList<>();
         genericDocumentCodeList.add(genericDocumentCode2);
         genericDocumentCodeList.add(genericDocumentCode);
-        QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
+        final QueryDocumentRequest queryDocumentRequest = mock(QueryDocumentRequest.class);
         when(queryDocumentRequest.getFilterParams()).thenReturn(filterParams);
         when(queryDocumentRequest.getPatientId()).thenReturn(patientId);
         when(queryDocumentRequest.getCountryCode()).thenReturn("GB");
@@ -1264,12 +1239,12 @@ public class ClientServiceImplTest {
         queryDocumentRequest.setCountryCode("42");
         queryDocumentRequest.setFilterParams(value);
         queryDocumentRequest.setPatientId(value2);
-        QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
-        when(queryDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryDocumentOperation queryDocumentOperation = mock(QueryDocumentOperation.class);
+        when(queryDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryDocumentOperation.getRequest()).thenReturn(queryDocumentRequest);
 
         // Act
-        List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
+        final List<EpsosDocument> actualQueryDocumentsResult = clientServiceImpl.queryDocuments(queryDocumentOperation);
 
         // Assert
         verify(queryDocumentRequest).getCountryCode();
@@ -1289,7 +1264,7 @@ public class ClientServiceImplTest {
         verify(queryDocumentRequest).getPatientId();
         verify(queryDocumentRequest).setFilterParams(isA(eu.europa.ec.sante.openncp.core.client.api.FilterParams.class));
         verify(queryDocumentRequest).setPatientId(isA(eu.europa.ec.sante.openncp.core.client.api.PatientId.class));
-        verify(queryDocumentOperation).getAssertions();
+        verify(queryDocumentOperation).getSamlDetails().getAssertionMap();
         verify(queryDocumentOperation, atLeast(1)).getRequest();
         verify(orCDService).list(isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId.class), eq("GB"),
                 isA(List.class), isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams.class), isA(Map.class));
@@ -1303,7 +1278,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryPatient() {
         // Arrange
-        PatientDemographics value = new PatientDemographics();
+        final PatientDemographics value = new PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1315,16 +1290,16 @@ public class ClientServiceImplTest {
         value.setStreetAddress("42");
         value.setTelephone("42");
 
-        QueryPatientRequest queryPatientRequest = new QueryPatientRequest();
+        final QueryPatientRequest queryPatientRequest = new QueryPatientRequest();
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.queryPatient(queryPatientOperation));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
     }
 
@@ -1335,7 +1310,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryPatient2() {
         // Arrange
-        PatientDemographics value = new PatientDemographics();
+        final PatientDemographics value = new PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1347,16 +1322,16 @@ public class ClientServiceImplTest {
         value.setStreetAddress("42");
         value.setTelephone("42");
 
-        QueryPatientRequest queryPatientRequest = new QueryPatientRequest();
+        final QueryPatientRequest queryPatientRequest = new QueryPatientRequest();
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenThrow(new ClientConnectorException("An error occurred"));
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenThrow(new ClientConnectorException("An error occurred"));
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.queryPatient(queryPatientOperation));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
     }
 
@@ -1371,7 +1346,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1382,7 +1357,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -1415,7 +1390,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -1423,12 +1398,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -1458,7 +1433,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -1476,7 +1451,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1487,7 +1462,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("");
@@ -1520,7 +1495,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -1528,12 +1503,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -1563,7 +1538,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -1581,7 +1556,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1592,7 +1567,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -1625,7 +1600,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -1633,12 +1608,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -1668,7 +1643,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -1682,7 +1657,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryPatient6() {
         // Arrange
-        PatientDemographics value = new PatientDemographics();
+        final PatientDemographics value = new PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1693,7 +1668,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        PatientDemographics patientDemographics = mock(PatientDemographics.class);
+        final PatientDemographics patientDemographics = mock(PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
         when(patientDemographics.getCountry()).thenReturn("GB");
@@ -1719,15 +1694,15 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
         doNothing().when(queryPatientRequest).setPatientDemographics(Mockito.<PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act and Assert
@@ -1751,7 +1726,7 @@ public class ClientServiceImplTest {
         verify(patientDemographics).setTelephone(eq("42"));
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest).setPatientDemographics(isA(PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
     }
 
@@ -1766,7 +1741,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1777,7 +1752,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -1810,7 +1785,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -1818,12 +1793,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -1853,7 +1828,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -1871,7 +1846,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1882,7 +1857,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -1915,7 +1890,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -1923,12 +1898,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -1958,7 +1933,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -1976,7 +1951,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -1987,7 +1962,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -2020,7 +1995,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -2028,12 +2003,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -2063,7 +2038,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -2081,7 +2056,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -2092,7 +2067,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -2125,7 +2100,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -2133,12 +2108,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -2168,7 +2143,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -2186,7 +2161,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -2197,7 +2172,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -2230,7 +2205,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -2238,12 +2213,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -2273,7 +2248,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -2287,7 +2262,7 @@ public class ClientServiceImplTest {
     @Test
     public void testQueryPatient12() {
         // Arrange
-        PatientDemographics value = new PatientDemographics();
+        final PatientDemographics value = new PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -2298,7 +2273,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        PatientDemographics patientDemographics = mock(PatientDemographics.class);
+        final PatientDemographics patientDemographics = mock(PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
         when(patientDemographics.getCountry()).thenReturn("GB");
@@ -2330,15 +2305,15 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
         doNothing().when(queryPatientRequest).setPatientDemographics(Mockito.<PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act and Assert
@@ -2368,7 +2343,7 @@ public class ClientServiceImplTest {
         verify(patientDemographics).setTelephone(eq("42"));
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest).setPatientDemographics(isA(PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
     }
 
@@ -2383,7 +2358,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -2394,7 +2369,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -2427,7 +2402,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -2435,12 +2410,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -2470,7 +2445,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -2488,7 +2463,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -2499,7 +2474,7 @@ public class ClientServiceImplTest {
         value.setPostalCode("42");
         value.setStreetAddress("42");
         value.setTelephone("42");
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -2532,7 +2507,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -2540,12 +2515,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -2575,7 +2550,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -2593,7 +2568,7 @@ public class ClientServiceImplTest {
                 Mockito.<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics>any(),
                 Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any())).thenReturn(new ArrayList<>());
 
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics value = new eu.europa.ec.sante.openncp.core.client.api.PatientDemographics();
         value.setAdministrativeGender("42");
         value.setBirthDate(new GregorianCalendar(1, 1, 1));
         value.setCity("42");
@@ -2605,13 +2580,13 @@ public class ClientServiceImplTest {
         value.setStreetAddress("42");
         value.setTelephone("42");
 
-        PatientId patientId = new PatientId();
+        final PatientId patientId = new PatientId();
         patientId.setExtension("U@U.UUUU");
         patientId.setRoot("U@U.UUUU");
 
-        ArrayList<PatientId> patientIdList = new ArrayList<>();
+        final ArrayList<PatientId> patientIdList = new ArrayList<>();
         patientIdList.add(patientId);
-        eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
+        final eu.europa.ec.sante.openncp.core.client.api.PatientDemographics patientDemographics = mock(
                 eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class);
         when(patientDemographics.getAdministrativeGender()).thenReturn("");
         when(patientDemographics.getCity()).thenReturn("Oxford");
@@ -2644,7 +2619,7 @@ public class ClientServiceImplTest {
         patientDemographics.setPostalCode("42");
         patientDemographics.setStreetAddress("42");
         patientDemographics.setTelephone("42");
-        QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
+        final QueryPatientRequest queryPatientRequest = mock(QueryPatientRequest.class);
         when(queryPatientRequest.getPatientDemographics()).thenReturn(patientDemographics);
         when(queryPatientRequest.getCountryCode()).thenReturn("GB");
         doNothing().when(queryPatientRequest).setCountryCode(Mockito.<String>any());
@@ -2652,12 +2627,12 @@ public class ClientServiceImplTest {
                 .setPatientDemographics(Mockito.<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics>any());
         queryPatientRequest.setCountryCode("42");
         queryPatientRequest.setPatientDemographics(value);
-        QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
-        when(queryPatientOperation.getAssertions()).thenReturn(new HashMap<>());
+        final QueryPatientOperation queryPatientOperation = mock(QueryPatientOperation.class);
+        when(queryPatientOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(queryPatientOperation.getRequest()).thenReturn(queryPatientRequest);
 
         // Act
-        List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
+        final List<eu.europa.ec.sante.openncp.core.client.api.PatientDemographics> actualQueryPatientResult = clientServiceImpl
                 .queryPatient(queryPatientOperation);
 
         // Assert
@@ -2687,7 +2662,7 @@ public class ClientServiceImplTest {
         verify(queryPatientRequest).getPatientDemographics();
         verify(queryPatientRequest)
                 .setPatientDemographics(isA(eu.europa.ec.sante.openncp.core.client.api.PatientDemographics.class));
-        verify(queryPatientOperation).getAssertions();
+        verify(queryPatientOperation).getSamlDetails().getAssertionMap();
         verify(queryPatientOperation, atLeast(1)).getRequest();
         verify(identificationService).findIdentityByTraits(
                 isA(eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics.class), isA(Map.class), eq("GB"));
@@ -2701,28 +2676,28 @@ public class ClientServiceImplTest {
     @Test
     public void testRetrieveDocument() {
         // Arrange
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         value.setNodeRepresentation("42");
         value.setSchema("42");
         value.setValue("42");
 
-        DocumentId value2 = new DocumentId();
+        final DocumentId value2 = new DocumentId();
         value2.setDocumentUniqueId("42");
         value2.setRepositoryUniqueId("42");
 
-        RetrieveDocumentRequest retrieveDocumentRequest = new RetrieveDocumentRequest();
+        final RetrieveDocumentRequest retrieveDocumentRequest = new RetrieveDocumentRequest();
         retrieveDocumentRequest.setClassCode(value);
         retrieveDocumentRequest.setCountryCode("42");
         retrieveDocumentRequest.setDocumentId(value2);
         retrieveDocumentRequest.setHomeCommunityId("42");
         retrieveDocumentRequest.setTargetLanguage("42");
-        RetrieveDocumentOperation retrieveDocumentOperation = mock(RetrieveDocumentOperation.class);
-        when(retrieveDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final RetrieveDocumentOperation retrieveDocumentOperation = mock(RetrieveDocumentOperation.class);
+        when(retrieveDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(retrieveDocumentOperation.getRequest()).thenReturn(retrieveDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.retrieveDocument(retrieveDocumentOperation));
-        verify(retrieveDocumentOperation).getAssertions();
+        verify(retrieveDocumentOperation).getSamlDetails().getAssertionMap();
         verify(retrieveDocumentOperation).getRequest();
     }
 
@@ -2733,28 +2708,28 @@ public class ClientServiceImplTest {
     @Test
     public void testRetrieveDocument2() {
         // Arrange
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         value.setNodeRepresentation("42");
         value.setSchema("42");
         value.setValue("42");
 
-        DocumentId value2 = new DocumentId();
+        final DocumentId value2 = new DocumentId();
         value2.setDocumentUniqueId("42");
         value2.setRepositoryUniqueId("42");
 
-        RetrieveDocumentRequest retrieveDocumentRequest = new RetrieveDocumentRequest();
+        final RetrieveDocumentRequest retrieveDocumentRequest = new RetrieveDocumentRequest();
         retrieveDocumentRequest.setClassCode(value);
         retrieveDocumentRequest.setCountryCode("42");
         retrieveDocumentRequest.setDocumentId(value2);
         retrieveDocumentRequest.setHomeCommunityId("42");
         retrieveDocumentRequest.setTargetLanguage("42");
-        RetrieveDocumentOperation retrieveDocumentOperation = mock(RetrieveDocumentOperation.class);
-        when(retrieveDocumentOperation.getAssertions()).thenThrow(new ClientConnectorException("An error occurred"));
+        final RetrieveDocumentOperation retrieveDocumentOperation = mock(RetrieveDocumentOperation.class);
+        when(retrieveDocumentOperation.getSamlDetails().getAssertionMap()).thenThrow(new ClientConnectorException("An error occurred"));
         when(retrieveDocumentOperation.getRequest()).thenReturn(retrieveDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.retrieveDocument(retrieveDocumentOperation));
-        verify(retrieveDocumentOperation).getAssertions();
+        verify(retrieveDocumentOperation).getSamlDetails().getAssertionMap();
         verify(retrieveDocumentOperation).getRequest();
     }
 
@@ -2774,21 +2749,21 @@ public class ClientServiceImplTest {
     @Test
     public void testSubmitDocument() throws UnsupportedEncodingException {
         // Arrange
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         value.setNodeRepresentation("42");
         value.setSchema("42");
         value.setValue("42");
 
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value2 = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value2 = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         value2.setNodeRepresentation("42");
         value2.setSchema("42");
         value2.setValue("42");
 
-        ReasonOfHospitalisation value3 = new ReasonOfHospitalisation();
+        final ReasonOfHospitalisation value3 = new ReasonOfHospitalisation();
         value3.setCode("42");
         value3.setText("42");
 
-        EpsosDocument value4 = new EpsosDocument();
+        final EpsosDocument value4 = new EpsosDocument();
         value4.setAtcCode("42");
         value4.setAtcText("42");
         value4.setBase64Binary("AXAXAXAX".getBytes("UTF-8"));
@@ -2811,7 +2786,7 @@ public class ClientServiceImplTest {
         value4.setTitle("42");
         value4.setUuid("42");
 
-        PatientDemographics value5 = new PatientDemographics();
+        final PatientDemographics value5 = new PatientDemographics();
         value5.setAdministrativeGender("42");
         value5.setBirthDate(new GregorianCalendar(1, 1, 1));
         value5.setCity("42");
@@ -2823,17 +2798,17 @@ public class ClientServiceImplTest {
         value5.setStreetAddress("42");
         value5.setTelephone("42");
 
-        SubmitDocumentRequest submitDocumentRequest = new SubmitDocumentRequest();
+        final SubmitDocumentRequest submitDocumentRequest = new SubmitDocumentRequest();
         submitDocumentRequest.setCountryCode("42");
         submitDocumentRequest.setDocument(value4);
         submitDocumentRequest.setPatientDemographics(value5);
-        SubmitDocumentOperation submitDocumentOperation = mock(SubmitDocumentOperation.class);
-        when(submitDocumentOperation.getAssertions()).thenReturn(new HashMap<>());
+        final SubmitDocumentOperation submitDocumentOperation = mock(SubmitDocumentOperation.class);
+        when(submitDocumentOperation.getSamlDetails().getAssertionMap()).thenReturn(new HashMap<>());
         when(submitDocumentOperation.getRequest()).thenReturn(submitDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.submitDocument(submitDocumentOperation));
-        verify(submitDocumentOperation).getAssertions();
+        verify(submitDocumentOperation).getSamlDetails().getAssertionMap();
         verify(submitDocumentOperation).getRequest();
     }
 
@@ -2844,21 +2819,21 @@ public class ClientServiceImplTest {
     @Test
     public void testSubmitDocument2() throws UnsupportedEncodingException {
         // Arrange
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         value.setNodeRepresentation("42");
         value.setSchema("42");
         value.setValue("42");
 
-        eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value2 = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
+        final eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode value2 = new eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode();
         value2.setNodeRepresentation("42");
         value2.setSchema("42");
         value2.setValue("42");
 
-        ReasonOfHospitalisation value3 = new ReasonOfHospitalisation();
+        final ReasonOfHospitalisation value3 = new ReasonOfHospitalisation();
         value3.setCode("42");
         value3.setText("42");
 
-        EpsosDocument value4 = new EpsosDocument();
+        final EpsosDocument value4 = new EpsosDocument();
         value4.setAtcCode("42");
         value4.setAtcText("42");
         value4.setBase64Binary("AXAXAXAX".getBytes("UTF-8"));
@@ -2881,7 +2856,7 @@ public class ClientServiceImplTest {
         value4.setTitle("42");
         value4.setUuid("42");
 
-        PatientDemographics value5 = new PatientDemographics();
+        final PatientDemographics value5 = new PatientDemographics();
         value5.setAdministrativeGender("42");
         value5.setBirthDate(new GregorianCalendar(1, 1, 1));
         value5.setCity("42");
@@ -2893,17 +2868,17 @@ public class ClientServiceImplTest {
         value5.setStreetAddress("42");
         value5.setTelephone("42");
 
-        SubmitDocumentRequest submitDocumentRequest = new SubmitDocumentRequest();
+        final SubmitDocumentRequest submitDocumentRequest = new SubmitDocumentRequest();
         submitDocumentRequest.setCountryCode("42");
         submitDocumentRequest.setDocument(value4);
         submitDocumentRequest.setPatientDemographics(value5);
-        SubmitDocumentOperation submitDocumentOperation = mock(SubmitDocumentOperation.class);
-        when(submitDocumentOperation.getAssertions()).thenThrow(new ClientConnectorException("An error occurred"));
+        final SubmitDocumentOperation submitDocumentOperation = mock(SubmitDocumentOperation.class);
+        when(submitDocumentOperation.getSamlDetails().getAssertionMap()).thenThrow(new ClientConnectorException("An error occurred"));
         when(submitDocumentOperation.getRequest()).thenReturn(submitDocumentRequest);
 
         // Act and Assert
         assertThrows(ClientConnectorException.class, () -> clientServiceImpl.submitDocument(submitDocumentOperation));
-        verify(submitDocumentOperation).getAssertions();
+        verify(submitDocumentOperation).getSamlDetails().getAssertionMap();
         verify(submitDocumentOperation).getRequest();
     }
 }

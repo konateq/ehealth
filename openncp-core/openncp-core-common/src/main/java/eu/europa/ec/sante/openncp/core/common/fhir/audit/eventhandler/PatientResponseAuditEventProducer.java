@@ -78,7 +78,7 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
         //TODO build proper participant data
         final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
                 .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlDetails().getHcpClaim().getElement()))
+                .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlDetails().getHcpAssertion().getElement()))
                 .requestor(false)
                 .network(auditSecurityInfo.getRequestIp())
                 .build();
