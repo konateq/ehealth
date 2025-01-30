@@ -12,7 +12,7 @@ public enum Countries {
     de("Deutschland"),
     ee("Eesti"),
     ie("Éire/Ireland"),
-    gr("Ελλάδα"),
+    el("Ελλάδα"),
     es("España"),
     fr("France"),
     hr("Hrvatska"),
@@ -38,7 +38,7 @@ public enum Countries {
     ch("Switzerland"),
     eu("European Union");
 
-    private static final Countries[] ALL = {be, bg, cz, dk, de, ee, ie, gr, es, fr, hr, is, it, cy, lv, lt, lu, hu, mt,
+    private static final Countries[] ALL = {be, bg, cz, dk, de, ee, ie, el, es, fr, hr, is, it, cy, lv, lt, lu, hu, mt,
             nl, no, at, pl, pt, ro, si, sk, fi, se, uk, ch, eu};
 
     private final String description;
