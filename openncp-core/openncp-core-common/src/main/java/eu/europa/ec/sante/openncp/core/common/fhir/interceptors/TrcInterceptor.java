@@ -12,7 +12,8 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.ImmutableDispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.ClaimDetails;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
@@ -43,9 +44,14 @@ public class TrcInterceptor implements FhirCustomInterceptor {
 
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
     public void validateTrcAssertionIfApplicable(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final RestOperationTypeEnum restOperationTypeEnum) {
-        final EuRequestDetails euRequestDetails = EuRequestDetails.of(theRequestDetails);
+        final DispatchContext dispatchContext = ImmutableDispatchContext.builder()
+                .ncpSide(serverContext.getNcpSide())
+                .servletRequest(servletRequestDetails.getServletRequest())
+                .servletResponse(servletRequestDetails.getServletResponse())
+                .hapiRequestDetails(theRequestDetails)
+                .build();
 
-        if (euRequestDetails.isPatient()) {
+        if (dispatchContext.isPatient()) {
             return; //no TRC check for patient resources
         }
 
