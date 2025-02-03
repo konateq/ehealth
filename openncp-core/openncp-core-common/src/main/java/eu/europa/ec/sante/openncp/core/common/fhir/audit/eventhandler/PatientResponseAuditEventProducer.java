@@ -1,11 +1,12 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
 import eu.europa.ec.sante.openncp.common.context.LogContext;
+import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
-import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AuditEvent;
@@ -71,15 +72,16 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
 
     private List<AuditEventData.ParticipantData> createParticipants() {
 
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
-
-
+        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
         //TODO build proper participant data
         final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
                 .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlAsRoot()))
+                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertion()
+                        .map(AssertionDetails::getElement)
+                        .map(SoapElementHelper::getRoleID)
+                        .orElse(StringUtils.EMPTY))
                 .requestor(false)
                 .network(auditSecurityInfo.getRequestIp())
                 .build();
