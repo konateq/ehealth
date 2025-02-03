@@ -36,6 +36,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
         this.bundleHandler = Validate.notNull(bundleHandler, "bundleHandler must not be null");
     }
 
+
     @Override
     public Class<Bundle> getResourceType() {
         return Bundle.class;

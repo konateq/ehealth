@@ -12,7 +12,8 @@ public enum ClassCode {
     ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE("18748-4"),
     ORCD_MEDICAL_IMAGES_CLASSCODE("x-clinical-image"),
     CONSENT_CLASSCODE("57016-8"),
-    HCER_CLASSCODE("34133-9");
+    HCER_CLASSCODE("34133-9"),
+    LABORATORY_RESULT_REPORTS("11502-2");
 
     private final String code;
 
