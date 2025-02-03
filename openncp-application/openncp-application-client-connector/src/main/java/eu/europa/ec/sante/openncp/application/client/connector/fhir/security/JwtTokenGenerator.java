@@ -22,8 +22,9 @@ import java.util.Map;
 
 @Component
 public class JwtTokenGenerator {
+    private final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 
-    ConfigurationManager configurationManager;
+    private final ConfigurationManager configurationManager;
 
     public JwtTokenGenerator(final ConfigurationManager configurationManager) {
         this.configurationManager = configurationManager;
@@ -56,10 +57,8 @@ public class JwtTokenGenerator {
         return jwtBuilder.sign(Algorithm.HMAC512(configurationManager.getProperty(Constant.JWT_SECRET)));
     }
 
-    public static String serializeAssertionToXML(final Assertion assertion) {
-        // Obtain a Marshaller
-        final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
-        final Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
+    public String serializeAssertionToXML(final Assertion assertion) {
+        final Marshaller marshaller = this.marshallerFactory.getMarshaller(assertion);
 
         // Marshall the assertion into a DOM Element
         final Element element;
