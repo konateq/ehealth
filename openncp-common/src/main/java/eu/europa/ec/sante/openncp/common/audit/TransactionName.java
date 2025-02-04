@@ -27,10 +27,6 @@ public enum TransactionName {
     NCP_TRUSTED_SERVICE_LIST("ncpConfigurationManager::ImportNSL"),
     PIVOT_TRANSLATION("ncpTransformationMgr::Translate"),
     COMMUNICATION_FAILURE("CommunicationFailure"),
-    PAC_RETRIEVE("PACRetrieve"),
-    HCER_PUT("HCERService:Put"),
-    MRO_SERVICE_LIST("MroService::List"),
-    MRO_SERVICE_RETRIEVE("MroService::Retrieve"),
     SMP_QUERY("SMP::Query"),
     SMP_PUSH("SMP::Push");
 

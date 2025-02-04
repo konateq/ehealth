@@ -22,12 +22,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
-public class PatientResponseAuditEventProducer implements AuditEventProducer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PatientResponseAuditEventProducer.class);
+public class PatientAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PatientAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
     private final AuditEventBuilder auditEventBuilder;
 
-    public PatientResponseAuditEventProducer(final AuditEventBuilder auditEventBuilder) {
+    public PatientAuditEventProducer(final AuditEventBuilder auditEventBuilder) {
         this.auditEventBuilder = Validate.notNull(auditEventBuilder, "AuditEventBuilder must not be null.");
     }
 
@@ -61,39 +61,6 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
         }
 
         return auditEventDataList.stream().map(auditEventBuilder::build).collect(Collectors.toList());
-    }
-
-    private AuditEventData.MetaData createMetaData(final AuditableEvent auditableEvent) {
-        return ImmutableMetaData.builder()
-                .recordDateTime(auditableEvent.getTimestamp())
-                .correlationId(LogContext.getCorrelationId())
-                .build();
-    }
-
-    private List<AuditEventData.ParticipantData> createParticipants() {
-
-        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
-
-        //TODO build proper participant data
-        final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
-                .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertion()
-                        .map(AssertionDetails::getElement)
-                        .map(SoapElementHelper::getRoleID)
-                        .orElse(StringUtils.EMPTY))
-                .requestor(false)
-                .network(auditSecurityInfo.getRequestIp())
-                .build();
-
-        final AuditEventData.ParticipantData serviceProvider = ImmutableParticipantData.builder()
-                .id((String)usernamePasswordAuthenticationToken.getCredentials())
-                .roleCode("provider role unknown")
-                .requestor(true)
-                .network(auditSecurityInfo.getHostIp())
-                .build();
-
-        return List.of(serviceConsumer, serviceProvider);
     }
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {

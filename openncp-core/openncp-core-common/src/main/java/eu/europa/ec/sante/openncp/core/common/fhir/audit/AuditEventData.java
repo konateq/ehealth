@@ -72,6 +72,7 @@ public interface AuditEventData {
                     .build();
         }
 
+
         @Domain
         interface EntityType {
             String getCode();
