@@ -19,44 +19,6 @@ public interface AuditEventProducer {
     boolean accepts(AuditableEvent auditableEvent);
 
     List<AuditEvent> produce(AuditableEvent auditableEvent);
-
-    default List<AuditEventData.ParticipantData> createParticipants() {
-        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        final AuditSecurityInfo auditSecurityInfo =
-                (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
-
-        return List.of(
-                createEventServiceConsumer(usernamePasswordAuthenticationToken, auditSecurityInfo),
-                createEventServiceProvider(usernamePasswordAuthenticationToken)
-        );
-    }
-
-    default AuditEventData.ParticipantData createEventServiceConsumer(
-            final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
-            final AuditSecurityInfo auditSecurityInfo) {
-
-        return ImmutableParticipantData.builder()
-                .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertion()
-                        .map(AssertionDetails::getElement)
-                        .map(SoapElementHelper::getRoleID)
-                        .orElse(StringUtils.EMPTY))
-                .requestor(false)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getRequestIp))
-                .build();
-    }
-
-    default AuditEventData.ParticipantData createEventServiceProvider(
-            final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken) {
-
-        return ImmutableParticipantData.builder()
-                .id((String) usernamePasswordAuthenticationToken.getCredentials())
-                .roleCode("provider role unknown")
-                .requestor(true)
-                .network(LogContext.getIpInformation().flatMap(IpInformation::getHostIp))
-                .build();
-    }
 }
 
 

@@ -21,12 +21,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
-public class PatientResponseAuditEventProducer implements AuditEventProducer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PatientResponseAuditEventProducer.class);
+public class PatientAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PatientAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
     private final AuditEventBuilder auditEventBuilder;
 
-    public PatientResponseAuditEventProducer(final AuditEventBuilder auditEventBuilder) {
+    public PatientAuditEventProducer(final AuditEventBuilder auditEventBuilder) {
         this.auditEventBuilder = Validate.notNull(auditEventBuilder, "AuditEventBuilder must not be null.");
     }
 
@@ -64,14 +64,6 @@ public class PatientResponseAuditEventProducer implements AuditEventProducer {
             return Collections.emptyList();
         }
     }
-
-    private AuditEventData.MetaData createMetaData(final AuditableEvent auditableEvent) {
-        return ImmutableMetaData.builder()
-                .recordDateTime(auditableEvent.getTimestamp())
-                .correlationId(LogContext.getCorrelationId())
-                .build();
-    }
-
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {
         final List<AuditEventData.ParticipantData> participants = createParticipants();
