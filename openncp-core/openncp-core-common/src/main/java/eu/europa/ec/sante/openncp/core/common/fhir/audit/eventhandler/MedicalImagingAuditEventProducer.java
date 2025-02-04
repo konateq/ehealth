@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
-public class MedicalImagingAuditEventProducer implements AuditEventProducer {
+public class MedicalImagingAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(MedicalImagingAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_DOCUMENT_REFERENCE = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.DocumentReference.getPath());
     public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
@@ -63,14 +63,6 @@ public class MedicalImagingAuditEventProducer implements AuditEventProducer {
         }
     }
 
-
-    private AuditEventData.MetaData createMetaData(final AuditableEvent auditableEvent) {
-        return ImmutableMetaData.builder()
-                .recordDateTime(auditableEvent.getTimestamp())
-                .correlationId(LogContext.getCorrelationId())
-                .build();
-    }
-
     private List<AuditEventData> handleSearch(final AuditableEvent auditableEvent) {
         final List<AuditEventData.ParticipantData> participants = createParticipants();
         return auditableEvent.getResource().map(resource -> {
@@ -80,7 +72,7 @@ public class MedicalImagingAuditEventProducer implements AuditEventProducer {
 
             final List<AuditEventData> auditEventDataList = new ArrayList<>();
             if (documentReferenceIds.isEmpty()) {
-                final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofDocumentReferenceResource(dataResourceId);
+                final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
                 auditEventDataList.add(ImmutableAuditEventData.builder()
                         .metaData(createMetaData(auditableEvent))
                         .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
@@ -92,7 +84,7 @@ public class MedicalImagingAuditEventProducer implements AuditEventProducer {
             } else {
                 documentReferenceIds.stream()
                         .map(patientId -> {
-                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofDocumentReferenceResource(dataResourceId);
+                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofResource(dataResourceId);
                             final AuditEventData.EntityData patientEntityData = AuditEventData.EntityData.ofPatient(patientId);
                             return ImmutableAuditEventData.builder()
                                     .metaData(createMetaData(auditableEvent))

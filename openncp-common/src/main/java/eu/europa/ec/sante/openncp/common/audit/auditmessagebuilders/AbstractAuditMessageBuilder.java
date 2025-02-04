@@ -293,7 +293,7 @@ public abstract class AbstractAuditMessageBuilder {
         final EventID eventID = buildEventID(eventType, ncpSide, transactionName);
 
         final EventTypeCode eventTypeCode = new EventTypeCodeBuilder()
-                .codeSystemName("IHE Transactions")
+                .codeSystemName("eHDSI Transactions")
                 .csdCode(eventType.getIheCode())
                 .displayName(transactionName)
                 .originalText(eventType.getIheTransactionName())
