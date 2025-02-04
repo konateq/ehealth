@@ -1,10 +1,12 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
 import eu.europa.ec.sante.openncp.common.context.LogContext;
+import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AuditEvent;
@@ -20,7 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
-public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
+public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_DOCUMENT_REFERENCE = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.DocumentReference.getPath());
@@ -65,37 +67,6 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
         return auditEventDataList.stream().map(auditEventBuilder::build).collect(Collectors.toList());
     }
 
-    private AuditEventData.MetaData createMetaData(final AuditableEvent auditableEvent) {
-        return ImmutableMetaData.builder()
-                .recordDateTime(auditableEvent.getTimestamp())
-                .correlationId(LogContext.getCorrelationId())
-                .build();
-    }
-
-    private List<AuditEventData.ParticipantData> createParticipants() {
-
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
-
-
-        //TODO build proper participant data
-        final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
-                .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(SoapElementHelper.getRoleID(auditSecurityInfo.getSamlAsRoot()))
-                .requestor(false)
-                .network(auditSecurityInfo.getRequestIp())
-                .build();
-
-        final AuditEventData.ParticipantData serviceProvider = ImmutableParticipantData.builder()
-                .id((String) usernamePasswordAuthenticationToken.getCredentials())
-                .roleCode("provider role unknown")
-                .requestor(true)
-                .network(auditSecurityInfo.getHostIp())
-                .build();
-
-        return List.of(serviceConsumer, serviceProvider);
-    }
-
     private List<AuditEventData> handleSearch(final AuditableEvent auditableEvent) {
         return commonHandler(auditableEvent, BalpProfileEnum.BASIC_QUERY);
 
@@ -121,7 +92,7 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
 
             final List<AuditEventData> auditEventDataList = new ArrayList<>();
             if (documentReferenceIds.isEmpty()) {
-                final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofDocumentReferenceResource(dataResourceId);
+                final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
                 auditEventDataList.add(ImmutableAuditEventData.builder()
                         .metaData(createMetaData(auditableEvent))
                         .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
@@ -133,8 +104,7 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
             } else {
                 documentReferenceIds.stream()
                         .map(patientId -> {
-                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofDocumentReferenceResource(dataResourceId);
-                            final AuditEventData.EntityData patientEntityData = AuditEventData.EntityData.ofPatient(patientId);
+                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofResource(dataResourceId);
                             return ImmutableAuditEventData.builder()
                                     .metaData(createMetaData(auditableEvent))
                                     .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
@@ -142,7 +112,6 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
                                     .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
                                     .addAllParticipants(participants)
                                     .addEntity(domainResourceEntityData)
-                                    .addEntity(patientEntityData)
                                     .build();
 
                         })
