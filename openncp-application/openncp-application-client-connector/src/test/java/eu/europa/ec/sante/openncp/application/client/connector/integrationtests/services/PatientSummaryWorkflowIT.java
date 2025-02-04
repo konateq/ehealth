@@ -16,11 +16,14 @@ import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.xml.namespace.QName;
 import javax.xml.ws.soap.SOAPFaultException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -131,5 +134,37 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         assertThatExceptionOfType(SOAPFaultException.class)
                 .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", differentPatientId, List.of(classCode), null))
                 .withMessageContaining("The request is not containing a proper PS identifier.");
+    }
+
+    @Test
+    void bugtrigger_EHEALTH_13227_missing_fault_code() throws MalformedURLException, MarshallingException {
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("unknown-patient");
+
+        final PatientDemographics patientDemographics = objectFactory.createPatientDemographics();
+        patientDemographics.getPatientId().add(patientId);
+
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+
+        assertThatExceptionOfType(SOAPFaultException.class)
+                .isThrownBy(() -> clientConnectorService.queryPatient(assertions, "BE", patientDemographics))
+                .extracting(SOAPFaultException::getFault)
+                .satisfies(fault -> {
+                    assertThat(fault.getFaultCode()).contains("Receiver");
+                    assertThat(fault.getFaultString()).contains("NoPatientIdDiscoveredException");
+
+                    final List<QName> subCodes = StreamSupport.stream(
+                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
+                    ).collect(Collectors.toList());
+                    assertThat(subCodes)
+                            .hasSize(1)
+                            .extracting(QName::getLocalPart)
+                            .containsExactly("ERROR_PI_NO_MATCH");
+                });
     }
 }
