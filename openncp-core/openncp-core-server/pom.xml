@@ -56,17 +56,28 @@
     </dependencies>
 
     <profiles>
-            <profile>
-                <!-- This profile bundles the mock National Connector implementation -->
-                <id>national-connector-mock</id>
-                <dependencies>
-                    <dependency>
-                        <groupId>eu.europa.ec.sante</groupId>
-                        <artifactId>openncp-core-server-mock</artifactId>
-                        <version>${project.version}</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                </dependencies>
-            </profile>
-        </profiles>
+        <profile>
+            <!-- This profile bundles the mock National Connector implementation -->
+            <id>national-connector-mock</id>
+            <dependencies>
+                <dependency>
+                    <groupId>eu.europa.ec.sante</groupId>
+                    <artifactId>openncp-core-server-mock</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>national-build</id>
+            <dependencies>
+                <dependency>
+                    <groupId>${openncp.national-connector.groupId}</groupId>
+                    <artifactId>${openncp.national-connector.artifactId}</artifactId>
+                    <version>${openncp.national-connector.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>
