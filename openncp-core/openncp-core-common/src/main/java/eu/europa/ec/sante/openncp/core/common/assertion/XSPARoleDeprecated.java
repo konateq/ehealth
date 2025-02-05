@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator;
+package eu.europa.ec.sante.openncp.core.common.assertion;
 
 import org.apache.commons.lang3.StringUtils;
 

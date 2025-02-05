@@ -8,7 +8,7 @@ public class GazelleValidatorFactory {
     private GazelleValidatorFactory() {
     }
 
-    public static AssertionValidator getAssertionValidator() {
+    public static DocumentValidator getAssertionValidator() {
         IGazelleValidatorFactory iGazelleValidatorFactory = getIGazelleValidatorFactory();
         return iGazelleValidatorFactory.getAssertionValidator();
     }

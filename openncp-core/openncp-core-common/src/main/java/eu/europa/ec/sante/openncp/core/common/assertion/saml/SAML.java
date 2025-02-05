@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml;
+package eu.europa.ec.sante.openncp.core.common.assertion.saml;
 
 import java.io.FileWriter;
 import java.io.IOException;

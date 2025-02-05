@@ -1,21 +1,19 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import javax.xml.transform.dom.DOMSource;
+package eu.europa.ec.sante.openncp.core.common.assertion.saml;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.PolicyAssertionManager;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.XSDValidationException;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.core.common.assertion.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.AssertionValidator;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.XSDValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.core.xml.io.UnmarshallingException;
@@ -29,16 +27,23 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.transform.dom.DOMSource;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class SAML2Validator {
 
     private static final String OASIS_WSSE_SCHEMA_LOC = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
     private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Validator.class);
 
+    private final AssertionValidator assertionValidator;
     private final SignatureManager signatureManager;
     private final PolicyAssertionManager policyAssertionManager;
 
-    private SAML2Validator(SignatureManager signatureManager, PolicyAssertionManager policyAssertionManager) {
+    private SAML2Validator(final AssertionValidator assertionValidator, final SignatureManager signatureManager, final PolicyAssertionManager policyAssertionManager) {
+        this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
         this.signatureManager = Validate.notNull(signatureManager, "signatureManager must not be null");
         this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
@@ -60,6 +65,8 @@ public class SAML2Validator {
         final NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
         Element hcpAss;
         Assertion hcpAssertion = null;
+
+
         try {
             if (assertionList.getLength() > 0) {
                 for (var i = 0; i < assertionList.getLength(); i++) {
@@ -76,7 +83,10 @@ public class SAML2Validator {
             }
             validateHcpAssertion(hcpAssertion);
 
-            sigCountryCode = checkHCPAssertion(hcpAssertion, null);
+            final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
+            checkHCPAssertion(hcpAssertionDetails, null);
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
+
             //TODO: Next of Kin assertion should be checked
             policyAssertionManager.XCPDPermissionValidator(hcpAssertion);
         } catch (final IOException | UnmarshallingException e) {
@@ -119,9 +129,9 @@ public class SAML2Validator {
             FieldValueValidators.validateTimeSpanForHCP(assertion);
             FieldValueValidators.validateAuthnContextClassRefValueForHCP(assertion);
 
-        } catch (MissingFieldException e){
+        } catch (MissingFieldException e) {
             throw new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_GENERIC, e.getMessage());
-        } catch (InvalidFieldException e){
+        } catch (InvalidFieldException e) {
             throw new InvalidFieldException(OpenNCPErrorCode.ERROR_HPI_GENERIC, e.getMessage());
         }
 
@@ -241,7 +251,7 @@ public class SAML2Validator {
             checkTRCAdviceIdReferenceAgainstHCPId(trcAssertion, hcpAssertion);
             //TODO: Next of Kin assertion should be checked
         } catch (final IOException | UnmarshallingException | SAXException e) {
-            LOGGER.error("Error when validating the XDR Header: [{}]",e.getMessage(), e);
+            LOGGER.error("Error when validating the XDR Header: [{}]", e.getMessage(), e);
             throw new InsufficientRightsException();
         }
 
@@ -305,101 +315,40 @@ public class SAML2Validator {
         return result;
     }
 
-    private String checkHCPAssertion(final Assertion assertion, final ClassCode classCode)
+    private void checkHCPAssertion(final AssertionDetails hcpAssertionDetails, final ClassCode classCode)
             throws InsufficientRightsException, SMgrException, MissingFieldException, InvalidFieldException {
+        final AssertionValidationResult assertionValidationResult = assertionValidator.validate(hcpAssertionDetails)
+                .orElseThrow(() -> new RuntimeException("No valid validator found for HCP assertion"));
 
-        final String sigCountryCode;
-
-        try {
-            RequiredFieldValidators.validateVersion(assertion);
-            RequiredFieldValidators.validateID(assertion);
-            RequiredFieldValidators.validateIssueInstant(assertion);
-            RequiredFieldValidators.validateIssuer(assertion);
-            RequiredFieldValidators.validateSubject(assertion);
-            RequiredFieldValidators.validateNameID(assertion);
-            RequiredFieldValidators.validateFormat(assertion);
-            RequiredFieldValidators.validateSubjectConfirmation(assertion);
-            RequiredFieldValidators.validateMethod(assertion);
-            RequiredFieldValidators.validateConditions(assertion);
-            RequiredFieldValidators.validateNotBefore(assertion);
-            RequiredFieldValidators.validateNotOnOrAfter(assertion);
-            RequiredFieldValidators.validateAuthnStatement(assertion);
-            RequiredFieldValidators.validateAuthnInstant(assertion);
-            RequiredFieldValidators.validateAuthnContext(assertion);
-            RequiredFieldValidators.validateAuthnContextClassRef(assertion);
-            RequiredFieldValidators.validateAttributeStatement(assertion);
-            RequiredFieldValidators.validateSignature(assertion);
-
-            FieldValueValidators.validateVersionValue(assertion);
-            FieldValueValidators.validateIssuerValue(assertion);
-            FieldValueValidators.validateNameIDValue(assertion);
-            FieldValueValidators.validateNotBeforeValue(assertion);
-            FieldValueValidators.validateNotOnOrAfterValue(assertion);
-            FieldValueValidators.validateTimeSpanForHCP(assertion);
-            FieldValueValidators.validateAuthnContextClassRefValueForHCP(assertion);
-
-            policyAssertionManager.XSPASubjectValidatorForHCP(assertion, classCode);
-            policyAssertionManager.XSPARoleValidator(assertion, classCode);
-            policyAssertionManager.HealthcareFacilityValidator(assertion, classCode);
-            policyAssertionManager.PurposeOfUseValidator(assertion, classCode);
-            if (classCode != null && classCode.equals(ClassCode.EDD_CLASSCODE)) {
-                policyAssertionManager.XSPAOrganizationIdValidator(assertion, classCode);
-            }
-            policyAssertionManager.XSPALocalityValidator(assertion, classCode);
-        } catch (final MissingFieldException e) {
-            throw new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_GENERIC, e.getMessage());
-        } catch (final InvalidFieldException e) {
-            throw new InvalidFieldException(OpenNCPErrorCode.ERROR_HPI_GENERIC, e.getMessage());
+        final List<String> failedValidationMessages = assertionValidationResult.getFailedValidationMessages();
+        if (!failedValidationMessages.isEmpty()) {
+            throw new RuntimeException(String.format("Invalid HCP assertion: [%s] ", failedValidationMessages));
         }
 
-        //TODO: [Mustafa, 2012.07.05] The original security manager was extended to return the two-letter country code
-        // from the signature, but now in order not to change the security manager in Google Code repo, this is reverted back.
-        // Konstantin: committed changes to security manager, in order to provide better support XCA and XDR implementations
-        //TODO: Improve Exception management.
-        sigCountryCode = signatureManager.verifySAMLAssertion(assertion);
-
-        //TODO EHEALTH-6693 See if needed to incapsulate? ERROR_HPI_GENERIC, WARNING_HPI_GENERIC, ERROR_HPI_INSUFFICIENT_INFORMATION...
-
-        return sigCountryCode;
+        final Assertion assertion = hcpAssertionDetails.getAssertion();
+        policyAssertionManager.XSPASubjectValidatorForHCP(assertion, classCode);
+        policyAssertionManager.XSPARoleValidator(assertion, classCode);
+        policyAssertionManager.HealthcareFacilityValidator(assertion, classCode);
+        policyAssertionManager.PurposeOfUseValidator(assertion, classCode);
+        if (classCode != null && classCode.equals(ClassCode.EDD_CLASSCODE)) {
+            policyAssertionManager.XSPAOrganizationIdValidator(assertion, classCode);
+        }
+        policyAssertionManager.XSPALocalityValidator(assertion, classCode);
     }
 
     public void checkTRCAssertion(final Assertion assertion, final ClassCode classCode)
             throws MissingFieldException, InvalidFieldException, InsufficientRightsException, SMgrException {
+        final AssertionValidationResult assertionValidationResult = assertionValidator.validate(assertion)
+                .orElseThrow(() -> new RuntimeException("No valid validator found for TRC assertion"));
 
-        RequiredFieldValidators.validateVersion(assertion);
-        RequiredFieldValidators.validateID(assertion);
-        RequiredFieldValidators.validateIssuer(assertion);
-        RequiredFieldValidators.validateIssueInstant(assertion);
-        RequiredFieldValidators.validateSubject(assertion);
-        RequiredFieldValidators.validateNameID(assertion);
-        RequiredFieldValidators.validateFormat(assertion);
-        RequiredFieldValidators.validateSubjectConfirmation(assertion);
-        RequiredFieldValidators.validateMethod(assertion);
-        RequiredFieldValidators.validateConditions(assertion);
-        RequiredFieldValidators.validateNotBefore(assertion);
-        RequiredFieldValidators.validateNotOnOrAfter(assertion);
-        RequiredFieldValidators.validateAdvice(assertion);
-        RequiredFieldValidators.validateAssertionIdRef(assertion);
-        RequiredFieldValidators.validateAuthnStatement(assertion);
-        RequiredFieldValidators.validateAuthnInstant(assertion);
-        RequiredFieldValidators.validateAuthnContext(assertion);
-        RequiredFieldValidators.validateAuthnContextClassRef(assertion);
-        RequiredFieldValidators.validateAttributeStatement(assertion);
-        RequiredFieldValidators.validateSignature(assertion);
-
-        FieldValueValidators.validateVersionValue(assertion);
-        FieldValueValidators.validateIssuerValue(assertion);
-        FieldValueValidators.validateNameIDValue(assertion);
-        FieldValueValidators.validateMethodValue(assertion);
-        FieldValueValidators.validateNotBeforeValue(assertion);
-        FieldValueValidators.validateNotOnOrAfterValue(assertion);
-        FieldValueValidators.validateTimeSpanForTRC(assertion);
-        FieldValueValidators.validateAuthnContextClassRefValueForHCP(assertion);
+        final List<String> failedValidationMessages = assertionValidationResult.getFailedValidationMessages();
+        if (!failedValidationMessages.isEmpty()) {
+            throw new RuntimeException(String.format("Invalid TRC assertion: [%s] ", failedValidationMessages));
+        }
 
         policyAssertionManager.PurposeOfUseValidatorForTRC(assertion, classCode);
         policyAssertionManager.XSPASubjectValidatorForTRC(assertion, classCode);
 
-        signatureManager.verifySAMLAssertion(assertion);
     }
 
     public String getCountryCodeFromHCPAssertion(final Element soapHeader) throws MissingFieldException, XSDValidationException, SMgrException {

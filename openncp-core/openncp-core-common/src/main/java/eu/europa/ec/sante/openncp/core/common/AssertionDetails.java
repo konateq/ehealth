@@ -13,21 +13,48 @@ import org.apache.commons.lang3.Validate;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.*;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.xmlsec.keyinfo.KeyInfoSupport;
+import org.opensaml.xmlsec.signature.Signature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Domain
 public interface AssertionDetails {
+    static final Logger LOGGER = LoggerFactory.getLogger(AssertionDetails.class);
+
     AssertionType getAssertionType();
 
     Element getElement();
 
     Assertion getAssertion();
+
+    default List<X509Certificate> getCertificates() {
+        final Signature signature = getAssertion().getSignature();
+        try {
+            return KeyInfoSupport.getCertificates(signature.getKeyInfo());
+        } catch (CertificateException e) {
+            LOGGER.error(String.format("Error fetching the certificates: %s", e.getMessage()), e);
+            return Collections.emptyList();
+        }
+    }
+
+    default Optional<String> getCountryCode() {
+        return getCertificates().stream().findFirst().map(certificate -> {
+            final String certificateDN = certificate.getSubjectDN().getName();
+            return certificateDN.substring(certificateDN.indexOf("C=") + 2, certificateDN.indexOf("C=") + 4);
+        });
+    }
 
     static Optional<AssertionDetails> of(final AssertionType assertionType, final DecodedJWT jwt) {
         Validate.notNull(assertionType, "assertionType must not be null");

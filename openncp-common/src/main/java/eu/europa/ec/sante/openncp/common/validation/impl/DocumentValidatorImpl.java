@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.common.validation.impl;
 
-import eu.europa.ec.sante.openncp.common.validation.AssertionValidator;
+import eu.europa.ec.sante.openncp.common.validation.DocumentValidator;
 import net.ihe.gazelle.jaxb.assertion.sante.ValidateBase64Document;
 import net.ihe.gazelle.jaxb.assertion.sante.ValidateBase64DocumentResponse;
 import net.ihe.gazelle.jaxb.assertion.sante.ValidateDocument;
@@ -11,11 +11,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.ws.client.WebServiceClientException;
 import org.springframework.ws.client.core.WebServiceTemplate;
 
-public class AssertionValidatorImpl extends AbstractValidator implements AssertionValidator {
+public class DocumentValidatorImpl extends AbstractValidator implements DocumentValidator {
 
-    private final Logger logger = LoggerFactory.getLogger(AssertionValidatorImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(DocumentValidatorImpl.class);
 
-    AssertionValidatorImpl(WebServiceTemplate webServiceTemplate) {
+    DocumentValidatorImpl(WebServiceTemplate webServiceTemplate) {
         super(webServiceTemplate);
     }
 

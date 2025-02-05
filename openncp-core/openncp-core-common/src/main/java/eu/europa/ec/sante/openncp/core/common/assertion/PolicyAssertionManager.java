@@ -1,8 +1,8 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator;
+package eu.europa.ec.sante.openncp.core.common.assertion;
 
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import org.opensaml.saml.saml2.core.Assertion;
 

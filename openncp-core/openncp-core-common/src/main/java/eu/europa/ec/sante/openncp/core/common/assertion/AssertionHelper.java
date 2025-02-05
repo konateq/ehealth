@@ -1,11 +1,11 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator;
+package eu.europa.ec.sante.openncp.core.common.assertion;
 
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.List;
 
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.XMLObject;

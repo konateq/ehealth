@@ -1,8 +1,7 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions;
+package eu.europa.ec.sante.openncp.core.common.assertion.exceptions;
 
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
 
 public class InsufficientRightsException extends OpenNCPErrorCodeException {
 

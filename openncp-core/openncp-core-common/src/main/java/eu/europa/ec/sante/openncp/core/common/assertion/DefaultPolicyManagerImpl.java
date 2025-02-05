@@ -1,10 +1,10 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator;
+package eu.europa.ec.sante.openncp.core.common.assertion;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.AssertionHelper.*;
+import static eu.europa.ec.sante.openncp.core.common.assertion.AssertionHelper.*;
 
 
 /**

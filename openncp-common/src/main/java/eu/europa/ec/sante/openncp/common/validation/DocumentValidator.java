@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.common.validation;
 
-public interface AssertionValidator {
+public interface DocumentValidator {
 
     String validateDocument(String document, String validator);
 

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator;
+package eu.europa.ec.sante.openncp.core.common.assertion;
 
 /**
  * From WP3.4 Deliverable D.3.4.2

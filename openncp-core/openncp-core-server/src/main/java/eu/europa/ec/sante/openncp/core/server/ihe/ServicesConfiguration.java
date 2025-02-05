@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.server.ihe;
 
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.DiscardDispenseDetails;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
