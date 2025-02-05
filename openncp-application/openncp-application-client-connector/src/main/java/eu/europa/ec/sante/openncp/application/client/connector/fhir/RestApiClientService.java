@@ -76,8 +76,7 @@ public class RestApiClientService {
 
         final HttpEntity<Map<String, Object>> newRequest = new HttpEntity<>(headers);
 
-        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath);
-        uriBuilder.pathSegment(resourcePath);
+        final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(fhirBasePath + resourcePath);
         searchParams.forEach((key, values) -> values.forEach(value -> uriBuilder.queryParam(key, value)));
         final URI uri = uriBuilder.encode().build().toUri();
 
