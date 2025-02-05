@@ -2,8 +2,10 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import eu.europa.ec.sante.openncp.common.context.LogContext;
-import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventBuilder;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.BalpProfileEnum;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.ImmutableAuditEventData;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
-public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
+public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_DOCUMENT_REFERENCE = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.DocumentReference.getPath());
     public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
@@ -68,18 +70,9 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
         }
     }
 
-
-    private AuditEventData.MetaData createMetaData(final AuditableEvent auditableEvent) {
-        return ImmutableMetaData.builder()
-                .recordDateTime(auditableEvent.getTimestamp())
-                .correlationId(LogContext.getCorrelationId())
-                .build();
-    }
-
     private List<AuditEventData> handleCreate(final AuditableEvent auditableEvent) {
         return commonHandler(auditableEvent, BalpProfileEnum.BASIC_CREATE);
     }
-
 
     private List<AuditEventData> handleRead(final AuditableEvent auditableEvent) {
         return commonHandler(auditableEvent, BalpProfileEnum.BASIC_READ);
@@ -95,7 +88,7 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
 
             final List<AuditEventData> auditEventDataList = new ArrayList<>();
             if (documentReferenceIds.isEmpty()) {
-                final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofDocumentReferenceResource(dataResourceId);
+                final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
                 auditEventDataList.add(ImmutableAuditEventData.builder()
                         .metaData(createMetaData(auditableEvent))
                         .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
@@ -107,8 +100,7 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
             } else {
                 documentReferenceIds.stream()
                         .map(patientId -> {
-                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofDocumentReferenceResource(dataResourceId);
-                            final AuditEventData.EntityData patientEntityData = AuditEventData.EntityData.ofPatient(patientId);
+                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofResource(dataResourceId);
                             return ImmutableAuditEventData.builder()
                                     .metaData(createMetaData(auditableEvent))
                                     .restOperationType(auditableEvent.getDispatchContext().getHapiRestOperationType().orElse(RestOperationTypeEnum.META))
@@ -116,7 +108,6 @@ public class DocumentReferenceAuditEventProducer implements AuditEventProducer {
                                     .fhirServerBase(auditableEvent.getDispatchContext().getHapiRequestDetails().map(RequestDetails::getFhirServerBase).orElse(StringUtils.EMPTY))
                                     .addAllParticipants(participants)
                                     .addEntity(domainResourceEntityData)
-                                    .addEntity(patientEntityData)
                                     .build();
 
                         })
