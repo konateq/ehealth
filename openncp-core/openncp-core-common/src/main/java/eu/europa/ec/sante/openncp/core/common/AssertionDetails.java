@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.fhir.security;
+package eu.europa.ec.sante.openncp.core.common;
 
 import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
@@ -11,9 +11,7 @@ import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
-import org.opensaml.core.xml.io.Unmarshaller;
-import org.opensaml.core.xml.io.UnmarshallerFactory;
-import org.opensaml.core.xml.io.UnmarshallingException;
+import org.opensaml.core.xml.io.*;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -24,16 +22,14 @@ import java.util.Base64;
 import java.util.Optional;
 
 @Domain
-public interface ClaimDetails {
+public interface AssertionDetails {
     AssertionType getAssertionType();
-
-    Claim getClaim();
 
     Element getElement();
 
     Assertion getAssertion();
 
-    static Optional<ClaimDetails> of(final AssertionType assertionType, final DecodedJWT jwt) {
+    static Optional<AssertionDetails> of(final AssertionType assertionType, final DecodedJWT jwt) {
         Validate.notNull(assertionType, "assertionType must not be null");
         Validate.notNull(jwt, "Decoded JWT token must not be null");
 
@@ -43,7 +39,6 @@ public interface ClaimDetails {
         }
 
         final Base64.Decoder decoder = Base64.getDecoder();
-
         final String claimAsString = claim.asString();
         final String decodedSaml = new String(decoder.decode(claimAsString));
 
@@ -71,11 +66,50 @@ public interface ClaimDetails {
             throw new AuthenticationException(Msg.code(333) + ex.getMessage());
         }
 
-        return Optional.of(ImmutableClaimDetails.builder()
+        return Optional.of(ImmutableAssertionDetails.builder()
                 .assertionType(assertionType)
-                .claim(claim)
                 .element(samlElement)
                 .assertion(assertion)
-                .build());
+                .build()
+        );
+    }
+
+    static AssertionDetails of(final Assertion assertion) {
+        Validate.notNull(assertion, "assertion must not be null");
+
+        final AssertionType assertionType;
+        switch (assertion.getIssuer().getNameQualifier()) {
+            case "urn:ehdsi:assertions:hcp":
+                assertionType = AssertionType.HCP;
+                break;
+            case "urn:ehdsi:assertions:trc":
+                assertionType = AssertionType.TRC;
+                break;
+            case "urn:ehdsi:assertions:nok":
+                assertionType = AssertionType.NOK;
+                break;
+            default:
+                throw new RuntimeException("Unsupported assertion type: " + assertion.getIssuer().getNameQualifier());
+        }
+
+        // Get the OpenSAML MarshallerFactory
+        final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+        final Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
+        if (marshaller == null) {
+            throw new RuntimeException("No marshaller found for Assertion");
+        }
+
+        final Element element;
+        try {
+            element = marshaller.marshall(assertion);
+        } catch (final MarshallingException e) {
+            throw new RuntimeException(String.format("Error when marshalling the Assertion into a DOM element: [%s]", e.getMessage()), e);
+        }
+
+        return ImmutableAssertionDetails.builder()
+                .assertionType(assertionType)
+                .element(element)
+                .assertion(assertion)
+                .build();
     }
 }

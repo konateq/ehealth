@@ -246,6 +246,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
                 .patientId(patientId)
                 .id(documentReferenceId)
                 .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .putAssertion(AssertionType.TRC, treatmentConfirmationAssertion)
                 .build();
 
         final ResponseEntity<String> responseEntityForDocumentReferenceById = this.clientConnectorService.queryDocumentReferenceByIdFhir(documentReferenceByIdRequest);
@@ -275,6 +276,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
                 .seriesUid(seriesInstanceUid)
                 .instanceUid(instanceUid)
                 .putAssertion(AssertionType.HCP, clinicalAssertion)
+                .putAssertion(AssertionType.TRC, treatmentConfirmationAssertion)
                 .build();
 
         final ResponseEntity<byte[]> responseEntity = this.clientConnectorService.fetchMedicalImagesRequest(fetchMedicalImagesRequest);
