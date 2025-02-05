@@ -248,6 +248,8 @@ public class OpenNCPValidation {
         LOGGER.info("[Validation Service: FHIR Validator]");
         if (isRemoteValidationEnable()) {
             //TODO Remote validation to be implemented for FHIR resources
+            LOGGER.warn("Remote validation is not yet implemented for HL7 FHIR Resources");
+            ReportBuilder.build(ReportBuilder.formatDate(), fhirModel, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         } else {
             ReportBuilder.build(ReportBuilder.formatDate(), fhirModel, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         }
