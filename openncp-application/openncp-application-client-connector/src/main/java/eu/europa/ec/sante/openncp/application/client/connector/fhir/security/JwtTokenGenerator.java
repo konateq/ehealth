@@ -8,11 +8,15 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 import org.apache.commons.lang.time.DateUtils;
+import org.opensaml.core.config.InitializationException;
+import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Marshaller;
 import org.opensaml.core.xml.io.MarshallerFactory;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Element;
 
@@ -22,6 +26,16 @@ import java.util.Map;
 
 @Component
 public class JwtTokenGenerator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtTokenGenerator.class);
+
+    static {
+        try {
+            InitializationService.initialize();
+        } catch (final InitializationException e) {
+            LOGGER.error("InitializationException: '{}'", e.getMessage());
+        }
+    }
+
     private final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 
     private final ConfigurationManager configurationManager;
