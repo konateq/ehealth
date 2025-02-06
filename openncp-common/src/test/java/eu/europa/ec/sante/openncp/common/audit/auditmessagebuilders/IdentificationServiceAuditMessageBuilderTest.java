@@ -63,11 +63,11 @@ public class IdentificationServiceAuditMessageBuilderTest extends XMLTestCase {
             final IdentificationServiceAuditMessageBuilder identificationServiceAuditMessageBuilder = new IdentificationServiceAuditMessageBuilder();
             final AuditMessage generatedAuditMessage = identificationServiceAuditMessageBuilder.build(eventLog);
 
-            final URL url = Resources.getResource("Identityservicefindidentitybytraits.xml");
+            final URL url = Resources.getResource("identityservicefindidentitybytraits.xml");
             final AuditMessage expectedAuditMessage = AuditTrailUtils.convertXMLToAuditObject(IOUtils.toInputStream(Resources.toString(url, StandardCharsets.UTF_8)));
             expectedAuditMessage.getEventIdentification().setEventDateTime(now);
+
             XMLUnit.setIgnoreWhitespace(true);
-            System.out.println(AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
             assertXMLEqual(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage), AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
         }
 
