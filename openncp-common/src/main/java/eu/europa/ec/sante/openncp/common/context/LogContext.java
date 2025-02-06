@@ -83,6 +83,15 @@ public final class LogContext {
         MDC.remove("correlationId");
         MDC.remove("errorId");
         MDC.remove("CountryCode");
+        MDC.remove("authorization");
+    }
+
+    public static void setAuthorization(final String authorization) {
+        MDC.put("authorization", authorization);
+    }
+
+    public static String getAuthorization() {
+        return MDC.get("authorization");
     }
 
     public static void setCountryCode(final String countryCode) {

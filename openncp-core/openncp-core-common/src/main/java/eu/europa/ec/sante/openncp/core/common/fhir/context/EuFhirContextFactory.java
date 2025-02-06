@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.context;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.LenientErrorHandler;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CustomResource;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CustomResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

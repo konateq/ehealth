@@ -65,7 +65,6 @@ public class SMPDeleteFileController {
     private static final String BUSINESS_CODE = "BusinessCode";
     private static final String ERROR_NOUSER = "error.nouser";
     private static final String ERROR_SERVER_FAILED = "error.server.failed";
-    private static final String SMP_ADMIN_URL = "SMP_ADMIN_URL";
     private static final String IOEXCEPTION = "\n IOException - {}";
     private static final String URI_SYNTAX_EXCEPTION = "URISyntaxException";
     private static final String URI = "\n ************** URI - {}";
@@ -269,7 +268,7 @@ public class SMPDeleteFileController {
         final HttpEntity entity = response.getEntity();
 
         //Audit vars
-        final String remoteIp = propertyService.getPropertyValueMandatory(SMP_ADMIN_URL);
+        final String remoteIp = propertyService.getPropertyValueMandatory(StandardProperties.SMP_SML_ADMIN_URL);
         //ET_ObjectID --> Base64 of url
         final String objectID = uri.toString();
         final byte[] encodedObjectID = Base64.encodeBase64(objectID.getBytes());
@@ -399,7 +398,7 @@ public class SMPDeleteFileController {
         final HttpEntity entity = response.getEntity();
 
         //  Audit vars
-        final String remoteIp = propertyService.getPropertyValueMandatory(SMP_ADMIN_URL);
+        final String remoteIp = propertyService.getPropertyValueMandatory(StandardProperties.SMP_SML_ADMIN_URL);
         //  ET_ObjectID --> Base64 of url
         final String objectID = uri.toString();
         final byte[] encodedObjectID = Base64.encodeBase64(objectID.getBytes());

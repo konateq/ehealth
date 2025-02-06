@@ -7,7 +7,6 @@ import java.util.stream.Stream;
 
 public enum RegisteredService {
 
-    CONSENT_SERVICE("ConsentService", "urn:ehealth:ProvisioningOfData:BPPC-RegisterUpdate::XDR::ProvideandRegisterDocumentSet-b##ITI-41"),
     DISPENSATION_SERVICE("DispensationService", "urn:ehealth:ProvisioningOfData:Provide::XDR::ProvideandRegisterDocumentSet-b##ITI-41"),
     ORDER_SERVICE("OrderService", "urn:ehealth:RequestOfData::XCA::CrossGatewayQuery##ITI-38"),
     ORCD_SERVICE("OrCDService", "urn:ehealth:RequestOfData::XCA::CrossGatewayQuery##ITI-38"),

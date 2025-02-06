@@ -2,10 +2,10 @@ package eu.europa.ec.sante.openncp.core.common.fhir.context;
 
 import ca.uhn.fhir.model.api.annotation.ResourceDef;
 import eu.europa.ec.sante.openncp.common.util.MoreCollectors;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.DiagnosticReportLabMyHealthEu;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.PatientMyHealthEu;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.ServiceRequestLabMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CompositionLabReportMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.DiagnosticReportLabMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.PatientMyHealthEu;
+import eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.ServiceRequestLabMyHealthEu;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -65,15 +65,15 @@ public enum FhirSupportedResourceType {
     }
 
     public static class CustomResource {
-        private final Class<? extends eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CustomResource> customResourceClass;
+        private final Class<? extends eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CustomResource> customResourceClass;
         private final String profile;
 
-        private CustomResource(final Class<? extends eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CustomResource> customResourceClass) {
+        private CustomResource(final Class<? extends eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CustomResource> customResourceClass) {
             this.customResourceClass = customResourceClass;
             this.profile = extractProfile(customResourceClass);
         }
 
-        private String extractProfile(final Class<? extends eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CustomResource> customResourceClass) {
+        private String extractProfile(final Class<? extends eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CustomResource> customResourceClass) {
             if (customResourceClass != null) {
                 return Arrays.stream(customResourceClass.getAnnotations())
                         .filter(annotation -> annotation instanceof ResourceDef)
@@ -84,7 +84,7 @@ public enum FhirSupportedResourceType {
             return null;
         }
 
-        public Optional<Class<? extends eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CustomResource>> getCustomResourceClass() {
+        public Optional<Class<? extends eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CustomResource>> getCustomResourceClass() {
             return Optional.ofNullable(customResourceClass);
         }
 
@@ -108,7 +108,7 @@ public enum FhirSupportedResourceType {
             return new CustomResource(null);
         }
 
-        public static CustomResource of(final Class<? extends eu.europa.ec.sante.openncp.core.common.fhir.context.r4.resources.CustomResource> customType) {
+        public static CustomResource of(final Class<? extends eu.europa.ec.sante.openncp.common.fhir.context.r4.resources.CustomResource> customType) {
             Validate.notNull(customType, "customType must not be blank");
             return new CustomResource(customType);
         }

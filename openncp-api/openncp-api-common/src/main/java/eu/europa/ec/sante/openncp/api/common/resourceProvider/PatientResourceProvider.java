@@ -14,6 +14,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import eu.europa.ec.sante.openncp.api.common.handler.BundleHandler;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -36,7 +37,8 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
     private final DispatchingService dispatchingService;
     private final BundleHandler bundleHandler;
 
-    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler) {
+    public PatientResourceProvider(final DispatchingService dispatchingService, final BundleHandler bundleHandler, final ValidationService validationService) {
+        super(validationService);
         this.dispatchingService = Validate.notNull(dispatchingService);
         this.bundleHandler = Validate.notNull(bundleHandler);
     }
@@ -81,7 +83,7 @@ public class PatientResourceProvider extends AbstractResourceProvider implements
 
         final Bundle serverResponse = dispatchingService.dispatchSearch(EuRequestDetails.of(theRequestDetails), jwt);
         final Bundle handledBundle = bundleHandler.handle(serverResponse);
-
+        validate(handledBundle, theRequestDetails.getRestOperationType());
         return handledBundle;
     }
 }

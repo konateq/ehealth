@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.service;
 
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
@@ -27,7 +27,7 @@ public class PatientService {
     }
 
     public QueryResponse list(final PatientId pid, final String countryCode, final GenericDocumentCode documentCode,
-                                     final Map<AssertionEnum, Assertion> assertionMap) throws XCAException {
+                                     final Map<AssertionType, Assertion> assertionMap) throws XCAException {
 
         return xcaInitGateway.crossGatewayQuery(pid, countryCode, List.of(documentCode), null, assertionMap,
                 RegisteredService.PATIENT_SERVICE.getServiceName());
@@ -37,7 +37,7 @@ public class PatientService {
                                                                             final String homeCommunityId,
                                                                             final String countryCode,
                                                                             final String targetLanguage,
-                                                                            final Map<AssertionEnum, Assertion> assertionMap) throws XCAException {
+                                                                            final Map<AssertionType, Assertion> assertionMap) throws XCAException {
 
         return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.PATIENT_SERVICE.getServiceName());
     }

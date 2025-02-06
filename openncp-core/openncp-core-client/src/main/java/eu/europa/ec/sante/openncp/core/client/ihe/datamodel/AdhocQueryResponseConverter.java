@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.datamodel;
 
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xdr.XDRConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.OrCDDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;

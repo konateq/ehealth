@@ -406,11 +406,96 @@ public class EventLog {
     }
 
     /**
+     * This method creates an EventLog object for use in Patient ID Mapping
+     * Audit Schema
+     *
+     * @param EI_TransactionName
+     * @param EI_EventActionCode           Possible values according to D4.5.6 are E,R,U,D
+     * @param EI_EventDateTime             The datetime the event occurred
+     * @param EI_EventOutcomeIndicator     <br>
+     *                                     0 for full success <br>
+     *                                     4 in case of partial delivery <br>
+     *                                     8 for temporal failures <br>
+     *                                     12 for permanent failure <br>
+     * @param HR_UserID                    Identifier of the HCP initiated the event
+     * @param HR_RoleID                    Role of the HCP initiated the event
+     * @param HR_AlternativeUserID         Human readable name of the HCP as given in
+     *                                     the Subject-ID attrbute of the HCP identity assertion
+     * @param SC_UserID                    The string encoded CN of the TLS certificate of the NCP
+     *                                     triggered the epsos operation
+     * @param SP_UserID                    The string encoded CN of the TLS certificate of the NCP
+     *                                     processed the epsos operation
+     * @param AS_AuditSourceId             the iso3166-2 code of the country responsible for
+     *                                     the audit source
+     * @param PS_ParticipantObjectIDs      List of Patient Identifiers in HL7 II format
+     *                                     (Patient Source)
+     * @param PT_ParticipantObjectIDs      List of Patient Identifiers in HL7 II format
+     *                                     (Patient Target)
+     * @param EM_ParticipantObjectID       The error code included with the response
+     *                                     message
+     * @param EM_ParticipantObjectDetail   Contains the base64 encoded error
+     *                                     message
+     * @param MS_UserID                    The string encoded OID of the service instance performed
+     *                                     the mapping
+     * @param ReqM_ParticipantObjectID     String-encoded UUID of the request
+     *                                     message
+     * @param ReqM_ParticipantObjectDetail The value MUST contain the base64
+     *                                     encoded security header.
+     * @param ResM_ParticipantObjectID     String-encoded UUID of the response
+     *                                     message
+     * @param ResM_ParticipantObjectDetail The value MUST contain the base64
+     *                                     encoded security header.
+     * @param sourceip                     The IP Address of the source Gateway
+     * @param targetip                     The IP Address of the target Gateway
+     * @return the EventLog object
+     */
+    public static EventLog createEventLogPatientMapping(final TransactionName EI_TransactionName, final EventActionCode EI_EventActionCode,
+                                                        final XMLGregorianCalendar EI_EventDateTime, final EventOutcomeIndicator EI_EventOutcomeIndicator,
+                                                        final String HR_UserID, final String HR_RoleID, final String HR_AlternativeUserID,
+                                                        final String SC_UserID, final String SP_UserID, final String AS_AuditSourceId,
+                                                        final List<String> PS_ParticipantObjectIDs, final List<String> PT_ParticipantObjectIDs,
+                                                        final String EM_ParticipantObjectID, final byte[] EM_ParticipantObjectDetail,
+                                                        final String MS_UserID, final String ReqM_ParticipantObjectID,
+                                                        final byte[] ReqM_ParticipantObjectDetail, final String ResM_ParticipantObjectID,
+                                                        final byte[] ResM_ParticipantObjectDetail, final String sourceip, final String targetip) {
+
+        LOGGER.info("Creating EventLog for Patient ID Mapping: '{}'-'{}'", EI_TransactionName, EI_EventActionCode);
+        final EventLog eventLog = new EventLog();
+        eventLog.setEI_TransactionName(EI_TransactionName);
+        eventLog.setEI_EventActionCode(EI_EventActionCode);
+        eventLog.setEI_EventDateTime(EI_EventDateTime);
+        eventLog.setEI_EventOutcomeIndicator(EI_EventOutcomeIndicator);
+        eventLog.setHR_UserID(nullToEmptyString(HR_UserID));
+        eventLog.setHR_RoleID(nullToEmptyString(HR_RoleID));
+        eventLog.setHR_AlternativeUserID(nullToEmptyString(HR_AlternativeUserID));
+        eventLog.setSC_UserID(nullToEmptyString(SC_UserID));
+        eventLog.setSP_UserID(nullToEmptyString(SP_UserID));
+        eventLog.setAS_AuditSourceId(nullToEmptyString(AS_AuditSourceId));
+        eventLog.setPS_ParticipantObjectIDs(PS_ParticipantObjectIDs);
+        eventLog.setPT_ParticipantObjectIDs(PT_ParticipantObjectIDs);
+        eventLog.setEM_ParticipantObjectID(nullToEmptyString(EM_ParticipantObjectID));
+        eventLog.setEM_ParticipantObjectDetail(EM_ParticipantObjectDetail);
+        eventLog.setMS_UserID(nullToEmptyString(MS_UserID));
+        eventLog.setReqM_ParticipantObjectID(nullToEmptyString(ReqM_ParticipantObjectID));
+        eventLog.setReqM_ParticipantObjectDetail(ReqM_ParticipantObjectDetail);
+        eventLog.setResM_ParticipantObjectID(nullToEmptyString(ResM_ParticipantObjectID));
+        eventLog.setResM_ParticipantObjectDetail(ResM_ParticipantObjectDetail);
+        eventLog.setSourceip(nullToEmptyString(sourceip));
+        eventLog.setTargetip(nullToEmptyString(targetip));
+        eventLog.setQueryByParameter("");
+        eventLog.setHciIdentifier("");
+
+        if (LOGGER_CLINICAL.isDebugEnabled() && !StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())) {
+            LOGGER_CLINICAL.debug("'{}'", eventLog);
+        }
+        return eventLog;
+    }
+
+    /**
      * @param str represents a string
      * @return empty string if the param is null. Otherwise returns the string as is
      */
     private static String nullToEmptyString(final String str) {
-
         return str == null ? "" : str;
     }
 

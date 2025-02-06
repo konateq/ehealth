@@ -246,7 +246,7 @@ public class AbuseDetectionService implements Job {
                         "TO_DATE('" + datetime + "', 'YYYY-MM-DD HH24:MI:SS'),\n " +
                         "TO_DATE('" + eventStartDate + "', 'YYYY-MM-DD HH24:MI:SS'),\n " +
                         "TO_DATE('" + eventEndDate + "', 'YYYY-MM-DD HH24:MI:SS') " +
-                        ")"; // FIX ORA-00933: SQL command not properly ended
+                        ");"; // FIX ORA-00933: SQL command not properly ended
             } else {
                 sqlInsertStatementError = "INSERT INTO EHNCP_ANOMALY( " +
                         "DESCRIPTION, " +

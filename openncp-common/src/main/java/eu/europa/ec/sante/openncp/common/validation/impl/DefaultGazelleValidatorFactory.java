@@ -23,31 +23,31 @@ import org.springframework.ws.transport.http.HttpComponentsMessageSender;
 public class DefaultGazelleValidatorFactory implements IGazelleValidatorFactory {
 
     //  "https://gazelle.ehdsi.eu/gazelle-xua-jar/ModelBasedValidationWSService/ModelBasedValidationWS";
-    public static final String GAZELLE_ASSERTION_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_ASSERTION_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_ASSERTION_VALIDATOR_URI");
 
     //  "https://gazelle.ehdsi.eu/gazelle-atna-ejb/AuditMessageValidationWSService/AuditMessageValidationWS";
-    public static final String GAZELLE_AUDIT_MESSAGE_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_AUDIT_MESSAGE_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_AUDIT_MESSAGE_VALIDATOR_URI");
 
     //  "https://gazelle.ehdsi.eu/CDAGenerator-ejb/ModelBasedValidationWSService/ModelBasedValidationWS";
-    public static final String GAZELLE_CDA_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_CDA_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_CDA_VALIDATOR_URI");
 
     //  "https://gazelle.ehdsi.eu/gazelle-atna-ejb/CertificateValidatorService/CertificateValidator";
-    public static final String GAZELLE_CERTIFICATE_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_CERTIFICATE_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_CERTIFICATE_VALIDATOR_URI");
 
     //  "https://gazelle.ehdsi.eu/GazelleHL7v2Validator-ejb/ModelBasedValidationWSService/ModelBasedValidationWS"
-    public static final String GAZELLE_HL7V3_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_HL7V3_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_HL7V3_VALIDATOR_URI");
 
     //  "https://gazelle.ehdsi.eu/SchematronValidator-ejb/GazelleObjectValidatorService/GazelleObjectValidator";
-    public static final String GAZELLE_SCHEMATRON_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_SCHEMATRON_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_SCHEMATRON_VALIDATOR_URI");
 
     //  "https://gazelle.ehdsi.eu/XDStarClient-ejb/ModelBasedValidationWSService/ModelBasedValidationWS";
-    public static final String GAZELLE_XDS_VALIDATOR_URI = (String) GazelleConfiguration.getInstance().getConfiguration()
+    public static final String GAZELLE_XDS_VALIDATOR_URI = GazelleConfiguration.getInstance()
             .getProperty("GAZELLE_XDS_VALIDATOR_URI");
 
     private final Logger logger = LoggerFactory.getLogger(DefaultGazelleValidatorFactory.class);

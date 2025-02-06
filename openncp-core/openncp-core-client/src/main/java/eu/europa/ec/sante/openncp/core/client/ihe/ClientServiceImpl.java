@@ -1,8 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.ihe;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
-import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.QueryDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.QueryPatientOperation;
@@ -12,7 +11,7 @@ import eu.europa.ec.sante.openncp.core.client.ihe.dts.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.service.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrResponse;
 import eu.europa.ec.sante.openncp.core.client.logging.LoggingSlf4j;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
@@ -72,10 +71,7 @@ public class ClientServiceImpl implements ClientService {
             final PatientDemographics patientDemographics = submitDocumentRequest.getPatientDemographics();
             final String countryCode = submitDocumentRequest.getCountryCode();
             final GenericDocumentCode classCode = submitDocument.getClassCode();
-            final Map<AssertionEnum, Assertion> assertionMap = submitDocumentOperation.getAssertions();
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionEnum.CLINICIAN), NcpSide.NCP_B);
-            }
+            final Map<AssertionType, Assertion> assertionMap = submitDocumentOperation.getSamlDetails().getAssertionMap();
             if (!classCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
                 throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + classCode.getSchema());
             }
@@ -119,11 +115,7 @@ public class ClientServiceImpl implements ClientService {
             final String countryCode = queryDocumentOperation.getRequest().getCountryCode();
             final List<GenericDocumentCode> documentCodes = queryDocumentOperation.getRequest().getClassCode();
             final FilterParams filterParams = queryDocumentOperation.getRequest().getFilterParams();
-            final Map<AssertionEnum, Assertion> assertionMap = queryDocumentOperation.getAssertions();
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionEnum.CLINICIAN), NcpSide.NCP_B);
-            }
-
+            final Map<AssertionType, Assertion> assertionMap = queryDocumentOperation.getSamlDetails().getAssertionMap();
             final QueryResponse response;
             if (documentCodes.size() == 1) {
                 final String classCode = documentCodes.get(0).getNodeRepresentation();
@@ -183,11 +175,7 @@ public class ClientServiceImpl implements ClientService {
             final GenericDocumentCode genericDocumentCode = retrieveDocumentRequest.getClassCode();
             final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode documentCode = GenericDocumentCodeDts.newInstance(
                     genericDocumentCode);
-            final Map<AssertionEnum, Assertion> assertionMap = retrieveDocumentOperation.getAssertions();
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateHCPAssertion(assertionMap.get(AssertionEnum.CLINICIAN), NcpSide.NCP_B);
-            }
-
+            final Map<AssertionType, Assertion> assertionMap = retrieveDocumentOperation.getSamlDetails().getAssertionMap();
             if (!documentCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
                 throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + documentCode.getSchema());
             }
@@ -232,8 +220,7 @@ public class ClientServiceImpl implements ClientService {
         try {
             final PatientDemographics patientDemographics = queryPatientOperation.getRequest().getPatientDemographics();
             final String countryCode = queryPatientOperation.getRequest().getCountryCode();
-            final Map<AssertionEnum, Assertion> assertionMap = queryPatientOperation.getAssertions();
-
+            final Map<AssertionType, Assertion> assertionMap = queryPatientOperation.getSamlDetails().getAssertionMap();
             final List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics> patientDemographicsList =
                     identificationService.findIdentityByTraits(
                     PatientDemographicsDts.toDataModel(patientDemographics), assertionMap, countryCode);

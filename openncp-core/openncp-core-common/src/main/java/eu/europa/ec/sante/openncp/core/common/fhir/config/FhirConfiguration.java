@@ -12,9 +12,10 @@ import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.IServerInterceptor;
 import ca.uhn.fhir.validation.FhirValidator;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuFhirContextFactory;
-import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.*;
-import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
+import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.EuCorsInterceptor;
+import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.FhirCustomInterceptor;
+import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.SecuredOpenApiInterceptor;
+import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.UnsecuredOpenApiInterceptor;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.common.hapi.validation.support.CommonCodeSystemsTerminologyService;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
@@ -45,17 +46,12 @@ public class FhirConfiguration {
 
     final Logger LOG = LoggerFactory.getLogger(FhirConfiguration.class);
 
-    private final FhirProperties properties;
-
-    public FhirConfiguration(final FhirProperties properties) {
-        this.properties = Validate.notNull(properties);
-    }
-
     @Bean
     @Primary
     public FhirContext fhirContext() {
         return EuFhirContextFactory.createFhirContext();
     }
+
     @Bean
     @ConditionalOnExpression("${hapi.fhir.openapi.enabled:false} == true && ${hapi.fhir.openapi.secured:false} == true")
     public OpenApiInterceptor getSecuredOpenApiInterceptor() {
@@ -97,12 +93,6 @@ public class FhirConfiguration {
         return new UnsecuredOpenApiInterceptor();
     }
 
-
-    @Bean
-    public JwtSamlInterceptor getJwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator) {
-        return new JwtSamlInterceptor(tokenProvider, saml2Validator);
-    }
-
     @Configuration
     static class FhirClientConfiguration {
 
@@ -120,7 +110,6 @@ public class FhirConfiguration {
     @EnableConfigurationProperties(FhirProperties.class)
     @ConditionalOnProperty(value = "fhir.server.inclusion", havingValue = "true")
     @ConfigurationProperties("hapi.fhir.rest")
-    @SuppressWarnings("serial")
     static class FhirRestfulServerConfiguration extends RestfulServer {
         final Logger LOGGER = LoggerFactory.getLogger(FhirRestfulServerConfiguration.class);
         private final FhirProperties properties;
@@ -146,7 +135,7 @@ public class FhirConfiguration {
             this.pagingProvider = pagingProvider.getIfAvailable();
             this.interceptors = interceptors.getIfAvailable();
             this.openApiInterceptor = openApiInterceptor;
-            this.fhirCustomInterceptors = Validate.notNull(fhirCustomInterceptors);
+            this.fhirCustomInterceptors = Validate.notNull(fhirCustomInterceptors, "fhirCustomInterceptors must not be null");
             this.euCorsInterceptor = euCorsInterceptor;
         }
 

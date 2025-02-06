@@ -1,5 +1,9 @@
 package eu.europa.ec.sante.openncp.common.audit;
 
+import eu.europa.ec.sante.openncp.common.ClassCode;
+
+import java.util.List;
+
 /**
  * Enumeration for populating the EventType of the AuditMessage.
  */
@@ -23,10 +27,6 @@ public enum TransactionName {
     NCP_TRUSTED_SERVICE_LIST("ncpConfigurationManager::ImportNSL"),
     PIVOT_TRANSLATION("ncpTransformationMgr::Translate"),
     COMMUNICATION_FAILURE("CommunicationFailure"),
-    PAC_RETRIEVE("PACRetrieve"),
-    HCER_PUT("HCERService:Put"),
-    MRO_SERVICE_LIST("MroService::List"),
-    MRO_SERVICE_RETRIEVE("MroService::Retrieve"),
     SMP_QUERY("SMP::Query"),
     SMP_PUSH("SMP::Push");
 
@@ -38,5 +38,37 @@ public enum TransactionName {
 
     public String getCode() {
         return code;
+    }
+
+    public static TransactionName determineTransactionNameForXCARetrieve(ClassCode classCode) {
+        switch (classCode) {
+            case PS_CLASSCODE:
+                return TransactionName.PATIENT_SERVICE_RETRIEVE;
+            case EP_CLASSCODE:
+                return TransactionName.ORDER_SERVICE_RETRIEVE;
+            case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
+            case ORCD_LABORATORY_RESULTS_CLASSCODE:
+            case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
+            case ORCD_MEDICAL_IMAGES_CLASSCODE:
+                return TransactionName.ORCD_SERVICE_RETRIEVE;
+        }
+        throw new RuntimeException(String.format("TransactionName for XCA Retrieve cannot be determined based on classCode [{}]", classCode));
+    }
+
+    public static TransactionName determineTransactionNameForXCAQuery(List<ClassCode> classCodes) {
+        for (ClassCode classCode : classCodes) {
+            switch (classCode) {
+                case PS_CLASSCODE:
+                    return TransactionName.PATIENT_SERVICE_LIST;
+                case EP_CLASSCODE:
+                    return TransactionName.ORDER_SERVICE_LIST;
+                case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
+                case ORCD_LABORATORY_RESULTS_CLASSCODE:
+                case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
+                case ORCD_MEDICAL_IMAGES_CLASSCODE:
+                    return TransactionName.ORCD_SERVICE_LIST;
+            }
+        }
+        throw new RuntimeException(String.format("TransactionName for XCA List cannot be determined based on classCodes [%s]", classCodes));
     }
 }

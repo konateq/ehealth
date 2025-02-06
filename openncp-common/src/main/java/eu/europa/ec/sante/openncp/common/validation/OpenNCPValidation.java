@@ -90,6 +90,16 @@ public class OpenNCPValidation {
 
     /**
      * @param assertion
+     * @param ncpSide
+     */
+    public static void validateNOKAssertion(final Assertion assertion, final NcpSide ncpSide) {
+
+        LOGGER.info("validate NOK Assertion...");
+        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
+    }
+
+    /**
+     * @param assertion
      * @param schematron
      * @param ncpSide
      */
@@ -181,7 +191,7 @@ public class OpenNCPValidation {
      * @param request
      * @param ncpSide
      */
-    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final List<String> classCodes) {
+    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final ClassCode classCodes) {
 
         LOGGER.info("[Validation Service: XDR Validator]");
         final XdsModel xdsModel = ValidatorUtil.obtainModelXdr(request, classCodes);
@@ -217,7 +227,7 @@ public class OpenNCPValidation {
 
         LOGGER.info("[Validation Service: CDA Validator]");
         final boolean isScannedDocument = cda.contains("nonXMLBody");
-        final String cdaModel = ValidatorUtil.obtainCdaModel(classCode, isPivot, isScannedDocument);
+        final String cdaModel = ValidatorUtil.obtainCdaModel(isPivot, isScannedDocument);
 
         if (isRemoteValidationEnable()) {
 
@@ -232,6 +242,24 @@ public class OpenNCPValidation {
             }).start();
         } else {
             ReportBuilder.build(ReportBuilder.formatDate(), cdaModel, ObjectType.CDA.toString(), cda, ncpSide);
+        }
+    }
+
+    /**
+     * @param fhirResource
+     * @param ncpSide
+     * @param resourceType
+     * @param isPivot
+     */
+    public static void validateFhirResource(final String fhirResource, final NcpSide ncpSide, final String resourceType, final boolean isPivot) {
+
+        final String fhirModel = ValidatorUtil.obtainFhirModel(resourceType);
+
+        LOGGER.info("[Validation Service: FHIR Validator]");
+        if (isRemoteValidationEnable()) {
+            //TODO Remote validation to be implemented for FHIR resources
+        } else {
+            ReportBuilder.build(ReportBuilder.formatDate(), fhirModel, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         }
     }
 

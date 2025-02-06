@@ -1,0 +1,13 @@
+=== Implementation Guides
+
+[cols="1,1"]
+|===
+|Description |Link
+
+|MyHealth@Eu Laboratory Report FHIR IG
+|https://fhir.ehdsi.eu/laboratory/
+
+|MyHealth@Eu NCPeH API FHIR IG
+|https://build-fhir.ehdsi.eu/ncp-api/
+
+|===

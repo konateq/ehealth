@@ -5,15 +5,15 @@ import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
+import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.*;
@@ -64,10 +64,10 @@ public class XDSbRepositoryServiceInvoker {
      * @throws RemoteException
      */
     public RegistryResponseType provideAndRegisterDocumentSet(final XdrRequest request, final String countryCode,
-                                                              final Map<AssertionEnum, Assertion> assertionMap, final ClassCode docClassCode)
+                                                              final Map<AssertionType, Assertion> assertionMap, final ClassCode docClassCode)
             throws RemoteException, XDRException {
 
-        logger.info("[XDSb Repository] XDR Request: '{}', '{}', '{}'", assertionMap.get(AssertionEnum.CLINICIAN).getID(), countryCode, docClassCode);
+        logger.info("[XDSb Repository] XDR Request: '{}', '{}', '{}'", assertionMap.get(AssertionType.HCP).getID(), countryCode, docClassCode);
         final RegistryResponseType response;
         final String submissionSetUuid = Constants.UUID_PREFIX + UUID.randomUUID();
 
@@ -78,10 +78,6 @@ public class XDSbRepositoryServiceInvoker {
             case ED_CLASSCODE:
             case EDD_CLASSCODE:
                 endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.DISPENSATION_SERVICE);
-                break;
-            case CONSENT_CLASSCODE:
-            case HCER_CLASSCODE:
-                endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.CONSENT_SERVICE);
                 break;
             default:
                 logger.warn("Document Class Code: '{}' not supported!!! Endpoint cannot be loaded", docClassCode);
@@ -348,22 +344,10 @@ public class XDSbRepositoryServiceInvoker {
                 break;
         }
 
-        if (docClassCode.equals(ClassCode.CONSENT_CLASSCODE)) {
-            result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_SCHEME, uuid,
-                    getConsentOptCode(request.getCda()), XDRConstants.EXTRINSIC_OBJECT.EVENT_CODING_SCHEME,
-                    getConsentOptName(request.getCda())));
-        }
-
         //  External Identifiers
         //  XDSDocumentEntry.PatientId
         result.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_SCHEME,
                 uuid, patientId.toString(), XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_STR));
-
-        //  XDSDocument.EntryUUID
-        if (docClassCode.equals(ClassCode.CONSENT_CLASSCODE)) {
-            // Missing XDSDocument.EntryUUID for Consent
-            logger.warn("Patient Consent not supported!!!");
-        }
 
         /* XDSDocument.UniqueId */
         result.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME,
@@ -387,12 +371,6 @@ public class XDSbRepositoryServiceInvoker {
 
         // eHDSI Type Code
         switch (docClassCode) {
-            case CONSENT_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
-                        uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.Consent.NODE_REPRESENTATION,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Consent.CODING_SCHEME,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Consent.DISPLAY_NAME));
-                break;
             case ED_CLASSCODE:
                 result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
                         uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensation.NODE_REPRESENTATION,
@@ -404,12 +382,6 @@ public class XDSbRepositoryServiceInvoker {
                         uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.NODE_REPRESENTATION,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.CODING_SCHEME,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.DISPLAY_NAME));
-                break;
-            case HCER_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
-                        uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.Hcer.NODE_REPRESENTATION,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Hcer.CODING_SCHEME,
-                        XDRConstants.EXTRINSIC_OBJECT.TypeCode.Hcer.DISPLAY_NAME));
                 break;
             default:
                 logger.warn("Document Class Code: '{}' not supported!!! TypeCodeScheme cannot be loaded.", docClassCode);
@@ -425,7 +397,7 @@ public class XDSbRepositoryServiceInvoker {
      * @return
      */
     private RegistryPackageType prepareRegistryPackage(final XdrRequest request, final ClassCode docClassCode, final String submissionSetUuid,
-                                                       final Map<AssertionEnum, Assertion> assertionMap) {
+                                                       final Map<AssertionType, Assertion> assertionMap) {
 
         final var registryPackageType = ofRim.createRegistryPackageType();
         final var patientId = request.getPatient().getIdList().get(0);
@@ -441,9 +413,9 @@ public class XDSbRepositoryServiceInvoker {
         final ClassificationType classification;
         classification = makeClassification0(XDRConstants.REGISTRY_PACKAGE.AUTHOR_CLASSIFICATION_UUID, submissionSetUuid, "");
         classification.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_INSTITUTION_STR,
-                getAuthorInstitution(request, assertionMap.get(AssertionEnum.CLINICIAN))));
+                getAuthorInstitution(request, assertionMap.get(AssertionType.HCP))));
         classification.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_PERSON_STR,
-                getAuthorPerson(request, assertionMap.get(AssertionEnum.CLINICIAN))));
+                getAuthorPerson(request, assertionMap.get(AssertionType.HCP))));
         registryPackageType.getClassification().add(classification);
 
         registryPackageType.getClassification().add(makeClassification(XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_UUID, submissionSetUuid,
@@ -630,10 +602,6 @@ public class XDSbRepositoryServiceInvoker {
     private String getNameFromClassCode(final ClassCode classCode) {
 
         switch (classCode) {
-            case HCER_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.NAME_HCER;
-            case CONSENT_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.NAME_CONSENT;
             case ED_CLASSCODE:
                 return XDRConstants.REGISTRY_PACKAGE.NAME_ED;
             case EDD_CLASSCODE:
@@ -651,10 +619,6 @@ public class XDSbRepositoryServiceInvoker {
     private String getDescriptionFromClassCode(final ClassCode classCode) {
 
         switch (classCode) {
-            case HCER_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.DESCRIPTION_HCER;
-            case CONSENT_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.DESCRIPTION_CONSENT;
             case ED_CLASSCODE:
                 return XDRConstants.REGISTRY_PACKAGE.DESCRIPTION_ED;
             case EDD_CLASSCODE:
@@ -672,10 +636,6 @@ public class XDSbRepositoryServiceInvoker {
     private String getSubmissionSetFromClassCode(final ClassCode classCode) {
 
         switch (classCode) {
-            case HCER_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.NAME_HCER;
-            case CONSENT_CLASSCODE:
-                return XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_CONS_STR;
             case ED_CLASSCODE:
                 return XDRConstants.REGISTRY_PACKAGE.NAME_ED;
             case EDD_CLASSCODE:

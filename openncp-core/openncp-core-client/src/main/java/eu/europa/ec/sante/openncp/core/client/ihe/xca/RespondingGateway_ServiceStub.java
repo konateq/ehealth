@@ -2,18 +2,21 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.audit.EventActionCode;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
+import eu.europa.ec.sante.openncp.common.audit.EventType;
+import eu.europa.ec.sante.openncp.common.audit.TransactionName;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
@@ -125,7 +128,6 @@ public class RespondingGateway_ServiceStub extends Stub {
 
         //To populate AxisService
         populateAxisService();
-        populateFaults();
 
         _serviceClient = new ServiceClient(configurationContext, _service);
         _serviceClient.getOptions().setTo(new org.apache.axis2.addressing.EndpointReference(targetEndpoint));
@@ -207,19 +209,12 @@ public class RespondingGateway_ServiceStub extends Stub {
     }
 
     /**
-     * Populates the faults
-     */
-    private void populateFaults() {
-        // Not implemented in eHDSI-OpenNCP.
-    }
-
-    /**
      * Auto generated method signature
      *
      * @param adhocQueryRequest
      */
     public AdhocQueryResponse respondingGateway_CrossGatewayQuery(final AdhocQueryRequest adhocQueryRequest,
-                                                                  final Map<AssertionEnum, Assertion> assertionMap,
+                                                                  final Map<AssertionType, Assertion> assertionMap,
                                                                   final List<ClassCode> classCodes)
             throws java.rmi.RemoteException, XCAException {
 
@@ -250,7 +245,6 @@ public class RespondingGateway_ServiceStub extends Stub {
             /*
              * adding SOAP soap_headers
              */
-            final SOAPFactory soapFactory = getFactory(_operationClient.getOptions().getSoapVersionURI());
             final OMFactory factory = OMAbstractFactory.getOMFactory();
 
             final OMNamespace ns2 = factory.createOMNamespace(XCAConstants.SOAP_HEADERS.QUERY.OM_NAMESPACE, "addressing");
@@ -273,7 +267,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final SOAPHeaderBlock replyTo = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("ReplyTo", ns2);
             final OMElement address = OMAbstractFactory.getSOAP12Factory().createOMElement("Address", ns2);
-            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ADDRESSING_NAMESPACE);
+            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ANONYMOUS_ADDRESSING_OM_TEXT);
             address.addChild(node4);
             replyTo.addChild(address);
 
@@ -291,13 +285,13 @@ public class RespondingGateway_ServiceStub extends Stub {
             final var headerSecurity = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("Security", omNamespace);
 
             try {
-                if (assertionMap.containsKey(AssertionEnum.NEXT_OF_KIN)) {
-                    final var assertionNextOfKin = assertionMap.get(AssertionEnum.NEXT_OF_KIN);
+                if (assertionMap.containsKey(AssertionType.NOK)) {
+                    final var assertionNextOfKin = assertionMap.get(AssertionType.NOK);
                     headerSecurity.addChild(XMLUtils.toOM(assertionNextOfKin.getDOM()));
                 }
-                final var assertionId = assertionMap.get(AssertionEnum.CLINICIAN);
+                final var assertionId = assertionMap.get(AssertionType.HCP);
                 headerSecurity.addChild(XMLUtils.toOM(assertionId.getDOM()));
-                final var assertionTreatment = assertionMap.get(AssertionEnum.TREATMENT);
+                final var assertionTreatment = assertionMap.get(AssertionType.TRC);
                 headerSecurity.addChild(XMLUtils.toOM(assertionTreatment.getDOM()));
 
                 _serviceClient.addHeader(headerSecurity);
@@ -494,7 +488,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 //            }
 
             //  Invoke eADC
-            if(!EadcUtilWrapper.hasTransactionErrors(_returnEnv)) {
+            if (!EadcUtilWrapper.hasTransactionErrors(_returnEnv)) {
                 EadcUtilWrapper.invokeEadc(_messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                         EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY);
@@ -518,12 +512,10 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final String dstHomeCommunityId = OidUtil.getHomeCommunityId(countryCode.toLowerCase(Locale.ENGLISH));
 
-            for (final ClassCode classCode : classCodes) {
-                createAndSendEventLogQuery(adhocQueryRequest, adhocQueryResponse,
-                        _messageContext, _returnEnv, env, assertionMap.get(AssertionEnum.CLINICIAN), assertionMap.get(AssertionEnum.TREATMENT),
-                        this._getServiceClient().getOptions().getTo().getAddress(),
-                        classCode, dstHomeCommunityId); // Audit
-            }
+            createAndSendEventLogQuery(adhocQueryRequest, adhocQueryResponse,
+                    _messageContext, _returnEnv, assertionMap.get(AssertionType.HCP), assertionMap.get(AssertionType.TRC),
+                    this._getServiceClient().getOptions().getTo().getAddress(),
+                    classCodes, dstHomeCommunityId);
             // TMP
             // Audit end time
             end = System.currentTimeMillis();
@@ -567,7 +559,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
             }
-            if(!eadcError.isEmpty()) {
+            if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(_messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                         EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY, eadcError);
@@ -583,14 +575,14 @@ public class RespondingGateway_ServiceStub extends Stub {
                     if (registeredService == null) {
                         registeredService = RegisteredService.ORDER_SERVICE;
                     } else {
-                        LOGGER.error("It is not allowed to pass more than one classCode when the classCode '{}' is used.", ClassCode.EP_CLASSCODE.getCode());
+                        LOGGER.error("It is not allowed to pass more than one classCode when the classCode '[{}]' is used.", ClassCode.EP_CLASSCODE.getCode());
                     }
                     break;
                 case PS_CLASSCODE:
                     if (registeredService == null) {
                         registeredService = RegisteredService.PATIENT_SERVICE;
                     } else {
-                        LOGGER.error("It is not allowed to pass more than one classCode when the classCode '{}' is used.", ClassCode.PS_CLASSCODE.getCode());
+                        LOGGER.error("It is not allowed to pass more than one classCode when the classCode '[{}]' is used.", ClassCode.PS_CLASSCODE.getCode());
                     }
                     break;
                 case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
@@ -620,7 +612,7 @@ public class RespondingGateway_ServiceStub extends Stub {
      * @throws java.rmi.RemoteException
      */
     public RetrieveDocumentSetResponseType respondingGateway_CrossGatewayRetrieve(final RetrieveDocumentSetRequestType retrieveDocumentSetRequest,
-                                                                                  final Map<AssertionEnum, Assertion> assertionMap,
+                                                                                  final Map<AssertionType, Assertion> assertionMap,
                                                                                   final ClassCode classCode)
             throws java.rmi.RemoteException, XCAException {
 
@@ -652,7 +644,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             final SOAPFactory soapFactory = getFactory(_operationClient.getOptions().getSoapVersionURI());
             final OMFactory factory = OMAbstractFactory.getOMFactory();
 
-            final OMNamespace ns2 = factory.createOMNamespace(XCAConstants.SOAP_HEADERS.ADDRESSING_NAMESPACE, "addressing");
+            final OMNamespace ns2 = factory.createOMNamespace(XCAConstants.SOAP_HEADERS.QUERY.OM_NAMESPACE, "addressing");
 
             final OMElement action = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("Action", ns2);
             final OMNode node = factory.createOMText(XCAConstants.SOAP_HEADERS.RETRIEVE.REQUEST_ACTION);
@@ -668,7 +660,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final OMElement replyTo = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("ReplyTo", ns2);
             final OMElement address = OMAbstractFactory.getSOAP12Factory().createOMElement("Address", ns2);
-            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ADDRESSING_NAMESPACE);
+            final OMNode node4 = factory.createOMText(XCAConstants.SOAP_HEADERS.ANONYMOUS_ADDRESSING_OM_TEXT);
             address.addChild(node4);
             replyTo.addChild(address);
 
@@ -688,13 +680,13 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             try {
 
-                if (assertionMap.containsKey(AssertionEnum.NEXT_OF_KIN)) {
-                    final var assertionNextOfKin = assertionMap.get(AssertionEnum.NEXT_OF_KIN);
+                if (assertionMap.containsKey(AssertionType.NOK)) {
+                    final var assertionNextOfKin = assertionMap.get(AssertionType.NOK);
                     security.addChild(XMLUtils.toOM(assertionNextOfKin.getDOM()));
                 }
-                final var assertionId = assertionMap.get(AssertionEnum.CLINICIAN);
+                final var assertionId = assertionMap.get(AssertionType.HCP);
                 security.addChild(XMLUtils.toOM(assertionId.getDOM()));
-                final var assertionTreatment = assertionMap.get(AssertionEnum.TREATMENT);
+                final var assertionTreatment = assertionMap.get(AssertionType.TRC);
                 security.addChild(XMLUtils.toOM(assertionTreatment.getDOM()));
                 _serviceClient.addHeader(security);
             } catch (final Exception ex) {
@@ -751,7 +743,6 @@ public class RespondingGateway_ServiceStub extends Stub {
                 LOGGER.error("Trying to automatically solve the problem by fetching configurations from the Central Services...");
 
                 String endpoint = null;
-                LOGGER.debug("ClassCode: " + classCode);
                 final DynamicDiscoveryService dynamicDiscoveryService = new DynamicDiscoveryService();
                 switch (classCode) {
                     case PS_CLASSCODE:
@@ -881,8 +872,8 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             //  Create Audit messages
             final EventLog eventLog = createAndSendEventLogRetrieve(retrieveDocumentSetRequest, retrieveDocumentSetResponse,
-                    _messageContext, returnEnv, env, assertionMap.get(AssertionEnum.CLINICIAN),
-                    assertionMap.get(AssertionEnum.TREATMENT), this._getServiceClient().getOptions().getTo().getAddress(),
+                    _messageContext, returnEnv, assertionMap.get(AssertionType.HCP),
+                    assertionMap.get(AssertionType.TRC), this._getServiceClient().getOptions().getTo().getAddress(),
                     classCode, dstHomeCommunityId);
             LOGGER.info("[Audit Service] Event Log '{}' sent to ATNA server", eventLog.getEventType());
 
@@ -919,7 +910,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
             }
-            if(!eadcError.isEmpty()) {
+            if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(_messageContext, _returnMessageContext, this._getServiceClient(), cda,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                         EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY, eadcError);
@@ -1089,13 +1080,16 @@ public class RespondingGateway_ServiceStub extends Stub {
     }
 
     private EventLog createAndSendEventLogQuery(final AdhocQueryRequest request, final AdhocQueryResponse response, final MessageContext msgContext,
-                                                final SOAPEnvelope _returnEnv, final SOAPEnvelope env, final Assertion idAssertion, final Assertion trcAssertion,
-                                                final String address, final ClassCode classCode, final String dstHomeCommunityId) {
+                                                final SOAPEnvelope _returnEnv, final Assertion idAssertion, final Assertion trcAssertion,
+                                                final String address, final List<ClassCode> classCodes, final String dstHomeCommunityId) {
 
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, classCode);
+        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
+        final EventType eventType = EventType.determineEventTypeForXCAQuery(classCodes);
+        final TransactionName transactionName = TransactionName.determineTransactionNameForXCAQuery(classCodes);
+        EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, eventType, transactionName);
         eventLog.setNcpSide(NcpSide.NCP_B);
         EventLogClientUtil.sendEventLog(eventLog);
 
@@ -1103,13 +1097,16 @@ public class RespondingGateway_ServiceStub extends Stub {
     }
 
     private EventLog createAndSendEventLogRetrieve(final RetrieveDocumentSetRequestType request, final RetrieveDocumentSetResponseType response,
-                                                   final MessageContext msgContext, final SOAPEnvelope _returnEnv, final SOAPEnvelope env,
+                                                   final MessageContext msgContext, final SOAPEnvelope _returnEnv,
                                                    final Assertion idAssertion, final Assertion trcAssertion, final String address, final ClassCode classCode, final String dstHomeCommunityId) {
 
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        EventLogUtil.prepareXCACommonLogRetrieve(eventLog, msgContext, request, response, classCode);
+        eventLog.setEI_EventActionCode(EventActionCode.CREATE);
+        final EventType eventType = EventType.determineEventTypeForXCARetrieve(classCode);
+        final TransactionName transactionName = TransactionName.determineTransactionNameForXCARetrieve(classCode);
+        EventLogUtil.prepareXCACommonLogRetrieve(eventLog, msgContext, request, response, eventType, transactionName);
         eventLog.setNcpSide(NcpSide.NCP_B);
         EventLogClientUtil.sendEventLog(eventLog);
 

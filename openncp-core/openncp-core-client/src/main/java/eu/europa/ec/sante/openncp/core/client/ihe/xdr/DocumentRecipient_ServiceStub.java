@@ -8,13 +8,13 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.DynamicDiscoveryService;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
+import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.lcm._3.SubmitObjectsRequest;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
@@ -182,7 +182,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
      */
     public RegistryResponseType documentRecipient_ProvideAndRegisterDocumentSetB(
             final ProvideAndRegisterDocumentSetRequestType provideAndRegisterDocumentSetRequest,
-            final Map<AssertionEnum, Assertion> assertionMap) throws RemoteException, XDRException {
+            final Map<AssertionType, Assertion> assertionMap) throws RemoteException, XDRException {
 
         MessageContext messageContext = null;
         MessageContext returnMessageContext = null;
@@ -250,7 +250,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
             /* Perform validation of request message */
             if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, null);
+                OpenNCPValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, classCode);
             }
             /*
              * Execute Operation
@@ -270,10 +270,6 @@ public class DocumentRecipient_ServiceStub extends Stub {
                     case ED_CLASSCODE:
                         endpoint = dynamicDiscoveryService.getEndpointUrl(
                                 this.countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.DISPENSATION_SERVICE, true);
-                        break;
-                    case CONSENT_CLASSCODE:
-                        endpoint = dynamicDiscoveryService.getEndpointUrl(
-                                this.countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.CONSENT_SERVICE, true);
                         break;
                     default:
                         break;
@@ -348,7 +344,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
             /* Perform validation of response message */
             if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, null);
+                OpenNCPValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, classCode);
             }
             /*
              * Return
@@ -358,7 +354,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
             final RegistryResponseType registryResponse = (RegistryResponseType) object;
 
             final EventLog eventLog = createAndSendEventLogConsent(provideAndRegisterDocumentSetRequest, registryResponse.getRegistryErrorList(),
-                    messageContext, returnEnv, assertionMap.get(AssertionEnum.CLINICIAN), assertionMap.get(AssertionEnum.TREATMENT),
+                    messageContext, returnEnv, assertionMap.get(AssertionType.HCP), assertionMap.get(AssertionType.TRC),
                     this._getServiceClient().getOptions().getTo().getAddress());
 
             return registryResponse;
@@ -420,15 +416,15 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
     }
 
-    private void addSecurityHeader(final Map<AssertionEnum, Assertion> assertionMap, final SOAPHeaderBlock security) {
+    private void addSecurityHeader(final Map<AssertionType, Assertion> assertionMap, final SOAPHeaderBlock security) {
         try {
-            if (assertionMap.containsKey(AssertionEnum.NEXT_OF_KIN)) {
-                final var assertionNextOfKin = assertionMap.get(AssertionEnum.NEXT_OF_KIN);
+            if (assertionMap.containsKey(AssertionType.NOK)) {
+                final var assertionNextOfKin = assertionMap.get(AssertionType.NOK);
                 security.addChild(XMLUtils.toOM(assertionNextOfKin.getDOM()));
             }
-            final var assertionId = assertionMap.get(AssertionEnum.CLINICIAN);
+            final var assertionId = assertionMap.get(AssertionType.HCP);
             security.addChild(XMLUtils.toOM(assertionId.getDOM()));
-            final var assertionTreatment = assertionMap.get(AssertionEnum.TREATMENT);
+            final var assertionTreatment = assertionMap.get(AssertionType.TRC);
             security.addChild(XMLUtils.toOM(assertionTreatment.getDOM()));
             _serviceClient.addHeader(security);
         } catch (final Exception ex) {

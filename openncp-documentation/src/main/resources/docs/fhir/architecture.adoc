@@ -1,0 +1,242 @@
+==== Architecture
+
+Our FHIR implementation is based on the R4 version of the HL7® FHIR specification.
+Reason for this is that also the EU Lab Reports FHIR IGs are currently defined in R4.
+
+The user interface is not part of the current OpenNCP implementation and needs to be developed by implemented by the Member States.
+Similarly as with the CDA Display Tool, a visualization tool for the FHIR bundles will be included in the OpenNCP as a reference implementation in the near future.
+
+===== High level architecture
+
+The high level layers of the OpenNCP related to FHIR are the following:
+
+*OpenNCP Client Connector*: JAR file that is to be used by the Member State portal as a dependency in order to interact with the OpenNCP client. +
+*OpenNCP Application*: The entry point of the OpenNCP application.
+Contains the Spring boot classes that startup the application. +
+*OpenNCP API*: All the logic related with the HTTP endpoints and the SOAP/REST interfaces. +
+*OpenNCP Client* : The Client implementation, accepting HTTP REST request from the portal and forwarding them to the Country of affiliation.
+This is the component to run in the Country of treatment and in the context of OpenNCP, it corresponds with the NCP-B. +
+*OpenNCP Server*: The implementation for the Country of Treatment (NCP-A).
+
+For testing purposes, a FHIR server containing various FHIR resources is configured simulating the Member States national infrastructure.
+The server that is used is the HL7 Sandbox FHIR server: https://sandbox.hl7europe.eu/laboratory/fhir
+
+.OpenNCP High level overview
+image::media/openncp_overview.png[]
+
+.High level architecture
+image::media/high_level_architecture.png[]
+
+===== Detailed architecture
+
+To facilitate the deployment of OpenNCP, we use docker as a container management tool that comprises the different components, configuration and required (populated) databases.
+This allows users to startup all the necessary components using a simple docker command.
+
+A new SMP file definition is created, "Fhir Endpoint service" where the FHIR REST API endpoint URL needs to be configured.
+This URL will be used by the application to connect the server from the client.
+
+.Detailed architecture
+image::media/detailed_architecture.png[]
+
+===== Request/Response flows
+
+To retrieve a Patient resource, the /Patient REST API is used based on the PDQm (ITI-78) profile.
+The /DocumentReference REST API is used to retrieve the different Resources that match specific search criteria.
+The supported search parameters by the portal are the following:
+
+When from the returned list of Document References, a specific Laboratory Result Report needs to be returned, the url contained in the DocumentReference resource is used to fetch the clinical document (Bundle).
+
+Also a transformation module is implemented, accessible as a service or over a REST API.
+On its turn the transformation module uses the TSAM module to connect with the local terminology repository database (LTRDB) and containing the translations/mappings.
+
+On the server side, transcodings (mappings) are applied to the bundle, where on the client side, the received codeable elements are translated.
+
+.Request/response flow
+image::media/request_response_flow.png[]
+
+===== Audit
+
+Audit logging leverages the FHIR https://www.hl7.org/fhir/auditevent.html[AuditEvent]. +
+This AuditEvent is based on http://tools.ietf.org/html/rfc3881[RFC 3881], now managed by http://medical.nema.org/medical/dicom/current/output/html/part15.html#sect_A.5[DICOM Part 15 Annex A5] and is formatted as https://www.json.org/json-en.html[json]. +
+
+For now these audit events are only saved to the local filesystem. +
+The location where this file is saved is currently `$\{EPSOS_PROPS_PATH\} + /validation` and the filename is `fhir_audit_\{timestamp\}_\{random\}.json` where:
+
+* `timestamp` has the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns[date format] `yyyyMMddHHmmss`
+ * `random` is a random 4 character sequence consisting of letters and numbers.
+
+Currently, only *outgoing* fhir message from NCP-A and NCP-B are being audited.
+
+===== Validation
+
+For the validation of FHIR resources we use the HAPI Instance Validator. HAPI provides a built-in and configurable mechanism for validating resources using FHIR's own conformance resources (StructureDefinition, ValueSet, CodeSystem, etc.). This mechanism is called the Instance Validator.
+
+Instance Validator is validation of the raw or parsed resource against the official FHIR validation rules (ie. the official FHIR definitions, expressed as profile resources such as StructureDefinition and ValueSet.
+
+The Instance Validator is used to validate resources against individual Implementation Guides which derive from the core specification, in our case the EU Lab Report FHIR IGs.
+
+Input for the POC are the packages of the MyHealth@EU Lab Result Reports FHIR IG, the EU Lab Report FHIR IGs and the IPS FHIR IGs.
+
+These can be downloaded here:
+
+- MyHealth@EU Lab Result Report FHIR IG package: https://fhir.ehdsi.eu/laboratory/downloads.html
+- EU Lab Report FHIR IG package: https://build.fhir.org/ig/hl7-eu/laboratory/downloads.html
+- HL7 IPS FHIR IG package: 	https://build.fhir.org/ig/HL7/fhir-ips/downloads.html
+
+====== Configuration
+
+The validation is defined as a Spring bean and is performed conditionally based on a configurable boolean property
+
+[source,yaml]
+----
+hapi:
+  fhir:
+    validation:
+      enabled: true
+----
+
+When this value is set to true, every response that is returned is validated using the ValidationService.
+
+The HAPI Instance validator is wrapped into a ValidationService, that takes care of the configuration and the logging.
+
+The NpmPackageValidationSupport class of HAPI is used to load the packages and use it to validate a resource.
+
+In the case of a *successful* validation, a log message can be retrieved in the logs:
+
+[source,]
+----
+2023-12-21 15:24:20 [2023-12-21T14:24:20.428Z] [http-nio-8080-exec-2] INFO  e.e.e.s.m.services.ValidationService.validate(41) - Successfully validated the received [class org.hl7.fhir.r4.model.Bundle] resource obtained with the [SEARCH_TYPE] operation
+----
+
+In the case of a *validation error*, an error message is logged, together with the corresponding error/warning messages:
+
+[source,]
+----
+2023-12-21 15:39:46 [2023-12-21T14:39:46.596Z] [http-nio-8080-exec-10] ERROR e.e.e.s.m.services.ValidationService.validate(43) - Validation error for the received [class org.hl7.fhir.r4.model.Bundle] obtained with the [SEARCH_TYPE] operation
+
+2023-12-21 15:39:46 [2023-12-21T14:39:46.596Z] [http-nio-8080-exec-10] INFO  e.e.e.s.m.services.ValidationService.validate(45) - None of the codings provided are in the value set 'FHIR Document Type Codes' (http://hl7.org/fhir/ValueSet/doc-typecodes|4.0.1), and a coding is recommended to come from this value set) (codes = http://loinc.org#11502-2, http://loinc.org#11502-2)
+
+2023-12-21 15:39:46 [2023-12-21T14:39:46.596Z] [http-nio-8080-exec-10] INFO  e.e.e.s.m.services.ValidationService.validate(45) - The Profile 'http://hl7.org/fhir/StructureDefinition/translation|4.0.1' definition allows for the type code but found type string
+
+2023-12-21 15:39:46 [2023-12-21T14:39:46.597Z] [http-nio-8080-exec-10] INFO  e.e.e.s.m.services.ValidationService.validate(45) - None of the codings provided are in the value set 'FHIR Document Type Codes' (http://hl7.org/fhir/ValueSet/doc-typecodes|4.0.1), and a coding is recommended to come from this value set) (codes = http://loinc.org#11502-2, http://loinc.org#11502-2)
+
+2023-12-21 15:39:46 [2023-12-21T14:39:46.597Z] [http-nio-8080-exec-10] INFO  e.e.e.s.m.services.ValidationService.validate(45) - The Profile 'http://hl7.org/fhir/StructureDefinition/translation|4.0.1' definition allows for the type code but found type string
+----
+===== Security
+
+====== Authentication
+
+All the endpoints require an authentication of the client, as MyHealth@EU is using SAML Tokens https://webgate.ec.europa.eu/fpfis/wikis/x/AeTzN, the FHIR flows re-use the SAML Token Option https://profiles.ihe.net/ITI/IUA/index.html#372432-saml-token-option where the SAML Assertion is added as a claim inside a JSON Web Token (JWT) in the header of each request. The JWT token is signed by the client using HMAC SHA-512 algorithm and a secret key that is shared between server amd client.
+
+An Authorization Server that supports the SAML Token Options shall be able to format the access token as a SAML 2.0 assertion. The SAML 2.0 assertion content shall comply with XUA SAML assertion rules (see ITI TF-2: 3.40).
+
+In accordance with [RFC7522, Section 2.2], the value of the access token contains a SAML 2.0 Assertion. *It shall not contain more than one SAML 2.0 Assertion*. The SAML Assertion XML data must be encoded using base64url, where the encoding adheres to the definition in Section 5 of RFC4648 [RFC4648] and where the padding bits are set to zero. To avoid the need for subsequent encoding steps (by "application/x-www-form-urlencoded" [W3C.REC-html401-19991224], for example), the base64url-encoded data must not be line wrapped and pad characters ("=") must not be included.
+
+Both the JWT and the SAML Assertion are validated by the server to ensure the authenticity of the request.
+
+[source,json]
+----
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyIiwic2FtbCI6Ijw_eG1sIHZlcnNpb249XCIxLjBcIiBlbmNvZGluZz1cIlVURi04XCI_PlxuPHNhbWwyOkFzc2VydGlvbiBJRD1cIl85ZTU3Yjc4Yy0zNTI5LTRiZGYtOGVhYi1kOGEzNGE5NmVkNmNcIlxuICAgIElzc3VlSW5zdGFudD1cIjIwMjQtMDctMTZUMjM6MzY6MTkuMDk3WlwiIFZlcnNpb249XCIyLjBcIlxuICAgIHhtbG5zOnNhbWwyPVwidXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFzc2VydGlvblwiIHhtbG5zOnhzZD1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hXCI-XG4gICAgPHNhbWwyOklzc3VlciBOYW1lUXVhbGlmaWVyPVwidXJuOmVoZHNpOmFzc2VydGlvbnM6aGNwXCI-dXJuOmlkcDpCRTpjb3VudHJ5Qjwvc2FtbDI6SXNzdWVyPlxuICAgIDxkczpTaWduYXR1cmVcbiAgICAgICAgICAgICAgICB4bWxuczpkcz1cImh0dHA6Ly93d3cudzMub3JnLzIwMDAvMDkveG1sZHNpZyNcIj5cbjxkczpTaWduZWRJbmZvPlxuPGRzOkNhbm9uaWNhbGl6YXRpb25NZXRob2RcbiAgICAgICAgICAgICAgICBBbGdvcml0aG09XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzEwL3htbC1leGMtYzE0biNcIi8-XG48ZHM6U2lnbmF0dXJlTWV0aG9kXG4gICAgICAgICAgICAgICAgQWxnb3JpdGhtPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS8wNC94bWxkc2lnLW1vcmUjcnNhLXNoYTI1NlwiLz5cbjxkczpSZWZlcmVuY2VcbiAgICAgICAgICAgICAgICAgICAgICAgIFVSST1cIiNfOWU1N2I3OGMtMzUyOS00YmRmLThlYWItZDhhMzRhOTZlZDZjXCI-XG48ZHM6VHJhbnNmb3Jtcz5cbjxkczpUcmFuc2Zvcm1cbiAgICAgICAgICAgICAgICAgICAgICAgIEFsZ29yaXRobT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDAvMDkveG1sZHNpZyNlbnZlbG9wZWQtc2lnbmF0dXJlXCIvPlxuPGRzOlRyYW5zZm9ybSBBbGdvcml0aG09XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzEwL3htbC1leGMtYzE0biNcIj5cbiAgICAgICAgICAgICAgICAgICAgICAgIDxlYzpJbmNsdXNpdmVOYW1lc3BhY2VzIFByZWZpeExpc3Q9XCJ4c2RcIiB4bWxuczplYz1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvMTAveG1sLWV4Yy1jMTRuI1wiLz5cbiAgICAgICAgICAgICAgICAgICAgPC9kczpUcmFuc2Zvcm0-XG48L2RzOlRyYW5zZm9ybXM-XG48ZHM6RGlnZXN0TWV0aG9kIEFsZ29yaXRobT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jI3NoYTI1NlwiLz5cbjxkczpEaWdlc3RWYWx1ZT41OTBSNlB2akRVRWZJT25NQXJnNmJBVUxTUWcySmR5V3hadnFYcGR6VmFRPTwvZHM6RGlnZXN0VmFsdWU-XG48L2RzOlJlZmVyZW5jZT5cbjwvZHM6U2lnbmVkSW5mbz5cbjxkczpTaWduYXR1cmVWYWx1ZT5cblVoVFhqWm1VSXZoV1BUaGdDb2RvTllIam1xOUNoK0JYSGV0aS9Rb2hYVDJmbjFrQm1VNFdpMFo4MFQ0RzhiQ3FSN1Myd2k5SHN3aGEmI3hkO1xuRWoxVGRtSkwyWDQ4TExUSytvRU1lZ2syNDdOL1FuZEFRZkpTemFONE8yazVDNHkvWkRoNFJFNzJmQ3hzUTg1eGY2M1RiVjFpMmxZVSYjeGQ7XG4vbE43NFVxdld2RTFhdm9WaFBHTTlRaW52U2dBWFRINVhSRVJrZXpvWTJPM09wOWltL0RveHdXaE04L3NOdm13ZWM2dVFWUzZ6L1pJJiN4ZDtcbnM1T3JyWm1UVEU0YXlqYTdVWTdnU3h2M25IK1JWR0pFZnhSRTBFNEpid2t6Um1aUXZXMnlROHN4aUhTWTNZZkJMSHMzeGR4SWJ1dDcmI3hkO1xuRjRqNlp6M1RrRHNUaEM1VlhKOEprbm5yMzhHVEFIQUdTczA3Q1E9PVxuPC9kczpTaWduYXR1cmVWYWx1ZT5cbjxkczpLZXlJbmZvPlxuICAgICAgICAgICAgPGRzOlg1MDlEYXRhPlxuICAgICAgICAgICAgICAgIDxkczpYNTA5Q2VydGlmaWNhdGU-TUlJREZUQ0NBZjJnQXdJQkFnSUNBSUl3RFFZSktvWklodmNOQVFFTkJRQXdVVEVMTUFrR0ExVUVCaE1DUWtVeEhEQWFCZ05WQkFvTUUwVjFjbTl3WldGdUlFTnZiVzFwYzNOcGIyNHhFVEFQQmdOVkJBTU1DRVZJUkZOSklFTkJNUkV3RHdZRFZRUUxEQWhFUnlCVFlXNTBaVEFlRncweU16RXhNalF4TXpRek1qaGFGdzB6TXpFeE1qUXhNelF6TWpoYU1Fb3hDekFKQmdOVkJBWVRBa2RGTVNRd0lnWURWUVFLREJ0SFpXOXlaMmxoYmlCTmFXNXBjM1J5ZVNCdlppQklaV0ZzZEdneEZUQVRCZ05WQkFNTURDb3VaV2hsWVd4MGFDNW5aVENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFNNGRLN21BUGg5a2x2SjRpVVBnYlZqL3dhbXlFaENOb3JOelcySDRwcklRVmdFNVBxUlJ3T2dFcHl5VFRPUEk2R09IYy9jLzlwZXVmVWJ1ZUo2YmdJMWhnejRxOENpVnRQY05RUnlVNFRxazFIN09yM0lJMUZHMENkUHEzV3cyU01WRFJka3BINmozZEE4ajhHdzgySTFOTWdtSmFyeWFuWG1VeHp2OUlvcXdrd3ZIMTBGdStDT0NYZ2RUcXd0dUVjY3NiNnNJTlplRzdWMlduaktMb0k3dzlqYjhBd3hpMzNOUlN0cUQ3Yk54bGdhenFBVURZUVdpakNCWVlDZDFFRTRRMno1WGFoU0p4NERQNGUvTDJhcmlpWktQL2s4M2JPbzRIbTVGZnZ1QW1mTjFJSWVCVmc0dUJ0M0YvMlluOTgya05SNkFMdTkvNTNxZThpVDB6SlVDQXdFQUFUQU5CZ2txaGtpRzl3MEJBUTBGQUFPQ0FRRUFTQyttKzUzbTJNQ3pRc2xPY1p2V0hSTmxSa2FydzVyT0FkSnFHTXdZb2JpRjBmQ0wzdXI0bkxEREZRV1JnOVdvcUlRRC9jU25vdVpiZlkrbzYxbDFEcGU3ZTVXSDNXWG9abUU3NGpWaWhlTWsrUi9QLzlXVm9PSnYyeUk3WGJ1ZnFPL0tEaHRIVjVxOHVtOG1iUktmYmRoUVFXaEJvNnZPN0hiRjIrSUVlZ3IzN0tQV1h5R3JTTWZYZG9aRjY1cFoyY1JkSFB5bDZkUnE2OUMvckZzT0pEMTFnSG16bFNycjN5b3N4dW0zUmF0QUVaV3ZDZzhQSzROckV6VVV2d3I5MTd4V2hla2xzQmRtb0RYeHdtUnY3dWNMOGx2V3pxdDdUTFl0QkZOcGVmc25XaWRYRE84ay8yRTJRNjR5TnNVN2lGb2ZlQU1FZWF4eUs3cHYzSmZxZUE9PTwvZHM6WDUwOUNlcnRpZmljYXRlPlxuICAgICAgICAgICAgPC9kczpYNTA5RGF0YT5cbiAgICAgICAgPC9kczpLZXlJbmZvPlxuICAgIDwvZHM6U2lnbmF0dXJlPlxuICAgIDxzYW1sMjpTdWJqZWN0PlxuICAgICAgICA8c2FtbDI6TmFtZUlEIEZvcm1hdD1cInVybjpvYXNpczpuYW1lczp0YzpTQU1MOjEuMTpuYW1laWQtZm9ybWF0OmVtYWlsQWRkcmVzc1wiPmhvdXNlQGVoZHNpLmV1PC9zYW1sMjpOYW1lSUQ-XG4gICAgICAgIDxzYW1sMjpTdWJqZWN0Q29uZmlybWF0aW9uIE1ldGhvZD1cInVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpjbTpzZW5kZXItdm91Y2hlc1wiLz5cbiAgICA8L3NhbWwyOlN1YmplY3Q-XG4gICAgPHNhbWwyOkNvbmRpdGlvbnMgTm90QmVmb3JlPVwiMjAyNC0wNy0xNlQyMzozNjoxOS4wOTdaXCIgTm90T25PckFmdGVyPVwiMjAyNC0wNy0xN1QwMzozNjoxOS4wOTdaXCI-XG4gICAgICAgIDxzYW1sMjpBdWRpZW5jZVJlc3RyaWN0aW9uPlxuICAgICAgICAgICAgPHNhbWwyOkF1ZGllbmNlPnVybjplaGRzaTphc3NlcnRpb25zLmF1ZGllbmNlOngtYm9yZGVyPC9zYW1sMjpBdWRpZW5jZT5cbiAgICAgICAgPC9zYW1sMjpBdWRpZW5jZVJlc3RyaWN0aW9uPlxuICAgIDwvc2FtbDI6Q29uZGl0aW9ucz5cbiAgICA8c2FtbDI6QXV0aG5TdGF0ZW1lbnQgQXV0aG5JbnN0YW50PVwiMjAyNC0wNy0xNlQyMzozNjoxOS4wOTdaXCI-XG4gICAgICAgIDxzYW1sMjpBdXRobkNvbnRleHQ-XG4gICAgICAgICAgICA8c2FtbDI6QXV0aG5Db250ZXh0Q2xhc3NSZWY-dXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFjOmNsYXNzZXM6U21hcnRjYXJkUEtJPC9zYW1sMjpBdXRobkNvbnRleHRDbGFzc1JlZj5cbiAgICAgICAgPC9zYW1sMjpBdXRobkNvbnRleHQ-XG4gICAgPC9zYW1sMjpBdXRoblN0YXRlbWVudD5cbiAgICA8c2FtbDI6QXR0cmlidXRlU3RhdGVtZW50PlxuICAgICAgICA8c2FtbDI6QXR0cmlidXRlIEZyaWVuZGx5TmFtZT1cIkhDSSBJZGVudGlmaWVyXCJcbiAgICAgICAgICAgIE5hbWU9XCJ1cm46aWhlOml0aTp4Y2E6MjAxMDpob21lQ29tbXVuaXR5SWRcIiBOYW1lRm9ybWF0PVwidXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDp1cmlcIj5cbiAgICAgICAgICAgIDxzYW1sMjpBdHRyaWJ1dGVWYWx1ZVxuICAgICAgICAgICAgICAgIHhtbG5zOnhzaT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlXCIgeHNpOnR5cGU9XCJ4c2Q6c3RyaW5nXCI-dXJuOm9pZDoxLjMuNi4xLjQuMS40ODMzNjwvc2FtbDI6QXR0cmlidXRlVmFsdWU-XG4gICAgICAgIDwvc2FtbDI6QXR0cmlidXRlPlxuICAgICAgICA8c2FtbDI6QXR0cmlidXRlIEZyaWVuZGx5TmFtZT1cIk5QSSBJZGVudGlmaWVyXCJcbiAgICAgICAgICAgIE5hbWU9XCJ1cm46b2FzaXM6bmFtZXM6dGM6eHNwYToxLjA6c3ViamVjdDpucGlcIiBOYW1lRm9ybWF0PVwidXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDp1cmlcIj5cbiAgICAgICAgICAgIDxzYW1sMjpBdHRyaWJ1dGVWYWx1ZVxuICAgICAgICAgICAgICAgIHhtbG5zOnhzaT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlXCIgeHNpOnR5cGU9XCJ4c2Q6c3RyaW5nXCI-QmVsZ2l1bTwvc2FtbDI6QXR0cmlidXRlVmFsdWU-XG4gICAgICAgIDwvc2FtbDI6QXR0cmlidXRlPlxuICAgICAgICA8c2FtbDI6QXR0cmlidXRlIEZyaWVuZGx5TmFtZT1cIlhTUEEgU3ViamVjdFwiXG4gICAgICAgICAgICBOYW1lPVwidXJuOm9hc2lzOm5hbWVzOnRjOnhzcGE6MS4wOnN1YmplY3Q6c3ViamVjdC1pZFwiIE5hbWVGb3JtYXQ9XCJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OnVyaVwiPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlXG4gICAgICAgICAgICAgICAgeG1sbnM6eHNpPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2VcIiB4c2k6dHlwZT1cInhzZDpzdHJpbmdcIj5Kb2huIEhvdXNlPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGU-XG4gICAgICAgIDxzYW1sMjpBdHRyaWJ1dGUgRnJpZW5kbHlOYW1lPVwiWFNQQSBSb2xlXCJcbiAgICAgICAgICAgIE5hbWU9XCJ1cm46b2FzaXM6bmFtZXM6dGM6eGFjbWw6Mi4wOnN1YmplY3Q6cm9sZVwiIE5hbWVGb3JtYXQ9XCJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OnVyaVwiPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlPlxuICAgICAgICAgICAgICAgIDxSb2xlIGNvZGU9XCIyMjFcIlxuICAgICAgICAgICAgICAgICAgICBjb2RlU3lzdGVtPVwiMi4xNi44NDAuMS4xMTM4ODMuMi45LjYuMi43XCJcbiAgICAgICAgICAgICAgICAgICAgY29kZVN5c3RlbU5hbWU9XCJJU0NPXCIgZGlzcGxheU5hbWU9XCJNZWRpY2FsIERvY3RvcnNcIiB4bWxucz1cInVybjpobDctb3JnOnYzXCIvPlxuICAgICAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGU-XG4gICAgICAgIDxzYW1sMjpBdHRyaWJ1dGUgRnJpZW5kbHlOYW1lPVwiWFNQQSBPcmdhbml6YXRpb25cIlxuICAgICAgICAgICAgTmFtZT1cInVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0Om9yZ2FuaXphdGlvblwiIE5hbWVGb3JtYXQ9XCJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OnVyaVwiPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlXG4gICAgICAgICAgICAgICAgeG1sbnM6eHNpPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2VcIiB4c2k6dHlwZT1cInhzZDpzdHJpbmdcIj5lSGVhbHRoIE9wZW5OQ1AgRVUgUG9ydGFsPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGU-XG4gICAgICAgIDxzYW1sMjpBdHRyaWJ1dGUgRnJpZW5kbHlOYW1lPVwiWFNQQSBPcmdhbml6YXRpb24gSURcIlxuICAgICAgICAgICAgTmFtZT1cInVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0Om9yZ2FuaXphdGlvbi1pZFwiIE5hbWVGb3JtYXQ9XCJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OnVyaVwiPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlXG4gICAgICAgICAgICAgICAgeG1sbnM6eHNpPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2VcIiB4c2k6dHlwZT1cInhzZDpzdHJpbmdcIj51cm46aGw3aWk6MS4yLjMuNDpBQkNEPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGU-XG4gICAgICAgIDxzYW1sMjpBdHRyaWJ1dGVcbiAgICAgICAgICAgIEZyaWVuZGx5TmFtZT1cImVIZWFsdGggRFNJIEhlYWx0aGNhcmUgRmFjaWxpdHkgVHlwZVwiXG4gICAgICAgICAgICBOYW1lPVwidXJuOmVoZHNpOm5hbWVzOnN1YmplY3Q6aGVhbHRoY2FyZS1mYWNpbGl0eS10eXBlXCIgTmFtZUZvcm1hdD1cInVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6dXJpXCI-XG4gICAgICAgICAgICA8c2FtbDI6QXR0cmlidXRlVmFsdWVcbiAgICAgICAgICAgICAgICB4bWxuczp4c2k9XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZVwiIHhzaTp0eXBlPVwieHNkOnN0cmluZ1wiPlJlc2lkZW50IFBoeXNpY2lhbjwvc2FtbDI6QXR0cmlidXRlVmFsdWU-XG4gICAgICAgIDwvc2FtbDI6QXR0cmlidXRlPlxuICAgICAgICA8c2FtbDI6QXR0cmlidXRlIEZyaWVuZGx5TmFtZT1cIlhTUEEgUHVycG9zZSBPZiBVc2VcIlxuICAgICAgICAgICAgTmFtZT1cInVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0OnB1cnBvc2VvZnVzZVwiIE5hbWVGb3JtYXQ9XCJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OnVyaVwiPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlPlxuICAgICAgICAgICAgICAgIDxQdXJwb3NlT2ZVc2UgY29kZT1cIlRSRUFUTUVOVFwiXG4gICAgICAgICAgICAgICAgICAgIGNvZGVTeXN0ZW09XCIzYmMxODUxOC1kMzA1LTQ2YzItYThkNi05NGJkNTk4NTZlOWVcIlxuICAgICAgICAgICAgICAgICAgICBjb2RlU3lzdGVtTmFtZT1cImVIRFNJIFhTUEEgUHVycG9zZU9mVXNlXCJcbiAgICAgICAgICAgICAgICAgICAgZGlzcGxheU5hbWU9XCJUUkVBVE1FTlRcIiB4bWxucz1cInVybjpobDctb3JnOnYzXCIvPlxuICAgICAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgPC9zYW1sMjpBdHRyaWJ1dGU-XG4gICAgICAgIDxzYW1sMjpBdHRyaWJ1dGUgRnJpZW5kbHlOYW1lPVwiWFNQQSBMb2NhbGl0eVwiXG4gICAgICAgICAgICBOYW1lPVwidXJuOm9hc2lzOm5hbWVzOnRjOnhzcGE6MS4wOmVudmlyb25tZW50OmxvY2FsaXR5XCIgTmFtZUZvcm1hdD1cInVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6dXJpXCI-XG4gICAgICAgICAgICA8c2FtbDI6QXR0cmlidXRlVmFsdWVcbiAgICAgICAgICAgICAgICB4bWxuczp4c2k9XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZVwiIHhzaTp0eXBlPVwieHNkOnN0cmluZ1wiPmVIRFNJIEVVIFRlc3RpbmcgTWVkQ2FyZSBDZW50ZXI8L3NhbWwyOkF0dHJpYnV0ZVZhbHVlPlxuICAgICAgICA8L3NhbWwyOkF0dHJpYnV0ZT5cbiAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZSBGcmllbmRseU5hbWU9XCJIbDcgUGVybWlzc2lvbnNcIlxuICAgICAgICAgICAgTmFtZT1cInVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0OmhsNzpwZXJtaXNzaW9uXCIgTmFtZUZvcm1hdD1cInVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6dXJpXCI-XG4gICAgICAgICAgICA8c2FtbDI6QXR0cmlidXRlVmFsdWVcbiAgICAgICAgICAgICAgICB4bWxuczp4c2k9XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZVwiIHhzaTp0eXBlPVwieHNkOnN0cmluZ1wiPnVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0OmhsNzpwZXJtaXNzaW9uOlBSRC0wMDM8L3NhbWwyOkF0dHJpYnV0ZVZhbHVlPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlXG4gICAgICAgICAgICAgICAgeG1sbnM6eHNpPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2VcIiB4c2k6dHlwZT1cInhzZDpzdHJpbmdcIj51cm46b2FzaXM6bmFtZXM6dGM6eHNwYToxLjA6c3ViamVjdDpobDc6cGVybWlzc2lvbjpQUkQtMDA0PC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgICAgIDxzYW1sMjpBdHRyaWJ1dGVWYWx1ZVxuICAgICAgICAgICAgICAgIHhtbG5zOnhzaT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlXCIgeHNpOnR5cGU9XCJ4c2Q6c3RyaW5nXCI-dXJuOm9hc2lzOm5hbWVzOnRjOnhzcGE6MS4wOnN1YmplY3Q6aGw3OnBlcm1pc3Npb246UFJELTAwNTwvc2FtbDI6QXR0cmlidXRlVmFsdWU-XG4gICAgICAgICAgICA8c2FtbDI6QXR0cmlidXRlVmFsdWVcbiAgICAgICAgICAgICAgICB4bWxuczp4c2k9XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZVwiIHhzaTp0eXBlPVwieHNkOnN0cmluZ1wiPnVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0OmhsNzpwZXJtaXNzaW9uOlBSRC0wMDY8L3NhbWwyOkF0dHJpYnV0ZVZhbHVlPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlXG4gICAgICAgICAgICAgICAgeG1sbnM6eHNpPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2VcIiB4c2k6dHlwZT1cInhzZDpzdHJpbmdcIj51cm46b2FzaXM6bmFtZXM6dGM6eHNwYToxLjA6c3ViamVjdDpobDc6cGVybWlzc2lvbjpQUkQtMDEwPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgICAgIDxzYW1sMjpBdHRyaWJ1dGVWYWx1ZVxuICAgICAgICAgICAgICAgIHhtbG5zOnhzaT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlXCIgeHNpOnR5cGU9XCJ4c2Q6c3RyaW5nXCI-dXJuOm9hc2lzOm5hbWVzOnRjOnhzcGE6MS4wOnN1YmplY3Q6aGw3OnBlcm1pc3Npb246UFJELTAxNjwvc2FtbDI6QXR0cmlidXRlVmFsdWU-XG4gICAgICAgICAgICA8c2FtbDI6QXR0cmlidXRlVmFsdWVcbiAgICAgICAgICAgICAgICB4bWxuczp4c2k9XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZVwiIHhzaTp0eXBlPVwieHNkOnN0cmluZ1wiPnVybjpvYXNpczpuYW1lczp0Yzp4c3BhOjEuMDpzdWJqZWN0OmhsNzpwZXJtaXNzaW9uOlBQRC0wMzI8L3NhbWwyOkF0dHJpYnV0ZVZhbHVlPlxuICAgICAgICAgICAgPHNhbWwyOkF0dHJpYnV0ZVZhbHVlXG4gICAgICAgICAgICAgICAgeG1sbnM6eHNpPVwiaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2VcIiB4c2k6dHlwZT1cInhzZDpzdHJpbmdcIj51cm46b2FzaXM6bmFtZXM6dGM6eHNwYToxLjA6c3ViamVjdDpobDc6cGVybWlzc2lvbjpQUEQtMDMzPC9zYW1sMjpBdHRyaWJ1dGVWYWx1ZT5cbiAgICAgICAgICAgIDxzYW1sMjpBdHRyaWJ1dGVWYWx1ZVxuICAgICAgICAgICAgICAgIHhtbG5zOnhzaT1cImh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlXCIgeHNpOnR5cGU9XCJ4c2Q6c3RyaW5nXCI-dXJuOm9hc2lzOm5hbWVzOnRjOnhzcGE6MS4wOnN1YmplY3Q6aGw3OnBlcm1pc3Npb246UFBELTA0Njwvc2FtbDI6QXR0cmlidXRlVmFsdWU-XG4gICAgICAgIDwvc2FtbDI6QXR0cmlidXRlPlxuICAgIDwvc2FtbDI6QXR0cmlidXRlU3RhdGVtZW50PlxuPC9zYW1sMjpBc3NlcnRpb24-XG4iLCJleHAiOjE3MjEyNTkzNzl9.M2SgkXXvXs5EpPomvWQ5m6X3Uzxfm4nRRh_wCSBp8PD_9lLMP_H8FLmBTYtrtrlBc4hVNNThe5yozX0oIQWvhA",
+  "Custom-Field": "ONCE UPON A TIME"
+}
+----
+
+.SAML token
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope" xmlns:wsa="http://www.w3.org/2005/08/addressing" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="_616271df-b05f-4df0-87bb-2aaaf2988158" IssueInstant="2023-06-16T09:10:49.091Z" Version="2.0">
+   <saml2:Issuer NameQualifier="urn:ehdsi:assertions:hcp">urn:idp:EU:countryB</saml2:Issuer>
+   <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+      <ds:SignedInfo>
+         <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+         <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" />
+         <ds:Reference URI="#_616271df-b05f-4df0-87bb-2aaaf2988158">
+            <ds:Transforms>
+               <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+               <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+                  <ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="xsd" />
+               </ds:Transform>
+            </ds:Transforms>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+            <ds:DigestValue>qZo3cvMYDjCV9GCqdnMJuYYbgIGGEr9PIUBPAuikhmA=</ds:DigestValue>
+         </ds:Reference>
+      </ds:SignedInfo>
+      <ds:SignatureValue>ZpPrGAX45ORddQzhUgC2JyCSNcoS5xNSTG0sC5zbsc/Ki1oywTZJvh+4PD1OEqMHRQ6YTkbnKJfc
+ZfXnGp+O/0M8ZxOJ9t0mlGslK1dVNwcnNRiu7qT6+X0C8irB3+7oeOexklZMMEKCoHUqlOg0gxBC
+zdibw/OvD8vcYGuq9whBkwcOa+VJmVGLumZLcNlQuOVzj8AweS0SM43A8YmKFR66Q9Ro3lHYlOqa
+y40D2iiJ6eaHygauMnilbZZgi3EgGOzhKgWlHBeuSjkhfr14wIjqcnglk9MVHhsi52djnfX4Qyre
+0sAfrlSOVhWunjNbSJPowqYfeMbd8TSiZ9/IJPjc0IxgjCqlLZIvMJM/Gd2lO4s4F69+8IQjfTii
+nHwMasp0om2BjrGUJ06KHR2qUwqQYxNg3N/pHQw5UDsPnGKjAJSPaMiS2MOkfQjzM/EvOBU1rHvG
+rNs99udLnrpOVmwza5/jfCFXLxkQlQ+J0wXI/IKsq7MWZhlsPuvfOZXZGKWNfHXiS6E1P7aFAg/r
+/b24M6R56l9D4R1rUNgIkw0sCDGi5AH2mZyvBJ+zcqeczRZTdOyusWk6sJnDq3hKSU9loKIljLFU
+dGT29iM4xah10aMXPPyio+OjJeyod2ePC65wTpcjtX6J2SLnpI5+u4n9KyMZhIJLOscabyWGo+A=</ds:SignatureValue>
+      <ds:KeyInfo>
+         <ds:X509Data>
+            <ds:X509Certificate>MIIELTCCAxWgAwIBAgIBHTANBgkqhkiG9w0BAQ0FADBRMQswCQYDVQQGEwJCRTEcMBoGA1UECgwTRXVyb3BlYW4gQ29tbWlzc2lvbjERMA8GA1UEAwwIRUhEU0kgQ0ExETAPBgNVBAsMCERHIFNhbnRlMB4XDTIzMDQxMTEyNTIyN1oXDTMzMDQxMTEyNTIyN1owYzELMAkGA1UEBhMCQkUxHDAaBgNVBAoME0V1cm9wZWFuIENvbW1pc3Npb24xIjAgBgNVBAMMGUdSUDpFSEVBTFRIX05DUF9ERVZfRVVfMDExEjAQBgNVBAsMCURHIFNhbnTDqTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBALibbrjRSP5pELWJA/9r6gq/7pyIarG65uwkASvMJpg4J8VfwLMMBVkGbsOIGXuWzycPOTXYZOFNtuhVhgT/lSlLJHKFmhKRTJMfjtGSFamiPs07eLbSdsnt96tEXvOfpZ2ritRdBBJOQp9XRl4OrqxVdszLUUpTykV+oMtZCneyWBH1JC50SZfa/Owud6DGKb10s1aPYjlyq8CasPh+b0yuT4GjlSgoXRNdjqSqaC9b0d0GhXfDo1Ren1tBNyahLjLwIOwU9XkEyVyRniNLYpnjbK293lnEmNGPt4FHDnM2RAucDTGusrl1Dex3s0jer0FT/P1i+t4QJorOL9GLa2YwQ0WW0i4JPnHwaDNUeV6chP1CyQ0OY5tVMNizn89f5kx4pc6qv0saMbgkgXudFzAwuvqD/vkr+D3LRIMNLZEyCu7uRrlzQcBqcKD559b1kf8gn7o5vMghfsrj2Q+ndpRcHo1S1qL6hAan/C42gnuVGU8jLyvh0oC9rw/gug11dIKZbs5N/hiQe+1/ewLlief7HKHDvaPnh5iYFxYFzwuNdIottTkoI4mWnFanAHFE4M8ge9mDCcHgBXG5Hy380CSXGs2MRd/FYKorC2Ouk6HrZLS8WJV3ooGbTHRtPIa6HGLaquD7Lqd7Sel4S2SXlZCSDgkmVGX+9Yxr/hUQD/h/AgMBAAEwDQYJKoZIhvcNAQENBQADggEBAIdpov68VDsb0JFBr9jgdFIzyiSnle4GaVFGRDL2WxvvB4aX50wfAjun1EPxuHN4ixgbP89/RJI2k/wrydsXJYNt/r4f20ag/E/C6AhsNE/wj1TgbIm4iSyD7oyo5SLq76ABjf2flRVZOCPbsCv1wYYu1hARcixNgM/648KJGB8oSMFBhNebkOVvU25TSAjaoKNnQJAB0ssq4HirmVWEuItPevhnDsZHS817eikqNa/m885kXRwqkZRdk372kuE7JTu28xakIZDeLCAI0ndbIuA2qjOSIqP6pI5x15UrLgM09+1fIVMhMzatt2MiW5yPKejpXerZIdKkNVzmMAXdjEw=</ds:X509Certificate>
+         </ds:X509Data>
+      </ds:KeyInfo>
+   </ds:Signature>
+   <saml2:Subject>
+      <saml2:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">house@ehdsi.eu</saml2:NameID>
+      <saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches" />
+   </saml2:Subject>
+   <saml2:Conditions NotBefore="2023-06-16T09:10:49.091Z" NotOnOrAfter="2023-06-16T13:10:49.091Z">
+      <saml2:AudienceRestriction>
+         <saml2:Audience>urn:ehdsi:assertions.audience:x-border</saml2:Audience>
+      </saml2:AudienceRestriction>
+   </saml2:Conditions>
+   <saml2:AuthnStatement AuthnInstant="2023-06-16T09:10:49.091Z">
+      <saml2:AuthnContext>
+         <saml2:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:SmartcardPKI</saml2:AuthnContextClassRef>
+      </saml2:AuthnContext>
+   </saml2:AuthnStatement>
+   <saml2:AttributeStatement>
+      <saml2:Attribute FriendlyName="HCI Identifier" Name="urn:ihe:iti:xca:2010:homeCommunityId" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oid:2.16.17.710.850.1000.990.1</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="NPI Identifier" Name="urn:oasis:names:tc:xspa:1.0:subject:npi" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">European Commission</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="XSPA Subject" Name="urn:oasis:names:tc:xspa:1.0:subject:subject-id" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">John House</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="XSPA Role" Name="urn:oasis:names:tc:xacml:2.0:subject:role" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue>
+            <Role xmlns="urn:hl7-org:v3" code="221" codeSystem="2.16.840.1.113883.2.9.6.2.7" codeSystemName="ISCO" displayName="Medical doctors" />
+         </saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="XSPA Organization" Name="urn:oasis:names:tc:xspa:1.0:subject:organization" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">eHealth OpenNCP EU Portal</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="XSPA Organization ID" Name="urn:oasis:names:tc:xspa:1.0:subject:organization-id" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:hl7ii:1.2.3.4:ABCD</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="eHealth DSI Healthcare Facility Type" Name="urn:epsos:names:wp3.4:subject:healthcare-facility-type" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Resident Physician</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="XSPA Purpose Of Use" Name="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue>
+            <PurposeOfUse xmlns="urn:hl7-org:v3" code="TREATMENT" codeSystem="3bc18518-d305-46c2-a8d6-94bd59856e9e" codeSystemName="eHDSI XSPA PurposeOfUse" displayName="TREATMENT" />
+         </saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="XSPA Locality" Name="urn:oasis:names:tc:xspa:1.0:environment:locality" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">eHDSI EU Testing MedCare Center</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="Hl7 Permissions" Name="urn:oasis:names:tc:xspa:1.0:subject:hl7:permission" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-003</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-005</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-006</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-010</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-016</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-032</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-033</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-046</saml2:AttributeValue>
+      </saml2:Attribute>
+   </saml2:AttributeStatement>
+</saml2:Assertion>
+----
+

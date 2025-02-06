@@ -183,7 +183,7 @@ public class SMPUploadFileController {
             documentTypeID = docScheme + "::" + docID;
         }
 
-        String urlServer = propertyService.getPropertyValueMandatory("SMP_ADMIN_URL");
+        String urlServer = propertyService.getPropertyValueMandatory(StandardProperties.SMP_SML_ADMIN_URL);
         if (urlServer.endsWith("/")) {
             urlServer = urlServer.substring(0, urlServer.length() - 1);
         }

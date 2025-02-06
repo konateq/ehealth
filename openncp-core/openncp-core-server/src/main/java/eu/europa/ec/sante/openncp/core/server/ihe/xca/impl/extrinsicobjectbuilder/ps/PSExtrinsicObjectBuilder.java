@@ -1,8 +1,8 @@
 package eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.ps;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.ClassificationScheme;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.ClassificationScheme;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPSOSDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
@@ -36,11 +36,6 @@ public class PSExtrinsicObjectBuilder extends AbstractExtrinsicObjectBuilder {
                 title = Constants.PS_TITLE;
                 nodeRepresentation = XCAConstants.EXTRINSIC_OBJECT.FormatCode.PatientSummary.EpsosPivotCoded.NODE_REPRESENTATION;
                 displayName = XCAConstants.EXTRINSIC_OBJECT.FormatCode.PatientSummary.EpsosPivotCoded.DISPLAY_NAME;
-                break;
-            case MRO_CLASSCODE:
-                title = Constants.MRO_TITLE;
-                nodeRepresentation = XCAConstants.EXTRINSIC_OBJECT.FormatCode.Mro.EpsosPivotCoded.NODE_REPRESENTATION;
-                displayName = XCAConstants.EXTRINSIC_OBJECT.FormatCode.Mro.EpsosPivotCoded.DISPLAY_NAME;
                 break;
             default:
                 LOGGER.error("Unsupported classCode for query in OpenNCP. Requested document classCode: {}", documentMetaData.getClassCode());

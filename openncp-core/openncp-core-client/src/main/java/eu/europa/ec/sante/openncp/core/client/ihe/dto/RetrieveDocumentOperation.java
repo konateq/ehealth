@@ -1,16 +1,12 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.dto;
 
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.immutables.Domain;
 import eu.europa.ec.sante.openncp.core.client.api.RetrieveDocumentRequest;
-import org.immutables.value.Value;
-import org.opensaml.saml.saml2.core.Assertion;
+import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 
-import java.util.Map;
-
-@Value.Immutable
+@Domain
 public interface RetrieveDocumentOperation {
-
-    Map<AssertionEnum, Assertion> getAssertions();
+    SamlDetails getSamlDetails();
 
     RetrieveDocumentRequest getRequest();
 }

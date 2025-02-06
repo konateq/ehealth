@@ -1,0 +1,334 @@
+=== Release 8.0.0
+
+==== Upgrade from release 7.x.x to release 8.0.0
+
+===== Breaking changes
+
+- New package structures
+- New module structure
+- Added a new (FHIR) service that must be implemented
+- Removed the `ServiceLoader` mechanism in favor of Spring meaning you *must* update your bean creation methods to use Spring
+- provide a (default) implementation for all services or else there will be `MissingBeanExceptions`
+
+===== Introduction
+The upgrade from version 7 to version 8 brings significant changes to the project structure, the bean creation and on top introduces a major new feature: the integration of FHIR capabilities.
+
+===== Main changes
+
+====== New project structure
+The previous project structure was highly complex and disorganized, with at numerous different package structures (ee.affecto.\*, ep.*, epsos.ccd.gnomon.\*, eu.epsos.*, eu.esens.abb.*, etc.) and modules, leading to dependency challenges and limiting the project's potential for expansion and improvement. +
+With the need to integrate FHIR capabilities into the existing solution, a decision was made to restructure the entire project to better accommodate this addition and facilitate future scalability.
+
+*Packages*
+
+We have renamed all packages to begin with `eu.europa.ec.sante.openncp`, except for ATNA, which was directly sourced from another project.
+
+*Structure*
+
+The application has been reorganized into three primary modules:
+
+. *Application*
++
+This component contains the startup logic and acts as the entry point for all services.
+
+. *Api*
++
+As the name suggests, this part manages everything related to public-facing APIs.
+
+. *Core*
++
+This component handles the core business logic.
+
+In addition to the modules mentioned above, there are several other modules included. These either serve as dependencies for the core modules or provide supplementary tools and utilities.
+
+<<<
+
+Below is a simplified overview of the modules within the new structure:
+
+[source]
+----
+/ehealth
+├── /openncp-common
+├── /openncp-application
+│   ├── /openncp-application-client
+│   ├── /openncp-application-client-connector
+│   ├── /openncp-application-openatna
+│   ├── /openncp-application-server
+│   ├── /openncp-application-transformation
+│   └── /openncp-application-trc-sts
+├── /openncp-api
+│   ├── /openncp-api-client
+│   ├── /openncp-api-common
+│   ├── /openncp-api-server
+│   ├── /openncp-api-transformation
+│   └── /openncp-api-trc-sts
+├── /openncp-core
+│   ├── /openncp-core-client
+│   ├── /openncp-core-client-api
+│   ├── /openncp-core-client-connector
+│   ├── /openncp-core-common
+│   ├── /openncp-core-server
+│   ├── /openncp-core-server-api
+│   ├── /openncp-core-server-mock
+│   └── /openncp-core-trc-sts
+├── /openncp-tools
+│   ├── /openncp-configuration-utility
+│   ├── /openncp-tsam-exporter
+│   └── /openncp-tsam-sync
+├── /openncp-coverage
+├── /openncp-docker
+├── /openncp-documentation
+└── /openncp-web-manager
+    ├── /openncp-web-manager-backend
+    └── /openncp-web-manager-frontend
+----
+
+As a result of this restructuring, the group IDs and artifact IDs have also been updated.
+
+===== Bean creation
+In the previous version, bean creation primarily relied on outdated static blocks and static factory methods, which mostly consisted of basic `new Class()` initializers. +
+Starting with wave 8, we began phasing out this approach in favor of a Spring-based solution that takes advantage of the more modern Inversion of Control (IoC) pattern.
+
+This change also allows member states to benefit from these Spring/IoC changes.
+
+===== FHIR capabilities
+Beginning with wave 8, we have integrated FHIR (Fast Healthcare Interoperability Resources) capabilities to improve interoperability and streamline healthcare data exchange. FHIR is a modern, widely-used standard that simplifies the sharing of healthcare information between systems, ensuring consistency, flexibility, and security.
+
+We've implemented these capabilities using HAPI FHIR, an open-source framework that fully supports the FHIR standard.
+
+Currently, two main functionalities have been introduced:
+
+. Patient Information
+. Lab Results
+
+===== Detailed migration guide
+
+====== NCP-B (client) portal connector
+
+As part of the structural changes, we have also addressed and cleaned up several incorrectly generated JAXB models. +
+While the main interface of the portal connector remains unchanged, some models have been renamed and all of them have been relocated to different packages.
+
+*Dependency migration*
+
+Wave 7
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante.ehdsi.openncp-protocol-terminators</groupId>
+    <artifactId>openncp-ncp-pt-client-consumer</artifactId>
+</dependency>
+----
+
+Wave 8
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante</groupId>
+    <artifactId>openncp-application-client-connector</artifactId>
+</dependency>
+----
+
+
+*Package renames*
+
+Wave 7 +
+`epsos.openncp.protocolterminator.clientconnector.*`
+
+Wave 8 +
+`eu.europa.ec.sante.openncp.core.client.api.*`
+
+*Specific model renames*
+
+- EpsosDocument
++
+Wave 7 +
+`epsos.openncp.protocolterminator.clientconnector.EpsosDocument1`
++
+Wave 8 +
+`eu.europa.ec.sante.openncp.core.client.api.EpsosDocument`
+
+- AssertionEnum
++
+Wave 7 +
+`eu.europa.ec.sante.ehdsi.constant.assertion.AssertionEnum`
++
+Wave 8 +
+`eu.europa.ec.sante.openncp.core.client.api.AssertionEnum`
+
+- ClientConnectorConsumerException
++
+Wave 7 +
+`epsos.openncp.protocolterminator.ClientConnectorConsumerException`
++
+Wave 8 +
+`eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException`
+
+WARNING: as we transitioned to spring, the `ConfigurationManagerFactory` is deprecated and most likely won't work.
+
+This approach will no longer work: +
+[source,java]
+----
+var clientConnectorService = new DefaultClientConnectorService(ConfigurationManagerFactory.getConfigurationManager());
+----
+use bean injection instead
+[source,java]
+----
+public class PatientService {
+
+    private final ClientConnectorService clientConnectorService;
+
+    public PatientService(final ClientConnectorService clientConnectorService) {
+        this.clientConnectorService = Validate.notNull(clientConnectorService, "clientConnectorService must not be null");
+    }
+
+    public void someMethod() {
+        clientConnectorService.queryPatient(assertionMap, landCode, patientDemographics);
+    }
+}
+----
+*Datasource clashes*
+
+We marked the DataSource used for the properties database as @Primary.
+While this configuration might change in a future version. If you need an additional DataSource without conflict with the default Spring DataSource prefix, you can define one with a custom prefix like this:
+
+[source,]
+----
+your.datasource.url=jdbc:mysql://localhost:3306/mydb
+your.datasource.username=myuser
+your.datasource.password=mypassword
+your.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+----
+
+[source,java]
+----
+@Configuration
+@EnableJpaRepositories(
+    basePackages = "your.repository", // Specify the package where your repositories are located
+    entityManagerFactoryRef = "yourEntityManagerFactory",
+    transactionManagerRef = "yourTransactionManager"
+)
+public class YourDataSourceConfig {
+    @Bean
+    @ConfigurationProperties("your.datasource")
+    public DataSourceProperties yourDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean(name = "yourDataSource")
+    public DataSource yourDataSource(DataSourceProperties yourDataSourceProperties) {
+        return yourDataSourceProperties.initializeDataSourceBuilder().build();
+    }
+
+    @Bean(name = "yourEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean yourEntityManagerFactory(
+            DataSource yourDataSource) {
+        LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
+        factory.setDataSource(yourDataSource);
+        factory.setPackagesToScan("your.model"); // Specify the package where your entities are located
+        factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+        return factory;
+    }
+
+    @Bean(name = "yourTransactionManager")
+    public PlatformTransactionManager yourTransactionManager(
+            EntityManagerFactory yourEntityManagerFactory) {
+        return new JpaTransactionManager(yourEntityManagerFactory);
+    }
+}
+----
+
+[source,java]
+----
+@Service
+public class YourService {
+    private final DataSource yourDataSource;
+
+    public MyService(@Qualifier("yourDataSource") DataSource yourDataSource) {
+        this.yourDataSource = yourDataSource;
+    }
+}
+----
+
+====== NCP-A (server) national infrastructure integration
+
+A general advise is to create a national connector that defines a REST interface between the OpenNCP server component and the national infrastructure. Doing so favours loose coupling and makes it easier to migrate towards a Spring-based solution.
+
+*Dependency migration*
+
+The interfaces needed to be implemented by the member state has been moved.
+
+Wave 7
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante.ehdsi.openncp-protocol-terminators.openncp-ncp-server</groupId>
+    <artifactId>openncp-interface</artifactId>
+</dependency>
+----
+
+Wave 8
+[source,xml]
+----
+<dependency>
+    <groupId>eu.europa.ec.sante</groupId>
+    <artifactId>openncp-core-server-api</artifactId>
+</dependency>
+----
+
+*Removed the ServiceLoader concept*
+
+In version 8.0.0, we completely removed the old `ServiceLoader` mechanism. +
+As a result, you *must* update your bean creation methods to use Spring and provide a (default) implementation for all services.
+
+Note: In release 8.0.1, the `ServiceLoader` mechanism was reintroduced as a fallback and default implementations for all services were provided. This ensures that the server will start even if the national implementation does not provide its own service implementations.
+
+WARNING: The `ServiceLoader` mechanism is deprecated as of wave 8 and will be completely removed in wave 9. From wave 9 onwards, you *must* provide services as Spring beans.
+
+*Interface migration*
+
+The interfaces of the main services in the national infrastructure connector remain unchanged, but they have all been relocated to new packages.
+
+The package structure has changed from +
+`eu.epsos.protocolterminators.ws.server.\*` +
+to +
+`eu.europa.ec.sante.openncp.core.server.api.ihe.*`
+
+*New FHIR interface*
+
+We have introduced a new service that enables FHIR communication between NCP-B and NCP-A. From NCP-B, a FHIR request is sent to NCP-A, which utilizes the methods defined in the newly added interface:
+`eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService`
+
+IMPORTANT: If your national infrastructure does not support FHIR capabilities but you want to offer this functionality, the dispatching service will act as a proxy between NCP-A's FHIR capabilities and the national infrastructure. However, it is essential that a valid (HAPI) FHIR Resource is returned. It is the responsibility of the national infrastructure to map its own response to the equivalent (HAPI) FHIR Resource.
+
+===== Some implementation examples:
+
+*With spring factories:*
+
+Add a +
+`META-INF/spring.factories` file +
+with content: +
+`org.springframework.boot.autoconfigure.EnableAutoConfiguration=YourNIConfigurationClass`
+
+Create the new configuration class:
+[source,java]
+----
+@Configuration
+@ComponentScan(basePackages = "your.ni.packages")
+public class YourNIConfigurationClass {
+
+    @Primary
+    @Bean
+    public DispatchingService nationalDispatchingService() {
+        return new YourNIDispatchingService();
+    }
+
+    @Primary
+    @Bean
+    public DocumentSearchInterface nationalDocumentSearch() {
+        return new YourNIDDocumentSearchInterface();
+    }
+
+    // other services goes here
+
+}
+----

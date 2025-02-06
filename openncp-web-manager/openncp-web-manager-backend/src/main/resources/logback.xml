@@ -7,7 +7,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${catalina.base}/logs/openncp-gateway-backend.log</file>
+        <file>${catalina.base}/logs/openncp-web-manager-backend.log</file>
         <append>true</append>
         <encoder>
             <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %highlight(%-5level) %logger{36}.%M\(%line\) - %msg%n</pattern>
@@ -15,7 +15,7 @@
     </appender>
 
     <appender name="FILE_CLINICAL" class="ch.qos.logback.core.FileAppender">
-        <file>${catalina.base}/logs/openncp-gateway-backend-clinical.log</file>
+        <file>${catalina.base}/logs/openncp-web-manager-backend-clinical.log</file>
         <append>true</append>
         <encoder>
             <pattern>%green([%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}]) %cyan([%thread]) %cyan([%logger{36}]) %highlight(%-5level) %C{36}.%M\(%line\) - %msg%n</pattern>
@@ -26,11 +26,15 @@
         <appender-ref ref="FILE_CLINICAL"/>
     </logger>
 
-    <logger name="eu.europa.ec.dynamicdiscovery" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.core.common.dynamicdiscovery" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="eu.europa.ec.sante.ehdsi.openncp.gateway" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.common" level="INFO" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <logger name="eu.europa.ec.sante.openncp.webmanager.backend" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 
@@ -38,11 +42,7 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="epsos.ccd.gnomon.auditmanager.ssl" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
-    <logger name="epsos.ccd.gnomon.auditmanager" level="INFO" additivity="false">
+    <logger name="eu.europa.ec.sante.openncp.webmanager.backend.module.smp.service.AuditManager" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>
 

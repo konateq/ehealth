@@ -14,6 +14,11 @@ public class InsufficientRightsException extends OpenNCPErrorCodeException {
         openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
     }
 
+    public InsufficientRightsException(Throwable cause) {
+        super(cause);
+        openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+    }
+
     @Override
     public String getMessage() {
         return openncpErrorCode.getDescription();

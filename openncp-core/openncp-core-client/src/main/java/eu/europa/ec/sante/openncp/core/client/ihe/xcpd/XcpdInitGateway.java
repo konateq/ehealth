@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
-import eu.europa.ec.sante.openncp.core.client.api.AssertionEnum;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201306UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
@@ -31,7 +31,7 @@ public class XcpdInitGateway {
      * @throws NoPatientIdDiscoveredException contains the error message
      */
     public List<PatientDemographics> patientDiscovery(final PatientDemographics patientDemographics,
-                                                             final Map<AssertionEnum, Assertion> assertionMap,
+                                                             final Map<AssertionType, Assertion> assertionMap,
                                                              final String countryCode) throws NoPatientIdDiscoveredException {
 
         final PRPAIN201306UV02 response = RespondingGateway_RequestSender.respondingGateway_PRPA_IN201305UV02(patientDemographics, assertionMap, countryCode);

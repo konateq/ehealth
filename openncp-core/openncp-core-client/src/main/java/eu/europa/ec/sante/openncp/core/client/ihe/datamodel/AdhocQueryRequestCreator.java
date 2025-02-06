@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.datamodel;
 
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
@@ -8,9 +8,9 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.Respons
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.AdhocQueryType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ValueListType;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AdhocQueryRequestCreator {
 
@@ -62,18 +62,9 @@ public class AdhocQueryRequestCreator {
         SlotType1 entryClassCode = new SlotType1();
         entryClassCode.setName(XCAConstants.AdHocQueryRequest.XDS_DOCUMENT_ENTRY_CLASSCODE_SLOT_NAME);
         ValueListType v3 = new ValueListType();
-        StringBuilder documentEntryClassCodeBuilder = new StringBuilder();
-
-        documentEntryClassCodeBuilder.append("('");
-        for(GenericDocumentCode documentCode : documentCodes) {
-            if(documentEntryClassCodeBuilder.length() > 2) {
-                documentEntryClassCodeBuilder.append(",");
-            }
-            documentEntryClassCodeBuilder.append(documentCode.getValue()).append("^^").append(documentCode.getSchema());
-        }
-        documentEntryClassCodeBuilder.append("')");
-        String documentEntryClassCode = documentEntryClassCodeBuilder.toString();
-
+        String documentEntryClassCode = documentCodes.stream()
+                .map(documentCode -> "'" + documentCode.getValue() + "^^" + documentCode.getSchema() + "'")
+                .collect(Collectors.joining(",", "(", ")"));
         v3.getValue().add(documentEntryClassCode);
         entryClassCode.setValueList(v3);
         adhocQueryRequest.getAdhocQuery().getSlot().add(entryClassCode);

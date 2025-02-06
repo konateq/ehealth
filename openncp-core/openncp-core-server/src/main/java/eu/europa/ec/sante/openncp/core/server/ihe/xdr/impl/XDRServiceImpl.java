@@ -11,8 +11,8 @@ import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xdr.XDRConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.IHEEventType;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.XDRServiceInterface;
@@ -58,10 +58,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class XDRServiceImpl implements XDRServiceInterface {
@@ -300,7 +297,6 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     registryErrorList,
                     e.getOpenncpErrorCode(),
                     e.getMessage(),
-                    null,
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
 
@@ -365,7 +361,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         } catch (final NIException e) {
             logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(org.apache.commons.lang.exception.ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
         } catch (final Exception e) {
             logger.error("Generic Exception: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
@@ -557,7 +553,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 //                    }
                 } catch (final NIException e) {
                     logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-                    registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", e.getMessage(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+                    registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(org.apache.commons.lang.exception.ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
                 } catch (final Exception e) {
                     logger.error("Generic Exception: '{}'", e.getMessage(), e);
                     RegistryErrorUtils.addErrorMessage(
