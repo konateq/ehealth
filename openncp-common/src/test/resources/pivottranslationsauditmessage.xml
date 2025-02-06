@@ -1,22 +1,18 @@
 <AuditMessage>
-    <EventIdentification EventActionCode="E" EventDateTime="2024-02-16T16:57:21.368+01:00" EventOutcomeIndicator="0">
+    <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T11:56:08.793+01:00" EventOutcomeIndicator="0">
         <EventID csd-code="110112" codeSystemName="DCM" displayName="ncpTransformationMgr::Translate" originalText="Query"/>
         <EventTypeCode csd-code="EHDSI-94" codeSystemName="IHE Transactions" displayName="ncpTransformationMgr::Translate" originalText="ncpTransformationMgr::Translate"/>
     </EventIdentification>
-    <ActiveParticipant UserID="ncp.lu.ehealth.testa.eu" AlternativeUserID="ncp.lu.ehealth.testa.eu"
-                       UserIsRequestor="true" NetworkAccessPointID="192.168.34.64" NetworkAccessPointTypeCode="2">
-        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer"
-                    originalText="eHealth DSI Service Consumer"/>
+    <ActiveParticipant UserID="ncp.lu.ehealth.testa.eu" AlternativeUserID="ncp.lu.ehealth.testa.eu" UserIsRequestor="true" NetworkAccessPointID="192.168.34.64" NetworkAccessPointTypeCode="2">
+        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer" originalText="eHealth DSI Service Consumer"/>
     </ActiveParticipant>
     <AuditSourceIdentification AuditEnterpriseSiteID="LU-1" AuditSourceID="LU-1">
         <AuditSourceTypeCode csd-code="4"/>
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="4" ParticipantObjectDataLifeCycle="5">
         <ParticipantObjectIDTypeCode csd-code="in" codeSystemName="eHealth DSI Translation" displayName="Input Data" originalText="Input Data"/>
-        <ParticipantObjectName>PatientSource</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectTypeCode="4" ParticipantObjectDataLifeCycle="5">
         <ParticipantObjectIDTypeCode csd-code="out" codeSystemName="eHealth DSI Translation" displayName="Output Data" originalText="Output Data"/>
-        <ParticipantObjectName>PatientTarget</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

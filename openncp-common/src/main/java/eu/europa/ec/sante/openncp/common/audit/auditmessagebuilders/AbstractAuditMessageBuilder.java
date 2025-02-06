@@ -325,7 +325,7 @@ public abstract class AbstractAuditMessageBuilder {
      */
     AuditMessage addEventTarget(final AuditMessage auditMessage, final List<String> eventTargetObjectId, final Short typeCode,
                                 final Short typeCodeRole, final String errorMessageCode, final String action, final Short objectDataLifeCycle,
-                                final String EM_CodeSystemName, final String EM_DisplayName,final String participantObjectName) {
+                                final String EM_CodeSystemName, final String EM_DisplayName) {
 
         LOGGER.debug("AuditMessage addEventTarget('{}','{}','{}','{}','{}','{}','{}')", auditMessage, eventTargetObjectId,
                 typeCode, typeCodeRole, errorMessageCode, action, objectDataLifeCycle);
@@ -344,7 +344,6 @@ public abstract class AbstractAuditMessageBuilder {
                 em.setParticipantObjectDataLifeCycle(objectDataLifeCycle.toString());
             }
             em.setParticipantObjectIDTypeCode(errorMessageCodedValueType);
-            em.setParticipantObjectName(participantObjectName);
             auditMessage.getParticipantObjectIdentification().add(em);
         }
         return auditMessage;
@@ -361,7 +360,7 @@ public abstract class AbstractAuditMessageBuilder {
      * @return
      */
     AuditMessage addEventTarget(final AuditMessage auditMessage, final List<String> eventTargetObjectId, final Short objectTypeCode,
-                                final Short objectDataLifeCycle, final String EM_Code, final String EM_CodeSystemName, final String EM_DisplayName,final String participantObjectName) {
+                                final Short objectDataLifeCycle, final String EM_Code, final String EM_CodeSystemName, final String EM_DisplayName) {
 
         LOGGER.debug("AuditMessage addEventTarget('{}','{}','{}','{}','{}','{}','{}')", auditMessage, eventTargetObjectId,
                 objectTypeCode, objectDataLifeCycle, EM_Code, EM_CodeSystemName, EM_DisplayName);
@@ -380,7 +379,6 @@ public abstract class AbstractAuditMessageBuilder {
             eventTargetDescription.setDisplayName(EM_DisplayName);
             eventTargetDescription.setOriginalText(EM_DisplayName);
             eventTarget.setParticipantObjectIDTypeCode(eventTargetDescription);
-            eventTarget.setParticipantObjectName(participantObjectName);
             auditMessage.getParticipantObjectIdentification().add(eventTarget);
         }
         return auditMessage;

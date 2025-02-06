@@ -1,27 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
-    <EventIdentification EventActionCode="E" EventDateTime="2024-02-16T16:41:34.468+01:00" EventOutcomeIndicator="0">
+    <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T12:16:14.719+01:00" EventOutcomeIndicator="0">
         <EventID csd-code="SMP" codeSystemName="EHDSI-193" displayName="SMP::Query" originalText="SMP::Query"/>
         <EventTypeCode csd-code="EHDSI-193" codeSystemName="IHE Transactions" displayName="SMP::Query" originalText="SMP::Query"/>
         <EventTypeCode csd-code="SMP" codeSystemName="EHDSI-193" displayName="SMP::Query" originalText="SMP::Query"/>
     </EventIdentification>
     <ActiveParticipant UserID="ncp-ppt.pt.ehealth.testa.eu" AlternativeUserID="ncp-ppt.pt.ehealth.testa.eu" UserIsRequestor="true" NetworkAccessPointID="10.200.137.161" NetworkAccessPointTypeCode="2">
-        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer"
-                    originalText="eHealth DSI Service Consumer"/>
+        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer" originalText="eHealth DSI Service Consumer"/>
     </ActiveParticipant>
     <ActiveParticipant UserID="smp-test.publisher.ehealth.testa.eu" AlternativeUserID="smp-test.publisher.ehealth.testa.eu" UserIsRequestor="false" NetworkAccessPointID="smp-cert-auth-test.publisher.ehealth.testa.eu" NetworkAccessPointTypeCode="1">
-        <RoleIDCode csd-code="ServiceProvider" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Provider"
-                    originalText="eHealth DSI Service Provider"/>
+        <RoleIDCode csd-code="ServiceProvider" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Provider" originalText="eHealth DSI Service Provider"/>
     </ActiveParticipant>
     <AuditSourceIdentification AuditEnterpriseSiteID="PT-1" AuditSourceID="PT-1">
         <AuditSourceTypeCode csd-code="4"/>
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtY2VydC1hdXRoLXRlc3QucHVibGlzaGVyLmVoZWFsdGgudGVzdGEuZXUvZWhlYWx0aC1wYXJ0aWNpcGFudGlkLXFuczo6dXJuOmVoZWFsdGg6cHQ6bmNwLWlkcC9zZXJ2aWNlcy9laGVhbHRoLXJlc2lkLXFuczo6dXJuOmVoZWFsdGg6cGF0aWVudGlkZW50aWZpY2F0aW9uYW5kYXV0aGVudGljYXRpb246OnhjcGQ6OmNyb3NzZ2F0ZXdheXBhdGllbnRkaXNjb3ZlcnklMjMlMjNpdGktNTU=" ParticipantObjectTypeCode="2" ParticipantObjectTypeCodeRole="3">
         <ParticipantObjectIDTypeCode csd-code="9" codeSystemName="eHealth DSI Security" originalText="error message"/>
-        <ParticipantObjectDetail type="errormsg" value="ZXJyb3JNZXNzYWdl"/>
         <ParticipantObjectName>PatientSource</ParticipantObjectName>
+        <ParticipantObjectDetail type="errormsg" value="ZXJyb3JNZXNzYWdl"/>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="aHR0cHM6Ly9zbXAtdGVzdC5wdWJsaXNoZXIuZWhlYWx0aC50ZXN0YS5ldS9laGVhbHRoLXBhcnRpY2lwYW50aWQtcW5zJTNBJTNBdXJuJTNBZWhlYWx0aCUzQWF0JTNBbmNwLWlkcA==" ParticipantObjectTypeCode="2">
         <ParticipantObjectIDTypeCode csd-code="SMP" codeSystemName="eHealth DSI Security" displayName="SignedServiceMetadata" originalText="SignedServiceMetadata"/>
-        <ParticipantObjectName>Patient</ParticipantObjectName>
     </ParticipantObjectIdentification>
 </AuditMessage>

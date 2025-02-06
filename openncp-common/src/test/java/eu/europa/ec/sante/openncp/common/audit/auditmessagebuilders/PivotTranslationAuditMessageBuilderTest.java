@@ -37,11 +37,9 @@ public class PivotTranslationAuditMessageBuilderTest {
         eventLog.setEM_ParticipantObjectDetail("errorMessage".getBytes());
         final PivotTranslationAuditMessageBuilder pivotTranslationAuditMessageBuilder = new PivotTranslationAuditMessageBuilder();
         final AuditMessage generatedAuditMessage = pivotTranslationAuditMessageBuilder.build(eventLog);
-        System.out.println(AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
         final URL url = Resources.getResource("pivottranslationsauditmessage.xml");
         final AuditMessage expectedAuditMessage = AuditTrailUtils.convertXMLToAuditObject(IOUtils.toInputStream(Resources.toString(url, StandardCharsets.UTF_8)));
         expectedAuditMessage.getEventIdentification().setEventDateTime(now);
-        System.out.println(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage));
         XMLUnit.setIgnoreWhitespace(true);
         assertXMLEqual(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage), AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
     }

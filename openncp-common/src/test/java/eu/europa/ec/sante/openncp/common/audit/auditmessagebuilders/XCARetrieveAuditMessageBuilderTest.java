@@ -61,9 +61,9 @@ public class XCARetrieveAuditMessageBuilderTest extends XMLTestCase {
 
             final URL url = Resources.getResource("patientserviceretrievetauditmessage.xml");
             final AuditMessage expectedAuditMessage = AuditTrailUtils.convertXMLToAuditObject(IOUtils.toInputStream(Resources.toString(url, StandardCharsets.UTF_8)));
-           expectedAuditMessage.getEventIdentification().setEventDateTime(now);
-           XMLUnit.setIgnoreWhitespace(true);
-          assertXMLEqual(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage), AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
+            expectedAuditMessage.getEventIdentification().setEventDateTime(now);
+            XMLUnit.setIgnoreWhitespace(true);
+            assertXMLEqual(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage), AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
         }
 
     }

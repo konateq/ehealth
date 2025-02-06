@@ -31,9 +31,9 @@ public class PivotTranslationAuditMessageBuilder extends AbstractAuditMessageBui
         if (message != null) {
             // Event Target
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("4"), Short.valueOf("5"),
-                    "in", "eHealth DSI Translation", "Input Data","PatientSource");
+                    "in", "eHealth DSI Translation", "Input Data");
             addEventTarget(message, Arrays.asList(eventLog.getEventTargetAdditionalObjectId()), Short.valueOf("4"), Short.valueOf("5"),
-                    "out", "eHealth DSI Translation", "Output Data","PatientTarget");
+                    "out", "eHealth DSI Translation", "Output Data");
         }
         return message;
     }

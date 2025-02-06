@@ -42,7 +42,7 @@ public class TRCAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
         }
         if (message != null) {
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "TrcA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "TRC Assertion","Patient");
+                    "TrcA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "TRC Assertion");
         }
         return message;
     }

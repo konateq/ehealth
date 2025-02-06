@@ -13,7 +13,7 @@ public class XCARetrieveAuditMessageBuilder extends AbstractAuditMessageBuilder 
                         null, "ITI-39", "IHE Transactions", "Patient Number",
                         "Cross Gateway Retrieve", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), Short.valueOf("4"),
-                    "12", "", Short.valueOf("0"), AuditConstant.DICOM, "Cross Gateway Retrieve","PatientTarget");
+                    "12", "", Short.valueOf("0"), AuditConstant.DICOM, "Cross Gateway Retrieve");
         }
         return message;
     }

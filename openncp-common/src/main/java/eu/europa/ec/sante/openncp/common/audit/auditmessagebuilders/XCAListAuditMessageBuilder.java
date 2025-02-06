@@ -13,7 +13,7 @@ public class XCAListAuditMessageBuilder extends AbstractAuditMessageBuilder impl
                     null, "ITI-38", "IHE Transactions", "Patient Number",
                     "Cross Gateway Query", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), Short.valueOf("4"),
-                    "12", "", Short.valueOf("0"), AuditConstant.DICOM, "Cross Gateway Query","PatientTarget");
+                    "12", "", Short.valueOf("0"), AuditConstant.DICOM, "Cross Gateway Query");
 
         }
         return message;

@@ -32,7 +32,7 @@ public class SMPAuditMessageBuilder extends AbstractAuditMessageBuilder implemen
         }
         if (message != null) {
             addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "SMP", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "SignedServiceMetadata","Patient");
+                    "SMP", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "SignedServiceMetadata");
         }
         return message;
     }
