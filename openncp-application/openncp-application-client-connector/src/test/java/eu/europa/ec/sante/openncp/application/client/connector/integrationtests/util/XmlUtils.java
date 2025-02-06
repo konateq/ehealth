@@ -22,8 +22,7 @@ public class XmlUtils {
         try {
             final DOMSource domSource = new DOMSource(document);
             final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, true);
             transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             final Transformer transformer = transformerFactory.newTransformer();
             final String omit;

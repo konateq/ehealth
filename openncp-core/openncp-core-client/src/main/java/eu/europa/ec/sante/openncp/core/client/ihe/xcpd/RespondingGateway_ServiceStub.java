@@ -11,7 +11,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
-import eu.europa.ec.sante.openncp.core.common.constants.ihe.xcpd.XCPDConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xcpd.XCPDConstants;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201306UV02;
@@ -46,7 +46,10 @@ import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -556,7 +559,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
         try {
             final JAXBContext context = wsContext;
-            final Unmarshaller unmarshaller = context.createUnmarshaller();
+            final javax.xml.bind.Unmarshaller unmarshaller = context.createUnmarshaller();
 
             return unmarshaller.unmarshal(param.getXMLStreamReaderWithoutCaching(), type).getValue();
 
@@ -565,13 +568,13 @@ public class RespondingGateway_ServiceStub extends Stub {
         }
     }
 
-    private EventLog createAndSendEventLog(final PRPAIN201305UV02 sended, final PRPAIN201306UV02 received, final MessageContext msgContext,
+    private EventLog createAndSendEventLog(final PRPAIN201305UV02 sent, final PRPAIN201306UV02 received, final MessageContext msgContext,
                                            final SOAPEnvelope _returnEnv, final SOAPEnvelope env, final Assertion idAssertion, final String address, final String dstHomeCommunityId) {
 
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         eventLog.setNcpSide(NcpSide.NCP_B);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
-        EventLogUtil.prepareXCPDCommonLog(eventLog, msgContext, sended, received);
+        EventLogUtil.prepareXCPDCommonLog(eventLog, msgContext, sent, received);
         EventLogClientUtil.sendEventLog(eventLog);
         return eventLog;
     }

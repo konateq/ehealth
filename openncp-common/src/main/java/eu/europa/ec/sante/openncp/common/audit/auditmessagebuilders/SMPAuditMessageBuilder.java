@@ -26,7 +26,7 @@ public class SMPAuditMessageBuilder extends AbstractAuditMessageBuilder implemen
                     AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
             addAuditSource(message, eventLog.getAS_AuditSourceId());
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
-                    Short.valueOf("3"), "9", "errormsg");
+                    Short.valueOf("3"), "9", "errormsg","PatientSource");
         } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
