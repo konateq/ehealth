@@ -1,5 +1,0 @@
-# application.yml
-liquibase:
-  change-log: classpath:db/changelog/db.changelog-master.xml
-  # Spring Boot will resolve this version value
-version: 9.0.0

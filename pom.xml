@@ -92,6 +92,7 @@
         <jaxen.version>1.2.0</jaxen.version>
         <junit.version>4.13.2</junit.version>
         <junit.jupiter.version>5.7.2</junit.jupiter.version>
+        <liquibase.version>4.15.0</liquibase.version>
         <logback.version>1.2.11</logback.version>
         <mariadb-connector.version>3.1.4</mariadb-connector.version>
         <mysql-connector.version>8.4.0</mysql-connector.version>
@@ -649,6 +650,11 @@
                 <groupId>org.immutables</groupId>
                 <artifactId>value</artifactId>
                 <version>${immutables.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                <version>${liquibase.version}</version>
             </dependency>
             <!-- Test dependencies -->
             <dependency>
