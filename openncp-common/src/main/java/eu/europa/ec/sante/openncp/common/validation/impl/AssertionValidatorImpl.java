@@ -20,7 +20,7 @@ public class AssertionValidatorImpl extends AbstractValidator implements Asserti
     }
 
     @Override
-    public boolean validateDocument(String document, String validator) {
+    public String validateDocument(String document, String validator) {
 
         ValidateDocument request = new ValidateDocument();
         request.setDocument(document);
@@ -28,16 +28,16 @@ public class AssertionValidatorImpl extends AbstractValidator implements Asserti
 
         try {
             ValidateDocumentResponse response = (ValidateDocumentResponse) webServiceTemplate.marshalSendAndReceive(request);
-            return StringUtils.hasText(response.getDetailedResult());
+            return response.getDetailedResult();
 
         } catch (WebServiceClientException e) {
             logger.error("An error occurred during validation process of the AssertionValidator. Please check the stack trace for more details.", e);
-            return false;
+            return "N/A";
         }
     }
 
     @Override
-    public boolean validateBase64Document(String base64Document, String validator) {
+    public String validateBase64Document(String base64Document, String validator) {
 
         ValidateBase64Document request = new ValidateBase64Document();
         request.setBase64Document(base64Document);
@@ -45,11 +45,11 @@ public class AssertionValidatorImpl extends AbstractValidator implements Asserti
 
         try {
             ValidateBase64DocumentResponse response = (ValidateBase64DocumentResponse) webServiceTemplate.marshalSendAndReceive(request);
-            return StringUtils.hasText(response.getDetailedResult());
+            return response.getDetailedResult();
 
         } catch (WebServiceClientException e) {
             logger.error("An error occurred during validation process of the AssertionValidator. Please check the stack trace for more details.", e);
-            return false;
+            return "N/A";
         }
     }
 }
