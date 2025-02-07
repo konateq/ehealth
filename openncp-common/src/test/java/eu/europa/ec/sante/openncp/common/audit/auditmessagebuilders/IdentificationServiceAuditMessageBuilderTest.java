@@ -68,6 +68,7 @@ public class IdentificationServiceAuditMessageBuilderTest extends XMLTestCase {
             expectedAuditMessage.getEventIdentification().setEventDateTime(now);
 
             XMLUnit.setIgnoreWhitespace(true);
+            System.out.println(AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
             assertXMLEqual(AuditTrailUtils.convertAuditObjectToXML(expectedAuditMessage), AuditTrailUtils.convertAuditObjectToXML(generatedAuditMessage));
         }
 
