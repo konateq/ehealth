@@ -40,6 +40,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     true, eventLog.getSourceip());
+            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
                     AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
