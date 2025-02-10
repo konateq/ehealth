@@ -1,5 +1,8 @@
 package eu.europa.ec.sante.openncp.core.server.nc.mock.xca.impl;
 
+import eu.europa.ec.sante.openncp.common.Constant;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
@@ -82,8 +85,8 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
     private final List<OrCDDocumentMetaData> orCDDocumentMedicalImagesMetaDatas = new ArrayList<>();
     private final List<EPSOSDocument> documents = new ArrayList<>();
 
-    public DocumentSearchMockImpl() {
-
+    public DocumentSearchMockImpl(ConfigurationManager configurationManager) {
+        Validate.notNull(configurationManager, "ConfigurationManager must not be null");
         Collection<String> documentlist = ResourceList.getResources(Pattern.compile(PATTERN_EP));
         var resourceLoader = new ResourceLoader();
 
@@ -123,12 +126,12 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
                 logger.info("Document ID: '{}' parsed for Patient ID: '{}'", getOIDFromDocument(xmlDoc), pd.getId());
                 if (StringUtils.contains(pd.getId(), PREFIX_W_6)) {
                     epdXml = DocumentFactory.createEPDocumentXML(getOIDFromDocument(xmlDoc), pd.getId(), new Date(),
-                            Constants.HOME_COMM_ID, getTitleFromDocument(xmlDoc), getClinicalDocumentAuthor(xmlDoc),
+                            configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(xmlDoc), getClinicalDocumentAuthor(xmlDoc),
                             description, productCode, productName, epListParam, getClinicalDocumentConfidentialityEnum(xmlDoc),
                             this.getClinicalDocumentLanguage(xmlDoc));
                 } else {
                     epdXml = DocumentFactory.createEPDocumentXML(getOIDFromDocument(xmlDoc), pd.getId(), new Date(),
-                            Constants.HOME_COMM_ID, getTitleFromDocument(xmlDoc), getClinicalDocumentAuthor(xmlDoc),
+                            configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(xmlDoc), getClinicalDocumentAuthor(xmlDoc),
                             description, productCode, productName, epListParam, getClinicalDocumentConfidentialityEnum(xmlDoc),
                             this.getClinicalDocumentLanguage(xmlDoc), size, hash);
                 }
@@ -147,12 +150,12 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
                         addFormatToOID(pdfDoc, EPSOSDocumentMetaData.EPSOSDOCUMENT_FORMAT_PDF);
                         if (StringUtils.contains(pd.getId(), PREFIX_W_6)) {
                             epdPdf = DocumentFactory.createEPDocumentPDF(getOIDFromDocument(pdfDoc), pd.getId(),
-                                    new Date(), Constants.HOME_COMM_ID, getTitleFromDocument(xmlDoc),
+                                    new Date(), configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(xmlDoc),
                                     getClinicalDocumentAuthor(xmlDoc), description, productCode, productName, epListParam,
                                     getClinicalDocumentConfidentialityEnum(xmlDoc), this.getClinicalDocumentLanguage(xmlDoc));
                         } else {
                             epdPdf = DocumentFactory.createEPDocumentPDF(getOIDFromDocument(pdfDoc), pd.getId(),
-                                    new Date(), Constants.HOME_COMM_ID, getTitleFromDocument(xmlDoc),
+                                    new Date(), configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(xmlDoc),
                                     getClinicalDocumentAuthor(xmlDoc), description, productCode, productName, epListParam,
                                     getClinicalDocumentConfidentialityEnum(xmlDoc), this.getClinicalDocumentLanguage(xmlDoc)
                                     , size, hash);
@@ -188,12 +191,12 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
                 PSDocumentMetaData psdXml;
                 if (StringUtils.contains(pd.getId(), PREFIX_W_6)) {
                     psdXml = DocumentFactory.createPSDocumentXML(getOIDFromDocument(xmlDoc), pd.getId(),
-                            new Date(), Constants.HOME_COMM_ID, getTitleFromDocument(xmlDoc),
+                            new Date(), ConfigurationManagerFactory.getConfigurationManager().getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(xmlDoc),
                             getClinicalDocumentAuthor(xmlDoc), this.getClinicalDocumentConfidentialityEnum(xmlDoc),
                             this.getClinicalDocumentLanguage(xmlDoc));
                 } else {
                     psdXml = DocumentFactory.createPSDocumentXML(getOIDFromDocument(xmlDoc), pd.getId(),
-                            new Date(), Constants.HOME_COMM_ID, getTitleFromDocument(xmlDoc),
+                            new Date(), configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(xmlDoc),
                             getClinicalDocumentAuthor(xmlDoc), this.getClinicalDocumentConfidentialityEnum(xmlDoc),
                             this.getClinicalDocumentLanguage(xmlDoc), size, hash);
                 }
@@ -211,12 +214,12 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
                         addFormatToOID(pdfDoc, EPSOSDocumentMetaData.EPSOSDOCUMENT_FORMAT_PDF);
                         if (StringUtils.contains(pd.getId(), PREFIX_W_6)) {
                             psdPdf = DocumentFactory.createPSDocumentPDF(getOIDFromDocument(pdfDoc), pd.getId(),
-                                    new Date(), Constants.HOME_COMM_ID, getTitleFromDocument(pdfDoc),
+                                    new Date(), configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(pdfDoc),
                                     getClinicalDocumentAuthor(xmlDoc), this.getClinicalDocumentConfidentialityEnum(pdfDoc),
                                     this.getClinicalDocumentLanguage(pdfDoc));
                         } else {
                             psdPdf = DocumentFactory.createPSDocumentPDF(getOIDFromDocument(pdfDoc), pd.getId(),
-                                    new Date(), Constants.HOME_COMM_ID, getTitleFromDocument(pdfDoc),
+                                    new Date(), configurationManager.getProperty(Constant.HOME_COMM_ID), getTitleFromDocument(pdfDoc),
                                     getClinicalDocumentAuthor(xmlDoc), this.getClinicalDocumentConfidentialityEnum(pdfDoc),
                                     this.getClinicalDocumentLanguage(pdfDoc), size, hash);
                         }
