@@ -7,6 +7,9 @@
     <ActiveParticipant UserID="HR User ID" AlternativeUserID="HR Alternative User ID" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110153" codeSystemName="DCM" originalText="Source Role ID"/>
     </ActiveParticipant>
+    <ActiveParticipant UserID="eHealth OpenNCP EU Portal" AlternativeUserID="eHealth OpenNCP EU Portal" UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
+        <RoleIDCode csd-code="110152" codeSystemName="DCM" originalText="Destination Role ID"/>
+    </ActiveParticipant>
     <ActiveParticipant UserID="Service Consumer" AlternativeUserID="Service Consumer" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer"
                     originalText="eHealth DSI Service Consumer"/>
