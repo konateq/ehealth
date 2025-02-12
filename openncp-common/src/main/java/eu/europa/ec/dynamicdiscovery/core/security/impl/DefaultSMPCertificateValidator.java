@@ -108,7 +108,7 @@ public class DefaultSMPCertificateValidator implements ISMPCertificateValidator 
 
             x509TrustedCertificate.checkValidity();
         }  catch (CertificateExpiredException e) {
-            throw new CertificateException("Certificate with alias " + alias + " is expired!");
+            throw new CertificateException("[CERTIFICATE EXPIRED] Certificate with alias " + alias + " is expired!");
         }  catch (KeyStoreException | UnrecoverableEntryException | NoSuchAlgorithmException exc) {
             throw new CertificateException("Truststore exception occurred when  accessing certificate with alias:" + alias + ". Error message:" + ((GeneralSecurityException)exc).getMessage(), exc);
         }
