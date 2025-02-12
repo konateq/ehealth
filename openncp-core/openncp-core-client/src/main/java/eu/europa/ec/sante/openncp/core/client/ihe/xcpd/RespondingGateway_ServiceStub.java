@@ -20,6 +20,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.handler.OutFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import org.apache.axiom.om.*;
@@ -34,11 +35,10 @@ import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.client.Stub;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
-import org.apache.axis2.description.AxisService;
-import org.apache.axis2.description.OutInAxisOperation;
-import org.apache.axis2.description.WSDL2Constants;
+import org.apache.axis2.description.*;
+import org.apache.axis2.engine.Phase;
 import org.apache.axis2.kernel.http.HTTPConstants;
+import org.apache.axis2.phaseresolver.PhaseException;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.axis2.wsdl.WSDLConstants;
 import org.apache.commons.lang3.StringUtils;
@@ -73,6 +73,7 @@ public class RespondingGateway_ServiceStub extends Stub {
     private static final Logger LOGGER = LoggerFactory.getLogger(RespondingGateway_ServiceStub.class);
     private static final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private static final JAXBContext wsContext;
+    private static final int TIME_OUT_IN_MILLI_SECONDS = 180000;
     private static int counter = 0;
 
     static {
@@ -124,10 +125,34 @@ public class RespondingGateway_ServiceStub extends Stub {
         _serviceClient.getOptions().setTo(new EndpointReference(targetEndpoint));
         _serviceClient.getOptions().setUseSeparateListener(useSeparateListener);
         //  Wait time after which a client times out in a blocking scenario: 3 minutes
-        _serviceClient.getOptions().setTimeOutInMilliSeconds(180000);
+        _serviceClient.getOptions().setTimeOutInMilliSeconds(TIME_OUT_IN_MILLI_SECONDS);
+        _serviceClient.getOptions().setProperty(HTTPConstants.SO_TIMEOUT, TIME_OUT_IN_MILLI_SECONDS);
+        _serviceClient.getOptions().setProperty(HTTPConstants.CONNECTION_TIMEOUT, TIME_OUT_IN_MILLI_SECONDS);
 
         // Set the soap version
         _serviceClient.getOptions().setSoapVersionURI(SOAP12Constants.SOAP_ENVELOPE_NAMESPACE_URI);
+
+        try {
+            // Enabling WS Addressing module.
+            this._getServiceClient().engageModule("addressing");
+
+            LOGGER.debug("Adding custom phase for Outflow Evidence Emitter processing");
+            var outFlowHandlerDescription = new HandlerDescription("OutFlowEvidenceEmitterHandler");
+            outFlowHandlerDescription.setHandler(new OutFlowEvidenceEmitterHandler());
+            var axisConfiguration = this._getServiceClient().getServiceContext()
+                    .getConfigurationContext().getAxisConfiguration();
+            List<Phase> outFlowPhasesList = axisConfiguration.getOutFlowPhases();
+            var outFlowEvidenceEmitterPhase = new Phase("OutFlowEvidenceEmitterPhase");
+            try {
+                outFlowEvidenceEmitterPhase.addHandler(outFlowHandlerDescription);
+            } catch (PhaseException ex) {
+                LOGGER.error("PhaseException: '{}'", ex.getMessage(), ex);
+            }
+            outFlowPhasesList.add(outFlowEvidenceEmitterPhase);
+            axisConfiguration.setGlobalOutPhase(outFlowPhasesList);
+        } catch (AxisFault e) {
+            throw new RuntimeException(e);
+        }
 
         // Enabling Axis2 - SSL 2 ways communication (not active by default).
         try {
