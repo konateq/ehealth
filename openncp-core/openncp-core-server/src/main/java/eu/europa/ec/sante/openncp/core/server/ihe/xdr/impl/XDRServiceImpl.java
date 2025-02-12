@@ -41,11 +41,17 @@ import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xdr.DocumentSubmitInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.xml.ws.handler.MessageContext;
 import org.apache.axiom.soap.SOAPHeader;
+import org.apache.axiom.soap.SOAPMessage;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.cxf.message.Exchange;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -688,4 +694,45 @@ public class XDRServiceImpl implements XDRServiceInterface {
         }
         return uid;
     }
+
+    @Override
+    public RegistryResponseType saveDocument(ProvideAndRegisterDocumentSetRequestType request, EventLog eventLog) throws Exception {
+        MessageContext mc = PhaseInterceptorChain.getCurrentMessage().getExchange().getInMessage().get(MessageContext.class);
+        SOAPMessage soapMessage = (SOAPMessage) mc.get(SOAPMessage.class);
+        SOAPHeader soapHeader = soapMessage.getSOAPEnvelope().getHeader();
+        logger.info("[WS] XDR Service: Save Document");
+        // Traverse all ExtrinsicObjects
+        for (int i = 0; i < request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable().size(); i++) {
+
+            if (!(request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable().get(i).getValue() instanceof ExtrinsicObjectType)) {
+                continue;
+            }
+            final ExtrinsicObjectType extrinsicObject = (ExtrinsicObjectType) request.getSubmitObjectsRequest().getRegistryObjectList()
+                    .getIdentifiable().get(i).getValue();
+
+            // Traverse all Classification blocks in the ExtrinsicObject selected
+            for (final ClassificationType classification : extrinsicObject.getClassification()) {
+
+                logger.debug("[WS] XDR Service: Classification: '{}'-'{}'", classification.getClassificationScheme(), classification.getNodeRepresentation());
+                if (StringUtils.equals(classification.getClassificationScheme(), IheConstants.FORMAT_CODE_SCHEME)) {
+
+                    // Check the right LOINC code, currently coded as in example 3.4.2 ver. 2.2 p. 82
+                    if (StringUtils.equals(classification.getNodeRepresentation(), "urn:epSOS:ep:dis:2010")) {
+                        //  urn:epSOS:ep:dis:2010
+                        return saveDispensation(request, soapHeader, eventLog);
+
+                    } else if (StringUtils.equals(classification.getNodeRepresentation(), "urn:eHDSI:ed:discard:2020")) {
+                        //  "urn:eHDSI:ed:discard:2020"
+                        return discardMedicationDispensed(request, soapHeader, eventLog);
+                    }
+                }
+            }
+            break;
+        }
+
+        return reportDocumentTypeError(request);
+    }
 }
+
+
+

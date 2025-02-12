@@ -17,6 +17,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
+import eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl.XDRServiceImpl;
 import org.apache.axiom.om.*;
 import org.apache.axiom.om.ds.AbstractOMDataSource;
 import org.apache.axiom.soap.SOAPEnvelope;
@@ -30,6 +31,9 @@ import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
 import org.apache.axis2.util.JavaUtils;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.message.Exchange;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -107,7 +111,10 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         try {
             // get the implementation class for the Web Service
             final Object serviceObject = getTheImplementationObject(msgContext);
-            final XDR_ServiceSkeleton xdrServiceSkeleton = (XDR_ServiceSkeleton) serviceObject;
+            Message message = PhaseInterceptorChain.getCurrentMessage();
+
+            XDRServiceImpl xdrService = (XDRServiceImpl)getServiceObject(message); // Using the method from above
+
 
             // Find the axisOperation that has been set by the Dispatch phase.
             final AxisOperation axisOperation = msgContext.getOperationContext().getAxisOperation();
@@ -155,7 +162,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
                     eventLog.setNcpSide(NcpSide.NCP_A);
-                    final RegistryResponseType registryResponse = xdrServiceSkeleton.documentRecipient_ProvideAndRegisterDocumentSetB(wrappedParam, soapHeader, eventLog);
+                    final RegistryResponseType registryResponse = xdrService.saveDocument(wrappedParam, eventLog);
 
                     envelope = toEnvelope(getSOAPFactory(msgContext), registryResponse);
 
@@ -382,6 +389,35 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         @Override
         public boolean isDestructiveWrite() {
             return false;
+        }
+    }
+
+    public Object getServiceObject(Message message) {
+
+        try {
+            if (message == null) {
+                throw new RuntimeException("No CXF message found."); // Handle appropriately
+            }
+
+            Exchange exchange = message.getExchange();
+            if (exchange == null) {
+                throw new RuntimeException("No CXF exchange found."); // Handle appropriately
+            }
+
+            // 2. Get the Implementation Object
+            Object serviceObject = exchange.getService();
+
+            if (serviceObject == null) {
+                throw new RuntimeException("Service object not found in exchange.");
+            }
+            //3. Cast to Service Impl
+            XDRServiceImpl xdrServiceSkeleton = (XDRServiceImpl) serviceObject;
+
+            return xdrServiceSkeleton;
+
+        } catch (Exception e) {
+            // Handle exceptions appropriately (log, throw custom exception, etc.)
+            throw new RuntimeException("Error getting service object: " + e.getMessage(), e); // Example
         }
     }
 }

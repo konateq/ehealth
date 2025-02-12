@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.server.ihe.xdr;
+/*package eu.europa.ec.sante.openncp.core.server.ihe.xdr;
 
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.core.common.ihe.XDRServiceInterface;
@@ -8,21 +8,21 @@ import org.apache.axiom.soap.SOAPHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
+*//**
  * XDR_ServiceSkeleton java skeleton for the axisService
- */
+ *//*
 @Service("xdrServiceSkeleton")
 public class XDR_ServiceSkeleton {
 
     @Autowired
     private XDRServiceInterface xdrServiceInterface;
 
-    /**
+    *//**
      * Auto generated method signature
      *
      * @param provideAndRegisterDocumentSetRequest
-     */
+     *//*
     public RegistryResponseType documentRecipient_ProvideAndRegisterDocumentSetB(ProvideAndRegisterDocumentSetRequestType provideAndRegisterDocumentSetRequest,SOAPHeader soapHeader, EventLog eventLog) throws Exception {
         return xdrServiceInterface.saveDocument(provideAndRegisterDocumentSetRequest, soapHeader, eventLog);
     }
-}
+}*/
