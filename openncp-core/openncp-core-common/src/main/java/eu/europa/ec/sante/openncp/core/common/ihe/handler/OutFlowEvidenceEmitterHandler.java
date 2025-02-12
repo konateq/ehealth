@@ -7,6 +7,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import org.apache.axiom.soap.SOAPBody;
 import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axis2.context.MessageContext;
+import org.apache.axis2.description.AxisService;
 import org.apache.axis2.handlers.AbstractHandler;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
 //        LOGGER.debug("LOGGING TEST VALUES");
 //        LOGGER.debug("MessageContext properties: " + msgcontext.getProperties());
 //        LOGGER.debug("MessageContext messageID: " + msgcontext.getMessageID());
-//        
+//
 //        SessionContext sessionCtx = msgcontext.getSessionContext();
 //        if (sessionCtx != null) {
 //            LOGGER.debug("SessionContext CookieID: " + sessionCtx.getCookieID());
@@ -88,7 +89,7 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
 //                LOGGER.debug("AxisService EPRs: " + Arrays.toString((String[]) axisService.getEPRs()));
 //                LOGGER.debug("AxisService name: " + axisService.getName());
 //                LOGGER.debug("AxisService isClientSide: " + axisService.isClientSide());
-//            } 
+//            }
 //        } else {
 //            LOGGER.debug("ServiceGroupContext is null!");
 //        }
@@ -115,13 +116,84 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
             LOGGER.debug("title: '{}'", title);
             LOGGER.debug("msgUUID: '{}", msgUUID);
 
-            /* Portal sends request to NCP-B*/
-            EvidenceUtils.createEvidenceREMNRO(envCanonicalized, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
-                    Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-                    title, msgUUID);
+            AxisService axisService = msgcontext.getServiceContext().getAxisService();
+            boolean isClientSide = axisService.isClientSide();
+            LOGGER.debug("AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
 
+            if (isClientSide) {
+                LOGGER.info("[NRO] Evidence Emitter - NCP-B");
+                /* NCP-B sends to NCP-A, e.g.:
+                    NRO
+                    title = "NCPB_XCPD_REQ"
+                    eventType = ihe event
+                */
+                //msgUUID = null; It stays as null because it's fetched from soap msg
+                LOGGER.debug("Title: '{}' - eventType: '{}'", title, eventType);
+
+                /* Portal sends request to NCP-B*/
+                EvidenceUtils.createEvidenceREMNRO(envCanonicalized, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
+                        Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+                        "NCPB_" + title, msgUUID);
+            } else {
+                LOGGER.info("[NRO] Evidence Emitter - NCP-A");
+                /* NCP-A replies to NCP-B, e.g.:
+                    NRO
+                    title = "NCPA_XCPD_RES"
+                    eventType = ihe event
+                NCP-B replies to Portal, e.g.:
+                    NRO
+                    title = "NCPB_PD_RES_SENT"
+                    eventType = "NCPB_PD_RES"
+                    msguuid = random
+                */
+                /* Joao: as per the CP, evidence generation on the way back is optional,
+                so I leave it commented. If in the future it's decided that is mandatory,
+                just uncomment.
+                */
+//                eventType = this.evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
+//                title = this.evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
+//                msgUUID = this.evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
+//                logger.debug("eventType: " + eventType);
+//                logger.debug("title: " + title);
+//                logger.debug("msgUUID: " + msgUUID);
+//
+//                if (msgUUID != null) {
+//                    // this is a Portal-NCPB interaction: msgUUID comes from IdA or is random
+//                    EvidenceUtils.createEvidenceREMNRO(envCanonicalized,
+//                                Constants.NCP_SIG_KEYSTORE_PATH,
+//                                Constants.NCP_SIG_KEYSTORE_PASSWORD,
+//                                Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                                Constants.SC_KEYSTORE_PATH,
+//                                Constants.SC_KEYSTORE_PASSWORD,
+//                                Constants.SC_PRIVATEKEY_ALIAS,
+//                                Constants.NCP_SIG_KEYSTORE_PATH,
+//                                Constants.NCP_SIG_KEYSTORE_PASSWORD,
+//                                Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                                eventType,
+//                                new DateTime(),
+//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+//                                title,
+//                                msgUUID);
+//                } else {
+//                    // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the soap header
+//                    EvidenceUtils.createEvidenceREMNRO(envCanonicalized,
+//                                Constants.NCP_SIG_KEYSTORE_PATH,
+//                                Constants.NCP_SIG_KEYSTORE_PASSWORD,
+//                                Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                                Constants.SP_KEYSTORE_PATH,
+//                                Constants.SP_KEYSTORE_PASSWORD,
+//                                Constants.SP_PRIVATEKEY_ALIAS,
+//                                Constants.SC_KEYSTORE_PATH,
+//                                Constants.SC_KEYSTORE_PASSWORD,
+//                                Constants.SC_PRIVATEKEY_ALIAS,
+//                                eventType,
+//                                new DateTime(),
+//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+//                                title);
+//                }
+            }
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
