@@ -54,65 +54,42 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
             final AxisService axisService = msgContext.getServiceContext().getAxisService();
             final boolean isClientSide = axisService.isClientSide();
             logger.debug("[NRR] AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
-            //if (isClientSide) {
 
-                logger.info("[NRR] Evidence Emitter - Response");
-                //  This will stay commented as the Evidence Emitter CP doesn't mandate the generation of evidences in the response.
-                // NCP-B receives from NCP-A, e.g.: NRR title = "NCPB_XCPD_RES" eventType = ihe event
+            logger.info("[NRR] Evidence Emitter - Response");
+            //  Evidence Emitter CP doesn't mandate the generation of evidences in the response.
+            // NCP-B receives from NCP-A, e.g.: NRR title = "NCPB_XCPD_RES" eventType = ihe event
 
-//                eventType = this.evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
-//                title = "NCPB_" + this.evidenceEmitterHandlerUtils.getTransactionNameFromMessage(soapBody);
-//                //msgUUID = null; It stays as null because it's fetched from soap msg
-//                logger.debug("eventType: '{}'", eventType);
-//                logger.debug("title: '{}'", title);
-//
-//                EvidenceUtils.createEvidenceREMNRR(envCanonicalized,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                            tr.com.srdc.epsos.util.Constants.SP_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.SP_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.SP_PRIVATEKEY_ALIAS,
-//                            tr.com.srdc.epsos.util.Constants.SC_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.SC_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.SC_PRIVATEKEY_ALIAS,
-//                            eventType,
-//                            new DateTime(),
-//                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                            title);
-            //} else {
-                /* NCP-B receives from Portal, e.g.:
-                    NRR
-                    title = "PORTAL_PD_REQ_RECEIVED"
-                    eventType = "PORTAL_PD_REQ"
-                    msguuid = IdA ID + datetime
-                NCP-A receives from NCP-B, e.g.:
-                    NRR
-                    title = "NCPA_XCPD_REQ"
-                    eventType = ihe event
-                */
-                eventType = evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
-                title = evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
-                msgUUID = evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
-                logger.debug("eventType: '{}' - title: '{}'", eventType, title);
+            /* NCP-B receives from Portal, e.g.:
+                NRR
+                title = "PORTAL_PD_REQ_RECEIVED"
+                eventType = "PORTAL_PD_REQ"
+                msguuid = IdA ID + datetime
+            NCP-A receives from NCP-B, e.g.:
+                NRR
+                title = "NCPA_XCPD_REQ"
+                eventType = ihe event
+            */
+            eventType = evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
+            title = evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
+            msgUUID = evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
+            logger.debug("eventType: '{}' - title: '{}'", eventType, title);
 
-                if (msgUUID != null) {
-                    logger.info("[NRR] Evidence Emitter - Portal NCP-B");
-                    // this is a Portal-NCPB interaction: msgUUID comes from IdA or TRCA or is random
-                    EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
-                            Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-                            title, msgUUID);
-                } else {
-                    logger.info("[NRR] Evidence Emitter - NCP A/B");
-                    // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the SOAP header
-                    EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS,
-                            Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS, eventType,
-                            new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), title);
-                }
-           // }
+            if (msgUUID != null) {
+                logger.info("[NRR] Evidence Emitter - Portal NCP-B");
+                // this is a Portal-NCPB interaction: msgUUID comes from IdA or TRCA or is random
+                EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
+                        Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+                        title, msgUUID);
+            } else {
+                logger.info("[NRR] Evidence Emitter - NCP A/B");
+                // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the SOAP header
+                EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS,
+                        Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS, eventType,
+                        new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), title);
+            }
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
