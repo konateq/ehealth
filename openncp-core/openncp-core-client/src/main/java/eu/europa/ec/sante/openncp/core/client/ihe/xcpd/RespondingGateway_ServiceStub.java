@@ -133,28 +133,22 @@ public class RespondingGateway_ServiceStub extends Stub {
         // Set the soap version
         _serviceClient.getOptions().setSoapVersionURI(SOAP12Constants.SOAP_ENVELOPE_NAMESPACE_URI);
 
+        registerOutEvidenceEmitterHandler();
+        registerInEvidenceEmitterHandler();
+
+        // Enabling Axis2 - SSL 2 ways communication (not active by default).
         try {
-            // Enabling WS Addressing module.
-            this._getServiceClient().engageModule("addressing");
-
-            LOGGER.debug("Adding custom phase for Outflow Evidence Emitter processing");
-            var outFlowHandlerDescription = new HandlerDescription("OutFlowEvidenceEmitterHandler");
-            outFlowHandlerDescription.setHandler(new OutFlowEvidenceEmitterHandler());
-            var axisConfiguration = this._getServiceClient().getServiceContext()
-                    .getConfigurationContext().getAxisConfiguration();
-            List<Phase> outFlowPhasesList = axisConfiguration.getOutFlowPhases();
-            var outFlowEvidenceEmitterPhase = new Phase("OutFlowEvidenceEmitterPhase");
-            try {
-                outFlowEvidenceEmitterPhase.addHandler(outFlowHandlerDescription);
-            } catch (PhaseException ex) {
-                LOGGER.error("PhaseException: '{}'", ex.getMessage(), ex);
-            }
-            outFlowPhasesList.add(outFlowEvidenceEmitterPhase);
-            axisConfiguration.setGlobalOutPhase(outFlowPhasesList);
-        } catch (AxisFault e) {
-            throw new RuntimeException(e);
+            _serviceClient.getServiceContext().getConfigurationContext()
+                    .setProperty(HTTPConstants.CACHED_HTTP_CLIENT, HttpsClientConfiguration.getDefaultSSLClient());
+            _serviceClient.getServiceContext().getConfigurationContext()
+                    .setProperty(HTTPConstants.REUSE_HTTP_CLIENT, false);
+        } catch (final NoSuchAlgorithmException | KeyManagementException | IOException | CertificateException |
+                       KeyStoreException | UnrecoverableKeyException e) {
+            throw new RuntimeException("SSL Context cannot be initialized", e);
         }
+    }
 
+    private void registerInEvidenceEmitterHandler() {
         try {
             // Enabling WS Addressing module.
             this._getServiceClient().engageModule("addressing");
@@ -176,16 +170,29 @@ public class RespondingGateway_ServiceStub extends Stub {
         } catch (AxisFault e) {
             throw new RuntimeException(e);
         }
+    }
 
-        // Enabling Axis2 - SSL 2 ways communication (not active by default).
+    private void registerOutEvidenceEmitterHandler() {
         try {
-            _serviceClient.getServiceContext().getConfigurationContext()
-                    .setProperty(HTTPConstants.CACHED_HTTP_CLIENT, HttpsClientConfiguration.getDefaultSSLClient());
-            _serviceClient.getServiceContext().getConfigurationContext()
-                    .setProperty(HTTPConstants.REUSE_HTTP_CLIENT, false);
-        } catch (final NoSuchAlgorithmException | KeyManagementException | IOException | CertificateException |
-                       KeyStoreException | UnrecoverableKeyException e) {
-            throw new RuntimeException("SSL Context cannot be initialized", e);
+            // Enabling WS Addressing module.
+            this._getServiceClient().engageModule("addressing");
+
+            LOGGER.debug("Adding custom phase for Outflow Evidence Emitter processing");
+            var outFlowHandlerDescription = new HandlerDescription("OutFlowEvidenceEmitterHandler");
+            outFlowHandlerDescription.setHandler(new OutFlowEvidenceEmitterHandler());
+            var axisConfiguration = this._getServiceClient().getServiceContext()
+                    .getConfigurationContext().getAxisConfiguration();
+            List<Phase> outFlowPhasesList = axisConfiguration.getOutFlowPhases();
+            var outFlowEvidenceEmitterPhase = new Phase("OutFlowEvidenceEmitterPhase");
+            try {
+                outFlowEvidenceEmitterPhase.addHandler(outFlowHandlerDescription);
+            } catch (PhaseException ex) {
+                LOGGER.error("PhaseException: '{}'", ex.getMessage(), ex);
+            }
+            outFlowPhasesList.add(outFlowEvidenceEmitterPhase);
+            axisConfiguration.setGlobalOutPhase(outFlowPhasesList);
+        } catch (AxisFault e) {
+            throw new RuntimeException(e);
         }
     }
 

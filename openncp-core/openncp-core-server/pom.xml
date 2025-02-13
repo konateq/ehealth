@@ -4,7 +4,7 @@
     <parent>
         <groupId>eu.europa.ec.sante</groupId>
         <artifactId>openncp-core</artifactId>
-        <version>8.0.2-SNAPSHOT</version>
+        <version>8.0.2</version>
     </parent>
     <artifactId>openncp-core-server</artifactId>
     <name>openncp-core-server</name>
