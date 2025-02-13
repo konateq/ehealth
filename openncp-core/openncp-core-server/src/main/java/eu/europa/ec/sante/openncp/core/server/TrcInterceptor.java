@@ -27,7 +27,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-@Interceptor(order = Integer.MIN_VALUE)
+@Interceptor
 @Component
 public class TrcInterceptor implements FhirCustomInterceptor {
 
@@ -45,11 +45,12 @@ public class TrcInterceptor implements FhirCustomInterceptor {
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
     public void validateTrcAssertionIfApplicable(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final RestOperationTypeEnum restOperationTypeEnum) {
         final EuRequestDetails euRequestDetails = EuRequestDetails.of(theRequestDetails);
-
-        if (euRequestDetails.isPatient()) {
-            return; //no TRC check for patient resources
+        if (euRequestDetails.isPatient() || euRequestDetails.getRestOperationType() == RestOperationTypeEnum.METADATA) {
+            LOGGER.debug("The request was regarding a patient resource or a METADATA request, skipping TRC assertion verification");
+            return; //no TRC check for patient resources or metadata requests
         }
 
+        LOGGER.info("Validating TRC assertion for resource: {}", euRequestDetails.getResourceType());
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
