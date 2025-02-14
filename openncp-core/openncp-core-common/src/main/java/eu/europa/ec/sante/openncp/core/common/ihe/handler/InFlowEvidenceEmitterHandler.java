@@ -54,7 +54,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
             final AxisService axisService = msgContext.getServiceContext().getAxisService();
             final boolean isClientSide = axisService.isClientSide();
             logger.debug("[NRR] AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
-            if (isClientSide) {
+            //if (isClientSide) {
 
                 logger.info("[NRR] Evidence Emitter - Response");
                 //  This will stay commented as the Evidence Emitter CP doesn't mandate the generation of evidences in the response.
@@ -80,7 +80,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
 //                            new DateTime(),
 //                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
 //                            title);
-            } else {
+            //} else {
                 /* NCP-B receives from Portal, e.g.:
                     NRR
                     title = "PORTAL_PD_REQ_RECEIVED"
@@ -112,7 +112,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
                             Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS, eventType,
                             new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), title);
                 }
-            }
+           // }
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }

@@ -20,6 +20,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.handler.InFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.OutFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
@@ -150,6 +151,28 @@ public class RespondingGateway_ServiceStub extends Stub {
             }
             outFlowPhasesList.add(outFlowEvidenceEmitterPhase);
             axisConfiguration.setGlobalOutPhase(outFlowPhasesList);
+        } catch (AxisFault e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            // Enabling WS Addressing module.
+            this._getServiceClient().engageModule("addressing");
+
+            LOGGER.debug("Adding custom phase for InFlow Evidence Emitter processing");
+            var inFlowHandlerDescription = new HandlerDescription("InFlowEvidenceEmitterHandler");
+            inFlowHandlerDescription.setHandler(new InFlowEvidenceEmitterHandler());
+            var axisConfiguration = this._getServiceClient().getServiceContext()
+                    .getConfigurationContext().getAxisConfiguration();
+            List<Phase> inFlowPhasesList = axisConfiguration.getOutFlowPhases();
+            var inFlowEvidenceEmitterPhase = new Phase("InFlowEvidenceEmitterPhase");
+            try {
+                inFlowEvidenceEmitterPhase.addHandler(inFlowHandlerDescription);
+            } catch (PhaseException ex) {
+                LOGGER.error("PhaseException: '{}'", ex.getMessage(), ex);
+            }
+            inFlowPhasesList.add(inFlowEvidenceEmitterPhase);
+            axisConfiguration.setGlobalOutPhase(inFlowPhasesList);
         } catch (AxisFault e) {
             throw new RuntimeException(e);
         }
