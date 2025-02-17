@@ -5,16 +5,15 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
-import org.apache.axiom.soap.SOAPBody;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.util.XMLUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPHeader;
 import java.util.*;
 
 /**
@@ -91,16 +90,31 @@ public class EvidenceEmitterHandlerUtils {
 
     public String getEventTypeFromMessage(final SOAPBody soapBody) {
 
-        final String messageElement = soapBody.getFirstElementLocalName();
-        LOGGER.debug("Message body element: '{}'", messageElement);
-        return events.get(messageElement);
+
+        Element firstChild = (Element) soapBody.getFirstChild();
+
+        if (firstChild != null) {
+            final String messageElement =  firstChild.getLocalName();
+            LOGGER.debug("Message body element: '{}'", messageElement);
+            return events.get(messageElement);
+        } else {
+            return null;
+        }
+
+
     }
 
     public String getTransactionNameFromMessage(final SOAPBody soapBody) {
 
-        final String messageElement = soapBody.getFirstElementLocalName();
-        LOGGER.debug("Message body element: '{}'", messageElement);
-        return transactionNames.get(messageElement);
+        Element firstChild = (Element) soapBody.getFirstChild();
+
+        if (firstChild != null) {
+            final String messageElement =  firstChild.getLocalName();
+            LOGGER.debug("Message body element: '{}'", messageElement);
+            return transactionNames.get(messageElement);
+        } else {
+            return null;
+        }
     }
 
     private boolean isClientConnectorOperation(final String operation) {
@@ -109,19 +123,30 @@ public class EvidenceEmitterHandlerUtils {
 
     public String getServerSideTitle(final SOAPBody soapBody) {
 
-        final String operation = soapBody.getFirstElementLocalName();
-        String title = transactionNames.get(operation);
-        if (!this.isClientConnectorOperation(operation)) {
-            title = "NCPA_" + title;
+
+        Element firstChild = (Element) soapBody.getFirstChild();
+
+        if (firstChild != null) {
+            final String messageElement =  firstChild.getLocalName();
+            String title = transactionNames.get(messageElement);
+            if (!this.isClientConnectorOperation(messageElement)) {
+                title = "NCPA_" + title;
+            }
+            return title;
+        } else {
+            return null;
         }
-        return title;
+
+
     }
 
     public String getMsgUUID(final SOAPHeader soapHeader, final SOAPBody soapBody) throws Exception {
 
         String msguuid = null;
         final Element elemSoapHeader = XMLUtils.toDOM(soapHeader);
-        final String operation = soapBody.getFirstElementLocalName();
+       // final String operation = soapBody.getFirstElementLocalName();
+        Element firstChild = (Element) soapBody.getFirstChild();
+        final String operation =  firstChild.getLocalName();
         if (isClientConnectorOperation(operation)) {
             // we're in a Portal-NCPB interaction
             final Assertion identityAssertion = SoapElementHelper.getHCPAssertion(elemSoapHeader);
@@ -143,7 +168,7 @@ public class EvidenceEmitterHandlerUtils {
 
     public Document canonicalizeAxiomSoapEnvelope(final SOAPEnvelope env) throws Exception {
 
-        final Element envAsDom = XMLUtils.toDOM(env);
+        final Element envAsDom =
         final Document envCanonicalized = XMLUtil.canonicalize(envAsDom.getOwnerDocument());
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             LOGGER_CLINICAL.debug("Pretty printing canonicalized:\n{}", XMLUtil.prettyPrint(envCanonicalized));

@@ -46,7 +46,7 @@
             <scope>compile</scope>
         </dependency>
         <!-- Axis 2 dependencies -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.axis2</groupId>
             <artifactId>axis2-kernel</artifactId>
             <version>${axis2.version}</version>
@@ -96,7 +96,7 @@
             <groupId>org.apache.axis2</groupId>
             <artifactId>axis2-jaxws</artifactId>
             <version>${axis2.version}</version>
-        </dependency>
+        </dependency>-->
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>

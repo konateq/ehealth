@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- This file was auto-generated from WSDL -->
-<!-- by the Apache Axis2 version: 1.5.5  Built on : May 28, 2011 (08:30:56 CEST) -->
+<!--<?xml version="1.0" encoding="UTF-8"?>
+&lt;!&ndash; This file was auto-generated from WSDL &ndash;&gt;
+&lt;!&ndash; by the Apache Axis2 version: 1.5.5  Built on : May 28, 2011 (08:30:56 CEST) &ndash;&gt;
 <serviceGroup>
     <service name="XDR_Service">
         <messageReceivers>
@@ -15,4 +15,4 @@
             <outputActionMapping>urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-bResponse</outputActionMapping>
         </operation>
     </service>
-</serviceGroup>
+</serviceGroup>-->

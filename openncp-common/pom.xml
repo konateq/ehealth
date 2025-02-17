@@ -9,6 +9,8 @@
     <artifactId>openncp-common</artifactId>
     <name>openncp-common</name>
 
+    <properties>
+        <cxf.version>3.6.4</cxf.version> </properties>
 
     <dependencies>
         <!-- Spring dependencies -->
@@ -224,12 +226,29 @@
             <groupId>xmlunit</groupId>
             <artifactId>xmlunit</artifactId>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>org.apache.axis2</groupId>
             <artifactId>axis2-kernel</artifactId>
             <version>${axis2.version}</version>
             <scope>compile</scope>
-        </dependency>
+        </dependency>-->
+
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-core</artifactId>
+                <version>${cxf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-rt-transports-http</artifactId>
+                <version>${cxf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-rt-frontend-jaxws</artifactId>
+                <version>${cxf.version}</version>
+            </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot</artifactId>

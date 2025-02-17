@@ -3,21 +3,27 @@ package eu.europa.ec.sante.openncp.core.common.ihe.eadc;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.ObjectFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.Transaction;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.TransactionInfo;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.cxf.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPHeader;
+import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
+import javax.xml.transform.TransformerFactory;
 
 /**
  * The purpose of this class is to help the eADC invocation process, by providing utility methods to invoke the service.
@@ -34,13 +40,13 @@ public class EadcUtil {
      * Response message context, together with optional document, a Transaction Info object containing transaction
      * details and a selected data source.
      *
-     * @param reqMsgContext the Servlet request message context
-     * @param rspMsgContext the Servlet response message context
+     * @param reqMessage the Servlet request message context
+     * @param rspMessage the Servlet response message context
      * @param cdaDocument   the optional CDA document, leave as null if not necessary
      * @param transInfo     the Transaction Info object
      * @throws Exception
      */
-    public static void invokeEadcFailure(MessageContext reqMsgContext, MessageContext rspMsgContext, Document cdaDocument,
+    public static void invokeEadcFailure(final Message reqMessage, final Message rspMessage, Document cdaDocument,
                                          TransactionInfo transInfo, EadcEntry.DsTypes datasource, String errorDescription) throws Exception {
 
         StopWatch watch = new StopWatch();
@@ -53,11 +59,23 @@ public class EadcUtil {
         reqEnv = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         respEnv = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-        if (reqMsgContext != null && reqMsgContext.getEnvelope() != null) {
+        /*if (reqMsgContext != null && reqMsgContext.getEnvelope() != null) {
             reqEnv.adoptNode(XMLUtils.toDOM(reqMsgContext.getEnvelope()));
         }
         if (rspMsgContext != null && rspMsgContext.getEnvelope() != null) {
             respEnv.adoptNode(XMLUtils.toDOM(rspMsgContext.getEnvelope()));
+        }*/
+
+        try {
+            SOAPMessage reqSoapMessage = reqMessage.get(SOAPMessage.class);
+            SOAPMessage resSoapMessage = rspMessage.get(SOAPMessage.class);
+            copyEnvelopeContent(reqMessage, reqSoapMessage.getSOAPPart().getEnvelope());
+            copyEnvelopeContent(rspMessage, resSoapMessage.getSOAPPart().getEnvelope());
+
+        } catch (Exception e) {
+            // Log the full exception details for debugging!
+            e.printStackTrace(); // Or use your logging framework
+            throw new RuntimeException("Error copying SOAP envelopes: " + e.getMessage(), e);
         }
 
         transaction = buildTransaction(transInfo);
@@ -78,18 +96,54 @@ public class EadcUtil {
         LOGGER.info("[EADC] Transaction Failure Processing executed in: '{}ms'", watch.getTime());
     }
 
+
+    private static void copyEnvelopeContent(Message message, SOAPEnvelope targetEnvelope) throws Exception {
+        if (message != null) {
+            SOAPMessage soapMessage = message.get(SOAPMessage.class);
+            if (soapMessage != null) {
+                SOAPEnvelope sourceEnvelope = soapMessage.getSOAPPart().getEnvelope();
+                if (sourceEnvelope != null) {
+
+                    // 1. Create a *new* body for the target envelope
+                    SOAPBody targetBody = targetEnvelope.getBody(); // Get the target body
+                    if(targetBody == null) {
+                        targetBody = targetEnvelope.addBody();
+                    }
+                    Element newBodyElement = targetBody.addBodyElement(targetEnvelope.createName("","","")); // create empty body
+
+                    // 2. Transform the *source* body to the *new* target body element
+                    TransformerFactory tf = TransformerFactory.newInstance();
+                    tf.newTransformer().transform(new DOMSource(sourceEnvelope.getBody()), new DOMResult(newBodyElement));
+
+
+                    // Copy the header (if needed)
+                    SOAPHeader sourceHeader = sourceEnvelope.getHeader();
+                    if (sourceHeader != null) {
+                        SOAPHeader targetHeader = targetEnvelope.getHeader();
+                        if(targetHeader == null) {
+                            targetHeader = targetEnvelope.addHeader();
+                        }
+                        Element newHeaderElement = targetHeader.addHeaderElement(targetEnvelope.createName("","",""));
+                        tf.newTransformer().transform(new DOMSource(sourceHeader), new DOMResult(newHeaderElement));
+
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * This utility method will invoke eADC for a given transaction. You will need to provide the Axis Request and
      * Response message context, together with optional document, a Transaction Info object containing transaction
      * details and a selected data source.
      *
-     * @param reqMsgContext the Servlet request message context
-     * @param rspMsgContext the Servlet response message context
+     * @param reqMessage the Servlet request message context
+     * @param rspMessage the Servlet response message context
      * @param cdaDocument   the optional CDA document, leave as null if not necessary
      * @param transInfo     the Transaction Info object
      * @throws Exception
      */
-    public static void invokeEadc(MessageContext reqMsgContext, MessageContext rspMsgContext, Document cdaDocument,
+    public static void invokeEadc(Message reqMessage, Message rspMessage, Document cdaDocument,
                                   TransactionInfo transInfo, EadcEntry.DsTypes datasource) throws Exception {
 
         StopWatch watch = new StopWatch();
@@ -102,11 +156,16 @@ public class EadcUtil {
         reqEnv = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         respEnv = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-        if (reqMsgContext != null && reqMsgContext.getEnvelope() != null) {
-            reqEnv.adoptNode(XMLUtils.toDOM(reqMsgContext.getEnvelope()));
-        }
-        if (rspMsgContext != null && rspMsgContext.getEnvelope() != null) {
-            respEnv.adoptNode(XMLUtils.toDOM(rspMsgContext.getEnvelope()));
+        try {
+            SOAPMessage reqSoapMessage = reqMessage.get(SOAPMessage.class);
+            SOAPMessage resSoapMessage = rspMessage.get(SOAPMessage.class);
+            copyEnvelopeContent(reqMessage, reqSoapMessage.getSOAPPart().getEnvelope());
+            copyEnvelopeContent(rspMessage, resSoapMessage.getSOAPPart().getEnvelope());
+
+        } catch (Exception e) {
+            // Log the full exception details for debugging!
+            e.printStackTrace(); // Or use your logging framework
+            throw new RuntimeException("Error copying SOAP envelopes: " + e.getMessage(), e);
         }
 
         transaction = buildTransaction(transInfo);

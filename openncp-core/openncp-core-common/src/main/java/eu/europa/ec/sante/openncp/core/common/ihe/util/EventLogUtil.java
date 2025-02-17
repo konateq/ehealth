@@ -15,11 +15,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQu
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
-import org.apache.axiom.om.OMElement;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.kernel.http.HTTPConstants;
-import org.apache.axis2.transport.http.TransportHeaders;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.opensaml.saml.saml2.core.Attribute;
@@ -30,8 +25,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import org.apache.cxf.message.Message;
+import org.w3c.dom.Element;
+
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPMessage;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
+import org.w3c.dom.NodeList;
+
+import javax.xml.soap.SOAPHeader;
+import org.apache.cxf.transport.servlet.CXFServlet;
 
 // Common part for client and server logging
 // TODO A.R. Should be moved into openncp-util later to avoid duplication
@@ -47,7 +55,7 @@ public class EventLogUtil {
      * @param request
      * @param response
      */
-    public static void prepareXCPDCommonLog(final EventLog eventLog, final MessageContext msgContext, final PRPAIN201305UV02 request, final PRPAIN201306UV02 response) {
+    public static void prepareXCPDCommonLog(final EventLog eventLog, final Message message, final PRPAIN201305UV02 request, final PRPAIN201306UV02 response) {
 
         // Set Event Identification
         eventLog.setEventType(EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
@@ -97,21 +105,21 @@ public class EventLogUtil {
             eventLog.setEM_ParticipantObjectDetail(error.getBytes());
         }
 
-        extractXcpdQueryByParamFromHeader(eventLog, msgContext, "PRPA_IN201305UV02", "controlActProcess", "queryByParameter");
-        extractHCIIdentifierFromHeader(eventLog, msgContext);
+        extractXcpdQueryByParamFromHeader(eventLog, message, "PRPA_IN201305UV02", "controlActProcess", "queryByParameter");
+        extractHCIIdentifierFromHeader(eventLog, message);
 
     }
 
     /**
      * @param eventLog
-     * @param msgContext
+     * @param message
      * @param request
      * @param response
      * @param eventType
      * @param transactionName
      */
     public static void prepareXCACommonLogQuery(final EventLog eventLog,
-                                                final MessageContext msgContext,
+                                                final Message message,
                                                 final AdhocQueryRequest request,
                                                 final AdhocQueryResponse response,
                                                 final EventType eventType,
@@ -148,8 +156,8 @@ public class EventLogUtil {
             eventLog.setEM_ParticipantObjectDetail(re.getCodeContext() == null ? null : re.getCodeContext().getBytes());
         }
 
-        extractQueryByParamFromHeader(eventLog, msgContext, "AdhocQueryRequest", "AdhocQuery", "id");
-        extractHCIIdentifierFromHeader(eventLog, msgContext);
+        extractQueryByParamFromHeader(eventLog, message, "AdhocQueryRequest", "AdhocQuery", "id");
+        extractHCIIdentifierFromHeader(eventLog, message);
     }
 
     @NotNull
@@ -185,14 +193,14 @@ public class EventLogUtil {
 
     /**
      * @param eventLog
-     * @param msgContext
+     * @param message
      * @param request
      * @param response
      * @param eventType
      * @param transactionName
      */
     public static void prepareXCACommonLogRetrieve(final EventLog eventLog,
-                                                   final MessageContext msgContext,
+                                                   final Message message,
                                                    final RetrieveDocumentSetRequestType request,
                                                    final RetrieveDocumentSetResponseType response,
                                                    final EventType eventType,
@@ -226,11 +234,11 @@ public class EventLogUtil {
             }
         }
 
-        extractQueryByParamFromHeader(eventLog, msgContext, "RetrieveDocumentSetRequest", "DocumentRequest", "HomeCommunityId");
-        extractHCIIdentifierFromHeader(eventLog, msgContext);
+        extractQueryByParamFromHeader(eventLog, message, "RetrieveDocumentSetRequest", "DocumentRequest", "HomeCommunityId");
+        extractHCIIdentifierFromHeader(eventLog, message);
     }
 
-    public static void extractXcpdQueryByParamFromHeader(final EventLog eventLog, final MessageContext msgContext, final String elem1, final String elem2, final String elem3) {
+/*    public static void extractXcpdQueryByParamFromHeader(final EventLog eventLog, final MessageContext msgContext, final String elem1, final String elem2, final String elem3) {
         if(msgContext.getEnvelope().getBody().getChildrenWithLocalName(elem1).hasNext()) {
             final OMElement elem_PRPA_IN201305UV02 = msgContext.getEnvelope().getBody().getChildrenWithLocalName(elem1).next();
             if(elem_PRPA_IN201305UV02.getChildrenWithLocalName(elem2).hasNext()){
@@ -241,9 +249,52 @@ public class EventLogUtil {
                 }
             }
         }
+    }*/
+
+
+    public static void extractXcpdQueryByParamFromHeader(final EventLog eventLog, final Message message, final String elem1, final String elem2, final String elem3) {
+        try {
+            SOAPMessage soapMessage = message.get(SOAPMessage.class);
+            if (soapMessage == null) {
+                throw new RuntimeException("SOAPMessage is null");
+            }
+            javax.xml.soap.SOAPBody body = soapMessage.getSOAPBody();
+
+            if (body == null) {
+                throw new RuntimeException("SOAPBody is null");
+            }
+
+            NodeList elem1List = body.getElementsByTagNameNS("*", elem1); // Use "*" for any namespace
+            if (elem1List.getLength() > 0) {
+                Element elem_PRPA_IN201305UV02 = (Element) elem1List.item(0);
+
+                NodeList elem2List = elem_PRPA_IN201305UV02.getElementsByTagNameNS("*", elem2);
+                if (elem2List.getLength() > 0) {
+                    Element elem_controlActProcess = (Element) elem2List.item(0);
+
+                    NodeList elem3List = elem_controlActProcess.getElementsByTagNameNS("*", elem3);
+                    if (elem3List.getLength() > 0) {
+                        Element elem_qBP = (Element) elem3List.item(0);
+
+                        // Convert the Element to a String for your EventLog
+                        StringWriter writer = new StringWriter();
+                        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                        transformer.transform(new DOMSource(elem_qBP), new StreamResult(writer));
+                        String queryByParameter = writer.getBuffer().toString();
+
+                        eventLog.setQueryByParameter(queryByParameter);
+                    }
+                }
+            }
+
+
+        } catch (Exception e) {
+            // Handle exceptions appropriately (log, throw custom exception, etc.)
+            throw new RuntimeException("Error extracting query parameters: " + e.getMessage(), e);
+        }
     }
 
-    public static void extractQueryByParamFromHeader(final EventLog eventLog, final MessageContext msgContext, final String elem1, final String elem2, final String elem3) {
+ /*   public static void extractQueryByParamFromHeader(final EventLog eventLog, final MessageContext msgContext, final String elem1, final String elem2, final String elem3) {
         if(msgContext.getEnvelope().getBody().getChildrenWithLocalName("AdhocQueryRequest").hasNext()) {
             final OMElement elem_AdhocQueryRequest = msgContext.getEnvelope().getBody().getChildrenWithLocalName("AdhocQueryRequest").next();
             if(elem_AdhocQueryRequest.getChildrenWithLocalName("AdhocQuery").hasNext()){
@@ -252,9 +303,50 @@ public class EventLogUtil {
                 eventLog.setQueryByParameter(elem_AdhocQuery.toString());
             }
         }
+    }*/
+
+
+    public static void extractQueryByParamFromHeader(final EventLog eventLog, final Message message, final String elem1, final String elem2, String id) {
+        try {
+            SOAPMessage soapMessage = message.get(SOAPMessage.class);
+            if (soapMessage == null) {
+                throw new RuntimeException("SOAPMessage is null");
+            }
+            javax.xml.soap.SOAPBody body = soapMessage.getSOAPBody();
+
+            if (body == null) {
+                throw new RuntimeException("SOAPBody is null");
+            }
+
+            NodeList elem1List = body.getElementsByTagNameNS("*", elem1); // e.g., "AdhocQueryRequest"
+            if (elem1List.getLength() > 0) {
+                Element elem_AdhocQueryRequest = (Element) elem1List.item(0);
+
+                NodeList elem2List = elem_AdhocQueryRequest.getElementsByTagNameNS("*", elem2); // e.g., "AdhocQuery"
+                if (elem2List.getLength() > 0) {
+                    Element elem_AdhocQuery = (Element) elem2List.item(0);
+
+                    /*String id = elem_AdhocQuery.getAttributeNS("*", "id"); // Get attribute, any namespace
+                    if (id != null) {
+                        eventLog.setQueryByParameterId(id); // Assuming you have this setter in EventLog
+                    }*/
+
+                    // Convert the Element to a String for your EventLog
+                    StringWriter writer = new StringWriter();
+                    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                    transformer.transform(new DOMSource(elem_AdhocQuery), new StreamResult(writer));
+                    String query = writer.getBuffer().toString();
+
+                    eventLog.setQueryByParameter(query); // Set the query XML
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error extracting query parameters: " + e.getMessage(), e);
+        }
     }
 
-    public static void extractHCIIdentifierFromHeader(final EventLog eventLog, final MessageContext msgContext) {
+/*    public static void extractHCIIdentifierFromHeader(final EventLog eventLog, final MessageContext msgContext) {
         if(msgContext.getEnvelope().getHeader().getChildrenWithLocalName("Security").hasNext()) {
             final OMElement elemSecurity = msgContext.getEnvelope().getHeader().getChildrenWithLocalName("Security").next();
             for (final Iterator<OMElement> itSecurity = elemSecurity.getChildElements(); itSecurity.hasNext(); ) {
@@ -275,6 +367,53 @@ public class EventLogUtil {
                     }
                 }
             }
+        }
+    }*/
+
+    public static void extractHCIIdentifierFromHeader(final EventLog eventLog, final Message message) {
+        try {
+            SOAPMessage soapMessage = message.get(SOAPMessage.class);
+            if (soapMessage == null) {
+                throw new RuntimeException("SOAPMessage is null");
+            }
+            SOAPHeader header = soapMessage.getSOAPHeader();
+            if (header == null) {
+                throw new RuntimeException("SOAPHeader is null");
+            }
+
+            NodeList securityList = header.getElementsByTagNameNS("*", "Security");
+            if (securityList.getLength() > 0) {
+                Element elemSecurity = (Element) securityList.item(0);
+
+                NodeList assertionList = elemSecurity.getElementsByTagNameNS("*", "Assertion");
+                for (int i = 0; i < assertionList.getLength(); i++) {
+                    Element elemAssertion = (Element) assertionList.item(i);
+
+                    NodeList attributeStatementList = elemAssertion.getElementsByTagNameNS("*", "AttributeStatement");
+                    for (int j = 0; j < attributeStatementList.getLength(); j++) {
+                        Element elemAttributeStatement = (Element) attributeStatementList.item(j);
+
+                        NodeList attributeList = elemAttributeStatement.getElementsByTagNameNS("*", "Attribute");
+                        for (int k = 0; k < attributeList.getLength(); k++) {
+                            Element elemAttribute = (Element) attributeList.item(k);
+
+                            String friendlyName = elemAttribute.getAttributeNS("*", "FriendlyName"); // Any namespace
+                            if ("HCI Identifier".equals(friendlyName)) {
+                                NodeList attributeValueList = elemAttribute.getElementsByTagNameNS("*", "AttributeValue");
+                                if (attributeValueList.getLength() > 0) {
+                                    Element elemAttributeValue = (Element) attributeValueList.item(0);
+                                    String hciIdentifier = elemAttributeValue.getTextContent(); // Use getTextContent()
+                                    eventLog.setHciIdentifier(hciIdentifier);
+                                    return; // Found it, exit loops
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error extracting HCI Identifier: " + e.getMessage(), e);
         }
     }
 
@@ -369,13 +508,37 @@ public class EventLogUtil {
      * @param envelope
      * @return
      */
-    public static String getMessageID(final SOAPEnvelope envelope) {
+    /*public static String getMessageID(final SOAPEnvelope envelope) {
 
         final Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
         if (it.hasNext()) {
             return it.next().getText();
         } else {
             return "NA";
+        }
+    }*/
+
+    /**
+     * @param envelope
+     * @return
+     */
+    public static String getMessageID(final SOAPEnvelope envelope) {
+        try {
+            SOAPHeader header = envelope.getHeader();
+            if (header == null) {
+                return "NA"; // Or throw an exception, depending on your needs
+            }
+
+            NodeList messageIDList = header.getElementsByTagNameNS("http://www.w3.org/2005/08/addressing", "MessageID");
+            if (messageIDList.getLength() > 0) {
+                Element messageIDElement = (Element) messageIDList.item(0);
+                return messageIDElement.getTextContent();
+            } else {
+                return "NA";
+            }
+        } catch (Exception e) {
+            // Handle exceptions appropriately (log, throw a custom exception, etc.)
+            throw new RuntimeException("Error getting MessageID: " + e.getMessage(), e); // Example
         }
     }
 
@@ -408,10 +571,7 @@ public class EventLogUtil {
     }
 
 
-    /**
-     * @param messageContext - JAXWS Axis2 MessageContext used by the request.
-     * @return
-     */
+   /*
     public static String getSourceGatewayIdentifier(final MessageContext messageContext) {
 
         final TransportHeaders headers = (TransportHeaders) messageContext.getProperty(MessageContext.TRANSPORT_HEADERS);
@@ -437,19 +597,62 @@ public class EventLogUtil {
             LOGGER.debug("Client IP: '{}'", clientIp);
             return clientIp;
         }
+    }*/
+
+    public static String getSourceGatewayIdentifier(final Message message) {
+        try {
+            HttpServletRequest servletRequest = message.get(CxfServletRequest.class).getRequest();
+            String headerClientIp = servletRequest.getHeader("X-Forwarded-For");
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("--> X-Forwarded-For Address: '{}'", headerClientIp);
+                LOGGER.debug("--> Remote Address: '{}'", servletRequest.getRemoteAddr());
+                LOGGER.debug("--> Transport Address: '{}'", servletRequest.getRemoteAddr()); // Same as Remote Address
+            }
+
+            if (StringUtils.isNotBlank(headerClientIp)) {
+                if (StringUtils.contains(headerClientIp, ",")) {
+                    return StringUtils.split(headerClientIp, ",")[0];
+                } else {
+                    return headerClientIp;
+                }
+            }
+
+            String clientIp = servletRequest.getRemoteAddr();
+            if (IPUtil.isLocalLoopbackIp(clientIp)) {
+                LOGGER.debug("Client Server Name: '{}'", servletRequest.getServerName());
+                return servletRequest.getServerName();
+            } else {
+                LOGGER.debug("Client IP: '{}'", clientIp);
+                return clientIp;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting source gateway identifier: " + e.getMessage(), e); // Handle it
+        }
     }
 
     public static String getTargetGatewayIdentifier() {
         return IPUtil.getPrivateServerIp();
     }
 
-    public static String getClientCommonName(final MessageContext messageContext) {
+   /* public static String getClientCommonName(final Message message) {
 
         final HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
         return HttpUtil.getClientCertificate(servletRequest);
+    }*/
+
+    public static String getClientCommonName(final Message message) {
+        try {
+            HttpServletRequest servletRequest = message.get(CxfServletRequest.class).getRequest();
+            return HttpUtil.getClientCertificate(servletRequest);
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting client common name: " + e.getMessage(), e); // Handle it
+        }
     }
 
-    private static String getParticipantObjectID(final II id) {
+
+
+private static String getParticipantObjectID(final II id) {
         return id.getExtension() + "^^^&" + id.getRoot() + "&ISO";
     }
 }

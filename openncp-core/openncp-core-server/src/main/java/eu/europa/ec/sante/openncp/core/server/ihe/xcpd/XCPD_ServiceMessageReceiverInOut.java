@@ -28,6 +28,7 @@ import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
 import org.apache.axis2.util.JavaUtils;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +86,7 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
         }
     }
 
-    public void invokeBusinessLogic(MessageContext msgContext, MessageContext newMsgContext) throws AxisFault {
+    public void invokeBusinessLogic(Message message, Message newMessage) throws AxisFault {
         String eadcError = "";
 
         // Start Date for eADC
@@ -93,11 +94,11 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
 
         try {
             //  Identification of the TLS Common Name of the client.
-            String clientCommonName = EventLogUtil.getClientCommonName(msgContext);
+            String clientCommonName = EventLogUtil.getClientCommonName(newMessage);
             LOGGER.info("[ITI-55] Incoming XCPD Request from '{}'", clientCommonName);
 
             // Get the implementation class for the Web Service
-            Object serviceObject = getTheImplementationObject(msgContext);
+            Object serviceObject = getTheImplementationObject(newMessage);
             SOAPHeader soapHeader = msgContext.getEnvelope().getHeader();
 
             // Prepare EventLog for audit purpose.

@@ -18,42 +18,41 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl.XDRServiceImpl;
-import org.apache.axiom.om.*;
-import org.apache.axiom.om.ds.AbstractOMDataSource;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axiom.soap.SOAPFactory;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.AxisFault;
-import org.apache.axis2.addressing.AddressingConstants;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
-import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
-import org.apache.axis2.util.JavaUtils;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.phase.Phase;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import javax.xml.bind.*;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPHeader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.*;
+import javax.xml.ws.addressing.AddressingConstants;
 
 /**
  * XDR_ServiceMessageReceiverInOut message receiver
  */
-public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiver {
+public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XDR_ServiceMessageReceiverInOut.class);
     private static final JAXBContext wsContext;
+
+    public XDR_ServiceMessageReceiverInOut() {
+        super(Phase.RECEIVE); // Or Phase.INVOKE, depending on when you need it
+    }
 
     static {
 
@@ -78,7 +77,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
 
-    private String getMessageID(final SOAPEnvelope envelope) {
+   /* private String getMessageID(final SOAPEnvelope envelope) {
 
         final Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(new QName(AddressingConstants.Final.WSA_NAMESPACE,
                 AddressingConstants.WSA_MESSAGE_ID));
@@ -86,6 +85,28 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
             return it.next().getText();
         } else {
             return Constants.UUID_PREFIX;
+        }
+    }*/
+
+    private String getMessageID(final SOAPEnvelope envelope) {
+        try {
+            SOAPHeader header = envelope.getHeader();
+            if (header == null) {
+                return Constants.UUID_PREFIX; // Or throw an exception
+            }
+
+            // Use AddressingConstants for namespace and local name
+            NodeList messageIDList = header.getElementsByTagNameNS(AddressingConstants.Final.WSA_NAMESPACE, AddressingConstants.WSA_MESSAGE_ID);
+
+            if (messageIDList.getLength() > 0) {
+                Element messageIDElement = (Element) messageIDList.item(0);
+                return messageIDElement.getTextContent();
+            } else {
+                return Constants.UUID_PREFIX;
+            }
+        } catch (Exception e) {
+            // Handle exceptions appropriately
+            throw new RuntimeException("Error getting MessageID: " + e.getMessage(), e);
         }
     }
 
@@ -96,7 +117,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
      * @param newMsgContext- SOAP MessageContext response.
      * @throws AxisFault - Exception returned during the process.
      */
-    public void invokeBusinessLogic(final MessageContext msgContext, final MessageContext newMsgContext) throws AxisFault {
+    public void invokeBusinessLogic(final Message msgContext, final Message newMsgContext) throws AxisFault {
 
         String eadcError = "";
 
@@ -298,6 +319,11 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         }
 
         return axisFault;
+    }
+
+    @Override
+    public void handleMessage(Message message) throws Fault {
+
     }
 
     class JaxbRIDataSource extends AbstractOMDataSource {

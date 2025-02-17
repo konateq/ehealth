@@ -5,22 +5,25 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
-import org.apache.axiom.soap.SOAPBody;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axiom.soap.SOAPHeaderBlock;
-import org.apache.axis2.context.*;
-import org.apache.axis2.description.AxisEndpoint;
-import org.apache.axis2.description.AxisService;
-import org.apache.axis2.description.AxisServiceGroup;
-import org.apache.axis2.handlers.AbstractHandler;
+import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.phase.Phase;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.soap.*;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * InFlowEvidenceEmitterHandler - Generates all NRRs
@@ -31,12 +34,16 @@ import java.util.Map;
  *
  * @author jgoncalves
  */
-public class InFlowEvidenceEmitterHandler extends AbstractHandler {
+public class InFlowEvidenceEmitterHandler extends AbstractPhaseInterceptor<Message>  {
 
     private final Logger logger = LoggerFactory.getLogger(InFlowEvidenceEmitterHandler.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
 
-    @Override
+
+    public InFlowEvidenceEmitterHandler() {
+        super(Phase.RECEIVE); // Or Phase.PRE_INVOKE, or another appropriate phase
+    }
+    /*@Override
     public InvocationResponse invoke(final MessageContext msgContext) {
 
         logger.info("[NRR] InFlow Evidence Emitter handler is executing");
@@ -46,7 +53,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
         debugInflowEvidenceEmitter(msgContext);
 
         try {
-            /* Canonicalization of the full SOAP message */
+            *//* Canonicalization of the full SOAP message *//*
             final Document canonicalDocument = evidenceEmitterHandlerUtils.canonicalizeAxiomSoapEnvelope(msgContext.getEnvelope());
             final String eventType;
             final String title;
@@ -81,7 +88,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
 //                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
 //                            title);
             } else {
-                /* NCP-B receives from Portal, e.g.:
+                *//* NCP-B receives from Portal, e.g.:
                     NRR
                     title = "PORTAL_PD_REQ_RECEIVED"
                     eventType = "PORTAL_PD_REQ"
@@ -90,7 +97,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
                     NRR
                     title = "NCPA_XCPD_REQ"
                     eventType = ihe event
-                */
+                *//*
                 eventType = evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
                 title = evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
                 msgUUID = evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
@@ -118,12 +125,13 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
         }
 
         return InvocationResponse.CONTINUE;
-    }
+    }*/
 
-    private void debugInflowEvidenceEmitter(final MessageContext msgContext) {
+    private void debugInflowEvidenceEmitter(final Message message) throws SOAPException{} /*{
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-            final SOAPHeader soapHeader = msgContext.getEnvelope().getHeader();
+           *//* SOAPMessage soapMessage = message.get(SOAPMessage.class);
+            final SOAPHeader soapHeader = soapMessage.getSOAPHeader();
             if (soapHeader != null) {
                 final Iterator<?> blocks = soapHeader.examineAllHeaderBlocks();
                 loggerClinical.debug("Iterating over SOAP headers");
@@ -135,10 +143,46 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
                     }
                     block.setProcessed();
                 }
+            }*//*
+            try {
+                SOAPMessage soapMessage = message.get(SOAPMessage.class);
+                if (soapMessage != null) {
+                    SOAPHeader soapHeader = soapMessage.getSOAPHeader();
+
+                    if (soapHeader != null) {
+                        loggerClinical.debug("Iterating over SOAP headers");
+
+                        // Get all header blocks (for SOAP 1.1)
+                        NodeList headerBlocks = soapHeader.getChildNodes(); // Or soapHeader.getElementsByTagNameNS("*", "*") for all namespaces
+
+                        for (int i = 0; i < headerBlocks.getLength(); i++) {
+                            Node node = (Node) headerBlocks.item(i);
+                            if (node instanceof Element) { // Check if it's an Element (header block)
+                                Element block = (Element) node;
+
+                                loggerClinical.debug("Processing header");
+                                if (loggerClinical.isDebugEnabled()) {
+
+                                StringWriter writer = new StringWriter();
+                                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                                transformer.transform(new DOMSource(block), new StreamResult(writer));
+                                String headerString = writer.getBuffer().toString();
+                                loggerClinical.debug(headerString);
+                                    loggerClinical.debug(block.toString()); // Direct toString()
+                                }
+
+
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error processing SOAP headers: " + e.getMessage(), e); // Handle it
             }
 
-            loggerClinical.debug("MessageContext properties: '{}'", msgContext.getProperties());
-            loggerClinical.debug("MessageContext messageID: '{}'", msgContext.getMessageID());
+
+            loggerClinical.debug("MessageContext properties: '{}'", message.getContextualPropertyKeys());
+            loggerClinical.debug("MessageContext messageID: '{}'", message.getId());
 
             final SessionContext sessionCtx = msgContext.getSessionContext();
             if (sessionCtx != null) {
@@ -193,5 +237,83 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
                 loggerClinical.debug("ConfigurationContext is null!");
             }
         }
-    }
+    }*/
+
+    @Override
+    public void handleMessage(Message message) throws Fault{} /*{
+        {
+
+            logger.info("[NRR] InFlow Evidence Emitter handler is executing");
+            final EvidenceEmitterHandlerUtils evidenceEmitterHandlerUtils = new EvidenceEmitterHandlerUtils();
+
+            SOAPMessage soapMessage = message.get(SOAPMessage.class);
+            if (soapMessage == null) {
+                throw new RuntimeException("SOAPMessage is null");
+            }
+            SOAPHeader header = null;
+            try {
+                header = soapMessage.getSOAPHeader();
+                SOAPEnvelope sourceEnvelope = soapMessage.getSOAPPart().getEnvelope();
+                final SOAPBody soapBody = sourceEnvelope.getBody();
+                debugInflowEvidenceEmitter(message);
+            } catch (SOAPException e) {
+                throw new RuntimeException(e);
+            }
+            if (header == null) {
+                throw new RuntimeException("SOAPHeader is null");
+            }
+
+            try {
+                *//* Canonicalization of the full SOAP message *//*
+                final Document canonicalDocument = evidenceEmitterHandlerUtils.canonicalizeAxiomSoapEnvelope(msgContext.getEnvelope());
+                final String eventType;
+                final String title;
+                final String msgUUID;
+                final AxisService axisService = msgContext.getServiceContext().getAxisService();
+                final boolean isClientSide = axisService.isClientSide();
+                logger.debug("[NRR] AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
+                if (isClientSide) {
+
+                    logger.info("[NRR] Evidence Emitter - Response");
+                } else {
+                *//* NCP-B receives from Portal, e.g.:
+                    NRR
+                    title = "PORTAL_PD_REQ_RECEIVED"
+                    eventType = "PORTAL_PD_REQ"
+                    msguuid = IdA ID + datetime
+                NCP-A receives from NCP-B, e.g.:
+                    NRR
+                    title = "NCPA_XCPD_REQ"
+                    eventType = ihe event
+                *//*
+                    eventType = evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
+                    title = evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
+                    msgUUID = evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
+                    logger.debug("eventType: '{}' - title: '{}'", eventType, title);
+
+                    if (msgUUID != null) {
+                        logger.info("[NRR] Evidence Emitter - Portal NCP-B");
+                        // this is a Portal-NCPB interaction: msgUUID comes from IdA or TRCA or is random
+                        EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                                Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                                Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
+                                Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+                                title, msgUUID);
+                    } else {
+                        logger.info("[NRR] Evidence Emitter - NCP A/B");
+                        // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the SOAP header
+                        EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                                Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS,
+                                Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS, eventType,
+                                new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), title);
+                    }
+                }
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            return InvocationResponse.CONTINUE;
+        }
+
+    }*/
 }

@@ -7,25 +7,31 @@ import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.DummyMustUnderstandHandler;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axis2.client.Stub;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.HandlerDescription;
-import org.apache.axis2.engine.Phase;
-import org.apache.axis2.phaseresolver.PhaseException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.endpoint.Endpoint;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.StringWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URI;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import org.apache.cxf.message.Message;
+
+import javax.xml.soap.SOAPMessage;
+import javax.xml.soap.SOAPEnvelope; // Import for SOAPEnvelope
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.apache.cxf.interceptor.Interceptor;
+import org.apache.cxf.phase.Phase;
+
 
 public class EventLogClientUtil {
 
@@ -35,7 +41,7 @@ public class EventLogClientUtil {
     private EventLogClientUtil() {
     }
 
-    public static void createDummyMustUnderstandHandler(final Stub stub) {
+    /*public static void createDummyMustUnderstandHandler(final Stub stub) {
 
         final var description = new HandlerDescription("DummyMustUnderstandHandler");
         description.setHandler(new DummyMustUnderstandHandler());
@@ -50,7 +56,33 @@ public class EventLogClientUtil {
         }
         phasesList.add(0, myPhase);
         axisConfiguration.setInFaultPhases(phasesList);
+    }*/
+
+    public static void createDummyMustUnderstandHandler(final Endpoint endpoint) {
+        /*DummyMustUnderstandHandler handler = new DummyMustUnderstandHandler();
+
+        // Get the inbound interceptor chain
+        List<Interceptor<? extends Message>> inInterceptors = endpoint.getInInterceptors();
+
+        // Determine the appropriate phase (PRE_PROTOCOL or PRE_INVOKE)
+        Phase phase = new Phase(); // Create a custom phase if needed
+        phase.add(handler);
+
+        // Add your custom phase to the inbound phases
+        List<Phase> inboundPhases = endpoint.getInboundPhases();
+        inboundPhases.add(0, phase); // Add at the beginning (adjust index as needed)
+        endpoint.setInboundPhases(inboundPhases);
+
+
+        // For Faults (if needed):
+        List<Phase> inFaultPhases = endpoint.getInFaultPhases();
+        Phase faultPhase = new Phase("MyFaultPhase");
+        faultPhase.add(handler); // Reuse the same handler instance
+        inFaultPhases.add(0, faultPhase);
+        endpoint.setInFaultPhases(inFaultPhases);*/
+
     }
+
 
     /**
      * Returns the local private IP of the machine executing the method.
@@ -85,7 +117,7 @@ public class EventLogClientUtil {
         }
     }
 
-    public static EventLog prepareEventLog(final MessageContext msgContext, final SOAPEnvelope soapEnvelope, final String endpointReference, final String dstHomeCommunityId) {
+    /*public static EventLog prepareEventLog(final MessageContext msgContext, final SOAPEnvelope soapEnvelope, final String endpointReference, final String dstHomeCommunityId) {
 
         final var eventLog = new EventLog();
         eventLog.setEI_EventDateTime(DateUtil.getDateAsXMLGregorian(new Date()));
@@ -112,6 +144,66 @@ public class EventLogClientUtil {
         final String rspMessageId = appendUrnUuid(EventLogUtil.getMessageID(soapEnvelope));
         eventLog.setResM_ParticipantObjectID(rspMessageId);
         eventLog.setResM_ParticipantObjectDetail(soapEnvelope.getHeader().toString().getBytes());
+
+        eventLog.setHciIdentifier(dstHomeCommunityId);
+
+        return eventLog;
+    }*/
+
+    public static EventLog prepareEventLog(final Message message, final SOAPEnvelope soapEnvelope, final String endpointReference, final String dstHomeCommunityId) {
+
+        final var eventLog = new EventLog();
+        eventLog.setEI_EventDateTime(DateUtil.getDateAsXMLGregorian(new Date()));
+
+        // Set Active Participant Identification: Service Consumer NCP
+        eventLog.setSC_UserID(HttpUtil.getSubjectDN(false));
+        eventLog.setSP_UserID(HttpUtil.getServerCertificate(endpointReference));
+
+        // Set Audit Source
+        eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
+
+        // Set Source Ip
+        eventLog.setSourceip(getSourceGatewayIdentifier());
+
+        // Set Target Ip
+        eventLog.setTargetip(getTargetGatewayIdentifier(endpointReference));
+
+        try {
+            SOAPMessage inMessage = message.get(SOAPMessage.class);
+            if (inMessage == null) {
+                throw new RuntimeException("Incoming SOAPMessage is null");
+            }
+            SOAPEnvelope requestEnvelope = inMessage.getSOAPPart().getEnvelope(); // Get the request envelope
+            if (requestEnvelope == null) {
+                throw new RuntimeException("Request SOAPEnvelope is null");
+            }
+
+            // Set Participant Object: Request Message
+            String reqMessageId = appendUrnUuid(EventLogUtil.getMessageID(requestEnvelope));
+            eventLog.setReqM_ParticipantObjectID(reqMessageId);
+
+            // Convert SOAPEnvelope header to byte[]
+            StringWriter writer = new StringWriter();
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.transform(new DOMSource(requestEnvelope.getHeader()), new StreamResult(writer));
+            byte[] requestHeaderBytes = writer.toString().getBytes();
+
+            eventLog.setReqM_ParticipantObjectDetail(requestHeaderBytes);
+
+            // Set Participant Object: Response Message (using provided soapEnvelope)
+            String rspMessageId = appendUrnUuid(EventLogUtil.getMessageID(soapEnvelope));
+            eventLog.setResM_ParticipantObjectID(rspMessageId);
+
+
+            StringWriter responseWriter = new StringWriter();
+            transformer.transform(new DOMSource(soapEnvelope.getHeader()), new StreamResult(responseWriter));
+            byte[] responseHeaderBytes = responseWriter.toString().getBytes();
+
+            eventLog.setResM_ParticipantObjectDetail(responseHeaderBytes);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error preparing event log: " + e.getMessage(), e); // Handle appropriately
+        }
 
         eventLog.setHciIdentifier(dstHomeCommunityId);
 
