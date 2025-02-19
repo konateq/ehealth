@@ -10,6 +10,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ValueListType;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AdhocQueryRequestCreator {
 
@@ -61,18 +62,9 @@ public class AdhocQueryRequestCreator {
         SlotType1 entryClassCode = new SlotType1();
         entryClassCode.setName(XCAConstants.AdHocQueryRequest.XDS_DOCUMENT_ENTRY_CLASSCODE_SLOT_NAME);
         ValueListType v3 = new ValueListType();
-        StringBuilder documentEntryClassCodeBuilder = new StringBuilder();
-
-        documentEntryClassCodeBuilder.append("('");
-        for(GenericDocumentCode documentCode : documentCodes) {
-            if(documentEntryClassCodeBuilder.length() > 2) {
-                documentEntryClassCodeBuilder.append(",");
-            }
-            documentEntryClassCodeBuilder.append(documentCode.getValue()).append("^^").append(documentCode.getSchema());
-        }
-        documentEntryClassCodeBuilder.append("')");
-        String documentEntryClassCode = documentEntryClassCodeBuilder.toString();
-
+        String documentEntryClassCode = documentCodes.stream()
+                .map(documentCode -> "'" + documentCode.getValue() + "^^" + documentCode.getSchema() + "'")
+                .collect(Collectors.joining(",", "(", ")"));
         v3.getValue().add(documentEntryClassCode);
         entryClassCode.setValueList(v3);
         adhocQueryRequest.getAdhocQuery().getSlot().add(entryClassCode);

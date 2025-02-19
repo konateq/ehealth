@@ -25,6 +25,14 @@ public abstract class AbstractResourceProvider {
         validationService.validate(resource, restOperationTypeEnum);
     }
 
+    public String getJwtFromRequest(final HttpServletRequest request) {
+        final String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header;
+        }
+        throw new RuntimeException("JWT Token is missing");
+    }
+
     protected ServerContext getServerContext() {
         return serverContext;
     }

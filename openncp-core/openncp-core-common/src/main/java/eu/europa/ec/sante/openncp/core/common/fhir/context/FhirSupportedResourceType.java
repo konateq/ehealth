@@ -53,4 +53,3 @@ public enum FhirSupportedResourceType {
                         resourceType.getRequestMatcher() instanceof PathAndFhirTypeLoincRequestMatcher ? 0 : 1));
     }
 }
-

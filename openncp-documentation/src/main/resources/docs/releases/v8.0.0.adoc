@@ -2,6 +2,14 @@
 
 ==== Upgrade from release 7.x.x to release 8.0.0
 
+===== Breaking changes
+
+- New package structures
+- New module structure
+- Added a new (FHIR) service that must be implemented
+- Removed the `ServiceLoader` mechanism in favor of Spring meaning you *must* update your bean creation methods to use Spring
+- provide a (default) implementation for all services or else there will be `MissingBeanExceptions`
+
 ===== Introduction
 The upgrade from version 7 to version 8 brings significant changes to the project structure, the bean creation and on top introduces a major new feature: the integration of FHIR capabilities.
 
@@ -243,6 +251,8 @@ public class YourService {
 
 ====== NCP-A (server) national infrastructure integration
 
+A general advise is to create a national connector that defines a REST interface between the OpenNCP server component and the national infrastructure. Doing so favours loose coupling and makes it easier to migrate towards a Spring-based solution.
+
 *Dependency migration*
 
 The interfaces needed to be implemented by the member state has been moved.
@@ -265,19 +275,23 @@ Wave 8
 </dependency>
 ----
 
+*Removed the ServiceLoader concept*
+
+In version 8.0.0, we completely removed the old `ServiceLoader` mechanism. +
+As a result, you *must* update your bean creation methods to use Spring and provide a (default) implementation for all services.
+
+Note: In release 8.0.1, the `ServiceLoader` mechanism was reintroduced as a fallback and default implementations for all services were provided. This ensures that the server will start even if the national implementation does not provide its own service implementations.
+
+WARNING: The `ServiceLoader` mechanism is deprecated as of wave 8 and will be completely removed in wave 9. From wave 9 onwards, you *must* provide services as Spring beans.
+
 *Interface migration*
 
-The interfaces of the main services in the national infrastructure connector remain unchanged, but they have all been relocated to new packages. As a result, you will need to update your bean creation methods, whether you're using a Service Loader, Spring factories, or similar mechanisms as well as update the import of the interface in your actual implementation.
+The interfaces of the main services in the national infrastructure connector remain unchanged, but they have all been relocated to new packages.
 
 The package structure has changed from +
 `eu.epsos.protocolterminators.ws.server.\*` +
 to +
 `eu.europa.ec.sante.openncp.core.server.api.ihe.*`
-
-For example, if you are using the PatientSearchInterface with a Service Loader +
-`META-INF/services/eu.epsos.protocolterminators.ws.server.xcpd.PatientSearchInterface` +
-should now be updated to +
-`META-INF/services/eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface`
 
 *New FHIR interface*
 

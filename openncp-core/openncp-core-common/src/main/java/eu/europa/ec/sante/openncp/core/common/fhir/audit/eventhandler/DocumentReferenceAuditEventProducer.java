@@ -28,19 +28,18 @@ import java.util.stream.Collectors;
 public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentReferenceAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_DOCUMENT_REFERENCE = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.DocumentReference.getPath());
-    public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
     private final AuditEventBuilder auditEventBuilder;
 
     public DocumentReferenceAuditEventProducer(final AuditEventBuilder auditEventBuilder) {
         this.auditEventBuilder = Validate.notNull(auditEventBuilder, "AuditEventBuilder must not be null.");
     }
 
+
     @Override
     public boolean accepts(final AuditableEvent auditableEvent) {
         final boolean accepts = auditableEvent != null
-                && auditableEvent.getDispatchContext().isDocumentReference()
-                && auditableEvent.resourceIsOfType(FhirSupportedResourceType.BUNDLE, FhirSupportedResourceType.DOCUMENT_REFERENCE);
 
+                && auditableEvent.resourceIsOfType( FhirSupportedResourceType.DOCUMENT_REFERENCE);
         LOGGER.debug("[{}] auditable event [{}]", BooleanUtils.toString(accepts, "Accepted", "Rejected"), auditableEvent);
         return accepts;
     }
@@ -48,11 +47,14 @@ public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProdu
     @Override
     public List<AuditEvent> produce(final AuditableEvent auditableEvent) {
         final List<AuditEventData> auditEventDataList;
-        if (auditableEvent.getDispatchContext().getHapiRequestDetails().isPresent()) {
+        if (auditableEvent.getDispatchContext().getHapiRestOperationType().isPresent()) {
             switch (auditableEvent.getDispatchContext().getHapiRestOperationType().get()) {
                 case SEARCH_TYPE:
                 case SEARCH_SYSTEM:
                 case GET_PAGE:
+                    auditEventDataList = handleSearch(auditableEvent);
+                    break;
+                case VREAD:
                 case CREATE:
                     auditEventDataList = handleCreate(auditableEvent);
                     break;
@@ -70,6 +72,11 @@ public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProdu
         }
     }
 
+    private List<AuditEventData> handleSearch(final AuditableEvent auditableEvent) {
+        return commonHandler(auditableEvent, BalpProfileEnum.BASIC_QUERY);
+
+    }
+
     private List<AuditEventData> handleCreate(final AuditableEvent auditableEvent) {
         return commonHandler(auditableEvent, BalpProfileEnum.BASIC_CREATE);
     }
@@ -77,6 +84,8 @@ public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProdu
     private List<AuditEventData> handleRead(final AuditableEvent auditableEvent) {
         return commonHandler(auditableEvent, BalpProfileEnum.BASIC_READ);
     }
+
+
 
     private List<AuditEventData> commonHandler(final AuditableEvent auditableEvent, BalpProfileEnum operation) {
         final List<AuditEventData.ParticipantData> participants = createParticipants();

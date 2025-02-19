@@ -259,11 +259,7 @@ public class XDRConstants {
         public static final String SUBMISSION_TIME_STR = "submissionTime";
         public static final String SUBMISSION_TIME_FORMAT = "yyyyMMddhhmmss";
         public static final String NAME_ED = "eDispensation";
-        public static final String NAME_CONSENT = "Consent to Share Information";
-        public static final String NAME_HCER = "Summarization of Episode Note";
         public static final String DESCRIPTION_ED = "Description of eDispensation";
-        public static final String DESCRIPTION_CONSENT = "Description of Consent to Share Information";
-        public static final String DESCRIPTION_HCER = "Description Summarization of Episode Note";
         public static final String AUTHOR_CLASSIFICATION_UUID = "urn:uuid:a7058bb9-b4e4-4307-ba5b-e3f0ab85e12d";
         /* Coding Scheme */
         public static final String CODING_SCHEME_UUID = "urn:uuid:aa543740-bdda-424e-8c96-df4873be8500";

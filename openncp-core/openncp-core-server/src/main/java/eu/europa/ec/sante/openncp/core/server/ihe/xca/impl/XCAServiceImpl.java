@@ -83,6 +83,7 @@ import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 public class XCAServiceImpl implements XCAServiceInterface {
 
     private static final DatatypeFactory DATATYPE_FACTORY;
+    private static final String NO_EVENT_IDENTIFICATION_INFORMATION_FOUND = "No event identification information found!";
 
     static {
         try {
@@ -159,6 +160,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             eventLog.setEventType(EventType.determineEventTypeForXCAQuery(List.of(classCode)));
             eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCAQuery(List.of(classCode)));
         }
+        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.setPS_ParticipantObjectIDs(EventLogUtil.getDocumentEntryPatientId(request));
 
