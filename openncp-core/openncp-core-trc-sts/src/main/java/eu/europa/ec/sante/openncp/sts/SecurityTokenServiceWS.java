@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -24,7 +25,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;

@@ -16,6 +16,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
+import eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl.XDRServiceImpl;
 import org.apache.axiom.om.*;
 import org.apache.axiom.om.ds.AbstractOMDataSource;
 import org.apache.axiom.soap.SOAPEnvelope;
@@ -28,9 +29,14 @@ import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
 import org.apache.axis2.util.JavaUtils;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.binding.soap.SoapMessage;
+import org.apache.cxf.headers.Header;
+import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -75,18 +81,51 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
 
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
 
-    private String getMessageID(SOAPEnvelope envelope) {
+    private static String getMessageID(final Message message) {
 
-        Iterator<OMElement> it = envelope.getHeader().getChildrenWithName(
-                new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
-        if (it.hasNext()) {
-            return it.next().getText();
-        } else {
-            return Constants.UUID_PREFIX;
+        if (!(message instanceof SoapMessage)) {
+            LOGGER.warn("Message is not a SOAP message. Cannot extract MessageID.");
+            return Constants.UUID_PREFIX; // Or throw an exception if appropriate
         }
+
+        SoapMessage soapMessage = (SoapMessage) message;
+        List<Header> headers = soapMessage.getHeaders();
+
+        if (headers != null) {
+            for (Header header : headers) {
+                if (header.getObject() instanceof Element) {
+                    Element headerElement = (Element) header.getObject();
+
+                    // More robust approach using XPath (recommended):
+                    try {
+                        javax.xml.xpath.XPathFactory xpathFactory = javax.xml.xpath.XPathFactory.newInstance();
+                        javax.xml.xpath.XPath xpath = xpathFactory.newXPath();
+                        String expression = "//wsa:MessageID"; // wsa prefix for WS-Addressing namespace
+                        javax.xml.xpath.XPathExpression compiledExpression = xpath.compile(expression);
+
+                        String messageID = compiledExpression.evaluate(headerElement);
+                        if (messageID != null && !messageID.isEmpty()) {
+                            return messageID;
+                        }
+
+                    } catch (javax.xml.xpath.XPathExpressionException e) {
+                        LOGGER.error("Error evaluating XPath expression: " + e.getMessage());
+                        // Fallback to DOM traversal (less robust):
+                        QName messageIDQName = new QName("http://www.w3.org/2005/08/addressing", "MessageID");
+                        org.w3c.dom.NodeList nodeList = headerElement.getElementsByTagNameNS("http://www.w3.org/2005/08/addressing", "MessageID");
+                        if (nodeList.getLength() > 0) {
+                            return nodeList.item(0).getTextContent();
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return Constants.UUID_PREFIX; // MessageID not found.
     }
 
-    public void invokeBusinessLogic(Message message, Message newMessage) throws AxisFault {
+    public void invokeBusinessLogic(Message message, Message newMessage) throws Fault {
         String eadcError = "";
 
         // Start Date for eADC
@@ -98,8 +137,8 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
             LOGGER.info("[ITI-55] Incoming XCPD Request from '{}'", clientCommonName);
 
             // Get the implementation class for the Web Service
-            Object serviceObject = getTheImplementationObject(newMessage);
-            SOAPHeader soapHeader = msgContext.getEnvelope().getHeader();
+            Object serviceObject = getServiceObject(message);
+            SOAPHeader soapHeader = message.getEnvelope().getHeader();
 
             // Prepare EventLog for audit purpose.
             EventLog eventLog = new EventLog();
@@ -192,7 +231,7 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
         }
     }
 
-    private OMElement toOM(PRPAIN201306UV02 param) throws AxisFault {
+    private OMElement toOM(PRPAIN201306UV02 param) throws Fault {
 
         try {
 
@@ -334,6 +373,36 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
         @Override
         public boolean isDestructiveWrite() {
             return false;
+        }
+    }
+
+
+    public Object getServiceObject(Message message) {
+
+        try {
+            if (message == null) {
+                throw new RuntimeException("No CXF message found."); // Handle appropriately
+            }
+
+            Exchange exchange = message.getExchange();
+            if (exchange == null) {
+                throw new RuntimeException("No CXF exchange found."); // Handle appropriately
+            }
+
+            // 2. Get the Implementation Object
+            Object serviceObject = exchange.getService();
+
+            if (serviceObject == null) {
+                throw new RuntimeException("Service object not found in exchange.");
+            }
+            //3. Cast to Service Impl
+            XDRServiceImpl xdrServiceSkeleton = (XDRServiceImpl) serviceObject;
+
+            return xdrServiceSkeleton;
+
+        } catch (Exception e) {
+            // Handle exceptions appropriately (log, throw custom exception, etc.)
+            throw new RuntimeException("Error getting service object: " + e.getMessage(), e); // Example
         }
     }
 }

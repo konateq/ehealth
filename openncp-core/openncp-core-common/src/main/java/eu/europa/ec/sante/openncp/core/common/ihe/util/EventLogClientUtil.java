@@ -58,8 +58,8 @@ public class EventLogClientUtil {
         axisConfiguration.setInFaultPhases(phasesList);
     }*/
 
-    public static void createDummyMustUnderstandHandler(final Endpoint endpoint) {
-        /*DummyMustUnderstandHandler handler = new DummyMustUnderstandHandler();
+/*    public static void createDummyMustUnderstandHandler(final Endpoint endpoint) {
+        DummyMustUnderstandHandler handler = new DummyMustUnderstandHandler();
 
         // Get the inbound interceptor chain
         List<Interceptor<? extends Message>> inInterceptors = endpoint.getInInterceptors();
@@ -79,9 +79,9 @@ public class EventLogClientUtil {
         Phase faultPhase = new Phase("MyFaultPhase");
         faultPhase.add(handler); // Reuse the same handler instance
         inFaultPhases.add(0, faultPhase);
-        endpoint.setInFaultPhases(inFaultPhases);*/
+        endpoint.setInFaultPhases(inFaultPhases);
 
-    }
+    }*/
 
 
     /**

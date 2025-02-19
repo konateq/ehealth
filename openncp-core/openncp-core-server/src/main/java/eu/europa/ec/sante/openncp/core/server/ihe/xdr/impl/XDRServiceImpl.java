@@ -41,16 +41,10 @@ import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xdr.DocumentSubmitInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.xml.ws.handler.MessageContext;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axiom.soap.SOAPMessage;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.cxf.message.Exchange;
-import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -62,6 +56,13 @@ import org.w3c.dom.Node;
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.soap.SOAPHeader;
+import javax.xml.soap.SOAPMessage;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -242,7 +243,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         logger.info("Processing Discard Dispense Medication");
         final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
-        final Element soapHeaderElement = XMLUtils.toDOM(soapHeader);
+        final Element soapHeaderElement = convertSoapHeaderToElement(soapHeader);
         documentSubmitInterface.setSOAPHeader(soapHeaderElement);
 
         //  Validate HCP SAML token according de Medication Discard Dispense rule:
@@ -389,6 +390,25 @@ public class XDRServiceImpl implements XDRServiceInterface {
         return response;
     }
 
+
+    public static Element convertSoapHeaderToElement(SOAPHeader soapHeader) throws Exception {
+        if (soapHeader == null) {
+            return null;
+        }
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer = tf.newTransformer();
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(soapHeader), new StreamResult(writer));
+        String xmlString = writer.getBuffer().toString();
+
+        javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        dbFactory.setNamespaceAware(true);
+        javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        org.w3c.dom.Document doc = dBuilder.parse(new java.io.ByteArrayInputStream(xmlString.getBytes()));
+        return doc.getDocumentElement();
+
+    }
+
     /**
      * @param request
      * @param soapHeader
@@ -405,7 +425,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         Element shElement;
         try {
-            shElement = XMLUtils.toDOM(soapHeader);
+            shElement = convertSoapHeaderToElement(soapHeader);
         } catch (final Exception e) {
             logger.error(e.getMessage());
             throw e;
@@ -487,7 +507,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
             response.setStatus(AdhocQueryResponseStatus.FAILURE);
         } else {
             try {
-                shElement = XMLUtils.toDOM(soapHeader);
+                shElement = convertSoapHeaderToElement(soapHeader);
             } catch (final Exception e) {
                 logger.error(e.getMessage());
                 throw e;
@@ -699,7 +719,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
     public RegistryResponseType saveDocument(ProvideAndRegisterDocumentSetRequestType request, EventLog eventLog) throws Exception {
         MessageContext mc = PhaseInterceptorChain.getCurrentMessage().getExchange().getInMessage().get(MessageContext.class);
         SOAPMessage soapMessage = (SOAPMessage) mc.get(SOAPMessage.class);
-        SOAPHeader soapHeader = soapMessage.getSOAPEnvelope().getHeader();
+        SOAPHeader soapHeader = soapMessage.getSOAPHeader();
         logger.info("[WS] XDR Service: Save Document");
         // Traverse all ExtrinsicObjects
         for (int i = 0; i < request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable().size(); i++) {

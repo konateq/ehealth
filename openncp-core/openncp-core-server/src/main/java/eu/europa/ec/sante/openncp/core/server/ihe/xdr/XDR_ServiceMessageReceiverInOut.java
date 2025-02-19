@@ -19,6 +19,8 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl.XDRServiceImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.binding.soap.SoapMessage;
+import org.apache.cxf.headers.Header;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
@@ -28,6 +30,7 @@ import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import javax.xml.bind.*;
@@ -40,7 +43,6 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.*;
-import javax.xml.ws.addressing.AddressingConstants;
 
 /**
  * XDR_ServiceMessageReceiverInOut message receiver
@@ -88,26 +90,48 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
         }
     }*/
 
-    private String getMessageID(final SOAPEnvelope envelope) {
-        try {
-            SOAPHeader header = envelope.getHeader();
-            if (header == null) {
-                return Constants.UUID_PREFIX; // Or throw an exception
-            }
+    private static String getMessageID(final Message message) {
 
-            // Use AddressingConstants for namespace and local name
-            NodeList messageIDList = header.getElementsByTagNameNS(AddressingConstants.Final.WSA_NAMESPACE, AddressingConstants.WSA_MESSAGE_ID);
-
-            if (messageIDList.getLength() > 0) {
-                Element messageIDElement = (Element) messageIDList.item(0);
-                return messageIDElement.getTextContent();
-            } else {
-                return Constants.UUID_PREFIX;
-            }
-        } catch (Exception e) {
-            // Handle exceptions appropriately
-            throw new RuntimeException("Error getting MessageID: " + e.getMessage(), e);
+        if (!(message instanceof SoapMessage)) {
+            LOGGER.warn("Message is not a SOAP message. Cannot extract MessageID.");
+            return Constants.UUID_PREFIX; // Or throw an exception if appropriate
         }
+
+        SoapMessage soapMessage = (SoapMessage) message;
+        List<Header> headers = soapMessage.getHeaders();
+
+        if (headers != null) {
+            for (Header header : headers) {
+                if (header.getObject() instanceof org.w3c.dom.Element) {
+                    org.w3c.dom.Element headerElement = (Element) header.getObject();
+
+                    // More robust approach using XPath (recommended):
+                    try {
+                        javax.xml.xpath.XPathFactory xpathFactory = javax.xml.xpath.XPathFactory.newInstance();
+                        javax.xml.xpath.XPath xpath = xpathFactory.newXPath();
+                        String expression = "//wsa:MessageID"; // wsa prefix for WS-Addressing namespace
+                        javax.xml.xpath.XPathExpression compiledExpression = xpath.compile(expression);
+
+                        String messageID = compiledExpression.evaluate(headerElement);
+                        if (messageID != null && !messageID.isEmpty()) {
+                            return messageID;
+                        }
+
+                    } catch (javax.xml.xpath.XPathExpressionException e) {
+                        LOGGER.error("Error evaluating XPath expression: " + e.getMessage());
+                        // Fallback to DOM traversal (less robust):
+                        QName messageIDQName = new QName("http://www.w3.org/2005/08/addressing", "MessageID");
+                        org.w3c.dom.NodeList nodeList = headerElement.getElementsByTagNameNS("http://www.w3.org/2005/08/addressing", "MessageID");
+                        if (nodeList.getLength() > 0) {
+                            return nodeList.item(0).getTextContent();
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return Constants.UUID_PREFIX; // MessageID not found.
     }
 
     /**
@@ -115,9 +139,9 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
      *
      * @param msgContext     - SOAP MessageContext request.
      * @param newMsgContext- SOAP MessageContext response.
-     * @throws AxisFault - Exception returned during the process.
+     * @throws Fault - Exception returned during the process.
      */
-    public void invokeBusinessLogic(final Message msgContext, final Message newMsgContext) throws AxisFault {
+    public void invokeBusinessLogic(final Message message, final Message newMessage) throws Fault {
 
         String eadcError = "";
 
@@ -131,8 +155,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
 
         try {
             // get the implementation class for the Web Service
-            final Object serviceObject = getTheImplementationObject(msgContext);
-            Message message = PhaseInterceptorChain.getCurrentMessage();
+            final Object serviceObject = getServiceObject(message);
 
             XDRServiceImpl xdrService = (XDRServiceImpl)getServiceObject(message); // Using the method from above
 

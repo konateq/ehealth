@@ -11,6 +11,12 @@
 
     <packaging>war</packaging>
 
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>eu.europa.ec.sante</groupId>
@@ -39,6 +45,22 @@
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>${commons-fileupload.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.xml.ws</groupId>
+            <artifactId>jaxws-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-rt</artifactId>
+            <version>2.3.7</version>
         </dependency>
     </dependencies>
 
@@ -72,59 +94,47 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.axis2</groupId>
-                <artifactId>axis2-aar-maven-plugin</artifactId>
-                <version>${axis2.version}</version>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-codegen-plugin</artifactId>
+                <version>${cxf.version}</version>
                 <executions>
                     <execution>
-                        <phase>prepare-package</phase>
-                        <id>XCPD_aar_generation</id>
-                        <goals>
-                            <goal>aar</goal>
-                        </goals>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
                         <configuration>
-                            <includeDependencies>false</includeDependencies>
-                            <classesDirectory>src/main/resources/aar/xcpd</classesDirectory>
-                            <servicesXmlFile>src/main/resources/aar/xcpd/META-INF/services.xml</servicesXmlFile>
-                            <wsdlFile>src/main/resources/aar/xcpd/META-INF/XCPD_Service.wsdl</wsdlFile>
-                            <wsdlFileName>XCPD_Service.wsdl</wsdlFileName>
-                            <outputDirectory>${project.basedir}/target/${project.build.finalName}/WEB-INF/services</outputDirectory>
-                            <aarDirectory>target/aar/build/xcpd</aarDirectory>
-                            <aarName>epsos-xcpd-service</aarName>
+                            <sourceRoot>${project.build.directory}/generated-sources</sourceRoot>
+                            <wsdlOptions>
+                                <wsdlOption>
+                                    <wsdl>src/main/resources/aar/xdr/META-INF/XCPD_Service.wsd.wsdl</wsdl>
+                                    <wsdlLocation>classpath:XCPD_Service.wsd.wsdl</wsdlLocation>
+                                    <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <bindingFiles>
+                                        <bindingFile>${basedir}/src/main/resources/binding.xjb</bindingFile>
+                                    </bindingFiles>
+                                </wsdlOption>
+                            </wsdlOptions>
                         </configuration>
-                    </execution>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <id>XCA_aar_generation</id>
                         <goals>
-                            <goal>aar</goal>
+                            <goal>wsdl2java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <id>add-wsdl-source</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
                         </goals>
                         <configuration>
-                            <includeDependencies>false</includeDependencies>
-                            <classesDirectory>src/main/resources/aar/xca</classesDirectory>
-                            <servicesXmlFile>src/main/resources/aar/xca/META-INF/services.xml</servicesXmlFile>
-                            <wsdlFile>src/main/resources/aar/xca/META-INF/XCA_Service.wsdl</wsdlFile>
-                            <wsdlFileName>XCA_Service.wsdl</wsdlFileName>
-                            <outputDirectory>${project.basedir}/target/${project.build.finalName}/WEB-INF/services</outputDirectory>
-                            <aarDirectory>target/aar/build/xca</aarDirectory>
-                            <aarName>epsos-xca-service</aarName>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <id>XDR_aar_generation</id>
-                        <goals>
-                            <goal>aar</goal>
-                        </goals>
-                        <configuration>
-                            <includeDependencies>false</includeDependencies>
-                            <classesDirectory>src/main/resources/aar/xdr</classesDirectory>
-                            <servicesXmlFile>src/main/resources/aar/xdr/META-INF/services.xml</servicesXmlFile>
-                            <wsdlFile>src/main/resources/aar/xdr/META-INF/XDR_Service.wsdl</wsdlFile>
-                            <wsdlFileName>XDR_Service.wsdl</wsdlFileName>
-                            <outputDirectory>${project.basedir}/target/${project.build.finalName}/WEB-INF/services</outputDirectory>
-                            <aarDirectory>target/aar/build/xdr</aarDirectory>
-                            <aarName>epsos-xdr-service</aarName>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/</source>
+                            </sources>
                         </configuration>
                     </execution>
                 </executions>

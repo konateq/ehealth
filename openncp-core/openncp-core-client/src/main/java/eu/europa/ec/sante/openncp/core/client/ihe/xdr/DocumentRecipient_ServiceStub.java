@@ -1,3 +1,4 @@
+/*
 package eu.europa.ec.sante.openncp.core.client.ihe.xdr;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
@@ -27,27 +28,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
-import org.apache.axiom.attachments.ByteArrayDataSource;
-import org.apache.axiom.om.*;
-import org.apache.axiom.om.ds.AbstractOMDataSource;
-import org.apache.axiom.soap.SOAP12Constants;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axiom.soap.SOAPFactory;
-import org.apache.axiom.soap.SOAPHeaderBlock;
-import org.apache.axis2.AxisFault;
-import org.apache.axis2.addressing.EndpointReference;
-import org.apache.axis2.client.OperationClient;
-import org.apache.axis2.client.ServiceClient;
-import org.apache.axis2.client.Stub;
-import org.apache.axis2.context.ConfigurationContext;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
-import org.apache.axis2.description.AxisService;
-import org.apache.axis2.description.OutInAxisOperation;
-import org.apache.axis2.description.WSDL2Constants;
-import org.apache.axis2.kernel.http.HTTPConstants;
-import org.apache.axis2.util.XMLUtils;
-import org.apache.axis2.wsdl.WSDLConstants;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -110,16 +90,20 @@ public class DocumentRecipient_ServiceStub extends Stub {
     private String countryCode;
     private ClassCode classCode;
 
-    /**
+    */
+/**
      * Constructor that takes in a configContext
-     */
+     *//*
+
     public DocumentRecipient_ServiceStub(final ConfigurationContext configurationContext, final String targetEndpoint) throws AxisFault {
         this(configurationContext, targetEndpoint, false);
     }
 
-    /**
+    */
+/**
      * Constructor that takes in a configContext and use separate listener
-     */
+     *//*
+
     public DocumentRecipient_ServiceStub(final ConfigurationContext configurationContext, final String targetEndpoint, final boolean useSeparateListener) throws AxisFault {
 
         // To populate AxisService
@@ -148,9 +132,11 @@ public class DocumentRecipient_ServiceStub extends Stub {
         }
     }
 
-    /**
+    */
+/**
      * Constructor taking the target endpoint
-     */
+     *//*
+
     public DocumentRecipient_ServiceStub(final String targetEndpoint) throws AxisFault {
         this(null, targetEndpoint);
     }
@@ -168,18 +154,22 @@ public class DocumentRecipient_ServiceStub extends Stub {
         this.countryCode = countryCode;
     }
 
-    /*
+    */
+/*
      * Methods
-     */
+     *//*
+
 
     public void setClassCode(final ClassCode classCode) {
         this.classCode = classCode;
     }
 
-    /**
+    */
+/**
      * @param provideAndRegisterDocumentSetRequest
      * @see DocumentRecipient_ServiceStub#documentRecipient_ProvideAndRegisterDocumentSetB
-     */
+     *//*
+
     public RegistryResponseType documentRecipient_ProvideAndRegisterDocumentSetB(
             final ProvideAndRegisterDocumentSetRequestType provideAndRegisterDocumentSetRequest,
             final Map<AssertionType, Assertion> assertionMap) throws RemoteException, XDRException {
@@ -230,31 +220,41 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
             addSecurityHeader(assertionMap, security);
 
-            /* The WSA To header is not being manually added, it's added by the client-connector axis2.xml configurations
+            */
+/* The WSA To header is not being manually added, it's added by the client-connector axis2.xml configurations
             (which globally engages the addressing module, adding the wsa:To header based on the endpoint value from the transport)
             based on the assumption that these IHE Service clients will always be coupled with client-connector, which may not be
             the case in the future. When that happens, we may need to revisit this code to add the To header like it's done in the IHE XCA service client.
-            See issues EHNCP-1141 and EHNCP-1168. */
+            See issues EHNCP-1141 and EHNCP-1168. *//*
+
             _serviceClient.addHeader(action);
             _serviceClient.addHeader(id);
             _serviceClient.addHeadersToEnvelope(soapEnvelope);
 
-            /*
+            */
+/*
              * Prepare request
-             */
+             *//*
+
             messageContext.setEnvelope(soapEnvelope);   // set the message context with that soap envelope
             operationClient.addMessageContext(messageContext);    // add the message context to the operation client
 
-            /* Log soap request */
+            */
+/* Log soap request *//*
+
             final String requestLogMsg = getSoapResponseRequestMsg(soapEnvelope, XDRConstants.LOG.OUTGOING_XDR_PROVIDEANDREGISTER_MESSAGE);
 
-            /* Perform validation of request message */
+            */
+/* Perform validation of request message *//*
+
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, null);
             }
-            /*
+            */
+/*
              * Execute Operation
-             */
+             *//*
+
             transactionStartTime = new Date();
             final SOAPEnvelope returnEnv;
             try {
@@ -281,12 +281,18 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
                 if (StringUtils.isNotEmpty(endpoint)) {
 
-                    /* if we get something from the Central Services, then we retry the request */
-                    /* correctly sets the Transport information with the new endpoint */
+                    */
+/* if we get something from the Central Services, then we retry the request *//*
+
+                    */
+/* correctly sets the Transport information with the new endpoint *//*
+
                     LOGGER.debug("Retrying the request with the new configurations: [{}]", endpoint);
                     _serviceClient.getOptions().setTo(new EndpointReference(endpoint));
 
-                    /* we need a new OperationClient, otherwise we'll face the error "A message was added that is not valid. However, the operation context was complete." */
+                    */
+/* we need a new OperationClient, otherwise we'll face the error "A message was added that is not valid. However, the operation context was complete." *//*
+
                     final OperationClient newOperationClient = _serviceClient.createClient(axisOperations[0].getName());
                     newOperationClient.getOptions().setAction(XDRConstants.SOAP_HEADERS.REQUEST_ACTION);
                     newOperationClient.getOptions().setExceptionToBeThrownOnSOAPFault(true);
@@ -294,33 +300,47 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
                     final SOAPFactory newSoapFactory = getFactory(newOperationClient.getOptions().getSoapVersionURI());
 
-                    /* we need to create a new SOAP payload so that the wsa:To header is correctly set
+                    */
+/* we need to create a new SOAP payload so that the wsa:To header is correctly set
                     (i.e., copied from the Transport information to the wsa:To during the running of the Addressing Phase,
-                    as defined by the global engagement of the addressing module in axis2.xml). The old payload still contains the old endpoint. */
+                    as defined by the global engagement of the addressing module in axis2.xml). The old payload still contains the old endpoint. *//*
+
                     final SOAPEnvelope newEnv = toEnvelope(newSoapFactory, provideAndRegisterDocumentSetRequest,
                             optimizeContent(new QName(XCAConstants.SOAP_HEADERS.NAMESPACE_URI, XCAConstants.SOAP_HEADERS.RETRIEVE.NAMESPACE_REQUEST_LOCAL_PART)));
 
-                    /* we set the previous headers in the new SOAP envelope. Note: the wsa:To header is not manually set (only Action and MessageID are) but instead handled by the
+                    */
+/* we set the previous headers in the new SOAP envelope. Note: the wsa:To header is not manually set (only Action and MessageID are) but instead handled by the
                     axis2 configuration of client-connector (my assumption). This may have impact if we decouple client-connector from the IHE service clients. If
                     they are decoupled, we most probably have to add the To header manually like it's done in the IHE XCA client, both here and in the initial
-                    request. See issues EHNCP-1141 and EHNCP-1168. */
+                    request. See issues EHNCP-1141 and EHNCP-1168. *//*
+
                     _serviceClient.addHeadersToEnvelope(newEnv);
 
-                    /* we create a new Message Context with the new SOAP envelope */
+                    */
+/* we create a new Message Context with the new SOAP envelope *//*
+
                     final var newMessageContext = new MessageContext();
                     newMessageContext.setEnvelope(newEnv);
 
-                    /* add the new message context to the new operation client */
+                    */
+/* add the new message context to the new operation client *//*
+
                     newOperationClient.addMessageContext(newMessageContext);
-                    /* we retry the request */
+                    */
+/* we retry the request *//*
+
                     newOperationClient.execute(true);
-                    /* we need to reset the previous variables with the new content, to be used later */
+                    */
+/* we need to reset the previous variables with the new content, to be used later *//*
+
                     operationClient = newOperationClient;
                     messageContext = newMessageContext;
                     soapEnvelope = newEnv;
                     LOGGER.debug("Successfully retried the request! Proceeding with the normal workflow...");
                 } else {
-                    /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
+                    */
+/* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown *//*
+
                     eadcError = "Could not find configurations in the Central Services for [" + endpoint + "], the service will fail.";
                     LOGGER.error(eadcError);
                     throw new XDRException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, e);
@@ -346,13 +366,17 @@ public class DocumentRecipient_ServiceStub extends Stub {
             //  Log SOAP response message.
             final String responseLogMsg = getSoapResponseRequestMsg(returnEnv, XDRConstants.LOG.INCOMING_XDR_PROVIDEANDREGISTER_MESSAGE);
 
-            /* Perform validation of response message */
+            */
+/* Perform validation of response message *//*
+
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, null);
             }
-            /*
+            */
+/*
              * Return
-             */
+             *//*
+
             final Object object = fromOM(returnEnv.getBody().getFirstElement(), RegistryResponseType.class);
 
             final RegistryResponseType registryResponse = (RegistryResponseType) object;
@@ -436,9 +460,11 @@ public class DocumentRecipient_ServiceStub extends Stub {
         }
     }
 
-    /**
+    */
+/**
      * get the default envelope
-     */
+     *//*
+
     private SOAPEnvelope toEnvelope(final SOAPFactory factory) {
 
         return factory.getDefaultEnvelope();
@@ -558,33 +584,45 @@ public class DocumentRecipient_ServiceStub extends Stub {
 
     static class JaxbRIDataSource extends AbstractOMDataSource {
 
-        /**
+        */
+/**
          * Bound object for output.
-         */
+         *//*
+
         private final Object outObject;
-        /**
+        */
+/**
          * Bound class for output.
-         */
+         *//*
+
         private final Class outClazz;
-        /**
+        */
+/**
          * Marshaller.
-         */
+         *//*
+
         private final Marshaller marshaller;
-        /**
+        */
+/**
          * Namespace
-         */
+         *//*
+
         private final String nsuri;
-        /**
+        */
+/**
          * Local name
-         */
+         *//*
+
         private final String name;
 
-        /**
+        */
+/**
          * Constructor from object and marshaller.
          *
          * @param obj
          * @param marshaller
-         */
+         *//*
+
         public JaxbRIDataSource(final Class clazz, final Object obj, final Marshaller marshaller, final String nsuri, final String name) {
             this.outClazz = clazz;
             this.outObject = obj;
@@ -593,10 +631,12 @@ public class DocumentRecipient_ServiceStub extends Stub {
             this.name = name;
         }
 
-        /**
+        */
+/**
          * @param output
          * @throws XMLStreamException
-         */
+         *//*
+
         public void serialize(final OutputStream output) throws XMLStreamException {
 
             try {
@@ -606,10 +646,12 @@ public class DocumentRecipient_ServiceStub extends Stub {
             }
         }
 
-        /**
+        */
+/**
          * @param writer
          * @throws XMLStreamException
-         */
+         *//*
+
         public void serialize(final Writer writer) throws XMLStreamException {
 
             try {
@@ -619,10 +661,12 @@ public class DocumentRecipient_ServiceStub extends Stub {
             }
         }
 
-        /**
+        */
+/**
          * @param xmlWriter
          * @throws XMLStreamException
-         */
+         *//*
+
         public void serialize(final XMLStreamWriter xmlWriter) throws XMLStreamException {
 
             try {
@@ -633,10 +677,12 @@ public class DocumentRecipient_ServiceStub extends Stub {
             }
         }
 
-        /**
+        */
+/**
          * @return
          * @throws XMLStreamException
-         */
+         *//*
+
         public XMLStreamReader getReader() throws XMLStreamException {
 
             try {
@@ -663,3 +709,4 @@ public class DocumentRecipient_ServiceStub extends Stub {
         }
     }
 }
+*/

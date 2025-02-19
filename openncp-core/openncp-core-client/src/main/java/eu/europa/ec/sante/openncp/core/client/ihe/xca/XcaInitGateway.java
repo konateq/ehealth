@@ -29,8 +29,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATran
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.TMError;
-import org.apache.axis2.addressing.EndpointReference;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;

@@ -1,5 +1,7 @@
+/*
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
+import com.sun.xml.ws.client.Stub;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
@@ -22,25 +24,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
-import org.apache.axiom.om.*;
-import org.apache.axiom.om.ds.AbstractOMDataSource;
-import org.apache.axiom.soap.SOAP12Constants;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axiom.soap.SOAPFactory;
-import org.apache.axis2.AxisFault;
-import org.apache.axis2.addressing.EndpointReference;
-import org.apache.axis2.client.OperationClient;
-import org.apache.axis2.client.ServiceClient;
-import org.apache.axis2.client.Stub;
-import org.apache.axis2.context.ConfigurationContext;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
-import org.apache.axis2.description.AxisService;
-import org.apache.axis2.description.OutInAxisOperation;
-import org.apache.axis2.description.WSDL2Constants;
-import org.apache.axis2.kernel.http.HTTPConstants;
-import org.apache.axis2.util.XMLUtils;
-import org.apache.axis2.wsdl.WSDLConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
@@ -65,9 +48,11 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.*;
 
+*/
 /**
  * RespondingGateway_ServiceStub java implementation.
- */
+ *//*
+
 public class RespondingGateway_ServiceStub extends Stub {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RespondingGateway_ServiceStub.class);
@@ -100,16 +85,20 @@ public class RespondingGateway_ServiceStub extends Stub {
     protected AxisOperation[] _operations;
     private String countryCode;
 
-    /**
+    */
+/**
      * Constructor that takes in a configContext
-     */
+     *//*
+
     public RespondingGateway_ServiceStub(final ConfigurationContext configurationContext, final String targetEndpoint) {
         this(configurationContext, targetEndpoint, false);
     }
 
-    /**
+    */
+/**
      * Constructor that takes in a configContext and useseperate listner
-     */
+     *//*
+
     public RespondingGateway_ServiceStub(final ConfigurationContext configurationContext, final String targetEndpoint, final boolean useSeparateListener) {
 
         // To populate AxisService
@@ -141,9 +130,11 @@ public class RespondingGateway_ServiceStub extends Stub {
         }
     }
 
-    /**
+    */
+/**
      * Constructor taking the target endpoint
-     */
+     *//*
+
     public RespondingGateway_ServiceStub(final String targetEndpoint) {
         this(null, targetEndpoint);
     }
@@ -179,13 +170,15 @@ public class RespondingGateway_ServiceStub extends Stub {
     private void populateFaults() {
     }
 
-    /**
+    */
+/**
      * Auto generated method signature
      *
      * @param prpain201305UV02
      * @param assertionMap
      * @return
-     */
+     *//*
+
     public PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PRPAIN201305UV02 prpain201305UV02, final Map<AssertionType, Assertion> assertionMap, final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
 
         MessageContext _messageContext = null;
@@ -214,11 +207,15 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             final var soapFactory = getFactory(operationClient.getOptions().getSoapVersionURI());
 
-            /* create SOAP envelope with that payload */
+            */
+/* create SOAP envelope with that payload *//*
+
             SOAPEnvelope env = toEnvelope(soapFactory, prpain201305UV02, optimizeContent(
                     new QName(XCPDConstants.SOAP_HEADERS.NAMESPACE_URI, XCPDConstants.SOAP_HEADERS.NAMESPACE_REQUEST_LOCAL_PART)));
 
-            /* adding SOAP soap_headers */
+            */
+/* adding SOAP soap_headers *//*
+
             final var factory = OMAbstractFactory.getOMFactory();
             final var ns2 = factory.createOMNamespace(XCPDConstants.SOAP_HEADERS.OM_NAMESPACE, "");
             final var soapHeaderBlock = OMAbstractFactory.getSOAP12Factory().createSOAPHeaderBlock("Action", ns2);
@@ -246,16 +243,20 @@ public class RespondingGateway_ServiceStub extends Stub {
             } catch (final Exception ex) {
                 LOGGER.error(ex.getLocalizedMessage(), ex);
             }
-            /* The WSA To header is not being manually added, it's added by the client-connector axis2.xml configurations
+            */
+/* The WSA To header is not being manually added, it's added by the client-connector axis2.xml configurations
             (which globally engages the addressing module, adding the wsa:To header based on the endpoint value from the transport)
             based on the assumption that these IHE Service clients will always be coupled with client-connector, which may not be
             the case in the future. When that happens, we may need to revisit this code to add the To header like it's done in the IHE XCA service client.
-            See issues EHNCP-1141 and EHNCP-1168. */
+            See issues EHNCP-1141 and EHNCP-1168. *//*
+
             _serviceClient.addHeader(soapHeaderBlock);
             _serviceClient.addHeader(headerBlockMessageId);
             _serviceClient.addHeadersToEnvelope(env);
 
-            /* set the message context with that soap envelope */
+            */
+/* set the message context with that soap envelope *//*
+
             messageContext = new MessageContext();
             messageContext.setEnvelope(env);
             _messageContext = messageContext;
@@ -295,7 +296,9 @@ public class RespondingGateway_ServiceStub extends Stub {
             // Transaction start time
             start = System.currentTimeMillis();
 
-            /* execute the operation client */
+            */
+/* execute the operation client *//*
+
             transactionStartTime = new Date();
             try {
                 operationClient.execute(true);
@@ -308,12 +311,18 @@ public class RespondingGateway_ServiceStub extends Stub {
 
                 if (StringUtils.isNotEmpty(value)) {
 
-                    /* if we get something from the Central Services, then we retry the request */
-                    /* correctly sets the Transport information with the new endpoint */
+                    */
+/* if we get something from the Central Services, then we retry the request *//*
+
+                    */
+/* correctly sets the Transport information with the new endpoint *//*
+
                     LOGGER.debug("Retrying the request with the new configurations: [{}]", value);
                     _serviceClient.getOptions().setTo(new EndpointReference(value));
 
-                    /* we need a new OperationClient, otherwise we'll face the error "A message was added that is not valid. However, the operation context was complete." */
+                    */
+/* we need a new OperationClient, otherwise we'll face the error "A message was added that is not valid. However, the operation context was complete." *//*
+
                     final OperationClient newOperationClient = _serviceClient.createClient(_operations[0].getName());
                     newOperationClient.getOptions().setAction(XCPDConstants.SOAP_HEADERS.REQUEST_ACTION);
                     newOperationClient.getOptions().setExceptionToBeThrownOnSOAPFault(true);
@@ -321,34 +330,48 @@ public class RespondingGateway_ServiceStub extends Stub {
 
                     final SOAPFactory newSoapFactory = getFactory(newOperationClient.getOptions().getSoapVersionURI());
 
-                    /* we need to create a new SOAP payload so that the wsa:To header is correctly set
+                    */
+/* we need to create a new SOAP payload so that the wsa:To header is correctly set
                     (i.e., copied from the Transport information to the wsa:To during the running of the Addressing Phase,
-                    as defined by the global engagement of the addressing module in axis2.xml). The old payload still contains the old endpoint. */
+                    as defined by the global engagement of the addressing module in axis2.xml). The old payload still contains the old endpoint. *//*
+
                     final SOAPEnvelope newEnv = toEnvelope(newSoapFactory, prpain201305UV02,
                             optimizeContent(new QName(XCPDConstants.SOAP_HEADERS.NAMESPACE_URI, XCPDConstants.SOAP_HEADERS.NAMESPACE_REQUEST_LOCAL_PART)));
 
-                    /* we set the previous headers in the new SOAP envelope. Note: the wsa:To header is not manually set (only Action and MessageID are) but instead handled by the
+                    */
+/* we set the previous headers in the new SOAP envelope. Note: the wsa:To header is not manually set (only Action and MessageID are) but instead handled by the
                     axis2 configuration of client-connector (my assumption). This may have impact if we decouple client-connector from the IHE service clients. If
                     they are decoupled, we most probably have to add the To header manually like it's done in the IHE XCA client, both here and in the initial
-                    request. See issues EHNCP-1141 and EHNCP-1168. */
+                    request. See issues EHNCP-1141 and EHNCP-1168. *//*
+
                     _serviceClient.addHeadersToEnvelope(newEnv);
 
-                    /* we create a new Message Context with the new SOAP envelope */
+                    */
+/* we create a new Message Context with the new SOAP envelope *//*
+
                     final MessageContext newMessageContext = new MessageContext();
                     newMessageContext.setEnvelope(newEnv);
 
-                    /* add the new message context to the new operation client */
+                    */
+/* add the new message context to the new operation client *//*
+
                     newOperationClient.addMessageContext(newMessageContext);
 
-                    /* we need to reset the previous variables with the new content, to be used later */
+                    */
+/* we need to reset the previous variables with the new content, to be used later *//*
+
                     operationClient = newOperationClient;
                     messageContext = newMessageContext;
                     env = newEnv;
-                    /* we retry the request */
+                    */
+/* we retry the request *//*
+
                     newOperationClient.execute(true);
                     LOGGER.debug("Successfully retried the request! Proceeding with the normal workflow...");
                 } else {
-                    /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
+                    */
+/* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown *//*
+
                     eadcError = "Could not find configurations in the Central Services for [" + this.countryCode.toLowerCase(Locale.ENGLISH)
                             + RegisteredService.PATIENT_IDENTIFICATION_SERVICE.getServiceName() + "], the service will fail.";
                     LOGGER.error(eadcError);                    throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
@@ -368,7 +391,9 @@ public class RespondingGateway_ServiceStub extends Stub {
             // Validation start time
             start = System.currentTimeMillis();
 
-            /* Log soap response */
+            */
+/* Log soap response *//*
+
             final String logResponseBody;
             try {
                 if (loggerClinical.isDebugEnabled() && !StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())) {
@@ -380,7 +405,9 @@ public class RespondingGateway_ServiceStub extends Stub {
                 throw new RuntimeException(ex);
             }
 
-            /* Validate Response Messages */
+            */
+/* Validate Response Messages *//*
+
             if (OpenNCPValidation.isValidationEnable()) {
                 OpenNCPValidation.validatePatientDemographicResponse(logResponseBody, NcpSide.NCP_B);
             }
@@ -395,9 +422,11 @@ public class RespondingGateway_ServiceStub extends Stub {
             // eADC start time
             start = System.currentTimeMillis();
 
-            /*
+            */
+/*
              * Invoque eADC
-             */
+             *//*
+
             EadcUtilWrapper.invokeEadc(messageContext, _returnMessageContext, this._getServiceClient(), null,
                     transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
                     EadcUtil.Direction.OUTBOUND, ServiceType.PATIENT_IDENTIFICATION_QUERY);
@@ -434,7 +463,9 @@ public class RespondingGateway_ServiceStub extends Stub {
 
             if (faultElt != null && faultExceptionNameMap.containsKey(faultElt.getQName())) {
 
-                /* make the fault by reflection */
+                */
+/* make the fault by reflection *//*
+
                 try {
                     final String exceptionClassName = (String) faultExceptionClassNameMap.get(faultElt.getQName());
                     final var exceptionClass = Class.forName(exceptionClassName);
@@ -472,9 +503,11 @@ public class RespondingGateway_ServiceStub extends Stub {
         }
     }
 
-    /**
+    */
+/**
      * A utility method that copies the namespaces from the SOAPEnvelope
-     */
+     *//*
+
     private Map getEnvelopeNamespaces(final SOAPEnvelope env) {
 
         final Map returnMap = new java.util.HashMap();
@@ -547,9 +580,11 @@ public class RespondingGateway_ServiceStub extends Stub {
         return envelope;
     }
 
-    /**
+    */
+/**
      * get the default envelope
-     */
+     *//*
+
     private SOAPEnvelope toEnvelope(final SOAPFactory factory) {
 
         return factory.getDefaultEnvelope();
@@ -581,33 +616,45 @@ public class RespondingGateway_ServiceStub extends Stub {
 
     class JaxbRIDataSource extends AbstractOMDataSource {
 
-        /**
+        */
+/**
          * Bound object for output.
-         */
+         *//*
+
         private final Object outObject;
-        /**
+        */
+/**
          * Bound class for output.
-         */
+         *//*
+
         private final Class outClazz;
-        /**
+        */
+/**
          * Marshaller.
-         */
+         *//*
+
         private final Marshaller marshaller;
-        /**
+        */
+/**
          * Namespace
-         */
+         *//*
+
         private final String nsuri;
-        /**
+        */
+/**
          * Local name
-         */
+         *//*
+
         private final String name;
 
-        /**
+        */
+/**
          * Constructor from object and marshaller.
          *
          * @param obj
          * @param marshaller
-         */
+         *//*
+
         public JaxbRIDataSource(final Class clazz, final Object obj, final Marshaller marshaller, final String nsuri, final String name) {
             this.outClazz = clazz;
             this.outObject = obj;
@@ -667,3 +714,4 @@ public class RespondingGateway_ServiceStub extends Stub {
         }
     }
 }
+*/
