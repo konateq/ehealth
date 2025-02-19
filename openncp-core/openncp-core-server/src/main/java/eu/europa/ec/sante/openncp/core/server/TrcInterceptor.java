@@ -51,19 +51,12 @@ public class TrcInterceptor implements FhirCustomInterceptor {
                 .servletResponse(servletRequestDetails.getServletResponse())
                 .hapiRequestDetails(theRequestDetails)
                 .build();
-        if (dispatchContext.isPatient() || dispatchContext.getRestOperationType() == RestOperationTypeEnum.METADATA) {
+        if (dispatchContext.isPatient() || dispatchContext.getHapiRestOperationType().map(restOperation -> restOperation == RestOperationTypeEnum.METADATA).orElse(true)) {
             LOGGER.debug("The request was regarding a patient resource or a METADATA request, skipping TRC assertion verification");
             return; //no TRC check for patient resources or metadata requests
         }
 
-
-        final EuRequestDetails euRequestDetails = EuRequestDetails.of(theRequestDetails);
-        if (euRequestDetails.isPatient() || euRequestDetails.getRestOperationType() == RestOperationTypeEnum.METADATA) {
-            LOGGER.debug("The request was regarding a patient resource or a METADATA request, skipping TRC assertion verification");
-            return; //no TRC check for patient resources or metadata requests
-        }
-
-        LOGGER.info("Validating TRC assertion for resource: {}", euRequestDetails.getResourceType());
+        LOGGER.info("Validating TRC assertion for resource: {}", dispatchContext.getResourceName());
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 

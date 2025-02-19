@@ -1,7 +1,9 @@
 package eu.europa.ec.sante.openncp.core.server.ihe;
 
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
-import eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import eu.europa.ec.sante.openncp.core.common.dicom.DicomDispatchingService;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.DiscardDispenseDetails;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
@@ -21,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.w3c.dom.Element;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -102,6 +105,37 @@ public class ServicesConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public DicomDispatchingService dicomDispatchingService() {
+        return loadWithFallBack(DicomDispatchingService.class, () -> Optional.of(new DicomDispatchingService() {
+            @Override
+            public byte[] dispatchDicomFile(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID) {
+                throw new UnsupportedOperationException("No NI implementation found for PatientSearchInterface");
+            }
+
+            @Override
+            public String dispatchDicomMetadata(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID) {
+                throw new UnsupportedOperationException("No NI implementation found for PatientSearchInterface");
+            }
+
+            @Override
+            public byte[] dispatchDicomRenderedImage(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID, String frameNumber) {
+                throw new UnsupportedOperationException("No NI implementation found for PatientSearchInterface");
+            }
+
+            @Override
+            public InputStream dispatchDicomPixelData(DispatchContext dispatchContext, String studyId, String seriesId, String instanceId, String frameNumber) {
+                throw new UnsupportedOperationException("No NI implementation found for PatientSearchInterface");
+            }
+
+            @Override
+            public InputStream dispatchDicomBulkData(DispatchContext dispatchContext, String studyUID, String seriesUID, String instanceUID, String bulkDataID) {
+                throw new UnsupportedOperationException("No NI implementation found for PatientSearchInterface");
+            }
+        }));
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public DocumentSearchInterface documentSearchInterface() {
         return loadWithFallBack(DocumentSearchInterface.class, () -> Optional.of(new DocumentSearchInterface() {
             @Override
@@ -170,16 +204,21 @@ public class ServicesConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DispatchingService dispatchingService() {
-        return loadWithFallBack(DispatchingService.class, () -> Optional.of(new DispatchingService() {
+    public FhirDispatchingService dispatchingService() {
+        return loadWithFallBack(FhirDispatchingService.class, () -> Optional.of(new FhirDispatchingService() {
 
             @Override
-            public <T extends IBaseResource> T dispatchSearch(final EuRequestDetails requestDetails, final String JWTToken) {
+            public <T extends IBaseResource> T dispatchSearch(final DispatchContext dispatchContext) {
                 throw new UnsupportedOperationException("No NI implementation found for the FHIR DispatchingService");
             }
 
             @Override
-            public <T extends IBaseResource> T dispatchRead(final EuRequestDetails requestDetails, final String JWTToken) {
+            public <T extends IBaseResource> T dispatchRead(final DispatchContext dispatchContext) {
+                throw new UnsupportedOperationException("No NI implementation found for the FHIR DispatchingService");
+            }
+
+            @Override
+            public MethodOutcome dispatchWrite(DispatchContext requestDetails, IBaseResource bundleToCreate) {
                 throw new UnsupportedOperationException("No NI implementation found for the FHIR DispatchingService");
             }
         }));

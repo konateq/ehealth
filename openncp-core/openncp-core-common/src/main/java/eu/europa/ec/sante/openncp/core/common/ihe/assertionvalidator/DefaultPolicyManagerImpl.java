@@ -267,9 +267,6 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
             case LABORATORY_RESULT_REPORTS:
                 XCAPermissionValidatorLrr(assertion);
                 break;
-            case LABORATORY_RESULT_REPORTS:
-                XCAPermissionValidatorLrr(assertion);
-                break;
             default:
                 final String errorMsg = "Invalid document class code: " + classCode;
                 logger.error(errorMsg);

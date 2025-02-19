@@ -47,8 +47,8 @@ public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProdu
     @Override
     public List<AuditEvent> produce(final AuditableEvent auditableEvent) {
         final List<AuditEventData> auditEventDataList;
-        if (auditableEvent.getDispatchContext().getHapiRequestDetails().isPresent()) {
-            switch (auditableEvent.getDispatchContext().getRestOperationType()) {
+        if (auditableEvent.getDispatchContext().getHapiRestOperationType().isPresent()) {
+            switch (auditableEvent.getDispatchContext().getHapiRestOperationType().get()) {
                 case SEARCH_TYPE:
                 case SEARCH_SYSTEM:
                 case GET_PAGE:
@@ -62,7 +62,7 @@ public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProdu
                     auditEventDataList = handleRead(auditableEvent);
                     break;
                 default:
-                    LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getEuRequestDetails().getRestOperationType());
+                    LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getDispatchContext().getHapiRestOperationType());
                     //TODO what to do here exactly? create a file with the error? we cannot let the audit event create exceptions that will interfere with the response.
                     return Collections.emptyList();
             }
