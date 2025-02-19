@@ -77,8 +77,9 @@
                                                     </th>
                                                     <th>
                                                         <!-- Device ID -->
-                                                        <!-- TODO Add Concept to eHDSIDisplayLabel value set -->
-                                                        <xsl:text>Device ID</xsl:text>
+                                                        <xsl:call-template name="show-eHDSIDisplayLabel">
+                                                            <xsl:with-param name="code" select="'203'"/>
+                                                        </xsl:call-template>
                                                     </th>
                                                     <th>
                                                         <!-- Implant Date -->

@@ -93,6 +93,17 @@ public class OpenNCPValidation {
      * @param validator
      * @param ncpSide
      */
+    public static void validateNOKAssertion(final Assertion assertion, final NcpSide ncpSide) {
+
+        LOGGER.info("validate NOK Assertion...");
+        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
+    }
+
+    /**
+     * @param assertion
+     * @param validator
+     * @param ncpSide
+     */
     private static void validateAssertion(final Assertion assertion, final String validator, final NcpSide ncpSide) {
 
         LOGGER.info("[Validation Service: Assertion Validator]");
@@ -180,7 +191,7 @@ public class OpenNCPValidation {
      * @param request
      * @param ncpSide
      */
-    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final List<String> classCodes) {
+    public static void validateXDRMessage(final String request, final NcpSide ncpSide, final ClassCode classCodes) {
 
         LOGGER.info("[Validation Service: XDR Validator]");
         final XdsModel xdsModel = ValidatorUtil.obtainModelXdr(request, classCodes);

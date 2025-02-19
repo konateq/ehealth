@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.SimpleConfidentialityEnum;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.SubstitutionCodeEnum;
@@ -843,7 +844,6 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
         final List<Node> nodeListCode = XmlUtil.getNodeList(doc, "/ClinicalDocument/component/structuredBody/component/section/entry/substanceAdministration[@classCode = 'SBADM']/entryRelationship[@typeCode = 'SUBJ']/observation[@classCode = 'OBS']/code[@code = 'SUBST']");
         final List<Node> nodeListValue = XmlUtil.getNodeList(doc, "/ClinicalDocument/component/structuredBody/component/section/entry/substanceAdministration[@classCode = 'SBADM']/entryRelationship[@typeCode = 'SUBJ']/observation[@classCode = 'OBS']/value[@code = 'N']");
 
-        var substitutionMetadata = new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
         if (nodeListCode != null && !nodeListCode.isEmpty()) {
             for (final Node node : nodeListValue) {
                 final String valueAttr = node.getNodeName();
@@ -857,7 +857,7 @@ public class DocumentSearchMockImpl extends NationalConnectorGateway implements 
                 break;
             }
         }
-        return substitutionMetadata;
+        return new EPDocumentMetaDataImpl.SimpleSubstitutionMetadata(SubstitutionCodeEnum.G);
     }
 
     private boolean getDispensable(final Document xmlDoc) {

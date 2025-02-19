@@ -1,0 +1,99 @@
+=== Release 8.0.1
+
+We reintroduced the `ServiceLoader` mechanism as a fallback for bean loading and provided *default implementations* for all services ensuring that the server will start even if the national implementation does not provide its own service implementations.
+
+WARNING: The `ServiceLoader` mechanism is deprecated as of wave 8 and will be completely removed in wave 9. From wave 9 onwards, you *must* provide services as Spring beans.
+
+The `ServiceLoader` mechanism is available as a Spring bean, annotated with '@Configuration' in the class `ServicesConfiguration` located in the package `eu.europa.ec.sante.openncp.core.server.ihe` of the module `openncp-core-server`.
+
+We have 2 scenarios:
+
+1. Using spring aware implementation classes for the national implementation
+2. Using normal Java classes as implementation classes for the national implementation
+
+==== Spring based scenario
+
+When you go for the Spring solution, the national implementation of the interfaces is defined as a Spring bean. Make sure the National Implementation beans are chosen over the default openNCP ones.
+There are several ways to do this:
+
+1. Exclude OpenNCP fallback services +
++
+[source, java]
+----
+import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
+
+@EnableAutoConfiguration(exclude = { ServicesConfiguration.class }
+----
++
+2. Add `@Primary` to your service beans +
++
+3. Make sure your configuration is loaded before the OpenNCP fallback services
++
+[source, java]
+----
+import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
+
+@AutoConfigureBefore(ServicesConfiguration.class)
+----
+
+The following is an example using `spring.factories` and the `@Primary` notation.
+
+The `META-INF/spring.factories` file
+[source,]
+----
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+ms.openncp.nationalconnector.ModuleConfiguration
+----
+
+This class is a configuration where the different implementation classes are defined as Spring beans:
+
+[source, java]
+----
+@Configuration
+public class ModuleConfiguration {
+    @Bean
+    @Primary
+    public DispatchingService dispatchingServiceMs() {
+        return new NationalDispatchingService();
+    }
+
+    @Bean
+    @Primary
+    public DocumentSearchInterface documentSearchMs() {
+        return new NationalDocumentSearch();
+    }
+
+    @Bean
+    @Primary
+    public PatientSearchInterface patientSearchMs() {
+        return new NationalPatientSearch();
+    }
+
+    @Bean
+    @Primary
+    public DocumentSubmitInterface documentSubmitMs() {
+        return new NationalDocumentSubmit();
+    }
+}
+----
+
+In order to avoid naming conflicts it is strongly advised to provide a unique name for your Spring bean.
+
+==== non Spring-based scenario
+
+This scenario is the fallback scenario and allows the national implementations to work the way they did before using the ServiceLoader mechanism.
+
+If you are not using the Spring solution, the ServicesConfiguration bean is loaded and the national implementation of the interfaces are found through files stored in the META-INF/services folder:
+
+- eu.europa.ec.sante.openncp.core.server.api.ihe.xca.DocumentSearchInterface
+- eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface
+- eu.europa.ec.sante.openncp.core.server.api.ihe.xdr.DocumentSubmitInterface
+
+The content of each of these files must contain the location of the implementation in the national infrastructure:
+
+`eu.europa.ec.sante.openncp.core.server.nc.ms.xca.impl.NationalDocumentSearchImpl`
+
+Remember:
+If you want to support the HL7 FHIR services, you will still need to implement the interface as already defined in the v8.0.0 migration manual.
+
+- eu.europa.ec.sante.openncp.core.common.fhir.services.DispatchingService

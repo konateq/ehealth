@@ -14,6 +14,7 @@ import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.FhirDispatchingService;
 import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
+import eu.europa.ec.sante.openncp.core.common.fhir.services.ValidationService;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
@@ -37,6 +38,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     }
 
 
+
     @Override
     public Class<Bundle> getResourceType() {
         return Bundle.class;
@@ -46,6 +48,7 @@ public class BundleResourceProvider extends AbstractResourceProvider implements 
     public Bundle find(@IdParam final IdType id, final HttpServletRequest theServletRequest, final HttpServletResponse theServletResponse, final RequestDetails theRequestDetails) {
         final DispatchContext dispatchContext = createDispatchContext(theServletRequest, theServletResponse, theRequestDetails);
         final Bundle bundle = fhirDispatchingService.dispatchRead(dispatchContext);
+        validate(bundle, theRequestDetails.getRestOperationType());
         validate(bundle, theRequestDetails.getRestOperationType());
         return bundle;
     }

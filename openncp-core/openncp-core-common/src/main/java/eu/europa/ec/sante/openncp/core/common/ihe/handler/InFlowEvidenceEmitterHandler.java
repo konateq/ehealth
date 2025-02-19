@@ -56,9 +56,9 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
             logger.debug("[NRR] AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
             //if (isClientSide) {
 
-                logger.info("[NRR] Evidence Emitter - Response");
-                //  This will stay commented as the Evidence Emitter CP doesn't mandate the generation of evidences in the response.
-                // NCP-B receives from NCP-A, e.g.: NRR title = "NCPB_XCPD_RES" eventType = ihe event
+            logger.info("[NRR] Evidence Emitter - Response");
+            //  Evidence Emitter CP doesn't mandate the generation of evidences in the response.
+            // NCP-B receives from NCP-A, e.g.: NRR title = "NCPB_XCPD_RES" eventType = ihe event
 
 //                eventType = this.evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
 //                title = "NCPB_" + this.evidenceEmitterHandlerUtils.getTransactionNameFromMessage(soapBody);

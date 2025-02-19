@@ -21,7 +21,6 @@ public enum BalpProfileEnum {
             AuditEvent.AuditEventAction.R,
             () -> new Coding("http://dicom.nema.org/resources/ontology/DCM", "110153", "Source Role ID"),
             () -> new Coding("http://dicom.nema.org/resources/ontology/DCM", "110152", "Destination Role ID")),
-
     BASIC_QUERY(
             "https://profiles.ihe.net/ITI/BALP/StructureDefinition/IHE.BasicAudit.Query",
             AuditEvent.AuditEventAction.E,
