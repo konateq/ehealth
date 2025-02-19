@@ -601,7 +601,8 @@ public class EventLogUtil {
 
     public static String getSourceGatewayIdentifier(final Message message) {
         try {
-            HttpServletRequest servletRequest = message.get(CxfServletRequest.class).getRequest();
+
+            HttpServletRequest servletRequest = (HttpServletRequest) message.get("HTTP.REQUEST");
             String headerClientIp = servletRequest.getHeader("X-Forwarded-For");
 
             if (LOGGER.isDebugEnabled()) {
@@ -643,8 +644,8 @@ public class EventLogUtil {
 
     public static String getClientCommonName(final Message message) {
         try {
-            HttpServletRequest servletRequest = message.get(CxfServletRequest.class).getRequest();
-            return HttpUtil.getClientCertificate(servletRequest);
+            HttpServletRequest servletRequest = (HttpServletRequest) message.get("HTTP.REQUEST");
+            return HttpUtil.getClientCertificate((jakarta.servlet.http.HttpServletRequest) servletRequest);
         } catch (Exception e) {
             throw new RuntimeException("Error getting client common name: " + e.getMessage(), e); // Handle it
         }

@@ -224,7 +224,7 @@ public class OutFlowEvidenceEmitterHandler extends AbstractPhaseInterceptor<Mess
                     if (soapMessage != null) {
                         SOAPEnvelope sourceEnvelope = soapMessage.getSOAPPart().getEnvelope();
                         if (sourceEnvelope != null) {
-                            final Document envCanonicalized = evidenceEmitterHandlerUtils.canonicalizeAxiomSoapEnvelope(sourceEnvelope);
+                            final Document envCanonicalized = evidenceEmitterHandlerUtils.canonicalizeAxiomSoapEnvelope(soapMessage.getSOAPHeader());
 
                             final SOAPHeader soapHeader = soapMessage.getSOAPHeader();
                             final SOAPBody soapBody = sourceEnvelope.getBody();
@@ -249,7 +249,7 @@ public class OutFlowEvidenceEmitterHandler extends AbstractPhaseInterceptor<Mess
                 throw new RuntimeException(e);
             }
 
-            return InvocationResponse.CONTINUE;
+           // return InvocationResponse.CONTINUE;
         }
 
     }

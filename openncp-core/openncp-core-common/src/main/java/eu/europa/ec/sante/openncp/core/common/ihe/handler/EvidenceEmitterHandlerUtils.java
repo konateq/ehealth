@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
+import org.apache.cxf.message.Message;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,11 @@ import org.w3c.dom.Element;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPHeader;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -143,7 +149,7 @@ public class EvidenceEmitterHandlerUtils {
     public String getMsgUUID(final SOAPHeader soapHeader, final SOAPBody soapBody) throws Exception {
 
         String msguuid = null;
-        final Element elemSoapHeader = XMLUtils.toDOM(soapHeader);
+        final Element elemSoapHeader = convertSoapHeaderToElement(soapHeader);
        // final String operation = soapBody.getFirstElementLocalName();
         Element firstChild = (Element) soapBody.getFirstChild();
         final String operation =  firstChild.getLocalName();
@@ -166,13 +172,60 @@ public class EvidenceEmitterHandlerUtils {
         return msguuid;
     }
 
-    public Document canonicalizeAxiomSoapEnvelope(final SOAPEnvelope env) throws Exception {
+    public Document canonicalizeAxiomSoapEnvelope(SOAPHeader soapHeader) throws Exception {
 
-        final Element envAsDom =
+        final Element envAsDom = convertSoapHeaderToElement(soapHeader);
         final Document envCanonicalized = XMLUtil.canonicalize(envAsDom.getOwnerDocument());
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             LOGGER_CLINICAL.debug("Pretty printing canonicalized:\n{}", XMLUtil.prettyPrint(envCanonicalized));
         }
         return envCanonicalized;
     }
+
+    public static Element convertSoapHeaderToElement(SOAPHeader soapHeader) throws Exception {
+        if (soapHeader == null) {
+            return null;
+        }
+
+        // Method 1: Using Transformer (Recommended for robustness)
+        try {
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(soapHeader), new StreamResult(writer));
+
+            // Parse the resulting string back into a DOM Element
+            String xmlString = writer.getBuffer().toString();
+
+            // Use a DOM parser (like DocumentBuilderFactory) to parse xmlString to Element.
+            // Example using javax.xml.parsers.DocumentBuilderFactory:
+            javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+            dbFactory.setNamespaceAware(true); // Important for SOAP headers!
+            javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            org.w3c.dom.Document doc = dBuilder.parse(new java.io.ByteArrayInputStream(xmlString.getBytes()));
+            return doc.getDocumentElement();
+
+        } catch (Exception e) {
+            e.printStackTrace(); // Handle the exception appropriately in your code
+            throw e; // Re-throw if you want the calling method to handle it
+        }
+
+        // Method 2 (Less Robust):  Directly getting the first child (Less Reliable)
+        // SOAPHeader is a Node.  You can try to get its first child, but this is less
+        // reliable because the structure of the SOAPHeader might change.  It also
+        // doesn't handle namespaces correctly in many cases.  Avoid this unless
+        // you are absolutely certain of the SOAPHeader's exact structure.
+
+        /*
+        Node firstChild = soapHeader.getFirstChild();
+        if (firstChild instanceof Element) {
+            return (Element) firstChild;
+        } else {
+            // Handle the case where the first child is not an Element
+            return null; // Or throw an exception
+        }
+        */
+    }
+
+
 }
