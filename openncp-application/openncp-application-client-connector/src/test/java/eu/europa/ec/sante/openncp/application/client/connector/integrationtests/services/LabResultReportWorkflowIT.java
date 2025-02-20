@@ -60,7 +60,7 @@ public class LabResultReportWorkflowIT extends BaseIntegrationTest {
                 "patient.identifier", patientId.getRoot() + "|" + patientId.getExtension(),
                 "type", "http://loinc.org|11502-2");
 
-        final ResponseEntity<String> responseEntity = clientConnectorService.queryDocumentReferenceFhir(assertions, "BE", params);
+        final ResponseEntity<String> responseEntity = clientConnectorService.queryDocumentReferenceFhir(assertions, "PT", params);
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode().is2xxSuccessful()).isTrue();
 

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.assertion;
+package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
@@ -18,18 +18,18 @@ import java.util.List;
 
 
 @Component
-public class NokAssertionValidation implements AssertionValidation {
-
+public class TrcAssertionValidation implements AssertionValidation {
     private final SignatureManager signatureManager;
 
-    public NokAssertionValidation(SignatureManager signatureManager) {
+    public TrcAssertionValidation(SignatureManager signatureManager) {
         this.signatureManager = Validate.notNull(signatureManager, "signatureManager must not be null");
     }
 
     @Override
     public AssertionValidationResult validate(final AssertionDetails assertionDetails) {
-        if (assertionDetails.getAssertionType() != AssertionType.NOK) {
-            return AssertionValidationResult.forDifferentAssertionType(assertionDetails);
+
+        if (assertionDetails.getAssertionType() != AssertionType.TRC) {
+            return AssertionValidationResult.differentAssertion(assertionDetails, AssertionType.TRC);
         }
 
         final Assertion assertion = assertionDetails.getAssertion();
@@ -47,9 +47,10 @@ public class NokAssertionValidation implements AssertionValidation {
                             .key(AssertionValidationKey.REQUIRED_FIELDS)
                             .status(AssertionValidationDetailStatus.FAILED)
                             .error(e)
-                            .message(e.getMessage())
+                            .message("Error while checking the required fields")
                             .build())
                     .build();
+
         }
 
         try {
@@ -65,7 +66,7 @@ public class NokAssertionValidation implements AssertionValidation {
                             .key(AssertionValidationKey.SIGNATURE)
                             .status(AssertionValidationDetailStatus.FAILED)
                             .error(e)
-                            .message(e.getMessage())
+                            .message("Error while validating the signature")
                             .build())
                     .build();
         }
@@ -81,8 +82,8 @@ public class NokAssertionValidation implements AssertionValidation {
     private void checkRequiredFields(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
         RequiredFieldValidators.validateVersion(assertion);
         RequiredFieldValidators.validateID(assertion);
-        RequiredFieldValidators.validateIssueInstant(assertion);
         RequiredFieldValidators.validateIssuer(assertion);
+        RequiredFieldValidators.validateIssueInstant(assertion);
         RequiredFieldValidators.validateSubject(assertion);
         RequiredFieldValidators.validateNameID(assertion);
         RequiredFieldValidators.validateFormat(assertion);
@@ -91,6 +92,8 @@ public class NokAssertionValidation implements AssertionValidation {
         RequiredFieldValidators.validateConditions(assertion);
         RequiredFieldValidators.validateNotBefore(assertion);
         RequiredFieldValidators.validateNotOnOrAfter(assertion);
+        RequiredFieldValidators.validateAdvice(assertion);
+        RequiredFieldValidators.validateAssertionIdRef(assertion);
         RequiredFieldValidators.validateAuthnStatement(assertion);
         RequiredFieldValidators.validateAuthnInstant(assertion);
         RequiredFieldValidators.validateAuthnContext(assertion);
@@ -101,7 +104,10 @@ public class NokAssertionValidation implements AssertionValidation {
         FieldValueValidators.validateVersionValue(assertion);
         FieldValueValidators.validateIssuerValue(assertion);
         FieldValueValidators.validateNameIDValue(assertion);
+        FieldValueValidators.validateMethodValue(assertion);
         FieldValueValidators.validateNotBeforeValue(assertion);
         FieldValueValidators.validateNotOnOrAfterValue(assertion);
+        FieldValueValidators.validateTimeSpanForTRC(assertion);
+        FieldValueValidators.validateAuthnContextClassRefValueForHCP(assertion);
     }
 }

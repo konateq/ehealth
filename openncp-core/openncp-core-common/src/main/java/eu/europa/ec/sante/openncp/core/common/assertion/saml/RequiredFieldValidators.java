@@ -1,7 +1,10 @@
 package eu.europa.ec.sante.openncp.core.common.assertion.saml;
 
+import eu.europa.ec.sante.openncp.core.common.assertion.AssertionConstants;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import org.opensaml.saml.saml2.core.Assertion;
+
+import static eu.europa.ec.sante.openncp.core.common.assertion.AssertionHelper.getAttributeFromAssertion;
 
 public class RequiredFieldValidators {
 
@@ -126,5 +129,9 @@ public class RequiredFieldValidators {
         if (assertion.getAdvice().getAssertionIDReferences().isEmpty()) {
             throw (new MissingFieldException("AssertionIdRef element is required."));
         }
+    }
+
+    public static void validateNokIdentifiers(Assertion assertion) throws MissingFieldException {
+        getAttributeFromAssertion(assertion, AssertionConstants.URN_EHDSI_NAMES_ISM_DOCUMENT_ID);
     }
 }

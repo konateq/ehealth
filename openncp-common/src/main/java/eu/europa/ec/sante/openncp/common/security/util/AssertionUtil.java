@@ -1,9 +1,5 @@
 package eu.europa.ec.sante.openncp.common.security.util;
 
-import java.util.List;
-import java.util.Optional;
-import javax.xml.namespace.QName;
-
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -14,16 +10,18 @@ import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.XSString;
 import org.opensaml.core.xml.schema.XSURI;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.AttributeValue;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.saml2.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import javax.xml.namespace.QName;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class AssertionUtil {
 
@@ -72,12 +70,12 @@ public class AssertionUtil {
                         attrVal.setValue(((XSString) attribute.getAttributeValues().get(0)).getValue());
                     } else {
                         if (attribute.getAttributeValues()
-                                     .get(0)
-                                     .getOrderedChildren()
-                                     .get(0)
-                                     .getClass()
-                                     .getName()
-                                     .equals("org.opensaml.core.xml.schema.impl.XSAnyImpl")) {
+                                .get(0)
+                                .getOrderedChildren()
+                                .get(0)
+                                .getClass()
+                                .getName()
+                                .equals("org.opensaml.core.xml.schema.impl.XSAnyImpl")) {
                             attrVal.setValue(((XSAny) attribute.getAttributeValues().get(0).getOrderedChildren().get(0)).getTextContent());
                         } else {
                             attrVal.setValue(((XSString) attribute.getAttributeValues().get(0).getOrderedChildren().get(0)).getValue());
@@ -193,6 +191,21 @@ public class AssertionUtil {
         attrVal.setValue(value);
         attr.getAttributeValues().add(attrVal);
         return attr;
+    }
+
+    public static List<Assertion> toAssertions(final NodeList assertionList)  {
+        final List<Assertion> assertions = new ArrayList<>();
+
+        for (int i = 0; i < assertionList.getLength(); i++) {
+            final Node node = assertionList.item(i);
+
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                final Element assertionElement = (Element) node;
+                toAssertion(assertionElement).ifPresent(assertions::add);
+            }
+        }
+
+        return assertions;
     }
 
     public static Optional<Assertion> toAssertion(final Element element) {

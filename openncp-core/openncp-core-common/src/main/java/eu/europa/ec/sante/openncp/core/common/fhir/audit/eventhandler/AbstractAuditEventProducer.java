@@ -22,7 +22,7 @@ public class AbstractAuditEventProducer {
 
         final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
                 .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertion()
+                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertionDetails()
                         .map(AssertionDetails::getElement)
                         .map(SoapElementHelper::getRoleID)
                         .orElse(StringUtils.EMPTY))

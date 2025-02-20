@@ -5,15 +5,16 @@ import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
-import eu.europa.ec.sante.openncp.core.common.assertion.AssertionValidationResult;
-import eu.europa.ec.sante.openncp.core.common.assertion.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.XSDValidationException;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.core.xml.io.UnmarshallingException;
@@ -61,8 +62,9 @@ public class SAML2Validator {
         } else {
             throw (new MissingFieldException("Security element is required."));
         }
-
         final NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
+        final List<Assertion> assertions = AssertionUtil.toAssertions(securityList)
+
         Element hcpAss;
         Assertion hcpAssertion = null;
 
@@ -86,9 +88,8 @@ public class SAML2Validator {
             final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
             checkHCPAssertion(hcpAssertionDetails, null);
             sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
-
             //TODO: Next of Kin assertion should be checked
-            policyAssertionManager.XCPDPermissionValidator(hcpAssertion);
+            policyAssertionManager.xcpdPermissionValidator(hcpAssertion);
         } catch (final IOException | UnmarshallingException e) {
             LOGGER.error("{}: '{}'", e.getClass(), e.getMessage());
         } catch (final SAXException e) {
@@ -98,7 +99,7 @@ public class SAML2Validator {
         return sigCountryCode;
     }
 
-    public void validateHCPHeader(Assertion assertion) throws MissingFieldException, InsufficientRightsException,
+    public static void validateHCPHeader(final Assertion assertion) throws MissingFieldException, InsufficientRightsException,
             InvalidFieldException, XSDValidationException, SMgrException {
         LOGGER.debug("[SAML] Validating HCP assertion.");
 
@@ -129,9 +130,9 @@ public class SAML2Validator {
             FieldValueValidators.validateTimeSpanForHCP(assertion);
             FieldValueValidators.validateAuthnContextClassRefValueForHCP(assertion);
 
-        } catch (MissingFieldException e) {
+        } catch (final MissingFieldException e) {
             throw new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_GENERIC, e.getMessage());
-        } catch (InvalidFieldException e) {
+        } catch (final InvalidFieldException e) {
             throw new InvalidFieldException(OpenNCPErrorCode.ERROR_HPI_GENERIC, e.getMessage());
         }
 
@@ -157,6 +158,7 @@ public class SAML2Validator {
             Element assertionElement;
             Assertion hcpAssertion = null;
             Assertion trcAssertion = null;
+            final Assertion nokAssertion = null;
 
             if (assertionList.getLength() > 0) {
                 for (var i = 0; i < assertionList.getLength(); i++) {
@@ -186,9 +188,10 @@ public class SAML2Validator {
             validateTrcAssertion(trcAssertion);
 
             final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
-            checkHCPAssertion(hcpAssertionDetails, null);
+            checkHCPAssertion(hcpAssertionDetails, classCode);
             sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
-            policyAssertionManager.XCAPermissionValidator(hcpAssertion, classCode);
+            policyAssertionManager.xcaPermissionvalidator(hcpAssertion, classCode);
+
             checkTRCAssertion(trcAssertion, classCode);
             checkTRCAdviceIdReferenceAgainstHCPId(trcAssertion, hcpAssertion);
             //TODO: Next of Kin assertion should be checked
@@ -248,7 +251,7 @@ public class SAML2Validator {
             validateTrcAssertion(trcAssertion);
 
             final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
-            checkHCPAssertion(hcpAssertionDetails, null);
+            checkHCPAssertion(hcpAssertionDetails, classCode);
             sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
             policyAssertionManager.XDRPermissionValidator(hcpAssertion, classCode);
             checkTRCAssertion(trcAssertion, classCode);
@@ -262,7 +265,7 @@ public class SAML2Validator {
         return sigCountryCode;
     }
 
-    private void checkTRCAdviceIdReferenceAgainstHCPId(final Assertion trcAssertion, final Assertion hcpAssertion) throws InsufficientRightsException {
+    private static void checkTRCAdviceIdReferenceAgainstHCPId(final Assertion trcAssertion, final Assertion hcpAssertion) throws InsufficientRightsException {
 
         try {
             final String trcFirstReferenceId = trcAssertion.getAdvice().getAssertionIDReferences().get(0).getAssertionID();
@@ -291,7 +294,7 @@ public class SAML2Validator {
         return policyAssertionManager.isConsentGiven(patientId, countryId);
     }
 
-    public List<Assertion> getAssertions(final Element soapHeader) {
+    public static List<Assertion> getAssertions(final Element soapHeader) {
 
         LOGGER.info("Retrieving SAML tokens from SOAP Header");
         final NodeList securityList = soapHeader.getElementsByTagNameNS(OASIS_WSSE_SCHEMA_LOC, "Security");
@@ -330,14 +333,14 @@ public class SAML2Validator {
         }
 
         final Assertion assertion = hcpAssertionDetails.getAssertion();
-        policyAssertionManager.XSPASubjectValidatorForHCP(assertion, classCode);
-        policyAssertionManager.XSPARoleValidator(assertion, classCode);
-        policyAssertionManager.HealthcareFacilityValidator(assertion, classCode);
-        policyAssertionManager.PurposeOfUseValidator(assertion, classCode);
+        policyAssertionManager.xspaSubjectValidatorForHCP(assertion);
+        policyAssertionManager.xspaRoleValidator(assertion);
+        policyAssertionManager.healthcareFacilityValidator(assertion);
+        policyAssertionManager.purposeOfUseValidator(assertion, classCode);
         if (classCode != null && classCode.equals(ClassCode.EDD_CLASSCODE)) {
-            policyAssertionManager.XSPAOrganizationIdValidator(assertion, classCode);
+            policyAssertionManager.xspaOrganizationIdValidator(assertion);
         }
-        policyAssertionManager.XSPALocalityValidator(assertion, classCode);
+        policyAssertionManager.xspalocalityvalidator(assertion);
     }
 
     public void checkTRCAssertion(final Assertion assertion, final ClassCode classCode)
@@ -350,8 +353,8 @@ public class SAML2Validator {
             throw new RuntimeException(String.format("Invalid TRC assertion: [%s] ", failedValidationMessages));
         }
 
-        policyAssertionManager.PurposeOfUseValidatorForTRC(assertion, classCode);
-        policyAssertionManager.XSPASubjectValidatorForTRC(assertion, classCode);
+        policyAssertionManager.purposeOfUseValidatorForTRC(assertion);
+        policyAssertionManager.xspaSubjectValidatorForTRC(assertion);
 
     }
 
@@ -390,6 +393,7 @@ public class SAML2Validator {
 
             final AssertionDetails hcpAssertionDetails = AssertionDetails.of(hcpAssertion);
             sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
+            signatureManager.verifySAMLAssertion(hcpAssertionDetails.getAssertion());
         } catch (final IOException | UnmarshallingException e) {
             LOGGER.error("'{}'", e.getMessage(), e);
         } catch (final SAXException e) {
@@ -399,7 +403,7 @@ public class SAML2Validator {
         return sigCountryCode;
     }
 
-    private static void validateHcpAssertion(Assertion hcpAssertion) throws MissingFieldException {
+    private static void validateHcpAssertion(final Assertion hcpAssertion) throws MissingFieldException {
         if (hcpAssertion == null) {
             throw (new MissingFieldException(OpenNCPErrorCode.ERROR_HPI_AUTHENTICATION_NOT_RECEIVED, "HCP Assertion element is required."));
         } else {
@@ -409,7 +413,7 @@ public class SAML2Validator {
         }
     }
 
-    private static void validateTrcAssertion(Assertion trcAssertion) throws MissingFieldException {
+    private static void validateTrcAssertion(final Assertion trcAssertion) throws MissingFieldException {
         if (trcAssertion == null) {
             throw (new MissingFieldException("TRC Assertion element is required."));
         } else {

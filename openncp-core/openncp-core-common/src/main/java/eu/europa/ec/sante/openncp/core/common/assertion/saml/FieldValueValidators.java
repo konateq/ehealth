@@ -2,14 +2,18 @@ package eu.europa.ec.sante.openncp.core.common.assertion.saml;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
 import eu.europa.ec.sante.openncp.common.security.TwoFactorAuthentication;
+import eu.europa.ec.sante.openncp.core.common.assertion.AssertionConstants;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static eu.europa.ec.sante.openncp.core.common.assertion.AssertionHelper.getAttributeFromAssertion;
 
 public class FieldValueValidators {
 
@@ -33,7 +37,7 @@ public class FieldValueValidators {
 
     public static void validateIssuerValue(final Assertion assertion) throws InvalidFieldException {
         if (assertion.getIssuer().getValue() == null) {
-            throw (new InvalidFieldException("Issuer should be filled."));
+            throw new InvalidFieldException("Issuer should be filled.");
         } else if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             LOGGER_CLINICAL.debug("Issuer: '{}'", assertion.getIssuer().getValue());
         }
@@ -114,5 +118,14 @@ public class FieldValueValidators {
                 throw (new InvalidFieldException("AuthnContextClassRef element must be a Two Factor Authentication token."));
             }
         }
+    }
+
+    public static void validateNextOfKinIdentifiers(final Assertion assertion) throws InvalidFieldException {
+        try {
+            final String attributeFromAssertion = getAttributeFromAssertion(assertion, AssertionConstants.URN_EHDSI_NAMES_ISM_DOCUMENT_ID);
+        } catch (final MissingFieldException e) {
+            throw new InvalidFieldException("The next of kin identifier(s) are missing.");
+        }
+
     }
 }

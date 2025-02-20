@@ -33,7 +33,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public String submitDocument(final SubmitDocumentRequest submitDocumentRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = RequestContextProvider.getRequestContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getSamlDetails();
@@ -47,7 +47,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public List<EpsosDocument> queryDocuments(final QueryDocumentRequest queryDocumentRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = RequestContextProvider.getRequestContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getSamlDetails();
@@ -63,7 +63,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public EpsosDocument retrieveDocument(final RetrieveDocumentRequest retrieveDocumentRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = RequestContextProvider.getRequestContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getSamlDetails();
@@ -77,7 +77,7 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public List<PatientDemographics> queryPatient(final QueryPatientRequest queryPatientRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = RequestContextProvider.getRequestContext()
                 .orElseThrow(() -> new ClientException(
                         CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
                 .getSamlDetails();

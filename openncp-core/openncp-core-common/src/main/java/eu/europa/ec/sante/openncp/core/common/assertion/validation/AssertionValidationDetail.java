@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.assertion;
+package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
 

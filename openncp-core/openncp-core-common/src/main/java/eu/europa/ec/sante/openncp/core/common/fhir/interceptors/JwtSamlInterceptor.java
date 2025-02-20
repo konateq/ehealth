@@ -92,7 +92,7 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
 
     public void addAssertionToSecurityContext(final AuditSecurityInfo auditSecurityInfo) {
-        final Assertion hcpAssertion = auditSecurityInfo.getSamlDetails().getHcpAssertion()
+        final Assertion hcpAssertion = auditSecurityInfo.getSamlDetails().getHcpAssertionDetails()
                 .map(AssertionDetails::getAssertion)
                 .orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
         final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(hcpAssertion.getSubject().getNameID().getValue(), hcpAssertion.getIssuer().getValue(), null);
@@ -101,22 +101,22 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
     }
 
     private void validateAssertions(final SamlDetails samlDetails) {
-        final Assertion hcpAssertion = samlDetails.getHcpAssertion()
+        final Assertion hcpAssertion = samlDetails.getHcpAssertionDetails()
                 .map(AssertionDetails::getAssertion)
                 .orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
 
         if (OpenNCPValidation.isValidationEnable()) {
             OpenNCPValidation.validateHCPAssertion(hcpAssertion, serverContext.getNcpSide());
-            samlDetails.getAssertion(AssertionType.TRC)
+            samlDetails.getAssertionDetails(AssertionType.TRC)
                     .map(AssertionDetails::getAssertion)
                     .ifPresent(trcAssertion -> OpenNCPValidation.validateTRCAssertion(trcAssertion, serverContext.getNcpSide()));
-            samlDetails.getAssertion(AssertionType.NOK)
+            samlDetails.getAssertionDetails(AssertionType.NOK)
                     .map(AssertionDetails::getAssertion)
                     .ifPresent(trcAssertion -> OpenNCPValidation.validateNOKAssertion(trcAssertion, serverContext.getNcpSide()));
         }
 
         try {
-            saml2Validator.validateHCPHeader(hcpAssertion);
+            SAML2Validator.validateHCPHeader(hcpAssertion);
         } catch (final MissingFieldException | InsufficientRightsException | InvalidFieldException | SMgrException |
                        XSDValidationException e) {
             throw new AuthenticationException("Invalid HCP assertion.", e);

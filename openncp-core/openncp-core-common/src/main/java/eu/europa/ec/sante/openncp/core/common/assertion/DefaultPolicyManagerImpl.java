@@ -30,12 +30,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * Validates Health Care Facility Type SAML attribute implemented by default according the eHDSI SAML Profile document.
      *
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - User's assertion attribute is missing.
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void HealthcareFacilityValidator(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void healthcareFacilityValidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String facilityType = getAttributeFromAssertion(assertion, AssertionConstants.URN_EHDSI_NAMES_SUBJECT_HEALTHCARE_FACILITY_TYPE);
         if (StringUtils.equalsIgnoreCase(facilityType, HealthcareFacilityType.HOSPITAL.toString())
@@ -54,12 +53,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * Validates the OnBehalf attribute when a user is acting on behalf a clinician and its role is "Clerical and Administrative Personnel".
      *
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - User's assertion attribute is missing.
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void OnBehalfOfValidator(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void onBehalfOfValidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String onBehalfOfRole = getAttributeFromAssertion(assertion, AssertionConstants.URN_EHDSI_NAMES_SUBJECT_ON_BEHALF_OF);
         if (XSPARole.containsCode(onBehalfOfRole)) {
@@ -76,12 +74,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * of the DefaultPolicyManager.
      *
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - User's assertion attribute is missing.
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void XSPARoleValidator(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void xspaRoleValidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String structuralRole = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
         logger.debug("HCP Identity Assertion XSPA Structural Role: '{}'", structuralRole);
@@ -90,7 +87,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
             if (structuralRole.equals(XSPARoleDeprecated.CLERICAL_ADMINISTRATIVE.toString())) {
 
-                OnBehalfOfValidator(assertion, classCode);
+                onBehalfOfValidator(assertion);
             }
             //XSPAFunctionalRoleValidator(assertion, classCode);
         } else {
@@ -102,12 +99,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
     /**
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - User's assertion attribute is missing.
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void XSPASubjectValidatorForHCP(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void xspaSubjectValidatorForHCP(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String subjectId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         if (StringUtils.isEmpty(subjectId)) {
@@ -117,12 +113,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
     /**
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - User's assertion attribute is missing.
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void XSPASubjectValidatorForTRC(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void xspaSubjectValidatorForTRC(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String resourceId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         if (StringUtils.isBlank(resourceId)) {
@@ -132,12 +127,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
     /**
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException       - User's assertion attribute is missing.
      * @throws InsufficientRightsException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void PurposeOfUseValidator(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InsufficientRightsException {
+    public void purposeOfUseValidator(final Assertion assertion) throws MissingFieldException, InsufficientRightsException {
 
         final String resourceId = getPurposeOfUseFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
         logger.info("*** PurposeOfUse ***: '{}'", resourceId);
@@ -153,12 +147,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
     /**
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException       - User's assertion attribute is missing, log warning (PoU optional for TRC)
      * @throws InsufficientRightsException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void PurposeOfUseValidatorForTRC(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InsufficientRightsException {
+    public void purposeOfUseValidatorForTRC(final Assertion assertion) throws MissingFieldException, InsufficientRightsException {
 
         final String resourceId = getPurposeOfUseFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
         if (StringUtils.isEmpty(resourceId)) {
@@ -176,12 +169,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
     /**
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - User's assertion attribute is missing.
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void XSPALocalityValidator(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void xspalocalityvalidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String environmentLocality = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_ENVIRONMENT_LOCALITY);
         if (StringUtils.isBlank(environmentLocality)) {
@@ -192,12 +184,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
     /**
      * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
      * @throws MissingFieldException - assertion attribute is missing.
      * @throws InvalidFieldException - assertion attribute is not correct according the specification.
      */
     @Override
-    public void XSPAOrganizationIdValidator(final Assertion assertion, final ClassCode classCode) throws MissingFieldException, InvalidFieldException {
+    public void xspaOrganizationIdValidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String organizationId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID);
         if (StringUtils.isBlank(organizationId)) {
@@ -211,7 +202,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * @throws InsufficientRightsException - User doesn't have enough privileges.
      */
     @Override
-    public void XCPDPermissionValidator(final Assertion assertion) throws InsufficientRightsException {
+    public void xcpdPermissionValidator(final Assertion assertion) throws InsufficientRightsException {
 
         //Check allowed roles
         try {
@@ -249,11 +240,11 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * @throws InsufficientRightsException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void XCAPermissionValidator(final Assertion assertion, final ClassCode classCode) throws InsufficientRightsException, MissingFieldException {
+    public void xcaPermissionvalidator(final Assertion assertion, final ClassCode classCode) throws InsufficientRightsException, MissingFieldException {
 
         switch (classCode) {
             case PS_CLASSCODE:
-                XCAPermissionValidatorPS(assertion);
+                xcaPermissionvalidatorForPs(assertion);
                 break;
             case EP_CLASSCODE:
                 XCAPermissionValidatorEP(assertion);
@@ -278,7 +269,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * @param assertion - SAML user assertion.
      * @throws InsufficientRightsException - User doesn't have enough privileges.
      */
-    private void XCAPermissionValidatorPS(final Assertion assertion) throws InsufficientRightsException {
+    private void xcaPermissionvalidatorForPs(final Assertion assertion) throws InsufficientRightsException {
 
         var medicalHistory = false;
         var vitalSign = false;
@@ -395,7 +386,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      */
     private void XCAPermissionValidatorOrCD(final Assertion assertion) throws InsufficientRightsException {
         //TODO to be reviewed. For the moment, the same validation is used as for PS.
-        XCAPermissionValidatorPS(assertion);
+        xcaPermissionvalidatorForPs(assertion);
     }
 
     /**
@@ -406,7 +397,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      */
     private void XCAPermissionValidatorLrr(final Assertion assertion) throws InsufficientRightsException {
         //TODO to be reviewed. For the moment, the same validation is used as for PS.
-        XCAPermissionValidatorPS(assertion);
+        xcaPermissionvalidatorForPs(assertion);
     }
 
     /**

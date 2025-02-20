@@ -43,6 +43,9 @@ public class PatientServiceIT extends BaseIntegrationTest {
 
     @Test
     void queryPatient() throws ClientConnectorException {
+        doReturn("src/test/resources/expired_keystore.jks").when(configurationManager).getProperty(eq("SC_KEYSTORE_PATH"));
+
+
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         assertions.put(AssertionType.HCP, AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu"));
 

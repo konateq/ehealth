@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.assertion;
+package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import org.apache.commons.lang3.Validate;
@@ -24,7 +24,7 @@ public class AssertionValidator {
     public Optional<AssertionValidationResult> validate(final AssertionDetails assertionDetails) {
         return assertionValidations.stream()
                 .map(assertionValidation -> assertionValidation.validate(assertionDetails))
-                .filter(AssertionValidationResult::isCorrectType)
+                .filter(AssertionValidationResult::isIgnored)
                 .findFirst();
     }
 }

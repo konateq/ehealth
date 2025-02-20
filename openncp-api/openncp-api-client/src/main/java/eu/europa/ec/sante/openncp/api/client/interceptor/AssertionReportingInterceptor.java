@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import eu.europa.ec.sante.openncp.api.client.AssertionContext;
-import eu.europa.ec.sante.openncp.api.client.AssertionContextProvider;
+import eu.europa.ec.sante.openncp.api.client.RequestContext;
+import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
@@ -30,16 +30,16 @@ public class AssertionReportingInterceptor extends AbstractPhaseInterceptor<Mess
         }
 
         LOGGER.info("Reporting assertions");
-        final AssertionContext assertionContext = AssertionContextProvider.getAssertionContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
-        final SamlDetails samlDetails = assertionContext.getSamlDetails();
+        final RequestContext requestContext = RequestContextProvider.getRequestContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
+        final SamlDetails samlDetails = requestContext.getSamlDetails();
 
-        samlDetails.getAssertion(AssertionType.HCP)
+        samlDetails.getAssertionDetails(AssertionType.HCP)
                 .map(AssertionDetails::getAssertion)
                 .ifPresent(assertion -> OpenNCPValidation.validateHCPAssertion(assertion, NcpSide.NCP_B));
-        samlDetails.getAssertion(AssertionType.TRC)
+        samlDetails.getAssertionDetails(AssertionType.TRC)
                 .map(AssertionDetails::getAssertion)
                 .ifPresent(assertion -> OpenNCPValidation.validateTRCAssertion(assertion, NcpSide.NCP_B));
-        samlDetails.getAssertion(AssertionType.NOK)
+        samlDetails.getAssertionDetails(AssertionType.NOK)
                 .map(AssertionDetails::getAssertion)
                 .ifPresent(assertion -> OpenNCPValidation.validateNoKAssertion(assertion, NcpSide.NCP_B));
     }

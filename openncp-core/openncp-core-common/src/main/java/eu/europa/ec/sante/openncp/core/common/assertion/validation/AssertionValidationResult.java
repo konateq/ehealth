@@ -1,9 +1,11 @@
-package eu.europa.ec.sante.openncp.core.common.assertion;
+package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,12 +13,12 @@ import java.util.stream.Stream;
 public interface AssertionValidationResult {
     AssertionValidationStatus getStatus();
 
-    AssertionDetails getAssertionDetails();
+    Optional<AssertionDetails> getAssertionDetails();
 
     List<AssertionValidationDetail> getValidationDetails();
 
-    default boolean isCorrectType() {
-        return getStatus() != AssertionValidationStatus.DIFFERENT_TYPE;
+    default boolean isIgnored() {
+        return getStatus() != AssertionValidationStatus.IGNORED;
     }
 
     default Stream<AssertionValidationDetail> getFailedValidationDetails() {
@@ -30,10 +32,17 @@ public interface AssertionValidationResult {
                 .collect(Collectors.toList());
     }
 
-    static AssertionValidationResult forDifferentAssertionType(final AssertionDetails assertionDetails) {
+    static AssertionValidationResult differentAssertion(final AssertionDetails assertionDetails, final AssertionType requestedType) {
+        final AssertionType actualType = assertionDetails.getAssertionType();
+
         return ImmutableAssertionValidationResult.builder()
-                .status(AssertionValidationStatus.DIFFERENT_TYPE)
+                .status(AssertionValidationStatus.IGNORED)
                 .assertionDetails(assertionDetails)
+                .addValidationDetail(ImmutableAssertionValidationDetail.builder()
+                        .key(AssertionValidationKey.DIFFERENT_ASSERTION)
+                        .status(AssertionValidationDetailStatus.IGNORED)
+                        .message(String.format("Requested assertion type [%s], actual assertion type [%s]", requestedType, actualType))
+                        .build())
                 .build();
     }
 

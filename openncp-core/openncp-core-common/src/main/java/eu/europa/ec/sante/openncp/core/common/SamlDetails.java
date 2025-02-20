@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
  */
 @Domain
 public interface SamlDetails {
-    default Optional<AssertionDetails> getHcpAssertion() {
-        return getAssertion(AssertionType.HCP);
+    default Optional<AssertionDetails> getHcpAssertionDetails() {
+        return getAssertionDetails(AssertionType.HCP);
     }
 
     List<AssertionDetails> getAssertions();
 
-    default Optional<AssertionDetails> getAssertion(final AssertionType assertionType) {
+    default Optional<AssertionDetails> getAssertionDetails(final AssertionType assertionType) {
         Validate.notNull(assertionType, "assertionType must not be null");
 
         return getAssertions().stream()

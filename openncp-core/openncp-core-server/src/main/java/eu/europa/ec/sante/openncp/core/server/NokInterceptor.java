@@ -42,7 +42,7 @@ public class NokInterceptor implements FhirCustomInterceptor {
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
-        auditSecurityInfo.getSamlDetails().getAssertion(AssertionType.NOK)
+        auditSecurityInfo.getSamlDetails().getAssertionDetails(AssertionType.NOK)
                 .map(AssertionDetails::getAssertion)
                 .ifPresent(nokAssertion -> {
 

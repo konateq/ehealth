@@ -54,7 +54,7 @@ public class TrcInterceptor implements FhirCustomInterceptor {
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
-        final Assertion trcAssertion = auditSecurityInfo.getSamlDetails().getAssertion(AssertionType.TRC)
+        final Assertion trcAssertion = auditSecurityInfo.getSamlDetails().getAssertionDetails(AssertionType.TRC)
                 .map(AssertionDetails::getAssertion)
                 .orElseThrow(() -> new AuthenticationException("No TRC assertion found"));
 
