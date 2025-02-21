@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.assertion.saml;
+package eu.europa.ec.sante.openncp.common.security;
 
 import java.io.FileWriter;
 import java.io.IOException;

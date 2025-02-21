@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.assertion;
 
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import org.apache.commons.lang3.StringUtils;
 import org.immutables.value.Value;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -30,7 +30,7 @@ public interface TrcAssertionRequest extends AssertionRequest {
     @Value.Default
     @Override
     default void validate(Assertion assertion) {
-        OpenNCPValidation.validateTRCAssertion(assertion, NcpSide.NCP_B);
+        GazelleValidation.validateTRCAssertion(assertion, NcpSide.NCP_B);
     }
 
     @Value.Auxiliary

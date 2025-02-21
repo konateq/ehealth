@@ -10,7 +10,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
@@ -249,8 +249,8 @@ public class DocumentRecipient_ServiceStub extends Stub {
             final String requestLogMsg = getSoapResponseRequestMsg(soapEnvelope, XDRConstants.LOG.OUTGOING_XDR_PROVIDEANDREGISTER_MESSAGE);
 
             /* Perform validation of request message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, classCode);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateXDRMessage(requestLogMsg, NcpSide.NCP_B, classCode);
             }
             /*
              * Execute Operation
@@ -343,8 +343,8 @@ public class DocumentRecipient_ServiceStub extends Stub {
             final String responseLogMsg = getSoapResponseRequestMsg(returnEnv, XDRConstants.LOG.INCOMING_XDR_PROVIDEANDREGISTER_MESSAGE);
 
             /* Perform validation of response message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, classCode);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateXDRMessage(responseLogMsg, NcpSide.NCP_B, classCode);
             }
             /*
              * Return

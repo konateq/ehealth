@@ -1,15 +1,16 @@
 package eu.europa.ec.sante.openncp.common.security.util;
 
+import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Marshaller;
 import org.opensaml.core.xml.io.MarshallingException;
-import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.XSString;
 import org.opensaml.core.xml.schema.XSURI;
+import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class AssertionUtil {
-
+    private static final String OASIS_WSSE_SCHEMA_LOC = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionUtil.class);
 
     private AssertionUtil() {
@@ -193,6 +194,15 @@ public class AssertionUtil {
         return attr;
     }
 
+    public static List<Assertion> toAssertions(final Element soapHeader) {
+        LOGGER.info("Retrieving SAML tokens from SOAP Header");
+        final NodeList securityList = soapHeader.getElementsByTagNameNS(OASIS_WSSE_SCHEMA_LOC, "Security");
+        final Element security = (Element) securityList.item(0);
+        final NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
+
+        return toAssertions(assertionList);
+    }
+
     public static List<Assertion> toAssertions(final NodeList assertionList)  {
         final List<Assertion> assertions = new ArrayList<>();
 
@@ -201,27 +211,19 @@ public class AssertionUtil {
 
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 final Element assertionElement = (Element) node;
-                toAssertion(assertionElement).ifPresent(assertions::add);
+
+                if (assertionElement.getAttribute("ID").startsWith("urn:uuid:")) {
+                    assertionElement.setAttribute("ID", "_" + assertionElement.getAttribute("ID").substring("urn:uuid:".length()));
+                }
+                try {
+                    assertions.add((Assertion) SAML.fromElement(assertionElement));
+                } catch (final UnmarshallingException e) {
+                    LOGGER.error("Error unmarshalling assertion", e);
+                }
             }
         }
 
         return assertions;
-    }
-
-    public static Optional<Assertion> toAssertion(final Element element) {
-        // Unmarshalling using the document root element, an EntitiesDescriptor in this case
-        try {
-
-            final Unmarshaller unmarshaller = XMLObjectProviderRegistrySupport.getUnmarshallerFactory().getUnmarshaller(element);
-            if (unmarshaller == null) {
-                LOGGER.error("SAML Unmarshalling is NULL");
-                return Optional.empty();
-            }
-            return Optional.of((Assertion) unmarshaller.unmarshall(element));
-        } catch (final UnmarshallingException e) {
-            LOGGER.error("UnmarshallingException: '{}", e.getMessage(), e);
-            return Optional.empty();
-        }
     }
 
     public static Optional<Element> toElement(final Assertion assertion, final Document document) {

@@ -7,19 +7,22 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.ihe.IHEEventType;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.XDRServiceInterface;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
-import eu.europa.ec.sante.openncp.core.common.assertion.saml.SAML2Validator;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.DiscardDispenseDetails;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.DocumentFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPSOSDocument;
@@ -47,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
+import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -58,7 +62,11 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class XDRServiceImpl implements XDRServiceInterface {
@@ -78,12 +86,14 @@ public class XDRServiceImpl implements XDRServiceInterface {
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory ofRs = new ObjectFactory();
     private final DocumentSubmitInterface documentSubmitInterface;
-    private final SAML2Validator saml2Validator;
+    private final AssertionValidator assertionValidator;
     private final CDATransformationService cdaTransformationService;
+    private final PolicyAssertionManager policyAssertionManager;
 
-    public XDRServiceImpl(final DocumentSubmitInterface documentSubmitInterface, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
+    public XDRServiceImpl(final DocumentSubmitInterface documentSubmitInterface, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService) {
         this.documentSubmitInterface = Validate.notNull(documentSubmitInterface, "DocumentSubmitInterface cannot be null");
-        this.saml2Validator = Validate.notNull(saml2Validator, "SAML2Validator cannot be null");
+        this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator cannot be null");
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
     }
 
@@ -239,29 +249,13 @@ public class XDRServiceImpl implements XDRServiceInterface {
         final Element soapHeaderElement = XMLUtils.toDOM(soapHeader);
         documentSubmitInterface.setSOAPHeader(soapHeaderElement);
 
-        //  Validate HCP SAML token according de Medication Discard Dispense rule:
+        //  Validate assertions according de Medication Discard Dispense rule:
         String sealCountryCode = null;
-
         try {
-            sealCountryCode = saml2Validator.validateXDRHeader(soapHeaderElement, ClassCode.EDD_CLASSCODE);
-
-        } catch (final MissingFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_MISSING_REQUIRED_FIELDS,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final InvalidFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_INCORRECT_FORMATTING,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final OpenNCPErrorCodeException | SMgrException e) {
+            final AssertionDetails hcpAssertion = validateAssertionsAndGetHCPAssertion(soapHeaderElement);
+            policyAssertionManager.xdrPermissionValidatorSubmitDocument(hcpAssertion.getAssertion());
+            sealCountryCode = hcpAssertion.getCountryCode().orElse(null);
+        } catch (final OpenNCPErrorCodeException e) {
             logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
                     registryErrorList,
@@ -290,7 +284,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
             }
         }
         logger.info("The client country code to be used by the PDP: '{}'", countryCode);
-        if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+        if (!policyAssertionManager.isConsentGiven(fullPatientId, countryCode)) {
             logger.debug("No consent given, throwing InsufficientRightsException");
             final NoConsentException e = new NoConsentException(null);
             RegistryErrorUtils.addErrorMessage(
@@ -408,37 +402,14 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
         try {
-            sealCountryCode = saml2Validator.validateXDRHeader(shElement, ClassCode.ED_CLASSCODE);
-
-        } catch (final MissingFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_MISSING_REQUIRED_FIELDS,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final InvalidFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_INCORRECT_FORMATTING,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            final AssertionDetails hcpAssertion = validateAssertionsAndGetHCPAssertion(shElement);
+            policyAssertionManager.xdrPermissionValidatorSubmitDocument(hcpAssertion.getAssertion());
+            sealCountryCode = hcpAssertion.getCountryCode().orElse(null);
         } catch (final OpenNCPErrorCodeException e) {
             logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
                     registryErrorList,
                     e.getErrorCode(),
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final SMgrException e) {
-            logger.error("SMgrException: '{}'", e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_SEC_GENERIC,
                     e.getMessage(),
                     e,
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
@@ -467,7 +438,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
             }
         }
         logger.info("The client country code to be used by the PDP: '{}'", countryCode);
-        if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+        if (!policyAssertionManager.isConsentGiven(fullPatientId, countryCode)) {
             logger.debug("No consent given, throwing InsufficientRightsException");
             final NoConsentException e = new NoConsentException(null);
             RegistryErrorUtils.addErrorMessage(
@@ -495,8 +466,8 @@ public class XDRServiceImpl implements XDRServiceInterface {
                 try {
 
                     //  Validate CDA epSOS Pivot.
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCdaDocument(new String(doc.getValue(), StandardCharsets.UTF_8),
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCdaDocument(new String(doc.getValue(), StandardCharsets.UTF_8),
                                 NcpSide.NCP_A, obtainClassCode(request), true);
                     }
 
@@ -507,8 +478,8 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
 
                     // Validate CDA epSOS Pivot
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCdaDocument(new String(docBytes, StandardCharsets.UTF_8), NcpSide.NCP_A,
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCdaDocument(new String(docBytes, StandardCharsets.UTF_8), NcpSide.NCP_A,
                                 obtainClassCode(request), false);
                     }
                 } catch (final DocumentTransformationException ex) {
@@ -688,4 +659,22 @@ public class XDRServiceImpl implements XDRServiceInterface {
         }
         return uid;
     }
+
+    private AssertionDetails validateAssertionsAndGetHCPAssertion(final Element soapHeaderElement) throws InsufficientRightsException {
+        final List<Assertion> assertions = AssertionUtil.toAssertions(soapHeaderElement);
+        final AssertionDetails hcpAssertionDetails = assertions.stream()
+                .map(AssertionDetails::of)
+                .filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP)
+                .findFirst()
+                .orElseThrow(() -> new InsufficientRightsException("No valid HCP assertion found"));
+        final List<AssertionValidationResult> assertionValidationResults = assertionValidator.validate(assertions);
+        final List<String> failedValidationMessages = assertionValidationResults.stream()
+                .flatMap((AssertionValidationResult assertionValidationResult) -> assertionValidationResult.getFailedValidationMessages().stream())
+                .collect(Collectors.toList());
+        if (!failedValidationMessages.isEmpty()) {
+            throw new InsufficientRightsException(String.format("Assertion validation error: [%s]", String.join("\n", failedValidationMessages)));
+        }
+        return hcpAssertionDetails;
+    }
+
 }

@@ -5,7 +5,7 @@ import eu.europa.ec.sante.openncp.common.audit.utils.SecurityMgr;
 import eu.europa.ec.sante.openncp.common.audit.utils.Utils;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import net.RFC3881.dicom.AuditMessage;
 import net.RFC3881.dicom.ParticipantObjectDetail;
 import net.RFC3881.dicom.ParticipantObjectIDTypeCode;
@@ -196,7 +196,7 @@ public enum AuditTrailUtils {
 
         // Check if the Audit Message return with a null value shall be considered as fatal?
         // Invoke audit message validation services
-        if (OpenNCPValidation.isValidationEnable()) {
+        if (GazelleValidation.isValidationEnable()) {
             if (message == null) {
                 LOGGER.error("Validation of the Audit Message cannot proceed on a Null value!!!");
             } else {
@@ -327,7 +327,7 @@ public enum AuditTrailUtils {
             if (StringUtils.equals(eventLog.getEventType().getCode(), "EHDSI-CF")) {
                 throw new UnsupportedOperationException("EventCode not supported.");
             }
-            OpenNCPValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getCode(), ncpSide);
+            GazelleValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getCode(), ncpSide);
         } catch (JAXBException e) {
             LOGGER.error("JAXBException: {}", e.getMessage(), e);
         } catch (Exception e) {

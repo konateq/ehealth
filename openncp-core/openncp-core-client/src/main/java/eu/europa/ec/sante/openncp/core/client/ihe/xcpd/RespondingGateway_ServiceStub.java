@@ -9,7 +9,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xcpd.XCPDConstants;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
@@ -340,8 +340,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             start = System.currentTimeMillis();
 
             // Validate Request Messages
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validatePatientDemographicRequest(logRequestBody, NcpSide.NCP_B);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validatePatientDemographicRequest(logRequestBody, NcpSide.NCP_B);
             }
             // Transaction end time
             end = System.currentTimeMillis();
@@ -436,8 +436,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             }
 
             /* Validate Response Messages */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validatePatientDemographicResponse(logResponseBody, NcpSide.NCP_B);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validatePatientDemographicResponse(logResponseBody, NcpSide.NCP_B);
             }
             final Object object = fromOM(_returnEnv.getBody().getFirstElement(), PRPAIN201306UV02.class, getEnvelopeNamespaces(_returnEnv));
 

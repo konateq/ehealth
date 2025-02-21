@@ -2,14 +2,12 @@ package eu.europa.ec.sante.openncp.core.common.fhir.services;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
-import ca.uhn.fhir.util.BundleUtil;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import org.apache.commons.lang3.Validate;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -47,11 +45,11 @@ public class ValidationService {
                     final List<Bundle.BundleEntryComponent> entries = bundle.getEntry();
                     for (Bundle.BundleEntryComponent entry : entries) {
                         final Resource resource = entry.getResource();
-                        OpenNCPValidation.validateFhirResource(fhirContext.newJsonParser().encodeResourceToString(resource), serverContext.getNcpSide(), resource.fhirType(), Boolean.TRUE);
+                        GazelleValidation.validateFhirResource(fhirContext.newJsonParser().encodeResourceToString(resource), serverContext.getNcpSide(), resource.fhirType(), Boolean.TRUE);
                     }
                     break;
                 case DOCUMENT:
-                    OpenNCPValidation.validateFhirResource(fhirContext.newJsonParser().encodeResourceToString(bundle), serverContext.getNcpSide(), bundle.fhirType(), Boolean.TRUE);
+                    GazelleValidation.validateFhirResource(fhirContext.newJsonParser().encodeResourceToString(bundle), serverContext.getNcpSide(), bundle.fhirType(), Boolean.TRUE);
                     break;
                 default:
                     throw new RuntimeException("Unexpected Bundle type: [" + bundle.getType() + "]");

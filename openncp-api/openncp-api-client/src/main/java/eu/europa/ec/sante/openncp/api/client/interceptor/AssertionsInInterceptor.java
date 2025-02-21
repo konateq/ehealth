@@ -20,7 +20,6 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.namespace.QName;
 import java.util.List;
-import java.util.Optional;
 
 public class AssertionsInInterceptor extends AbstractSoapInterceptor {
 
@@ -51,14 +50,5 @@ public class AssertionsInInterceptor extends AbstractSoapInterceptor {
         final RequestContext requestContext = ImmutableRequestContext.builder().samlDetails(samlDetails).build();
 
         RequestContextProvider.replaceRequestContext(requestContext);
-    }
-
-    private static Optional<Assertion> toAssertion(final Element element) {
-        if ("Assertion".equals(element.getLocalName()) &&
-                (WSS4JConstants.SAML_NS.equals(element.getNamespaceURI()) || WSS4JConstants.SAML2_NS.equals(element.getNamespaceURI()))) {
-            return AssertionUtil.toAssertion(element);
-        } else {
-            return Optional.empty();
-        }
     }
 }

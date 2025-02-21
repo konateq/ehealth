@@ -13,7 +13,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
@@ -399,8 +399,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             start = System.currentTimeMillis();
 
             /* Validate Request Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, classCodes);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, classCodes);
             }
 
             // TMP
@@ -518,8 +518,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             }
 
             /* Validate Response Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, classCodes);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, classCodes);
             }
 
             // TMP
@@ -784,8 +784,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             }
 
             /* Validate Request Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, List.of(classCode));
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, List.of(classCode));
             }
 
             /*
@@ -897,8 +897,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             }
 
             /* Validate Response Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, List.of(classCode));
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, List.of(classCode));
             }
 
             /*

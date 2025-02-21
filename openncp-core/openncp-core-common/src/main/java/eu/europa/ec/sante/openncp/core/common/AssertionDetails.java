@@ -43,7 +43,7 @@ public interface AssertionDetails {
         final Signature signature = getAssertion().getSignature();
         try {
             return KeyInfoSupport.getCertificates(signature.getKeyInfo());
-        } catch (CertificateException e) {
+        } catch (final CertificateException e) {
             LOGGER.error(String.format("Error fetching the certificates: %s", e.getMessage()), e);
             return Collections.emptyList();
         }

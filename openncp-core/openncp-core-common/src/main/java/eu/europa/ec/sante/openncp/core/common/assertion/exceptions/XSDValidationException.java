@@ -11,18 +11,23 @@ public class XSDValidationException extends OpenNCPErrorCodeException {
 
 	private String message;
 
-	private OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_SEC_DATA_INTEGRITY_NOT_ENSURED;
+    private final OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_SEC_DATA_INTEGRITY_NOT_ENSURED;
 
-	public XSDValidationException(String message) {
+    public XSDValidationException(final String message) {
 		super();
 		this.message = message;
 	}
+
+    public XSDValidationException(final String message, final Throwable cause) {
+        super(cause);
+        this.message = message;
+    }
 
 	public String getMessage() {
 		return message;
 	}
 
-	public void setMessage(String message) {
+    public void setMessage(final String message) {
 		this.message = message;
 	}
 

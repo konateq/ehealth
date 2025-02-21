@@ -103,24 +103,10 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void xspaSubjectValidatorForHCP(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
+    public void xspaSubjectValidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String subjectId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
-        if (StringUtils.isEmpty(subjectId)) {
-            throw new InvalidFieldException(String.format("XSPA Subject '%s' attribute in assertion should be filled.", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID));
-        }
-    }
-
-    /**
-     * @param assertion - SAML user assertion.
-     * @throws MissingFieldException - User's assertion attribute is missing.
-     * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
-     */
-    @Override
-    public void xspaSubjectValidatorForTRC(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
-
-        final String resourceId = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
-        if (StringUtils.isBlank(resourceId)) {
+        if (StringUtils.isBlank(subjectId)) {
             throw new InvalidFieldException(String.format("XSPA Subject '%s' attribute in assertion should be filled.", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID));
         }
     }
@@ -173,7 +159,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
      * @throws InvalidFieldException - User's assertion attribute is not correct according the specification.
      */
     @Override
-    public void xspalocalityvalidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
+    public void xspaLocalityValidator(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
 
         final String environmentLocality = getAttributeFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_ENVIRONMENT_LOCALITY);
         if (StringUtils.isBlank(environmentLocality)) {
@@ -210,13 +196,10 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
             final String roleName = getRoleNameFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
             logger.debug("HCP with role: '{}'", role);
             if (!XSPARole.validateRole(role, roleName)) {
-
-                logger.error("InsufficientRightsException - Unsupported role (named: '{}') tried to access Patient Summary documents.", role);
-                throw new InsufficientRightsException();
+                throw new InsufficientRightsException(String.format("Unsupported role [%s]", role));
             }
         } catch (final MissingFieldException ex) {
-            logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
-            throw new InsufficientRightsException();
+            throw new InsufficientRightsException("Missing field role in assertion", ex);
         }
 
         final List<XMLObject> permissions = AssertionHelper.getPermissionValuesFromAssertion(assertion);
@@ -229,8 +212,7 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
                 }
             }
         }
-        logger.error("InsufficientRightsException: Permission '{}' not found!", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_HL7_PERMISSION_PRD_006);
-        throw new InsufficientRightsException();
+        throw new InsufficientRightsException(String.format("Permission [%s] not found!", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_HL7_PERMISSION_PRD_006));
     }
 
     /**
@@ -401,33 +383,13 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     }
 
     /**
-     * @param assertion - SAML user assertion.
-     * @param classCode - Type of clinical document requested by the user (if available).
-     * @throws MissingFieldException       - User's assertion attribute is missing.
-     * @throws InsufficientRightsException - User's assertion attribute is not correct according the specification.
-     */
-    @Override
-    public void XDRPermissionValidator(final Assertion assertion, final ClassCode classCode) throws InsufficientRightsException, MissingFieldException {
-
-        switch (classCode) {
-            //  eDispensation document
-            case ED_CLASSCODE:
-            case EDD_CLASSCODE:
-                XDRPermissionValidatorSubmitDocument(assertion);
-                break;
-            default:
-                logger.error("Invalid document class code: '{}'", classCode);
-                throw new MissingFieldException("Invalid document class code: " + classCode);
-        }
-    }
-
-    /**
      * XDR validation of Submit Document service (Dispense or Discard Medication).
      *
      * @param assertion - SAML user assertion.
      * @throws InsufficientRightsException - User doesn't have enough privileges.
      */
-    private void XDRPermissionValidatorSubmitDocument(final Assertion assertion) throws InsufficientRightsException {
+    @Override
+    public void xdrPermissionValidatorSubmitDocument(final Assertion assertion) throws InsufficientRightsException {
 
         var recordMedicationAdministrationRecord = false;
         final List<XMLObject> permissions = AssertionHelper.getPermissionValuesFromAssertion(assertion);
@@ -456,56 +418,6 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
 
         if (!recordMedicationAdministrationRecord) {
             logger.error("InsufficientRightsException for Cross-Community Document Reliable to eDispense request");
-            throw new InsufficientRightsException();
-        }
-    }
-
-    /**
-     * XDR for dispensation service HCER service
-     *
-     * @param assertion - SAML user assertion.
-     * @throws InsufficientRightsException - User doesn't have enough privileges.
-     */
-    private void XDRPermissionValidatorEncounterReport(final Assertion assertion) throws InsufficientRightsException {
-
-        XDRPermissionValidatorSubmitDocument(assertion);
-    }
-
-    /**
-     * XDR for patient consent
-     *
-     * @param assertion - SAML user assertion.
-     * @throws InsufficientRightsException - User doesn't have enough privileges.
-     */
-    private void XDRPermissionValidatorConsent(final Assertion assertion) throws InsufficientRightsException {
-
-        var recordMedicationAdministrationRecord = false;
-
-        final List<XMLObject> permissions = AssertionHelper.getPermissionValuesFromAssertion(assertion);
-        final String role;
-
-        //Check allowed roles
-        try {
-            role = getRoleFromAssertion(assertion, AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE);
-        } catch (final MissingFieldException ex) {
-            logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
-            throw new InsufficientRightsException();
-        }
-        if (!XSPARole.containsCode(role)) {
-            logger.error("InsufficientRightsException - Unsupported role (named: '{}') tried to submit consent documents.", role);
-            throw new InsufficientRightsException();
-        }
-
-        //  Check required permissions
-        for (final XMLObject permission : permissions) {
-            if (permission.getDOM() != null && StringUtils.equals(permission.getDOM().getTextContent(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_HL7_PERMISSION_PPD_032)) {
-                recordMedicationAdministrationRecord = true;
-                logger.debug("Found permission for PPD-032 (New Consents and Authorizations)");
-            }
-        }
-
-        if (!recordMedicationAdministrationRecord) {
-            logger.error("InsufficientRightsException for Cross-Community Document Reliable to eConsent request");
             throw new InsufficientRightsException();
         }
     }

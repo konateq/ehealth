@@ -2,112 +2,125 @@ package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
-import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.AssertionValidationException;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.saml.FieldValueValidators;
 import eu.europa.ec.sante.openncp.core.common.assertion.saml.RequiredFieldValidators;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 @Component
-public class TrcAssertionValidation implements AssertionValidation {
-    private final SignatureManager signatureManager;
+public class TrcAssertionValidation extends BaseAssertionValidation {
+    private final Logger LOGGER = LoggerFactory.getLogger(TrcAssertionValidation.class);
+    private final PolicyAssertionManager policyAssertionManager;
 
-    public TrcAssertionValidation(SignatureManager signatureManager) {
-        this.signatureManager = Validate.notNull(signatureManager, "signatureManager must not be null");
+    public TrcAssertionValidation(final SignatureManager signatureManager, final PolicyAssertionManager policyAssertionManager) {
+        super(signatureManager);
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
 
     @Override
-    public AssertionValidationResult validate(final AssertionDetails assertionDetails) {
-
-        if (assertionDetails.getAssertionType() != AssertionType.TRC) {
-            return AssertionValidationResult.differentAssertion(assertionDetails, AssertionType.TRC);
-        }
-
-        final Assertion assertion = assertionDetails.getAssertion();
-        final List<AssertionValidationDetail> validationDetails = new ArrayList<>();
-
-        try {
-            checkRequiredFields(assertion);
-            validationDetails.add(AssertionValidationDetail.passed(AssertionValidationKey.REQUIRED_FIELDS));
-        } catch (AssertionValidationException e) {
-            return ImmutableAssertionValidationResult
-                    .builder()
-                    .status(AssertionValidationStatus.FAILED)
-                    .assertionDetails(assertionDetails)
-                    .addValidationDetail(ImmutableAssertionValidationDetail.builder()
-                            .key(AssertionValidationKey.REQUIRED_FIELDS)
+    public Optional<AssertionValidationResult> validate(final AssertionDetails assertionToCheck, final List<AssertionDetails> allAssertionDetails) {
+        final Optional<AssertionValidationResult> baseValidationResult = super.validate(assertionToCheck, allAssertionDetails);
+        if (baseValidationResult.isPresent()) {
+            final AssertionValidationResult validationResult = baseValidationResult.get();
+            final Optional<AssertionDetails> hcpAssertion = allAssertionDetails.stream().filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP).findFirst();
+            final AssertionValidationDetail trcAdviceIdReferenceValidationDetail = hcpAssertion.map(assertionDetails -> {
+                final boolean trcAdviceIdReferenceCheck = checkTRCAdviceIdReferenceAgainstHCPId(assertionToCheck.getAssertion(), assertionDetails.getAssertion());
+                if (trcAdviceIdReferenceCheck) {
+                    return AssertionValidationDetail.passed(AssertionValidationKey.TRC_ADVICE);
+                } else {
+                    return ImmutableAssertionValidationDetail.builder()
+                            .key(AssertionValidationKey.TRC_ADVICE)
                             .status(AssertionValidationDetailStatus.FAILED)
-                            .error(e)
-                            .message("Error while checking the required fields")
-                            .build())
-                    .build();
+                            .message("Could not check TRC advice ID reference because the HCP assertion was not present")
+                            .build();
+                }
+            }).orElseGet(() -> ImmutableAssertionValidationDetail.builder()
+                    .key(AssertionValidationKey.TRC_ADVICE)
+                    .status(AssertionValidationDetailStatus.FAILED)
+                    .message("Could not check TRC advice ID reference because the HCP assertion was not present")
+                    .build());
 
+            final List<AssertionValidationDetail> updatedValidationDetails = new ArrayList<>(validationResult.getValidationDetails());
+            updatedValidationDetails.add(trcAdviceIdReferenceValidationDetail);
+
+            return Optional.of(ImmutableAssertionValidationResult.copyOf(validationResult).withValidationDetails(updatedValidationDetails));
+        } else {
+            return Optional.empty();
         }
-
-        try {
-            signatureManager.verifySAMLAssertion(assertion);
-            validationDetails.add(AssertionValidationDetail.passed(AssertionValidationKey.SIGNATURE));
-        } catch (SMgrException e) {
-            return ImmutableAssertionValidationResult
-                    .builder()
-                    .status(AssertionValidationStatus.FAILED)
-                    .assertionDetails(assertionDetails)
-                    .addAllValidationDetails(validationDetails)
-                    .addValidationDetail(ImmutableAssertionValidationDetail.builder()
-                            .key(AssertionValidationKey.SIGNATURE)
-                            .status(AssertionValidationDetailStatus.FAILED)
-                            .error(e)
-                            .message("Error while validating the signature")
-                            .build())
-                    .build();
-        }
-
-        return ImmutableAssertionValidationResult
-                .builder()
-                .status(AssertionValidationStatus.PASSED)
-                .assertionDetails(assertionDetails)
-                .addAllValidationDetails(validationDetails)
-                .build();
     }
 
-    private void checkRequiredFields(final Assertion assertion) throws MissingFieldException, InvalidFieldException {
-        RequiredFieldValidators.validateVersion(assertion);
-        RequiredFieldValidators.validateID(assertion);
-        RequiredFieldValidators.validateIssuer(assertion);
-        RequiredFieldValidators.validateIssueInstant(assertion);
-        RequiredFieldValidators.validateSubject(assertion);
-        RequiredFieldValidators.validateNameID(assertion);
-        RequiredFieldValidators.validateFormat(assertion);
-        RequiredFieldValidators.validateSubjectConfirmation(assertion);
-        RequiredFieldValidators.validateMethod(assertion);
-        RequiredFieldValidators.validateConditions(assertion);
-        RequiredFieldValidators.validateNotBefore(assertion);
-        RequiredFieldValidators.validateNotOnOrAfter(assertion);
-        RequiredFieldValidators.validateAdvice(assertion);
-        RequiredFieldValidators.validateAssertionIdRef(assertion);
-        RequiredFieldValidators.validateAuthnStatement(assertion);
-        RequiredFieldValidators.validateAuthnInstant(assertion);
-        RequiredFieldValidators.validateAuthnContext(assertion);
-        RequiredFieldValidators.validateAuthnContextClassRef(assertion);
-        RequiredFieldValidators.validateAttributeStatement(assertion);
-        RequiredFieldValidators.validateSignature(assertion);
+    @Override
+    protected AssertionType getSupportedAssertionType() {
+        return AssertionType.TRC;
+    }
 
-        FieldValueValidators.validateVersionValue(assertion);
-        FieldValueValidators.validateIssuerValue(assertion);
-        FieldValueValidators.validateNameIDValue(assertion);
-        FieldValueValidators.validateMethodValue(assertion);
-        FieldValueValidators.validateNotBeforeValue(assertion);
-        FieldValueValidators.validateNotOnOrAfterValue(assertion);
-        FieldValueValidators.validateTimeSpanForTRC(assertion);
-        FieldValueValidators.validateAuthnContextClassRefValueForHCP(assertion);
+    @Override
+    protected List<FieldValidator> getFieldValidators() {
+        return List.of(
+                RequiredFieldValidators::validateVersion,
+                RequiredFieldValidators::validateID,
+                RequiredFieldValidators::validateIssuer,
+                RequiredFieldValidators::validateIssueInstant,
+                RequiredFieldValidators::validateSubject,
+                RequiredFieldValidators::validateNameID,
+                RequiredFieldValidators::validateFormat,
+                RequiredFieldValidators::validateSubjectConfirmation,
+                RequiredFieldValidators::validateMethod,
+                RequiredFieldValidators::validateConditions,
+                RequiredFieldValidators::validateNotBefore,
+                RequiredFieldValidators::validateNotOnOrAfter,
+                RequiredFieldValidators::validateAdvice,
+                RequiredFieldValidators::validateAssertionIdRef,
+                RequiredFieldValidators::validateAuthnStatement,
+                RequiredFieldValidators::validateAuthnInstant,
+                RequiredFieldValidators::validateAuthnContext,
+                RequiredFieldValidators::validateAuthnContextClassRef,
+                RequiredFieldValidators::validateAttributeStatement,
+                RequiredFieldValidators::validateSignature,
+
+                FieldValueValidators::validateVersionValue,
+                FieldValueValidators::validateIssuerValue,
+                FieldValueValidators::validateNameIDValue,
+                FieldValueValidators::validateMethodValue,
+                FieldValueValidators::validateNotBeforeValue,
+                FieldValueValidators::validateNotOnOrAfterValue,
+                FieldValueValidators::validateTimeSpanForTRC,
+                FieldValueValidators::validateAuthnContextClassRefValueForHCP
+        );
+    }
+
+    @Override
+    protected List<PolicyValidator> getPolicyValidators() {
+        return List.of(
+                policyAssertionManager::purposeOfUseValidatorForTRC,
+                policyAssertionManager::xspaSubjectValidator
+
+        );
+    }
+
+    private boolean checkTRCAdviceIdReferenceAgainstHCPId(final Assertion trcAssertion, final Assertion hcpAssertion) {
+
+        try {
+            final String trcFirstReferenceId = trcAssertion.getAdvice().getAssertionIDReferences().get(0).getAssertionID();
+
+            if (trcFirstReferenceId != null && trcFirstReferenceId.equals(hcpAssertion.getID())) {
+                LOGGER.info("Assertion id reference equals to id.");
+                return true;
+            }
+        } catch (final Exception ex) {
+            LOGGER.error("Unable to resolve first id reference: '{}'", ex.getMessage(), ex);
+        }
+        
+        return false;
     }
 }

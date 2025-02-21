@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -149,8 +149,8 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
                     final List<ClassCode> classCodes = extractClassCodesFromQueryRequest(wrappedParam);
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A, classCodes);
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A, classCodes);
                     }
 
                     adhocQueryResponse1 = skel.respondingGateway_CrossGatewayQuery(wrappedParam, sh, eventLog);
@@ -172,8 +172,8 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                     /* Validate outgoing query response */
                     final String responseMessage = XMLUtil.prettyPrintForValidation(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A, classCodes);
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A, classCodes);
                     }
 
                     if (!StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && loggerClinical.isDebugEnabled()) {
@@ -192,8 +192,8 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                             msgContext.getEnvelope().getBody().getFirstElement(), RetrieveDocumentSetRequestType.class,
                             getEnvelopeNamespaces(msgContext.getEnvelope()));
 
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A, null);
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCrossCommunityAccess(requestMessage, NcpSide.NCP_A, null);
                     }
 
                     final OMFactory factory = OMAbstractFactory.getOMFactory();
@@ -224,8 +224,8 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                     /* Validate outgoing retrieve response */
                     final String responseMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A, null);
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCrossCommunityAccess(responseMessage, NcpSide.NCP_A, null);
                     }
 
                     final RetrieveDocumentSetResponseType responseType = (RetrieveDocumentSetResponseType) fromOM(

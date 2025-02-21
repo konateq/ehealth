@@ -8,15 +8,32 @@ public class InsufficientRightsException extends OpenNCPErrorCodeException {
     private static final long serialVersionUID = -7973928727557097260L;
 
     private final OpenNCPErrorCode openncpErrorCode;
+    private final String detailMessage;
 
     public InsufficientRightsException() {
-        openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+        super();
+        this.openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+        this.detailMessage = openncpErrorCode.getDescription();
     }
 
-    public InsufficientRightsException(Throwable cause) {
+    public InsufficientRightsException(final Throwable cause) {
         super(cause);
-        openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+        this.openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+        this.detailMessage = openncpErrorCode.getDescription();
     }
+
+    public InsufficientRightsException(final String detailMessage) {
+        super();
+        this.openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+        this.detailMessage = detailMessage;
+    }
+
+    public InsufficientRightsException(final String detailMessage, final Throwable cause) {
+        super(cause);
+        this.openncpErrorCode = OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS;
+        this.detailMessage = detailMessage;
+    }
+
 
     @Override
     public String getMessage() {

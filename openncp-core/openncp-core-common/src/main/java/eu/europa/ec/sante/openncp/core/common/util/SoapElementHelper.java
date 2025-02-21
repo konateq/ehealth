@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.util;
 
 import eu.europa.ec.sante.openncp.core.common.assertion.AssertionConstants;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.assertion.saml.SAML;
+import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.saml2.core.Assertion;

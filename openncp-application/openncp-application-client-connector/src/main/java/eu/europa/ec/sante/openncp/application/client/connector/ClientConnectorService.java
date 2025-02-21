@@ -26,7 +26,7 @@ public interface ClientConnectorService {
     /**
      * Returns demographics of the patient corresponding to the identity traits provided.
      *
-     * @param assertions          - Map of assertions required by the transaction (HCP, TRC and NoK optional)
+     * @param assertions          - Map of assertions required by the transaction (HCP and NoK optional)
      * @param countryCode         - ISO Country code of the patient country of origin.
      * @param patientDemographics - Identifiers of the requested patient
      * @return List of patients found (only 1 patient is expected in MyHealth@EU)

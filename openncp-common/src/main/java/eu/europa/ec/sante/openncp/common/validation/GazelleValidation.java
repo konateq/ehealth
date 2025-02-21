@@ -23,12 +23,12 @@ import javax.xml.transform.TransformerException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class OpenNCPValidation {
+public class GazelleValidation {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenNCPValidation.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GazelleValidation.class);
     private static final String MSG_VALIDATION_EXECUTION = "Remote validation executed in: '{}ms'";
 
-    private OpenNCPValidation() {
+    private GazelleValidation() {
     }
 
     /**
@@ -62,10 +62,10 @@ public class OpenNCPValidation {
      * @param assertion
      * @param ncpSide
      */
-    public static void validateHCPAssertion(final Assertion assertion, final NcpSide ncpSide) {
+    public static void logAndValidateHCPAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate HCP Assertion...");
-        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_HCP_IDENTITY, ncpSide);
+        logAndValidateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_HCP_IDENTITY, ncpSide);
     }
 
     /**
@@ -75,7 +75,7 @@ public class OpenNCPValidation {
     public static void validateNoKAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate Next Of Kin Assertion...");
-        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
+        logAndValidateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
     }
 
     /**
@@ -85,7 +85,7 @@ public class OpenNCPValidation {
     public static void validateTRCAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate TRC Assertion...");
-        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_TRC, ncpSide);
+        logAndValidateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_TRC, ncpSide);
     }
 
     /**
@@ -95,7 +95,7 @@ public class OpenNCPValidation {
     public static void validateNOKAssertion(final Assertion assertion, final NcpSide ncpSide) {
 
         LOGGER.info("validate NOK Assertion...");
-        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
+        logAndValidateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
     }
 
     /**
@@ -103,7 +103,7 @@ public class OpenNCPValidation {
      * @param validator
      * @param ncpSide
      */
-    private static void validateAssertion(final Assertion assertion, final String validator, final NcpSide ncpSide) {
+    private static void logAndValidateAssertion(final Assertion assertion, final String validator, final NcpSide ncpSide) {
 
         LOGGER.info("[Validation Service: Assertion Validator]");
         try {
