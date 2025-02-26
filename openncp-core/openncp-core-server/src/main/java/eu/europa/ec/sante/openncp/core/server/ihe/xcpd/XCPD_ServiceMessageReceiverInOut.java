@@ -16,50 +16,50 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
+import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl;
 import eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl.XDRServiceImpl;
 import org.apache.axiom.om.*;
-import org.apache.axiom.om.ds.AbstractOMDataSource;
 import org.apache.axiom.soap.SOAPEnvelope;
 import org.apache.axiom.soap.SOAPFactory;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.AxisFault;
-import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
-import org.apache.axis2.receivers.AbstractInOutMessageReceiver;
-import org.apache.axis2.util.JavaUtils;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.binding.soap.Soap11;
+import org.apache.cxf.binding.soap.Soap12;
 import org.apache.cxf.binding.soap.SoapMessage;
+import org.apache.cxf.binding.soap.SoapVersion;
 import org.apache.cxf.headers.Header;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.phase.Phase;
+import org.apache.cxf.service.model.OperationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
-import java.io.OutputStream;
-import java.io.Writer;
+import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 import java.util.*;
 
 /**
  * XCPD_ServiceMessageReceiverInOut message receiver
  */
-public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiver {
+public class XCPD_ServiceMessageReceiverInOut  extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XCPD_ServiceMessageReceiverInOut.class);
     private static final JAXBContext wsContext;
     private static final String PRPA_IN_201305_UV_02 = "PRPA_IN201305UV02";
     private static final String URN_HL_7_ORG_V_3 = "urn:hl7-org:v3";
+
+    public XCPD_ServiceMessageReceiverInOut() {
+        super(Phase.RECEIVE); // Or Phase.INVOKE, depending on when you need it
+    }
 
     static {
 
@@ -137,71 +137,77 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
             LOGGER.info("[ITI-55] Incoming XCPD Request from '{}'", clientCommonName);
 
             // Get the implementation class for the Web Service
-            Object serviceObject = getServiceObject(message);
-            SOAPHeader soapHeader = message.getEnvelope().getHeader();
+            // get the implementation class for the Web Service
+            final Object serviceObject = getServiceObject(message);
+
+            XCPDServiceImpl xdrService = (XCPDServiceImpl)getServiceObject(message); // Using the method from above
+
+            SOAPMessage soapMessage = message.getContent(SOAPMessage.class);
 
             // Prepare EventLog for audit purpose.
             EventLog eventLog = new EventLog();
-            eventLog.setReqM_ParticipantObjectID(getMessageID(msgContext.getEnvelope()));
-            eventLog.setReqM_ParticipantObjectDetail(msgContext.getEnvelope().getHeader().toString().getBytes());
+            eventLog.setReqM_ParticipantObjectID(getMessageID(message));
+            eventLog.setReqM_ParticipantObjectDetail(soapMessage.getSOAPPart().getEnvelope().getHeader().toString().getBytes());
             eventLog.setSC_UserID(clientCommonName);
-            eventLog.setSourceip(EventLogUtil.getSourceGatewayIdentifier(msgContext));
+            eventLog.setSourceip(EventLogUtil.getSourceGatewayIdentifier(message));
             eventLog.setTargetip(EventLogUtil.getTargetGatewayIdentifier());
 
             if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-                loggerClinical.debug("Incoming XCPD Request Message:\n{}", XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope())));
+                loggerClinical.debug("Incoming XCPD Request Message:\n{}", XMLUtil.prettyPrint(DOMUtils.getFirstElement(soapMessage.getSOAPPart().getEnvelope())));
             }
 
             /* Validate incoming request message */
-            String message = XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
+            String reqmessage = XMLUtil.prettyPrint(DOMUtils.getFirstElement(soapMessage.getSOAPPart().getEnvelope().getBody().getFirstChild()));
             if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validatePatientDemographicRequest(message, NcpSide.NCP_A);
+                OpenNCPValidation.validatePatientDemographicRequest(reqmessage, NcpSide.NCP_A);
             }
 
-            XCPD_ServiceSkeleton skeleton = (XCPD_ServiceSkeleton) serviceObject;
+           // XCPD_ServiceSkeleton skeleton = (XCPD_ServiceSkeleton) serviceObject;
             // Out Envelop
             SOAPEnvelope envelope;
             // Find the axisOperation that has been set by the Dispatch phase.
-            AxisOperation axisOperation = msgContext.getOperationContext().getAxisOperation();
+           /* AxisOperation axisOperation = msgContext.getOperationContext().getAxisOperation();
             if (axisOperation == null) {
                 String err = "Operation is not located, if this is doclit style the SOAP-ACTION " +
                         "should specified via the SOAP Action to use the RawXMLProvider";
                 eadcError = err;
                 throw new AxisFault(err);
-            }
+            }*/
 
             String randomUUID = Constants.UUID_PREFIX + UUID.randomUUID();
             String methodName;
 
-            if ((axisOperation.getName() != null) && ((methodName = JavaUtils.xmlNameToJavaIdentifier(axisOperation.getName().getLocalPart())) != null)) {
+            OperationInfo operationInfo = message.getExchange().get(OperationInfo.class);
+
+
+            if ((operationInfo.getName() != null) && ((methodName = xmlNameToJavaIdentifier(operationInfo.getName().getLocalPart())) != null)) {
 
                 if (StringUtils.equals("respondingGateway_PRPA_IN201305UV02", methodName)) {
 
-                    PRPAIN201305UV02 wrappedParam = (PRPAIN201305UV02) fromOM(msgContext.getEnvelope().getBody().getFirstElement(),
-                            PRPAIN201305UV02.class, getEnvelopeNamespaces(msgContext.getEnvelope()));
+                    PRPAIN201305UV02 wrappedParam = (PRPAIN201305UV02) fromOM( (OMElement) soapMessage.getSOAPPart().getEnvelope().getBody().getFirstChild(),
+                            PRPAIN201305UV02.class, getEnvelopeNamespaces(soapMessage));
 
-                    PRPAIN201306UV02 PRPAIN201306UV02 = skeleton.respondingGateway_PRPA_IN201305UV02(wrappedParam, soapHeader, eventLog);
-
-                    envelope = toEnvelope(getSOAPFactory(msgContext), PRPAIN201306UV02);
+                    PRPAIN201306UV02 PRPAIN201306UV02 = xdrService.queryPatient(wrappedParam,soapMessage.getSOAPHeader(),eventLog);
+                    envelope = toEnvelope(PRPAIN201306UV02);
 
                     /* Validate response message */
                     if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validatePatientDemographicResponse(XMLUtil.prettyPrint(XMLUtils.toDOM(
-                                envelope.getBody().getFirstElement())), NcpSide.NCP_A);
+                        OpenNCPValidation.validatePatientDemographicResponse(XMLUtil.prettyPrint(DOMUtils.getFirstElement(
+                                soapMessage.getSOAPPart().getEnvelope().getFirstChild())), NcpSide.NCP_A);
                     }
                     eventLog.setResM_ParticipantObjectID(randomUUID);
                     eventLog.setResM_ParticipantObjectDetail(envelope.getHeader().toString().getBytes());
                     eventLog.setNcpSide(NcpSide.NCP_A);
 
-                    EventLogUtil.extractXcpdQueryByParamFromHeader(eventLog, msgContext, PRPA_IN_201305_UV_02, "controlActProcess", "queryByParameter");
-                    EventLogUtil.extractHCIIdentifierFromHeader(eventLog, msgContext);
+                    EventLogUtil.extractXcpdQueryByParamFromHeader(eventLog, message, PRPA_IN_201305_UV_02, "controlActProcess", "queryByParameter");
+                    EventLogUtil.extractHCIIdentifierFromHeader(eventLog, newMessage);
 
                     AuditService auditService = AuditServiceFactory.getInstance();
                     auditService.write(eventLog, "", "1");
                     LOGGER.info("EventLog: '{}' generated.", eventLog.getEventType());
 
                     if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-                        loggerClinical.debug("Outgoing XCPD Response Message:\n{}", XMLUtil.prettyPrint(XMLUtils.toDOM(envelope)));
+                        loggerClinical.debug("Outgoing XCPD Response Message:\n{}", XMLUtil.prettyPrint(DOMUtils.getFirstElement(soapMessage.getSOAPPart().getEnvelope())));
                     }
 
                 } else {
@@ -210,25 +216,50 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
                     eadcError = err;
                     throw new RuntimeException(err);
                 }
-                newMsgContext.setEnvelope(envelope);
-                newMsgContext.getOptions().setMessageId(randomUUID);
 
-                EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, null, startTime,
+            //    message.setEnvelope(envelope);
+           //     newMessage.getOptions().setMessageId(randomUUID);
+
+                EadcUtilWrapper.invokeEadc(message, newMessage, null, null, startTime,
                         new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                         ServiceType.PATIENT_IDENTIFICATION_RESPONSE);
             }
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             eadcError = e.getMessage();
-            throw AxisFault.makeFault(e);
+            throw new RuntimeException("CXF Server Error",e);
         } finally {
             if (!eadcError.isEmpty()) {
-                EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, null, startTime,
+                EadcUtilWrapper.invokeEadcFailure(message, newMessage, null, null, startTime,
                         new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                         ServiceType.PATIENT_IDENTIFICATION_RESPONSE, eadcError);
                 eadcError = "";
             }
         }
+    }
+
+    private  SOAPFactory getSOAPFactory(SoapMessage soapMessage) {
+        SoapVersion version = soapMessage.getVersion();
+        if (version instanceof Soap11) {
+            return OMAbstractFactory.getSOAP11Factory();
+        } else if (version instanceof Soap12) {
+            return OMAbstractFactory.getSOAP12Factory();
+        }
+        return OMAbstractFactory.getSOAP11Factory();  // Default to SOAP 1.1
+    }
+
+    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final OMElement param) throws SOAPException {
+        if (factory == null) {
+            throw new SOAPException("SOAPFactory cannot be null.");
+        }
+        if (param == null) {
+            throw new SOAPException("OMElement parameter cannot be null.");
+        }
+
+        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
+        envelope.getBody().addChild(param);
+
+        return envelope;
     }
 
     private OMElement toOM(PRPAIN201306UV02 param) throws Fault {
@@ -245,19 +276,15 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
             return factory.createOMElement(source, "PRPA_IN201306UV02", namespace);
 
         } catch (JAXBException bex) {
-            throw AxisFault.makeFault(bex);
+            throw  new RuntimeException(bex);
         }
     }
 
-    private SOAPEnvelope toEnvelope(SOAPFactory factory, PRPAIN201306UV02 param) throws AxisFault {
 
-        SOAPEnvelope envelope = factory.getDefaultEnvelope();
-        envelope.getBody().addChild(toOM(param));
 
-        return envelope;
-    }
 
-    private Object fromOM(OMElement param, Class type, Map extraNamespaces) throws AxisFault {
+
+    private Object fromOM(OMElement param, Class type, Map extraNamespaces) throws Fault {
 
         try {
             Unmarshaller unmarshaller = wsContext.createUnmarshaller();
@@ -265,119 +292,18 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
             return unmarshaller.unmarshal(param.getXMLStreamReaderWithoutCaching(), type).getValue();
 
         } catch (JAXBException bex) {
-            throw AxisFault.makeFault(bex);
-        }
-    }
-
-    /**
-     * A utility method that copies the namespaces from the SOAPEnvelope
-     */
-    private Map getEnvelopeNamespaces(SOAPEnvelope env) {
-
-        Map returnMap = new HashMap();
-        Iterator namespaceIterator = env.getAllDeclaredNamespaces();
-        while (namespaceIterator.hasNext()) {
-            OMNamespace ns = (OMNamespace) namespaceIterator.next();
-            returnMap.put(ns.getPrefix(), ns.getNamespaceURI());
-        }
-        return returnMap;
-    }
-
-    class JaxbRIDataSource extends AbstractOMDataSource {
-
-        /**
-         * Bound object for output.
-         */
-        private final Object outObject;
-        /**
-         * Bound class for output.
-         */
-        private final Class outClazz;
-        /**
-         * Marshaller.
-         */
-        private final Marshaller marshaller;
-        /**
-         * Namespace
-         */
-        private final String nsuri;
-        /**
-         * Local name
-         */
-        private final String name;
-
-        /**
-         * Constructor from object and marshaller.
-         *
-         * @param obj
-         * @param marshaller
-         */
-        public JaxbRIDataSource(Class clazz, Object obj, Marshaller marshaller, String nsuri, String name) {
-            this.outClazz = clazz;
-            this.outObject = obj;
-            this.marshaller = marshaller;
-            this.nsuri = nsuri;
-            this.name = name;
-        }
-
-        public void serialize(OutputStream output) throws XMLStreamException {
-
-            try {
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), output);
-
-            } catch (JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        public void serialize(Writer writer) throws XMLStreamException {
-
-            try {
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), writer);
-
-            } catch (JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        public void serialize(XMLStreamWriter xmlWriter) throws XMLStreamException {
-
-            try {
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), xmlWriter);
-
-            } catch (JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        public XMLStreamReader getReader() throws XMLStreamException {
-
-            try {
-
-                OMDocument omDocument = OMAbstractFactory.getOMFactory().createOMDocument();
-                Marshaller marshallerWsContext = wsContext.createMarshaller();
-                marshallerWsContext.marshal(new javax.xml.bind.JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), omDocument.getSAXResult());
-
-                return omDocument.getOMDocumentElement().getXMLStreamReader();
-
-            } catch (JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        @Override
-        public boolean isDestructiveRead() {
-            return false;
-        }
-
-        @Override
-        public boolean isDestructiveWrite() {
-            return false;
+            throw new RuntimeException();
         }
     }
 
 
-    public Object getServiceObject(Message message) {
+    @Override
+    public void handleMessage(Message message) throws Fault {
+
+    }
+
+
+    private Object getServiceObject(Message message) {
 
         try {
             if (message == null) {
@@ -404,5 +330,42 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
             // Handle exceptions appropriately (log, throw custom exception, etc.)
             throw new RuntimeException("Error getting service object: " + e.getMessage(), e); // Example
         }
+    }
+
+    private static String xmlNameToJavaIdentifier(String xmlName) {
+        if (xmlName == null || xmlName.isEmpty()) {
+            return null;
+        }
+
+        // Replace invalid characters (anything except a-z, A-Z, 0-9, and underscores)
+        String javaIdentifier = xmlName.replaceAll("[^a-zA-Z0-9_]", "_");
+
+        // Ensure the identifier does not start with a digit
+        if (Character.isDigit(javaIdentifier.charAt(0))) {
+            javaIdentifier = "_" + javaIdentifier;
+        }
+
+        return javaIdentifier;
+    }
+
+    private Map<String, String> getEnvelopeNamespaces(final SOAPMessage message) {
+        // Create a map to store the namespaces
+        final Map<String, String> returnMap = new HashMap<>();
+
+        // Get the SOAP Body from the SoapMessage (using getContent(OMElement.class))
+        OMElement element = message.getContent(OMElement.class);
+
+        // Get the namespaces in scope for this OMElement
+        final Iterator<OMNamespace> namespaceIterator = element.getNamespacesInScope();
+
+        // Iterate over the namespaces and add them to the map
+        while (namespaceIterator.hasNext()) {
+            final OMNamespace ns = namespaceIterator.next();
+            if (ns != null) {
+                returnMap.put(ns.getPrefix(), ns.getNamespaceURI());
+            }
+        }
+
+        return returnMap;
     }
 }

@@ -529,7 +529,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     //  Reset the response document to a translated version.
                     final TMResponseStructure tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(docBytes), Constants.LANGUAGE_CODE);
                     domDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
-                    docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                    docBytes = new byte[10];//XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
 
 
                     // Validate CDA epSOS Pivot

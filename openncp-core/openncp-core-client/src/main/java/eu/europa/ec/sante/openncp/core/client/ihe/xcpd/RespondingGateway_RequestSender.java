@@ -59,11 +59,12 @@ public final class RespondingGateway_RequestSender {
                                                 final String countryCode,
                                                 final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
 
-        final var respondingGatewayServiceStub = new RespondingGateway_ServiceStub(endpointUrl);
+        /*final var respondingGatewayServiceStub = new RespondingGateway_ServiceStub(endpointUrl);
         // Dummy handler for any mustUnderstand
         EventLogClientUtil.createDummyMustUnderstandHandler(respondingGatewayServiceStub);
         respondingGatewayServiceStub.setCountryCode(countryCode);
 
-        return respondingGatewayServiceStub.respondingGateway_PRPA_IN201305UV02(pRPAIN201305UV022, assertionMap, dstHomeCommunityId);
+        return respondingGatewayServiceStub.respondingGateway_PRPA_IN201305UV02(pRPAIN201305UV022, assertionMap, dstHomeCommunityId);*/
+        return null;
     }
 }

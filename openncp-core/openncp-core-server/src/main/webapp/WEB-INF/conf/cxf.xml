@@ -11,4 +11,12 @@
                     implementor="eu.europa.ec.sante.openncp.core.common.ihe.XDRServiceImpl"
                     address="/xdrservice">  </jaxws:endpoint>
 
+    <jaxws:endpoint id="xcpdEndpoint"
+                    implementor="eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl"
+                    address="/xcpdservice">  </jaxws:endpoint>
+
+    <jaxws:endpoint id="xcaEndpoint"
+                    implementor="eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.XCAServiceImpl"
+                    address="/xdrservice">  </jaxws:endpoint>
+
 </beans>

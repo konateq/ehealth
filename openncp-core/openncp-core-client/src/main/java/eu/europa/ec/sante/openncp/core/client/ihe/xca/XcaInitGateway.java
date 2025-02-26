@@ -93,26 +93,26 @@ public class XcaInitGateway {
             final AdhocQueryRequest queryRequest = AdhocQueryRequestCreator.createAdhocQueryRequest(pid.getExtension(), pid.getRoot(), documentCodes, filterParams);
 
             /* Stub */
-            final var respondingGatewayStub = new RespondingGateway_ServiceStub();
+           /* final var respondingGatewayStub = new RespondingGateway_ServiceStub();
             final var dynamicDiscoveryService = new DynamicDiscoveryService();
             final String epr = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
             respondingGatewayStub.setAddr(epr);
             respondingGatewayStub._getServiceClient().getOptions().setTo(new EndpointReference(epr));
             EventLogClientUtil.createDummyMustUnderstandHandler(respondingGatewayStub);
-            respondingGatewayStub.setCountryCode(countryCode);
+            respondingGatewayStub.setCountryCode(countryCode);*/
 
             /* queryResponse */
             final List<ClassCode> documentClassCodes = new ArrayList<>();
             for (final GenericDocumentCode genericDocumentCode : documentCodes) {
                 documentClassCodes.add(ClassCode.getByCode(genericDocumentCode.getValue()));
             }
-            final AdhocQueryResponse queryResponse = respondingGatewayStub.respondingGateway_CrossGatewayQuery(queryRequest, assertionMap, documentClassCodes);
+            final AdhocQueryResponse queryResponse = null;// respondingGatewayStub.respondingGateway_CrossGatewayQuery(queryRequest, assertionMap, documentClassCodes);
             processRegistryErrors(queryResponse.getRegistryErrorList());
 
             if (queryResponse.getRegistryObjectList() != null) {
                 result = AdhocQueryResponseConverter.convertAdhocQueryResponse(queryResponse);
             }
-        } catch (final RemoteException | RuntimeException ex) {
+        } catch (final RuntimeException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -131,38 +131,33 @@ public class XcaInitGateway {
         final RetrieveDocumentSetResponseType queryResponse;
         ClassCode classCode = null;
 
-        try {
+        final RetrieveDocumentSetRequestType queryRequest = new RetrieveDocumentSetRequestTypeCreator().createRetrieveDocumentSetRequestType(
+                document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
 
-            final RetrieveDocumentSetRequestType queryRequest = new RetrieveDocumentSetRequestTypeCreator().createRetrieveDocumentSetRequestType(
-                    document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
-
-            final RespondingGateway_ServiceStub stub = new RespondingGateway_ServiceStub();
+            /*final RespondingGateway_ServiceStub stub = new RespondingGateway_ServiceStub();
             final DynamicDiscoveryService dynamicDiscoveryService = new DynamicDiscoveryService();
             final String endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
             stub.setAddr(endpointReference);
             stub._getServiceClient().getOptions().setTo(new EndpointReference(endpointReference));
             stub.setCountryCode(countryCode);
-            EventLogClientUtil.createDummyMustUnderstandHandler(stub);
-            // This is a rather dirty hack, but document.getClassCode() returns null for some reason.
-            switch (service) {
-                case Constants.OrderService:
-                case Constants.PatientService:
-                case Constants.OrCDService:
-                    classCode = ClassCode.getByCode(document.getClassCode().getValue());
-                    break;
-                default:
-                    LOGGER.error("Service Not Supported");
-                    //TODO: Has to be managed as an error.
-            }
-            queryResponse = stub.respondingGateway_CrossGatewayRetrieve(queryRequest, assertionMap, classCode);
+            EventLogClientUtil.createDummyMustUnderstandHandler(stub);*/
+        // This is a rather dirty hack, but document.getClassCode() returns null for some reason.
+        switch (service) {
+            case Constants.OrderService:
+            case Constants.PatientService:
+            case Constants.OrCDService:
+                classCode = ClassCode.getByCode(document.getClassCode().getValue());
+                break;
+            default:
+                LOGGER.error("Service Not Supported");
+                //TODO: Has to be managed as an error.
+        }
+        queryResponse = null; //stub.respondingGateway_CrossGatewayRetrieve(queryRequest, assertionMap, classCode);
 
-            if (queryResponse.getRegistryResponse() != null) {
+        if (queryResponse.getRegistryResponse() != null) {
 
-                final var registryErrorList = queryResponse.getRegistryResponse().getRegistryErrorList();
-                processRegistryErrors(registryErrorList);
-            }
-        } catch (final RemoteException ex) {
-            throw new RuntimeException(ex);
+            final var registryErrorList = queryResponse.getRegistryResponse().getRegistryErrorList();
+            processRegistryErrors(registryErrorList);
         }
 
         if (!queryResponse.getDocumentResponse().isEmpty()) {
@@ -186,7 +181,7 @@ public class XcaInitGateway {
                     //  Sets the response document to a translated version.
                     final var tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(pivotDocument), targetLanguage, NcpSide.NCP_B);
                     final var domDocument = tmResponseStructure.getResponseCDA();
-                    final byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                    final byte[] translatedCDA = null;//XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                     queryResponse.getDocumentResponse().get(0).setDocument(translatedCDA);
                 }
 

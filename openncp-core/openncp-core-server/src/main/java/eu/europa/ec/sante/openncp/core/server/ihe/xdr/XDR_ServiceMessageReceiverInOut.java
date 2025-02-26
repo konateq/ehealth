@@ -18,30 +18,31 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl.XDRServiceImpl;
+import org.apache.axiom.om.OMAbstractFactory;
+import org.apache.axiom.om.OMElement;
+import org.apache.axiom.om.OMFactory;
+import org.apache.axiom.om.OMNamespace;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.headers.Header;
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
-import org.apache.cxf.phase.PhaseInterceptorChain;
+import org.apache.cxf.service.model.OperationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import javax.xml.bind.*;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPEnvelope;
-import javax.xml.soap.SOAPHeader;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.XMLStreamWriter;
-import java.io.OutputStream;
-import java.io.Writer;
+import javax.xml.soap.*;
+
+import org.apache.axiom.soap.SOAPFactory;
+
 import java.util.*;
 
 /**
@@ -137,11 +138,13 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
     /**
      * Axis2 method invoking web service and business logic related to XDR IHE Profile.
      *
-     * @param msgContext     - SOAP MessageContext request.
-     * @param newMsgContext- SOAP MessageContext response.
+     * @param message     - SOAP MessageContext request.
+     * @param newMessage- SOAP MessageContext response.
      * @throws Fault - Exception returned during the process.
      */
     public void invokeBusinessLogic(final Message message, final Message newMessage) throws Fault {
+
+        SOAPMessage soapMessage = message.getContent(SOAPMessage.class);
 
         String eadcError = "";
 
@@ -157,10 +160,10 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
             // get the implementation class for the Web Service
             final Object serviceObject = getServiceObject(message);
 
-            XDRServiceImpl xdrService = (XDRServiceImpl)getServiceObject(message); // Using the method from above
+            XDRServiceImpl xdrService = (XDRServiceImpl) getServiceObject(message); // Using the method from above
 
 
-            // Find the axisOperation that has been set by the Dispatch phase.
+       /*     // Find the axisOperation that has been set by the Dispatch phase.
             final AxisOperation axisOperation = msgContext.getOperationContext().getAxisOperation();
 
             if (axisOperation == null) {
@@ -170,65 +173,69 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
                 eadcError = err;
 
                 throw new AxisFault(err);
-            }
+            }*/
 
             final String randomUUID = Constants.UUID_PREFIX + UUID.randomUUID();
             final String methodName;
 
-            if ((axisOperation.getName() != null) && ((methodName = JavaUtils.xmlNameToJavaIdentifier(axisOperation.getName().getLocalPart())) != null)) {
+            OperationInfo operationInfo = message.getExchange().get(OperationInfo.class);
 
-                final SOAPHeader soapHeader = msgContext.getEnvelope().getHeader();
+
+            if ((operationInfo.getName() != null) && ((methodName = xmlNameToJavaIdentifier(operationInfo.getName().getLocalPart())) != null)) {
+
+                final SOAPHeader soapHeader = soapMessage.getSOAPHeader();
+
                 //  Identification of the TLS Common Name of the client.
-                final String clientCommonName = EventLogUtil.getClientCommonName(msgContext);
+                final String clientCommonName = EventLogUtil.getClientCommonName(message);
                 LOGGER.info("[ITI-41] Incoming XDR Request from '{}'", clientCommonName);
 
                 final EventLog eventLog = new EventLog();
-                eventLog.setReqM_ParticipantObjectID(getMessageID(msgContext.getEnvelope()));
-                eventLog.setReqM_ParticipantObjectDetail(msgContext.getEnvelope().getHeader().toString().getBytes());
+                eventLog.setReqM_ParticipantObjectID(getMessageID(message));
+                eventLog.setReqM_ParticipantObjectDetail(soapMessage.getSOAPPart().getEnvelope().getHeader().toString().getBytes());
                 eventLog.setSC_UserID(clientCommonName);
-                eventLog.setSourceip(EventLogUtil.getSourceGatewayIdentifier(msgContext));
+                eventLog.setSourceip(EventLogUtil.getSourceGatewayIdentifier(message));
                 eventLog.setTargetip(EventLogUtil.getTargetGatewayIdentifier());
 
                 if (loggerClinical.isDebugEnabled() && !StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())) {
-                    loggerClinical.debug("Incoming XDR Request Message:\n{}", XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope())));
+                    loggerClinical.debug("Incoming XDR Request Message:\n{}", XMLUtil.prettyPrint(DOMUtils.getFirstElement(soapMessage.getSOAPPart().getEnvelope())));
                 }
 
                 if (StringUtils.equals("documentRecipient_ProvideAndRegisterDocumentSetB", methodName)) {
 
                     /* Validate incoming request */
-                    final String requestMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
+                    final String requestMessage = XMLUtil.prettyPrint(DOMUtils.getFirstElement(soapMessage.getSOAPPart().getEnvelope().getBody().getFirstChild()));
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateXDRMessage(requestMessage, NcpSide.NCP_A, null);
                     }
                     final ProvideAndRegisterDocumentSetRequestType wrappedParam = (ProvideAndRegisterDocumentSetRequestType) fromOM(
-                            msgContext.getEnvelope().getBody().getFirstElement(),
+                            (OMElement) soapMessage.getSOAPPart().getEnvelope().getBody().getFirstChild(),
                             ProvideAndRegisterDocumentSetRequestType.class,
-                            getEnvelopeNamespaces(msgContext.getEnvelope()));
+                            getEnvelopeNamespaces((SoapMessage) message));
 
                     eventLog.setNcpSide(NcpSide.NCP_A);
                     final RegistryResponseType registryResponse = xdrService.saveDocument(wrappedParam, eventLog);
 
-                    envelope = toEnvelope(getSOAPFactory(msgContext), registryResponse);
+                    envelope = soapMessage.getSOAPPart().getEnvelope();
 
                     eventLog.setResM_ParticipantObjectID(randomUUID);
                     eventLog.setResM_ParticipantObjectDetail(envelope.getHeader().toString().getBytes());
                     eventLog.setQueryByParameter(" ");
                     eventLog.setHciIdentifier(" ");
 
-                    EventLogUtil.extractQueryByParamFromHeader(eventLog, msgContext, "PRPA_IN201305UV02", "controlActProcess", "queryByParameter");
-                    EventLogUtil.extractHCIIdentifierFromHeader(eventLog, msgContext);
+                    EventLogUtil.extractQueryByParamFromHeader(eventLog, message, "PRPA_IN201305UV02", "controlActProcess", "queryByParameter");
+                    EventLogUtil.extractHCIIdentifierFromHeader(eventLog, message);
 
                     final AuditService auditService = AuditServiceFactory.getInstance();
                     auditService.write(eventLog, "", "1");
 
                     /* Validate outgoing response */
-                    final String responseMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
+                    final String responseMessage = XMLUtil.prettyPrint(DOMUtils.getFirstElement(envelope.getBody().getFirstChild()));
                     if (OpenNCPValidation.isValidationEnable()) {
                         OpenNCPValidation.validateXDRMessage(responseMessage, NcpSide.NCP_A, null);
                     }
                     if (loggerClinical.isDebugEnabled() && !StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())) {
                         loggerClinical.debug("Response Header:\n{}", envelope.getHeader());
-                        loggerClinical.debug("Outgoing XDR Response Message:\n{}", XMLUtil.prettyPrint(XMLUtils.toDOM(envelope)));
+                        loggerClinical.debug("Outgoing XDR Response Message:\n{}", XMLUtil.prettyPrint(DOMUtils.getFirstElement(envelope)));
                     }
                     // eADC: extract of the eDispense CDA required by the KPIs.
                     eDispenseCda = EadcUtilWrapper.toXmlDocument(wrappedParam.getDocument().get(0).getValue());
@@ -243,15 +250,15 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
                 }
 
                 endTime = new Date();
-                newMsgContext.setEnvelope(envelope);
-                newMsgContext.getOptions().setMessageId(randomUUID);
+                // newMessage.setEnvelope(envelope);
+                // newMsgContext.getOptions().setMessageId(randomUUID);
 
-                if(!EadcUtilWrapper.hasTransactionErrors(envelope)) {
-                    EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, eDispenseCda, startTime,
+                if (!EadcUtilWrapper.hasTransactionErrors(message)) {
+                    EadcUtilWrapper.invokeEadc(message, newMessage, null, eDispenseCda, startTime,
                             endTime, Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                             ServiceType.DISPENSATION_RESPONSE);
                 } else {
-                    eadcError = EadcUtilWrapper.getTransactionErrorDescription(envelope);
+                    eadcError = EadcUtilWrapper.getTransactionErrorDescription(message);
                 }
             }
         } catch (final Exception e) {
@@ -259,10 +266,10 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
 
             eadcError = e.getMessage();
 
-            throw AxisFault.makeFault(e);
+            throw new RuntimeException("CXF ", e);
         } finally {
-            if(!eadcError.isEmpty()) {
-                EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, eDispenseCda, startTime, endTime,
+            if (!eadcError.isEmpty()) {
+                EadcUtilWrapper.invokeEadcFailure(message, newMessage, null, eDispenseCda, startTime, endTime,
                         Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                         ServiceType.DISPENSATION_RESPONSE, eadcError);
             }
@@ -270,7 +277,23 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
 
     }
 
-    private OMElement toOM(final RegistryResponseType param) throws AxisFault {
+    private static String xmlNameToJavaIdentifier(String xmlName) {
+        if (xmlName == null || xmlName.isEmpty()) {
+            return null;
+        }
+
+        // Replace invalid characters (anything except a-z, A-Z, 0-9, and underscores)
+        String javaIdentifier = xmlName.replaceAll("[^a-zA-Z0-9_]", "_");
+
+        // Ensure the identifier does not start with a digit
+        if (Character.isDigit(javaIdentifier.charAt(0))) {
+            javaIdentifier = "_" + javaIdentifier;
+        }
+
+        return javaIdentifier;
+    }
+
+    private OMElement toOM(final RegistryResponseType param) throws Fault {
 
         try {
             final OMFactory factory = OMAbstractFactory.getOMFactory();
@@ -283,165 +306,79 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractPhaseInterceptor<Me
             return factory.createOMElement(source, "RegistryResponse", namespace);
 
         } catch (final JAXBException bex) {
-            throw AxisFault.makeFault(bex);
+            throw new RuntimeException("CXF Error", bex);
         }
     }
 
-    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final RegistryResponseType param) throws AxisFault {
+    private SOAPMessage toEnvelope(final RegistryResponseType param) throws SOAPException, JAXBException {
+        // Create a SOAP Message
+        MessageFactory messageFactory = MessageFactory.newInstance();
+        SOAPMessage soapMessage = messageFactory.createMessage();
+        SOAPBody soapBody = soapMessage.getSOAPBody();
 
-        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
-        envelope.getBody().addChild(toOM(param));
+        // Marshal RegistryResponseType to SOAPBody
+        JAXBContext jaxbContext = JAXBContext.newInstance(RegistryResponseType.class);
+        Marshaller marshaller = jaxbContext.createMarshaller();
+        marshaller.marshal(param, soapBody);
 
-        return envelope;
+        return soapMessage;
     }
 
     /**
      * Returns default SOAP envelope.
      */
-    private SOAPEnvelope toEnvelope(final SOAPFactory factory) {
+    // Method to create a default SOAP Envelope
+    private org.apache.axiom.soap.SOAPEnvelope toEnvelope(final SOAPFactory factory) {
+        // Simply return the default envelope from the factory
         return factory.getDefaultEnvelope();
     }
 
-    private Object fromOM(final OMElement param, final Class type, final Map extraNamespaces) throws AxisFault {
-
+    // Method to convert OMElement to Java object
+    private Object fromOM(final OMElement param, final Class<?> type, final Map<String, String> extraNamespaces) throws Fault {
         try {
-
+            // Create the unmarshaller from the wsContext
             final Unmarshaller unmarshaller = wsContext.createUnmarshaller();
 
+            // Unmarshal the OMElement to the specified class type and return the value
             return unmarshaller.unmarshal(param.getXMLStreamReaderWithoutCaching(), type).getValue();
-
         } catch (final JAXBException bex) {
-            throw AxisFault.makeFault(bex);
+            // Throw a specific AxisFault with the exception details
+            throw new RuntimeException("Error creating SOAP Fault", bex);
         }
     }
+
 
     /**
      * A utility method that copies the namespaces from the SOAPEnvelope.
      */
-    private Map getEnvelopeNamespaces(final SOAPEnvelope env) {
+    private Map<String, String> getEnvelopeNamespaces(final SoapMessage message) {
+        // Create a map to store the namespaces
+        final Map<String, String> returnMap = new HashMap<>();
 
-        final Map returnMap = new HashMap();
-        final Iterator namespaceIterator = env.getAllDeclaredNamespaces();
+        // Get the SOAP Body from the SoapMessage (using getContent(OMElement.class))
+        OMElement element = message.getContent(OMElement.class);
 
+        // Get the namespaces in scope for this OMElement
+        final Iterator<OMNamespace> namespaceIterator = element.getNamespacesInScope();
+
+        // Iterate over the namespaces and add them to the map
         while (namespaceIterator.hasNext()) {
-
-            final OMNamespace ns = (OMNamespace) namespaceIterator.next();
-            returnMap.put(ns.getPrefix(), ns.getNamespaceURI());
+            final OMNamespace ns = namespaceIterator.next();
+            if (ns != null) {
+                returnMap.put(ns.getPrefix(), ns.getNamespaceURI());
+            }
         }
+
         return returnMap;
     }
 
-    private AxisFault createAxisFault(final Exception e) {
-
-        final AxisFault axisFault;
-        final Throwable cause = e.getCause();
-        if (cause != null) {
-            axisFault = new AxisFault(e.getMessage(), cause);
-        } else {
-            axisFault = new AxisFault(e.getMessage());
-        }
-
-        return axisFault;
-    }
 
     @Override
     public void handleMessage(Message message) throws Fault {
-
+        invokeBusinessLogic(message, message);
     }
 
-    class JaxbRIDataSource extends AbstractOMDataSource {
-
-        /**
-         * Bound object for output.
-         */
-        private final Object outObject;
-        /**
-         * Bound class for output.
-         */
-        private final Class outClazz;
-        /**
-         * Marshaller.
-         */
-        private final Marshaller marshaller;
-        /**
-         * Namespace
-         */
-        private final String nsuri;
-        /**
-         * Local name
-         */
-        private final String name;
-
-        /**
-         * Constructor from object and marshaller.
-         *
-         * @param obj
-         * @param marshaller
-         */
-        public JaxbRIDataSource(final Class clazz, final Object obj, final Marshaller marshaller, final String nsuri, final String name) {
-            this.outClazz = clazz;
-            this.outObject = obj;
-            this.marshaller = marshaller;
-            this.nsuri = nsuri;
-            this.name = name;
-        }
-
-        public void serialize(final OutputStream output) throws XMLStreamException {
-
-            try {
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), output);
-
-            } catch (final JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        public void serialize(final Writer writer) throws XMLStreamException {
-            try {
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), writer);
-
-            } catch (final JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        public void serialize(final XMLStreamWriter xmlWriter) throws XMLStreamException {
-
-            try {
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), xmlWriter);
-
-            } catch (final JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        public XMLStreamReader getReader() throws XMLStreamException {
-
-            try {
-
-                final OMDocument omDocument = OMAbstractFactory.getOMFactory().createOMDocument();
-                final Marshaller marshaller = wsContext.createMarshaller();
-                marshaller.marshal(new JAXBElement(new QName(nsuri, name), outObject.getClass(), outObject), omDocument.getSAXResult());
-
-                return omDocument.getOMDocumentElement().getXMLStreamReader();
-
-            } catch (final JAXBException e) {
-                throw new XMLStreamException("Error in JAXB marshalling", e);
-            }
-        }
-
-        @Override
-        public boolean isDestructiveRead() {
-            return false;
-        }
-
-        @Override
-        public boolean isDestructiveWrite() {
-            return false;
-        }
-    }
-
-    public Object getServiceObject(Message message) {
+    private Object getServiceObject(Message message) {
 
         try {
             if (message == null) {

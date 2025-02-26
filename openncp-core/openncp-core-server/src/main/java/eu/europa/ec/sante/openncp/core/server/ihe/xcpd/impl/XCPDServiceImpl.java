@@ -21,15 +21,12 @@ import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfac
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
 import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceInterface;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,6 +39,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.soap.SOAPHeader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.math.BigInteger;
@@ -564,7 +562,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
         final Element shElement;
         try {
-            shElement = XMLUtils.toDOM(soapHeader);
+            shElement = null;//XMLUtils.toDOM(soapHeader);
         } catch (final Exception e) {
             logger.error("SOAP header jaxb to dom failed.", e);
             throw e;

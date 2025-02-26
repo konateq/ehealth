@@ -33,6 +33,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.Extrinsic
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
@@ -50,16 +51,17 @@ import eu.europa.ec.sante.openncp.core.server.ihe.xca.XCAServiceInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.ep.EPExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.orcd.OrCDExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.ps.PSExtrinsicObjectBuilder;
-import org.apache.axiom.attachments.ByteArrayDataSource;
+import jakarta.mail.util.ByteArrayDataSource;
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
 import org.apache.axiom.om.OMNamespace;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.util.XMLUtils;
+import org.apache.axiom.soap.SOAPFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.cxf.helpers.DOMUtils;
+import org.apache.cxf.interceptor.Fault;
 import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -71,11 +73,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
+import javax.xml.soap.SOAPHeader;
 import java.time.Instant;
 import java.util.*;
+
 
 import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 
@@ -118,7 +123,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
      * XCA list operation implementation, returns the list of patient summaries or ePrescriptions, depending on the query.
      */
     @Override
-    public AdhocQueryResponse queryDocument(final AdhocQueryRequest adhocQueryRequest, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
+    public AdhocQueryResponse queryDocument(final AdhocQueryRequest adhocQueryRequest, final SOAPHeader soapHeader, final EventLog eventLog,final OMElement omElement) throws Exception {
 
         try {
             return adhocQueryResponseBuilder(adhocQueryRequest, soapHeader, eventLog);
@@ -132,10 +137,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
      * The response is placed in the OMElement
      */
     @Override
-    public void retrieveDocument(final RetrieveDocumentSetRequestType request, final SOAPHeader soapHeader, final EventLog eventLog, final OMElement response)
+    public void retrieveDocument(final RetrieveDocumentSetRequestType request, final SOAPHeader soapHeader, final EventLog eventLog,final OMElement omElement)
             throws Exception {
 
-        retrieveDocumentSetBuilder(request, soapHeader, eventLog, response);
+        retrieveDocumentSetBuilder(request, soapHeader, eventLog,omElement);
     }
 
     public static List<ClassCode> getClassCodesOrCD() {
@@ -261,7 +266,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 final OMElement error = re.next();
                 if (logger.isDebugEnabled()) {
                     try {
-                        logger.debug("Error to be included in audit: '{}'", XMLUtil.prettyPrint(XMLUtils.toDOM(error)));
+                       // logger.debug("Error to be included in audit: '{}'", XMLUtil.prettyPrint(DOMUtils.getFirstElement(error)));
                     } catch (final Exception e) {
                         logger.debug("Exception: '{}'", e.getMessage(), e);
                     }
@@ -691,6 +696,17 @@ public class XCAServiceImpl implements XCAServiceInterface {
         return returnDoc;
     }
 
+    public org.w3c.dom.Element convertToDOM(OMElement soapHeader) throws Fault {
+        org.w3c.dom.Element soapHeaderElement = null;
+        try {final OMElement omElement;
+            soapHeaderElement = null;
+        } catch (final Exception e) {
+           // logger.severe("Error converting OMElement to DOM Element: " + e.getMessage()); // Use severe for errors
+            throw new Fault(e); // Throw a CXF Fault
+        }
+        return soapHeaderElement;
+    }
+
     private void retrieveDocumentSetBuilder(final RetrieveDocumentSetRequestType request, final SOAPHeader soapHeader, final EventLog eventLog, final OMElement omElement)
             throws Exception {
 
@@ -710,7 +726,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
         processLabel:
         {
             try {
-                soapHeaderElement = XMLUtils.toDOM(soapHeader);
+                soapHeaderElement = DOMUtils.getFirstElement(soapHeader);
+
             } catch (final Exception e) {
                 logger.error(null, e);
                 throw e;
@@ -940,7 +957,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                     } else {
                         /* Validate CDA eHDSI Pivot if no error during the transformation */
                         if (OpenNCPValidation.isValidationEnable()) {
-                            OpenNCPValidation.validateCdaDocument(XMLUtils.toOM(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
+                            OpenNCPValidation.validateCdaDocument(DOMUtils.getFirstElement(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
                                     epsosDoc.getClassCode(), true);
                         }
                     }
@@ -951,9 +968,9 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 if (!failure) {
                     ByteArrayDataSource dataSource = null;
                     if (doc != null) {
-                        dataSource = new ByteArrayDataSource(XMLUtils.toOM(doc.getDocumentElement()).toString().getBytes(), "text/xml;charset=UTF-8");
+                        dataSource = new ByteArrayDataSource(DOMUtils.getFirstElement(doc.getDocumentElement()).toString().getBytes(), "text/xml;charset=UTF-8");
                     }
-                    final var dataHandler = new DataHandler(dataSource);
+                    final var dataHandler = new DataHandler((DataSource) dataSource);
                     final var textData = omFactory.createOMText(dataHandler, true);
                     textData.setOptimize(true);
                     document.addChild(textData);
@@ -1103,7 +1120,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         Element shElement = null;
         String sigCountryCode = null;
         try {
-            shElement = XMLUtils.toDOM(soapHeader);
+            shElement = DOMUtils.getFirstElement(soapHeader);
             documentSearchService.setSOAPHeader(shElement);
             sigCountryCode = saml2Validator.validateXCAHeader(shElement, getFirstClassCode(classCodeValues));
         } catch (final InsufficientRightsException ire) {
@@ -1179,6 +1196,39 @@ public class XCAServiceImpl implements XCAServiceInterface {
         public static RequestData empty() {
             return new RequestData(null, null, null);
         }
+    }
+
+    private OMElement toOM(final RegistryResponseType param) throws Fault {
+        if (param == null) {
+            return null; // Or throw an exception if param is required
+        }
+
+        // Replace with your actual logic to convert RegistryResponseType to OMElement
+        // This is a placeholder example. You'll need to adapt it to your specific data structure.
+
+        // Example: Creating a simple OMElement with a QName
+        SOAPFactory factory = OMAbstractFactory.getSOAP12Factory(); //Or SOAP11Factory
+        QName qName = new QName("http://yournamespace.com", "RegistryResponse"); // Replace with your namespace and element name.
+        OMElement registryResponseElement = factory.createOMElement(qName);
+
+        // Access properties of param and add them as children to registryResponseElement
+        if (param.getStatus() != null) {
+            QName statusQName = new QName("http://yournamespace.com", "Status");
+            OMElement statusElement = factory.createOMElement(statusQName);
+            statusElement.setText(param.getStatus());
+            registryResponseElement.addChild(statusElement);
+        }
+
+      /*  if (param.getMessage() != null) {
+            QName messageQName = new QName("http://yournamespace.com", "Message");
+            OMElement messageElement = factory.createOMElement(messageQName);
+            messageElement.setText(param.getMessage());
+            registryResponseElement.addChild(messageElement);
+        }*/
+
+        // Add other properties from param as needed...
+
+        return registryResponseElement;
     }
 }
 
