@@ -24,10 +24,10 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMRespon
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
-import org.apache.axis2.addressing.EndpointReference;
-import org.apache.axis2.util.XMLUtils;
+import jakarta.xml.ws.BindingProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
@@ -88,13 +88,25 @@ public class XDSbRepositoryServiceInvoker {
                 break;
         }
         // WebService Client stubs
-        final DocumentRecipient_ServiceStub documentRecipientServiceStub = new DocumentRecipient_ServiceStub(endpointReference);
-        documentRecipientServiceStub._getServiceClient().getOptions().setTo(new EndpointReference(endpointReference));
-        documentRecipientServiceStub.setCountryCode(countryCode);
-        documentRecipientServiceStub.setClassCode(docClassCode);
+
+        /*// CXF WebService Client
+        JaxWsProxyFactoryBean factory = new JaxWsProxyFactoryBean();
+        factory.setServiceClass(DocumentRecipient_PortType.class); // Replace DocumentRecipient_PortType with the actual port type interface
+        factory.setAddress(endpointReference);
+
+        DocumentRecipient_PortType documentRecipientService = (DocumentRecipient_PortType) factory.create();
+
+       ((BindingProvider) documentRecipientService).getRequestContext().put("countryCode", countryCode);
+       ((BindingProvider) documentRecipientService).getRequestContext().put("classCode", docClassCode);
+
+
+      //   final DocumentRecipient_ServiceStub documentRecipientServiceStub = new DocumentRecipient_ServiceStub(endpointReference);
+      //   documentRecipientServiceStub._getServiceClient().getOptions().setTo(new EndpointReference(endpointReference));
+      //  documentRecipientServiceStub.setCountryCode(countryCode);
+      //  documentRecipientServiceStub.setClassCode(docClassCode);
 
         // Dummy handler for any mustUnderstand header within server response
-        EventLogClientUtil.createDummyMustUnderstandHandler(documentRecipientServiceStub);
+        EventLogClientUtil.createDummyMustUnderstandHandler(documentRecipientService);*/
 
         //  Retrieving XDR document from request
         Document document = null;
@@ -144,7 +156,7 @@ public class XDSbRepositoryServiceInvoker {
             if (!docClassCode.equals(ClassCode.EDD_CLASSCODE)) {
                 final TMResponseStructure tmResponseStructure = cdaTransformationService.transcode(DomUtils.byteToDocument(cdaBytes), NcpSide.NCP_B);
                 final var base64EncodedDocument = tmResponseStructure.getResponseCDA();
-                final byte[] transformedCda = XMLUtils.toOM(Base64Util.decode(base64EncodedDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                final byte[] transformedCda = null;//XMLUtils.toOM(Base64Util.decode(base64EncodedDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                 xdrDocument.setValue(transformedCda);
 
             } else {
@@ -162,7 +174,7 @@ public class XDSbRepositoryServiceInvoker {
         }
         registerDocumentSetRequest.getDocument().add(xdrDocument);
 
-        response = documentRecipientServiceStub.documentRecipient_ProvideAndRegisterDocumentSetB(registerDocumentSetRequest, assertionMap);
+        response = null;//documentRecipientServiceStub.documentRecipient_ProvideAndRegisterDocumentSetB(registerDocumentSetRequest, assertionMap);
 
         return response;
     }
