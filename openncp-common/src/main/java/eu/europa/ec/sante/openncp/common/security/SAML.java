@@ -1,15 +1,5 @@
 package eu.europa.ec.sante.openncp.common.security;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Map;
-import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
 import eu.europa.ec.sante.openncp.common.util.PrettyPrinter;
 import net.shibboleth.utilities.java.support.security.SecureRandomIdentifierGenerationStrategy;
 import org.joda.time.DateTime;
@@ -20,37 +10,33 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.core.xml.io.Unmarshaller;
+import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.AttributeValue;
-import org.opensaml.saml.saml2.core.Audience;
-import org.opensaml.saml.saml2.core.AudienceRestriction;
-import org.opensaml.saml.saml2.core.AuthnContext;
-import org.opensaml.saml.saml2.core.AuthnContextClassRef;
-import org.opensaml.saml.saml2.core.AuthnStatement;
-import org.opensaml.saml.saml2.core.Conditions;
-import org.opensaml.saml.saml2.core.Issuer;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.saml.saml2.core.Status;
-import org.opensaml.saml.saml2.core.StatusCode;
-import org.opensaml.saml.saml2.core.StatusMessage;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml.saml2.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Map;
+
 public class SAML {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SAML.class);
 
     private static final String CM_PREFIX = "urn:oasis:names:tc:SAML:2.0:cm:";
+
     private static SecureRandomIdentifierGenerationStrategy generator;
 
     /*
@@ -63,11 +49,13 @@ public class SAML {
             generator = new SecureRandomIdentifierGenerationStrategy();
         } catch (final InitializationException e) {
             LOGGER.error("ConfigurationException: '{}'", e.getMessage(), e);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             LOGGER.error("Failure during static initialization", t);
             throw t;
         }
     }
+
+    public static final UnmarshallerFactory UNMARSHALLER_FACTORY = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 
     private DocumentBuilder builder;
     private String issuerURL;
@@ -111,8 +99,21 @@ public class SAML {
      * Helper method to read an XML object from a DOM element.
      */
     public static XMLObject fromElement(final Element element) throws UnmarshallingException {
+        final Unmarshaller unmarshaller = UNMARSHALLER_FACTORY.getUnmarshaller(element);
+        if (unmarshaller == null) {
+            throw new UnmarshallingException(String.format("Unable to get the unmarshaller for element [%s]", element));
+        }
+        return unmarshaller.unmarshall(element);
+    }
 
-        return XMLObjectProviderRegistrySupport.getUnmarshallerFactory().getUnmarshaller(element).unmarshall(element);
+    public static Assertion assertionFromElement(final Element element) throws UnmarshallingException {
+        final XMLObject xmlObject = fromElement(element);
+
+        if (xmlObject instanceof Assertion) {
+            return (Assertion) xmlObject;
+        } else {
+            throw new UnmarshallingException(String.format("The unmarshalled element's type was not an Assertion but was [%s]", element.getClass().getSimpleName()));
+        }
     }
 
     /**

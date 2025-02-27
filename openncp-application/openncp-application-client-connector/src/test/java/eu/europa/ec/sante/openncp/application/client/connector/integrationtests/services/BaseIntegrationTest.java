@@ -42,6 +42,7 @@ public class BaseIntegrationTest {
         doReturn("https://localhost:6443/openncp-client-connector/services/ClientService").when(spy).getProperty(eq("PORTAL_CLIENT_CONNECTOR_URL"));
         doReturn("http://localhost:8091/openncp-client-connector/fhir/").when(spy).getProperty(eq("FHIR_REST_CLIENT_API"));
         doReturn("https://localhost:2443/TRC-STS/SecurityTokenService").when(spy).getProperty(eq("secman.sts.url"));
+        doReturn("https://localhost:2443/TRC-STS/NextOfKinTokenService").when(spy).getProperty(eq("secman.nextOfKin.url"));
         doReturn("false").when(spy).getProperty(eq("secman.sts.checkHostname"));
         doReturn("false").when(spy).getProperty(eq("automated.validation"));
         return spy;

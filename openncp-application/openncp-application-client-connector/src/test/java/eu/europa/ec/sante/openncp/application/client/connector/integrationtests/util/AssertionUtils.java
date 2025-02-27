@@ -1,9 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util;
 
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.ImmutableTrcAssertionRequest;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.TrcAssertionRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.assertion.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
@@ -81,10 +78,10 @@ public class AssertionUtils {
                 "eHDSI EU Testing MedCare Center", permissions, null);
     }
 
-    private static Assertion createHCPAssertion(KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
-                                               final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
-                                               final String organizationId, final String facilityType, final String purposeOfUse,
-                                               final String locality, final List<String> permissions, final String onBehalfId) {
+    private static Assertion createHCPAssertion(final KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
+                                                final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
+                                                final String organizationId, final String facilityType, final String purposeOfUse,
+                                                final String locality, final List<String> permissions, final String onBehalfId) {
 
         Assertion assertion = null;
         try {
@@ -237,12 +234,30 @@ public class AssertionUtils {
         return assertionTRC;
     }
 
+    public static Assertion createNOKAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final String purposeOfUse, final String nextOfKinId) throws STSClientException, MarshallingException, MalformedURLException {
+        final URL stsServerUrl = new URL(configurationManager.getProperty("secman.nextOfKin.url"));
+        final NextOfKinAssertionRequest assertionRequest = ImmutableNextOfKinAssertionRequest.builder()
+                .location(stsServerUrl)
+                .assertion(clinicalAssertion)
+                .checkForHostname(false)
+                .validationEnabled(false)
+                .purposeOfUse(purposeOfUse)
+                .nextOfKinId(nextOfKinId)
+                .build();
+        final Assertion assertion = assertionService.request(assertionRequest);
+        final var marshaller = new AssertionMarshaller();
+        final Element element = marshaller.marshall(assertion);
+        final Document document = element.getOwnerDocument();
+        LOGGER.info("NOK Assertion: '{}'\n'{}'", assertion.getID(), XmlUtils.getDocumentAsXml(document, false));
+        return assertion;
+    }
+
     private static <T> T create(final Class<T> cls, final QName qname) {
         LOGGER.info("Creating class {}", cls.getName());
         return (T) (XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(qname)).buildObject(qname);
     }
 
-    private static void signSAMLAssertion(KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject, final String keyAlias) throws Exception {
+    private static void signSAMLAssertion(final KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject, final String keyAlias) throws Exception {
 
         LOGGER.info("method signSAMLAssertion('{}')", keyAlias);
 

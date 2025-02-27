@@ -1,9 +1,9 @@
 package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
-import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -37,10 +37,10 @@ public abstract class BaseAssertionValidation implements AssertionValidation {
         final Assertion assertion = assertionDetails.getAssertion();
         final List<AssertionValidationDetail> validationDetails = new ArrayList<>();
 
-        final var schemaBuilder = new SAMLSchemaBuilder(SAMLSchemaBuilder.SAML1Version.SAML_11);
-        validationDetails.add(AssertionValidationDetail.passed(AssertionValidationKey.XSD));
         try {
+            final var schemaBuilder = new SAMLSchemaBuilder(SAMLSchemaBuilder.SAML1Version.SAML_11);
             schemaBuilder.getSAMLSchema().newValidator().validate(new DOMSource(assertion.getDOM()));
+            validationDetails.add(AssertionValidationDetail.passed(AssertionValidationKey.XSD));
         } catch (final IOException | SAXException e) {
             return Optional.of(ImmutableAssertionValidationResult
                     .builder()

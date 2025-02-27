@@ -9,8 +9,7 @@ import net.shibboleth.utilities.java.support.component.ComponentInitializationEx
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.apache.commons.lang3.Validate;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
-import org.opensaml.core.xml.io.*;
+import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.xmlsec.keyinfo.KeyInfoSupport;
 import org.opensaml.xmlsec.signature.Signature;
@@ -34,7 +33,9 @@ public interface AssertionDetails {
 
     AssertionType getAssertionType();
 
-    Element getElement();
+    default Element getElement() {
+        return getAssertion().getDOM();
+    }
 
     Assertion getAssertion();
 
@@ -85,16 +86,13 @@ public interface AssertionDetails {
 
         final Assertion assertion;
         try {
-            final UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-            final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(samlElement);
-            assertion = (Assertion) unmarshaller.unmarshall(samlElement);
+            assertion = SAML.assertionFromElement(samlElement);
         } catch (final UnmarshallingException ex) {
             throw new AuthenticationException(Msg.code(333) + ex.getMessage());
         }
 
         return Optional.of(ImmutableAssertionDetails.builder()
                 .assertionType(assertionType)
-                .element(samlElement)
                 .assertion(assertion)
                 .build()
         );
@@ -118,23 +116,23 @@ public interface AssertionDetails {
                 throw new RuntimeException("Unsupported assertion type: " + assertion.getIssuer().getNameQualifier());
         }
 
-        // Get the OpenSAML MarshallerFactory
-        final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
-        final Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
-        if (marshaller == null) {
-            throw new RuntimeException("No marshaller found for Assertion");
-        }
 
-        final Element element;
-        try {
-            element = marshaller.marshall(assertion);
-        } catch (final MarshallingException e) {
-            throw new RuntimeException(String.format("Error when marshalling the Assertion into a DOM element: [%s]", e.getMessage()), e);
-        }
+//        // Get the OpenSAML MarshallerFactory
+//        final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+//        final Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
+//        if (marshaller == null) {
+//            throw new RuntimeException("No marshaller found for Assertion");
+//        }
+//
+//        final Element element;
+//        try {
+//            element = marshaller.marshall(assertion);
+//        } catch (final MarshallingException e) {
+//            throw new RuntimeException(String.format("Error when marshalling the Assertion into a DOM element: [%s]", e.getMessage()), e);
+//        }
 
         return ImmutableAssertionDetails.builder()
                 .assertionType(assertionType)
-                .element(element)
                 .assertion(assertion)
                 .build();
     }

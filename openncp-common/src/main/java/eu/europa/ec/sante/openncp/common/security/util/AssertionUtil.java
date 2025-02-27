@@ -2,7 +2,6 @@ package eu.europa.ec.sante.openncp.common.security.util;
 
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.SAML;
-import org.apache.commons.lang3.StringUtils;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -216,7 +215,7 @@ public class AssertionUtil {
                 final Element assertionElement = (Element) node;
 
                 try {
-                    final Assertion assertion = (Assertion) SAML.fromElement(assertionElement);
+                    final Assertion assertion = SAML.assertionFromElement(assertionElement);
                     assertions.add(assertion);
                 } catch (final UnmarshallingException e) {
                     LOGGER.error("Error unmarshalling assertion", e);
