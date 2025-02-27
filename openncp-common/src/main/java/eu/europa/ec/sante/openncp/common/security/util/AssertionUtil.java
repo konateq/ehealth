@@ -1,6 +1,8 @@
 package eu.europa.ec.sante.openncp.common.security.util;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.SAML;
+import org.apache.commons.lang3.StringUtils;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -23,6 +25,7 @@ import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AssertionUtil {
     private static final String OASIS_WSSE_SCHEMA_LOC = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
@@ -194,13 +197,13 @@ public class AssertionUtil {
         return attr;
     }
 
-    public static List<Assertion> toAssertions(final Element soapHeader) {
+    public static List<AssertionDetails> toAssertions(final Element soapHeader) {
         LOGGER.info("Retrieving SAML tokens from SOAP Header");
         final NodeList securityList = soapHeader.getElementsByTagNameNS(OASIS_WSSE_SCHEMA_LOC, "Security");
         final Element security = (Element) securityList.item(0);
         final NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
 
-        return toAssertions(assertionList);
+        return toAssertions(assertionList).stream().map(AssertionDetails::of).collect(Collectors.toList());
     }
 
     public static List<Assertion> toAssertions(final NodeList assertionList)  {
@@ -212,11 +215,9 @@ public class AssertionUtil {
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 final Element assertionElement = (Element) node;
 
-                if (assertionElement.getAttribute("ID").startsWith("urn:uuid:")) {
-                    assertionElement.setAttribute("ID", "_" + assertionElement.getAttribute("ID").substring("urn:uuid:".length()));
-                }
                 try {
-                    assertions.add((Assertion) SAML.fromElement(assertionElement));
+                    final Assertion assertion = (Assertion) SAML.fromElement(assertionElement);
+                    assertions.add(assertion);
                 } catch (final UnmarshallingException e) {
                     LOGGER.error("Error unmarshalling assertion", e);
                 }

@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.api.client.interceptor;
 import eu.europa.ec.sante.openncp.api.client.RequestContext;
 import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.*;
 import org.apache.commons.lang3.Validate;
@@ -14,6 +14,7 @@ import org.apache.cxf.phase.Phase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,6 +50,7 @@ public abstract class AbstractAssertionValidationInterceptor extends AbstractPha
 
         final RequestContext requestContext = RequestContextProvider.getRequestContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
         final SamlDetails samlDetails = requestContext.getSamlDetails();
+        final List<AssertionDetails> allAssertions = samlDetails.getAssertions();
         final Optional<AssertionDetails> assertionDetails = samlDetails.getAssertionDetails(assertionType);
 
         if (assertionDetails.isEmpty()) {
@@ -77,7 +79,7 @@ public abstract class AbstractAssertionValidationInterceptor extends AbstractPha
             }
         }
 
-        return assertionValidator.validate(assertionDetails.get())
+        return assertionValidator.validate(assertionDetails.get(), allAssertions)
                 .orElseThrow(() -> new AuthenticationException(String.format("No valid validator found for [%s] assertion", assertionType.name())));
     }
 }

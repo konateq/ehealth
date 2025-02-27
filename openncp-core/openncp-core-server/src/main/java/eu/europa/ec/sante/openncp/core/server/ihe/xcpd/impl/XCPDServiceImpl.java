@@ -9,7 +9,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
@@ -580,7 +580,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         patientSearchService.setSOAPHeader(shElement);
 
         try {
-            final List<Assertion> assertions = AssertionUtil.toAssertions(shElement);
+            final List<AssertionDetails> assertions = AssertionUtil.toAssertions(shElement);
             final List<AssertionValidationResult> assertionValidationResults = assertionValidator.validate(assertions);
             final List<String> failedValidationMessages = assertionValidationResults.stream()
                     .flatMap((AssertionValidationResult assertionValidationResult) -> assertionValidationResult.getFailedValidationMessages().stream())

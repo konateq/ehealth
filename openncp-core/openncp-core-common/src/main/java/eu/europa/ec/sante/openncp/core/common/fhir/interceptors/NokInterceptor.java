@@ -6,9 +6,10 @@ import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
-import eu.europa.ec.sante.openncp.core.common.assertion.saml.SAML2Validator;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.NokAssertionValidation;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
@@ -19,19 +20,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Interceptor(order = Integer.MIN_VALUE)
 @Component
 public class NokInterceptor implements FhirCustomInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NokInterceptor.class);
 
-    private final SAML2Validator saml2Validator;
     private final ServerContext serverContext;
     private final NokAssertionValidation nokAssertionValidation;
 
     public NokInterceptor(final NokAssertionValidation nokAssertionValidation, final ServerContext serverContext) {
         this.nokAssertionValidation = nokAssertionValidation;
-        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
     }
 
@@ -42,7 +43,9 @@ public class NokInterceptor implements FhirCustomInterceptor {
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
+        final SamlDetails samlDetails = auditSecurityInfo.getSamlDetails();
+        final List<AssertionDetails> allAssertions = samlDetails.getAssertions();
         auditSecurityInfo.getSamlDetails().getAssertionDetails(AssertionType.NOK)
-                .ifPresent(nokAssertionValidation::validate);
+                .ifPresent(nokAssertion -> nokAssertionValidation.validate(nokAssertion, allAssertions));
     }
 }

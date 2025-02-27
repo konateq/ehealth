@@ -1,11 +1,10 @@
-package eu.europa.ec.sante.openncp.core.common;
+package eu.europa.ec.sante.openncp.common.security;
 
 import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
-import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;

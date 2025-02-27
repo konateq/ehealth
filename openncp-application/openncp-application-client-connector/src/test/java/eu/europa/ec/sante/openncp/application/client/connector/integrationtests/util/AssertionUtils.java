@@ -51,6 +51,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.opensaml.saml.common.xml.SAMLConstants.SAML20_NS;
+
 public class AssertionUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionUtils.class);
@@ -96,7 +98,8 @@ public class AssertionUtils {
             nameId.setValue(email);
             nameId.setFormat(NameID.EMAIL);
 
-            assertion = create(Assertion.class, Assertion.DEFAULT_ELEMENT_NAME);
+
+            assertion = create(Assertion.class, new QName(SAML20_NS, "Assertion"));
             final var issuedInstant = DateTime.now();
             final String assId = "_" + UUID.randomUUID();
             assertion.setID(assId);

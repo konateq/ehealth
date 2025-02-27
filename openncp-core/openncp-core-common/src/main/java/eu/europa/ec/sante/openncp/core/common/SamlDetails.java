@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;

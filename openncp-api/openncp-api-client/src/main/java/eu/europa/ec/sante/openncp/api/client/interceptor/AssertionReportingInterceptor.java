@@ -5,7 +5,7 @@ import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;

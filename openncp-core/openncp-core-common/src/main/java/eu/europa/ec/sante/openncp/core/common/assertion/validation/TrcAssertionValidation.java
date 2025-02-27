@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.saml.FieldValueValidators;
 import eu.europa.ec.sante.openncp.core.common.assertion.saml.RequiredFieldValidators;

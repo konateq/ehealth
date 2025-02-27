@@ -1,6 +1,8 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
+import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import org.apache.commons.lang3.Validate;
@@ -19,15 +21,16 @@ import java.util.List;
 @Component
 public class HcpAssertionValidationInterceptor extends AbstractAssertionValidationInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(HcpAssertionValidationInterceptor.class);
+    private final ServerContext serverContext;
 
-    public HcpAssertionValidationInterceptor(final AssertionValidator assertionValidator) {
+    public HcpAssertionValidationInterceptor(final AssertionValidator assertionValidator, ServerContext serverContext) {
         super(Validate.notNull(assertionValidator, "AssertionValidator must not be null"));
+        this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
     }
 
     @Override
     public void handleMessage(final Message message) {
         LOGGER.info("Validating HCP Assertion");
-
         final AssertionValidationResult assertionValidationResult = validateAssertion(message, AssertionType.HCP, true);
         final List<String> failedValidationMessages = assertionValidationResult.getFailedValidationMessages();
         if (!failedValidationMessages.isEmpty()) {

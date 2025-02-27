@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 

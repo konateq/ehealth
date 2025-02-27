@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.stereotype.Component;
@@ -34,11 +34,19 @@ public class AssertionValidator {
                 .findFirst();
     }
 
-    public List<AssertionValidationResult> validate(final List<Assertion> assertions) {
-        return assertions.stream()
-                .map(assertionToCheck -> validate(assertionToCheck, assertions))
+    public List<AssertionValidationResult> validate(final List<AssertionDetails> allAssertions) {
+        return allAssertions.stream()
+                .map(assertionToCheck -> validate(assertionToCheck, allAssertions))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
+
+//    public List<AssertionValidationResult> validate(final List<Assertion> assertions) {
+//        return assertions.stream()
+//                .map(assertionToCheck -> validate(assertionToCheck, assertions))
+//                .filter(Optional::isPresent)
+//                .map(Optional::get)
+//                .collect(Collectors.toList());
+//    }
 }

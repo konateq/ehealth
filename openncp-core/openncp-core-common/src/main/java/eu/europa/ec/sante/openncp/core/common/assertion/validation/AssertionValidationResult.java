@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 
 import java.util.List;
 import java.util.Optional;

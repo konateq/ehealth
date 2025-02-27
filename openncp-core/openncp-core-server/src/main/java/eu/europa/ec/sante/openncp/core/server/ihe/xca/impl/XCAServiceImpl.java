@@ -15,7 +15,7 @@ import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
@@ -1016,9 +1016,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
     }
 
     private AssertionDetails validateAssertionsAndGetHCPAssertion(final Element soapHeaderElement) throws InsufficientRightsException {
-        final List<Assertion> assertions = AssertionUtil.toAssertions(soapHeaderElement);
+        final List<AssertionDetails> assertions = AssertionUtil.toAssertions(soapHeaderElement);
         final AssertionDetails hcpAssertionDetails = assertions.stream()
-                .map(AssertionDetails::of)
                 .filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP)
                 .findFirst()
                 .orElseThrow(() -> new InsufficientRightsException("No valid HCP assertion found"));

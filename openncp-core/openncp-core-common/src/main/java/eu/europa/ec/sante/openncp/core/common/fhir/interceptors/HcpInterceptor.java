@@ -7,8 +7,8 @@ import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
-import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
@@ -28,14 +28,14 @@ import java.util.Optional;
 
 @Interceptor
 @Component
-public class TrcInterceptor implements FhirCustomInterceptor {
+public class HcpInterceptor implements FhirCustomInterceptor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrcInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HcpInterceptor.class);
     private final ServerContext serverContext;
     private final AssertionValidator assertionValidator;
 
 
-    public TrcInterceptor(final ServerContext serverContext, final AssertionValidator assertionValidator) {
+    public HcpInterceptor(final ServerContext serverContext, final AssertionValidator assertionValidator) {
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
         this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
     }
@@ -44,7 +44,7 @@ public class TrcInterceptor implements FhirCustomInterceptor {
     public void validateTrcAssertionIfApplicable(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final RestOperationTypeEnum restOperationTypeEnum) {
         final EuRequestDetails euRequestDetails = EuRequestDetails.of(theRequestDetails);
         if (euRequestDetails.getRestOperationType() == RestOperationTypeEnum.METADATA) {
-            LOGGER.debug("The request was a METADATA request, skipping TRC assertion verification");
+            LOGGER.debug("The request was a METADATA request, skipping HCP assertion verification");
             return;
         }
 
@@ -53,17 +53,14 @@ public class TrcInterceptor implements FhirCustomInterceptor {
 
         final SamlDetails samlDetails = auditSecurityInfo.getSamlDetails();
         final List<AssertionDetails> assertions = samlDetails.getAssertions();
-        final Optional<AssertionDetails> trcAssertionDetails = samlDetails.getAssertionDetails(AssertionType.TRC);
-        if (trcAssertionDetails.isPresent()) {
-            final Optional<AssertionValidationResult> validationResult = assertionValidator.validate(trcAssertionDetails.get(), assertions);
-            if (validationResult.isPresent()) {
-                final List<String> failedValidationMessages = validationResult.get().getFailedValidationMessages();
-                if (!failedValidationMessages.isEmpty()) {
-                    throw new AuthenticationException(String.format("Validation failed for assertion [%s]: %s", trcAssertionDetails.get().getAssertionType(), StringUtils.join(failedValidationMessages, "\n")));
-                }
+        final AssertionDetails hcpAssertion = samlDetails.getAssertionDetails(AssertionType.HCP).orElseThrow(() -> new AuthenticationException("No valid HCP assertion found"));
+
+        final Optional<AssertionValidationResult> validationResult = assertionValidator.validate(hcpAssertion, assertions);
+        if (validationResult.isPresent()) {
+            final List<String> failedValidationMessages = validationResult.get().getFailedValidationMessages();
+            if (!failedValidationMessages.isEmpty()) {
+                throw new AuthenticationException(String.format("Validation failed for assertion [%s]: %s", hcpAssertion.getAssertionType(), StringUtils.join(failedValidationMessages, "\n")));
             }
-        } else {
-            LOGGER.info("No TRC assertion found: {}", euRequestDetails.getResourceType());
         }
     }
 }
