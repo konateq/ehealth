@@ -9,10 +9,6 @@
     <artifactId>openncp-core-common</artifactId>
     <name>openncp-core-common</name>
 
-    <properties>
-        <java-jwt.version>3.19.4</java-jwt.version>
-    </properties>
-
     <packaging>jar</packaging>
 
     <dependencies>

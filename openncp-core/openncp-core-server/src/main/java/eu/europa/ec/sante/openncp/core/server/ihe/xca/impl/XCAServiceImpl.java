@@ -7,20 +7,25 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
+import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
@@ -76,6 +81,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 
@@ -100,7 +106,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
     private final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory ofRim = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory();
     private final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory ofRs = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory();
     private final DocumentSearchInterface documentSearchService;
-    private final SAML2Validator saml2Validator;
+    private final AssertionValidator assertionValidator;
+    private final PolicyAssertionManager policyAssertionManager;
     private final CDATransformationService cdaTransformationService;
 
     /**
@@ -109,9 +116,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
      *
      * @see ServiceLoader
      */
-    public XCAServiceImpl(final DocumentSearchInterface documentSearchService, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
+    public XCAServiceImpl(final DocumentSearchInterface documentSearchService, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService) {
         this.documentSearchService = Validate.notNull(documentSearchService, "documentSearchService must not be null");
-        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
+        this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "cdaTransformationService must not be null");
     }
 
@@ -189,7 +197,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
     }
 
     @NotNull
-    private static List<String> getDocumentIds(AdhocQueryResponse response) {
+    private static List<String> getDocumentIds(final AdhocQueryResponse response) {
         final List<String> documentIds = new ArrayList<>();
         for (var i = 0; i < response.getRegistryObjectList().getIdentifiable().size(); i++) {
             if (!(response.getRegistryObjectList().getIdentifiable().get(i).getValue() instanceof ExtrinsicObjectType)) {
@@ -421,7 +429,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         logger.info("The client country code to be used by the PDP: '{}'", countryCode);
 
         // Then, it is the Policy Decision Point (PDP) that decides according to the consent of the patient
-        if (!saml2Validator.isConsentGiven(requestData.getFullPatientId(), countryCode)) {
+        if (!policyAssertionManager.isConsentGiven(requestData.getFullPatientId(), countryCode)) {
             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_NO_CONSENT,
                     OpenNCPErrorCode.ERROR_PS_NO_CONSENT.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
@@ -453,10 +461,11 @@ public class XCAServiceImpl implements XCAServiceInterface {
         }
 
         for (final ClassCode classCodeValue : classCodeValues) {
-
+            policyAssertionManager.xcaPermissionvalidator(requestData.getHcpAssertionDetails().getAssertion(), classCodeValue);
             try {
                 switch (classCodeValue) {
                     case EP_CLASSCODE:
+
                         final List<DocumentAssociation<EPDocumentMetaData>> prescriptions = documentSearchService.getEPDocumentList(
                                 DocumentFactory.createSearchCriteria().addPatientId(requestData.getFullPatientId()));
 
@@ -720,6 +729,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
 
             documentSearchService.setSOAPHeader(soapHeaderElement);
 
+            final AssertionDetails hcpAssertionDetails = validateAssertionsAndGetHCPAssertion(soapHeaderElement);
             final String documentId = request.getDocumentRequest().get(0).getDocumentUniqueId();
             final String fullPatientId = extractFullPatientId(soapHeaderElement);
             final String repositoryId = getRepositoryUniqueId(request);
@@ -742,7 +752,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 logger.info("Could not get client country code from the service consumer certificate. " +
                         "The reason can be that the call was not via HTTPS. " +
                         "Will check the country code from the signature certificate now.");
-                countryCode = saml2Validator.getCountryCodeFromHCPAssertion(soapHeaderElement);
+                countryCode = hcpAssertionDetails.getCountryCode().orElse(null);
                 if (countryCode != null) {
                     logger.info("Found the client country code via the signature certificate.");
                 } else {
@@ -757,7 +767,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             logger.info("The client country code to be used by the PDP '{}' ", countryCode);
 
             // Then, it is the Policy Decision Point (PDP) that decides according to the consent of the patient
-            if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+            if (!policyAssertionManager.isConsentGiven(fullPatientId, countryCode)) {
                 failure = true;
                 RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_PS_NO_CONSENT,
                         OpenNCPErrorCode.ERROR_PS_NO_CONSENT.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
@@ -849,28 +859,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
             //            }
 
             classCodeValue = epsosDoc.getClassCode();
-
-            try {
-                saml2Validator.validateXCAHeader(soapHeaderElement, classCodeValue);
-            } catch (final InvalidFieldException e) {
-                logger.error(e.getMessage(), e);
-                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_PS_INCORRECT_FORMATTING, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-            } catch (final MissingFieldException e) {
-                logger.error(e.getMessage(), e);
-                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_PS_MISSING_REQUIRED_FIELDS, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-            } catch (final OpenNCPErrorCodeException e) {
-                logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
-                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, e.getErrorCode(), e.getMessage(),
-                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-                break processLabel;
-            } catch (final SMgrException e) {
-                logger.error("SMgrException: '{}'", e.getMessage(), e);
-                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC, e.getMessage(),
-                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-                break processLabel;
-            }
-
-            logger.info("XCA Retrieve Request is valid.");
+            policyAssertionManager.xcaPermissionvalidator(hcpAssertionDetails.getAssertion(), classCodeValue);
             final var homeCommunityId = omFactory.createOMElement("HomeCommunityId", ns2);
             homeCommunityId.setText(request.getDocumentRequest().get(0).getHomeCommunityId());
             documentResponse.addChild(homeCommunityId);
@@ -896,9 +885,9 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 if (doc != null) {
                     logger.info("[National Infrastructure] CDA Document:\n'{}'", epsosDoc.getClassCode().getCode());
                     /* Validate CDA eHDSI Friendly */
-                    if (OpenNCPValidation.isValidationEnable()) {
+                    if (GazelleValidation.isValidationEnable()) {
 
-                        OpenNCPValidation.validateCdaDocument(XMLUtil.documentToString(epsosDoc.getDocument()), NcpSide.NCP_A,
+                        GazelleValidation.validateCdaDocument(XMLUtil.documentToString(epsosDoc.getDocument()), NcpSide.NCP_A,
                                 epsosDoc.getClassCode(), false);
                     }
                     // Transcode to eHDSI Pivot
@@ -941,8 +930,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         }
                     } else {
                         /* Validate CDA eHDSI Pivot if no error during the transformation */
-                        if (OpenNCPValidation.isValidationEnable()) {
-                            OpenNCPValidation.validateCdaDocument(XMLUtils.toOM(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
+                        if (GazelleValidation.isValidationEnable()) {
+                            GazelleValidation.validateCdaDocument(XMLUtils.toOM(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
                                     epsosDoc.getClassCode(), true);
                         }
                     }
@@ -1026,6 +1015,22 @@ public class XCAServiceImpl implements XCAServiceInterface {
         }
     }
 
+    private AssertionDetails validateAssertionsAndGetHCPAssertion(final Element soapHeaderElement) throws InsufficientRightsException {
+        final List<AssertionDetails> assertions = AssertionUtil.toAssertions(soapHeaderElement);
+        final AssertionDetails hcpAssertionDetails = assertions.stream()
+                .filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP)
+                .findFirst()
+                .orElseThrow(() -> new InsufficientRightsException("No valid HCP assertion found"));
+        final List<AssertionValidationResult> assertionValidationResults = assertionValidator.validate(assertions);
+        final List<String> failedValidationMessages = assertionValidationResults.stream()
+                .flatMap((AssertionValidationResult assertionValidationResult) -> assertionValidationResult.getFailedValidationMessages().stream())
+                .collect(Collectors.toList());
+        if (!failedValidationMessages.isEmpty()) {
+            throw new InsufficientRightsException(String.format("Assertion validation error: [%s]", String.join("\n", failedValidationMessages)));
+        }
+        return hcpAssertionDetails;
+    }
+
     /**
      * This method will check if the Registry error list only contains Warnings.
      *
@@ -1104,10 +1109,12 @@ public class XCAServiceImpl implements XCAServiceInterface {
     private RequestData extractAndValidateRequestData(final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) throws Exception {
         Element shElement = null;
         String sigCountryCode = null;
+        AssertionDetails hcpAssertionDetails = null;
         try {
             shElement = XMLUtils.toDOM(soapHeader);
             documentSearchService.setSOAPHeader(shElement);
-            sigCountryCode = saml2Validator.validateXCAHeader(shElement, getFirstClassCode(classCodeValues));
+            hcpAssertionDetails = validateAssertionsAndGetHCPAssertion(shElement);
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
         } catch (final InsufficientRightsException ire) {
             logger.error(ire.getMessage(), ire);
             RegistryErrorUtils.addErrorMessage(registryErrorList, ire.getErrorCode(), ire.getMessage(), ire, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
@@ -1145,18 +1152,20 @@ public class XCAServiceImpl implements XCAServiceInterface {
         }
 
         final String fullPatientId = extractFullPatientId(shElement);
-        return new RequestData(sigCountryCode, shElement, fullPatientId);
+        return new RequestData(sigCountryCode, shElement, fullPatientId, hcpAssertionDetails);
     }
 
     private static class RequestData {
-        public final String sigCountryCode;
-        public final Element shElement;
-        public final String fullPatientId;
+        private final String sigCountryCode;
+        private final Element shElement;
+        private final String fullPatientId;
+        private final AssertionDetails hcpAssertionDetails;
 
-        public RequestData(final String sigCountryCode, final Element shElement, final String fullPatientId) {
+        public RequestData(final String sigCountryCode, final Element shElement, final String fullPatientId, final AssertionDetails hcpAssertionDetails) {
             this.sigCountryCode = sigCountryCode;
             this.shElement = shElement;
             this.fullPatientId = fullPatientId;
+            this.hcpAssertionDetails = hcpAssertionDetails;
         }
 
         public String getSigCountryCode() {
@@ -1171,15 +1180,18 @@ public class XCAServiceImpl implements XCAServiceInterface {
             return fullPatientId;
         }
 
+        public AssertionDetails getHcpAssertionDetails() {
+            return hcpAssertionDetails;
+        }
+
         public boolean isEmpty() {
             return StringUtils.isBlank(sigCountryCode)
                     && shElement == null
                     && StringUtils.isBlank(fullPatientId);
-
         }
 
         public static RequestData empty() {
-            return new RequestData(null, null, null);
+            return new RequestData(null, null, null, null);
         }
     }
 }

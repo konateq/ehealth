@@ -70,7 +70,7 @@ public interface AssertionRequest {
             getSoapBody(soapBody);
 
             return message;
-        } catch (SOAPException e) {
+        } catch (final SOAPException e) {
             throw new STSClientException("Could not create the soap message", e);
         }
     }

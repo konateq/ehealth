@@ -7,25 +7,21 @@ import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.JwtToken;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.XSDValidationException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.core.config.InitializationException;
+import org.opensaml.core.config.InitializationService;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -45,20 +41,18 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
 
     private final TokenProvider tokenProvider;
-    private final SAML2Validator saml2Validator;
     private final ServerContext serverContext;
 
     static {
         try {
-            org.opensaml.core.config.InitializationService.initialize();
+            InitializationService.initialize();
         } catch (final InitializationException e) {
-            throw new RuntimeException("Could not initialize the opensaml InitializationService", e);
+            throw new RuntimeException(String.format("Could not initialize the opensaml InitializationService: %s", e.getMessage()), e);
         }
     }
 
-    public JwtSamlInterceptor(final TokenProvider tokenProvider, final SAML2Validator saml2Validator, final ServerContext serverContext) {
+    public JwtSamlInterceptor(final TokenProvider tokenProvider, final ServerContext serverContext) {
         this.tokenProvider = Validate.notNull(tokenProvider, "tokenProvider must not be null");
-        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
     }
 
@@ -70,7 +64,6 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
             LOGGER.error("No jwt token found in request with serverContext [{}] \n the request summary: \n {}", serverContext, getRequestSummary(theRequest));
             throw new AuthenticationException(String.format("A bearer token is mandatory to initiate a request to [%s].", serverContext.getNcpSide().getName()));
         }
-
 
         final DecodedJWT jwt = tokenProvider.verifyToken(jwtToken.get().getToken());
         final SamlDetails samlDetails = SamlDetails.of(jwt);
@@ -92,34 +85,27 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
 
     public void addAssertionToSecurityContext(final AuditSecurityInfo auditSecurityInfo) {
-        final Assertion hcpAssertion = auditSecurityInfo.getSamlDetails().getHcpAssertion()
+        final Assertion hcpAssertion = auditSecurityInfo.getSamlDetails().getHcpAssertionDetails()
                 .map(AssertionDetails::getAssertion)
-                .orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
+                .orElseThrow(() -> new InsufficientAuthenticationException("No valid HCP assertion found"));
         final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(hcpAssertion.getSubject().getNameID().getValue(), hcpAssertion.getIssuer().getValue(), null);
         authentication.setDetails(auditSecurityInfo);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private void validateAssertions(final SamlDetails samlDetails) {
-        final Assertion hcpAssertion = samlDetails.getHcpAssertion()
+        final Assertion hcpAssertion = samlDetails.getHcpAssertionDetails()
                 .map(AssertionDetails::getAssertion)
-                .orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
+                .orElseThrow(() -> new InsufficientAuthenticationException("No valid HCP assertion found"));
 
-        if (OpenNCPValidation.isValidationEnable()) {
-            OpenNCPValidation.validateHCPAssertion(hcpAssertion, serverContext.getNcpSide());
-            samlDetails.getAssertion(AssertionType.TRC)
+        if (GazelleValidation.isValidationEnable()) {
+            GazelleValidation.logAndValidateHCPAssertion(hcpAssertion, serverContext.getNcpSide());
+            samlDetails.getAssertionDetails(AssertionType.TRC)
                     .map(AssertionDetails::getAssertion)
-                    .ifPresent(trcAssertion -> OpenNCPValidation.validateTRCAssertion(trcAssertion, serverContext.getNcpSide()));
-            samlDetails.getAssertion(AssertionType.NOK)
+                    .ifPresent(trcAssertion -> GazelleValidation.validateTRCAssertion(trcAssertion, serverContext.getNcpSide()));
+            samlDetails.getAssertionDetails(AssertionType.NOK)
                     .map(AssertionDetails::getAssertion)
-                    .ifPresent(trcAssertion -> OpenNCPValidation.validateNOKAssertion(trcAssertion, serverContext.getNcpSide()));
-        }
-
-        try {
-            saml2Validator.validateHCPHeader(hcpAssertion);
-        } catch (final MissingFieldException | InsufficientRightsException | InvalidFieldException | SMgrException |
-                       XSDValidationException e) {
-            throw new AuthenticationException("Invalid HCP assertion.", e);
+                    .ifPresent(trcAssertion -> GazelleValidation.validateNOKAssertion(trcAssertion, serverContext.getNcpSide()));
         }
     }
 

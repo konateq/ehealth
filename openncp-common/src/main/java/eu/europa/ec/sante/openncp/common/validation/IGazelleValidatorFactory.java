@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.common.validation;
 
 public interface IGazelleValidatorFactory {
 
-    AssertionValidator getAssertionValidator();
+    DocumentValidator getAssertionValidator();
 
     AuditMessageValidator getAuditMessageValidator();
 

@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201306UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcEntry;
@@ -114,8 +114,8 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
 
             /* Validate incoming request message */
             String message = XMLUtil.prettyPrint(XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement()));
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validatePatientDemographicRequest(message, NcpSide.NCP_A);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validatePatientDemographicRequest(message, NcpSide.NCP_A);
             }
 
             XCPD_ServiceSkeleton skeleton = (XCPD_ServiceSkeleton) serviceObject;
@@ -145,8 +145,8 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
                     envelope = toEnvelope(getSOAPFactory(msgContext), PRPAIN201306UV02);
 
                     /* Validate response message */
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validatePatientDemographicResponse(XMLUtil.prettyPrint(XMLUtils.toDOM(
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validatePatientDemographicResponse(XMLUtil.prettyPrint(XMLUtils.toDOM(
                                 envelope.getBody().getFirstElement())), NcpSide.NCP_A);
                     }
                     eventLog.setResM_ParticipantObjectID(randomUUID);

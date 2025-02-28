@@ -1,32 +1,33 @@
 package eu.europa.ec.sante.openncp.common.security.util;
 
-import java.util.List;
-import java.util.Optional;
-import javax.xml.namespace.QName;
-
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Marshaller;
 import org.opensaml.core.xml.io.MarshallingException;
-import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.XSString;
 import org.opensaml.core.xml.schema.XSURI;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.AttributeValue;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.saml2.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import javax.xml.namespace.QName;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AssertionUtil {
-
+    private static final String OASIS_WSSE_SCHEMA_LOC = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionUtil.class);
 
     private AssertionUtil() {
@@ -72,12 +73,12 @@ public class AssertionUtil {
                         attrVal.setValue(((XSString) attribute.getAttributeValues().get(0)).getValue());
                     } else {
                         if (attribute.getAttributeValues()
-                                     .get(0)
-                                     .getOrderedChildren()
-                                     .get(0)
-                                     .getClass()
-                                     .getName()
-                                     .equals("org.opensaml.core.xml.schema.impl.XSAnyImpl")) {
+                                .get(0)
+                                .getOrderedChildren()
+                                .get(0)
+                                .getClass()
+                                .getName()
+                                .equals("org.opensaml.core.xml.schema.impl.XSAnyImpl")) {
                             attrVal.setValue(((XSAny) attribute.getAttributeValues().get(0).getOrderedChildren().get(0)).getTextContent());
                         } else {
                             attrVal.setValue(((XSString) attribute.getAttributeValues().get(0).getOrderedChildren().get(0)).getValue());
@@ -195,20 +196,34 @@ public class AssertionUtil {
         return attr;
     }
 
-    public static Optional<Assertion> toAssertion(final Element element) {
-        // Unmarshalling using the document root element, an EntitiesDescriptor in this case
-        try {
+    public static List<AssertionDetails> toAssertions(final Element soapHeader) {
+        LOGGER.info("Retrieving SAML tokens from SOAP Header");
+        final NodeList securityList = soapHeader.getElementsByTagNameNS(OASIS_WSSE_SCHEMA_LOC, "Security");
+        final Element security = (Element) securityList.item(0);
+        final NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
 
-            final Unmarshaller unmarshaller = XMLObjectProviderRegistrySupport.getUnmarshallerFactory().getUnmarshaller(element);
-            if (unmarshaller == null) {
-                LOGGER.error("SAML Unmarshalling is NULL");
-                return Optional.empty();
+        return toAssertions(assertionList).stream().map(AssertionDetails::of).collect(Collectors.toList());
+    }
+
+    public static List<Assertion> toAssertions(final NodeList assertionList)  {
+        final List<Assertion> assertions = new ArrayList<>();
+
+        for (int i = 0; i < assertionList.getLength(); i++) {
+            final Node node = assertionList.item(i);
+
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                final Element assertionElement = (Element) node;
+
+                try {
+                    final Assertion assertion = SAML.assertionFromElement(assertionElement);
+                    assertions.add(assertion);
+                } catch (final UnmarshallingException e) {
+                    LOGGER.error("Error unmarshalling assertion", e);
+                }
             }
-            return Optional.of((Assertion) unmarshaller.unmarshall(element));
-        } catch (final UnmarshallingException e) {
-            LOGGER.error("UnmarshallingException: '{}", e.getMessage(), e);
-            return Optional.empty();
         }
+
+        return assertions;
     }
 
     public static Optional<Element> toElement(final Assertion assertion, final Document document) {
