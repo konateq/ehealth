@@ -3,9 +3,9 @@ package eu.europa.ec.sante.openncp.api.client.interceptor;
 import eu.europa.ec.sante.openncp.api.client.RequestContext;
 import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
-import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -21,6 +21,7 @@ public class AssertionReportingInterceptor extends AbstractPhaseInterceptor<Mess
 
     public AssertionReportingInterceptor() {
         super(Phase.PRE_INVOKE);
+        addAfter(AssertionsInInterceptor.class.getName());
     }
 
     public void handleMessage(final Message message) {

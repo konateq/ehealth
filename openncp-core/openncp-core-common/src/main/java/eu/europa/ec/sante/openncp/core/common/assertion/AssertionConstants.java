@@ -21,6 +21,7 @@ public class AssertionConstants {
     public static final String URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION = "urn:oasis:names:tc:xspa:1.0:subject:organization";
     public static final String URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID = "urn:oasis:names:tc:xspa:1.0:subject:organization-id";
     public static final String URN_EHDSI_NAMES_ISM_DOCUMENT_ID = "urn:ehdsi:names:ism:document-id";
+    public static final String URN_EHDSI_NOK_ID = "urn:ehdsi:names:subject:nextofkin:id";
 
     private AssertionConstants() {
     }

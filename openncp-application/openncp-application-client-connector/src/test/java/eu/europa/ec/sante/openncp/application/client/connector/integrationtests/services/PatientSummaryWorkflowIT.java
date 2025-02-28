@@ -124,7 +124,8 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         assertions.put(AssertionType.HCP, clinicalAssertion);
         final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
         assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
-        final Assertion nextOfKinAssertion = AssertionUtils.createNOKAssertion(assertionService, configurationManager, clinicalAssertion, "TREATMENT", "NOKID");
+
+        final Assertion nextOfKinAssertion = AssertionUtils.createNOKAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT", "NOKID");
         assertions.put(AssertionType.NOK, nextOfKinAssertion);
 
         final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();

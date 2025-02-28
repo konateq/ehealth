@@ -44,6 +44,8 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +57,7 @@ public class AssertionUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionUtils.class);
 
     public static Assertion createClinicalAssertion(final KeyStoreManager keyStoreManager, final String username, final String fullName,
-                                              final String email) {
+                                                    final String email) {
         final List<String> permissions = new ArrayList<>();
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-003");
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004");
@@ -192,7 +194,7 @@ public class AssertionUtils {
             attrStmt.getAttributes().add(attrPID5);
 
             // XSPA Purpose of Use
-            final var attrPID6 = createAttributePurposeOfUse(builderFactory, "XSPA Purpose Of Use","urn:oasis:names:tc:xspa:1.0:subject:purposeofuse", purposeOfUse);
+            final var attrPID6 = createAttributePurposeOfUse(builderFactory, "XSPA Purpose Of Use", "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse", purposeOfUse);
             attrStmt.getAttributes().add(attrPID6);
 
             // XSPA Locality
@@ -222,8 +224,12 @@ public class AssertionUtils {
         return assertion;
     }
 
+    public static String getPatientId(final PatientId patientId) {
+        return patientId.getExtension() + "^^^&" + patientId.getRoot() + "&ISO";
+    }
+
     public static Assertion createTRCAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final PatientId patient, final String purposeOfUse) throws STSClientException, MarshallingException, MalformedURLException {
-        final String patientId = patient.getExtension() + "^^^&" + patient.getRoot() + "&ISO";
+        final String patientId = getPatientId(patient);
         final URL trcServerUrl = new URL(configurationManager.getProperty("secman.sts.url"));
         final TrcAssertionRequest assertionRequest = ImmutableTrcAssertionRequest.builder().location(trcServerUrl).assertion(clinicalAssertion).checkForHostname(false).validationEnabled(false).purposeOfUse(purposeOfUse).patientId(patientId).build();
         final Assertion assertionTRC = assertionService.request(assertionRequest);
@@ -234,15 +240,23 @@ public class AssertionUtils {
         return assertionTRC;
     }
 
-    public static Assertion createNOKAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final String purposeOfUse, final String nextOfKinId) throws STSClientException, MarshallingException, MalformedURLException {
-        final URL stsServerUrl = new URL(configurationManager.getProperty("secman.nextOfKin.url"));
+    public static Assertion createNOKAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final PatientId patientId, final String purposeOfUse, final String nextOfKinId) throws STSClientException, MarshallingException, MalformedURLException {
+        final URL nextOfKinUrl = new URL(configurationManager.getProperty("secman.nextOfKin.url"));
         final NextOfKinAssertionRequest assertionRequest = ImmutableNextOfKinAssertionRequest.builder()
-                .location(stsServerUrl)
+                .location(nextOfKinUrl)
                 .assertion(clinicalAssertion)
                 .checkForHostname(false)
                 .validationEnabled(false)
                 .purposeOfUse(purposeOfUse)
+                .patientId(getPatientId(patientId))
                 .nextOfKinId(nextOfKinId)
+                .nextOfKinFirstName("Horst")
+                .nextOfKinFamilyName("Köhler")
+                .nextOfKinAddressStreet("Rue Breydel 4")
+                .nextOfKinAddressCity("Brussels")
+                .nextOfKinAddressPostalCode("1040")
+                .nextOfKinAddressCountry("Belgium")
+                .nextOfKinBirthDate(LocalDate.of(1993, Month.NOVEMBER, 1))
                 .build();
         final Assertion assertion = assertionService.request(assertionRequest);
         final var marshaller = new AssertionMarshaller();

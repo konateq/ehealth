@@ -1,9 +1,5 @@
 package eu.europa.ec.sante.openncp.core.common.assertion;
 
-import java.text.MessageFormat;
-import java.time.Instant;
-import java.util.List;
-
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +10,10 @@ import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.util.List;
 
 public class AssertionHelper {
 

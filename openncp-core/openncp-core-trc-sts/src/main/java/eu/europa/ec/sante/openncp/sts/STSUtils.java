@@ -26,18 +26,17 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Locale;
 
 /**
  *
  */
 public class STSUtils {
-
     public static final String NO_CLIENT_CERTIFICATE = "Unknown (No Client Certificate)";
+    public static final String NOK_NS = "https://ehdsi.eu/assertion/nok";
+    public static final String TRC_NS = "https://ehdsi.eu/assertion/trc";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(STSUtils.class);
-    private static final String NOK_NS = "https://ehdsi.eu/assertion/nok";
-    private static final String TRC_NS = "https://ehdsi.eu/assertion/trc";
     private static final String SAML20_TOKEN_URN = "urn:oasis:names:tc:SAML:2.0:assertion";
     private static final String WS_SEC_UTIL_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
     private static final String WS_TRUST_NS = "http://docs.oasis-open.org/ws-sx/ws-trust/200512";
@@ -67,8 +66,14 @@ public class STSUtils {
         }
         final var nextOfKinDetail = new NextOfKinDetail();
         final SOAPElement trcDetails = (SOAPElement) body.getElementsByTagNameNS(NOK_NS, "NoKParameters").item(0);
+
+        if (trcDetails.getElementsByTagNameNS(NOK_NS, "PatientId").item(0) != null) {
+            nextOfKinDetail.setPatientId(trcDetails.getElementsByTagNameNS(NOK_NS, "PatientId").item(0).getTextContent());
+        }
+
+
         if (trcDetails.getElementsByTagNameNS(NOK_NS, "NextOfKinId").item(0) != null) {
-            nextOfKinDetail.setLivingSubjectIds(Collections.singletonList(trcDetails.getElementsByTagNameNS(NOK_NS, "NextOfKinId").item(0).getTextContent()));
+            nextOfKinDetail.setLivingSubjectId(trcDetails.getElementsByTagNameNS(NOK_NS, "NextOfKinId").item(0).getTextContent());
         }
         if (trcDetails.getElementsByTagNameNS(NOK_NS, "NextOfKinFamilyName").item(0) != null) {
             nextOfKinDetail.setFamilyName(trcDetails.getElementsByTagNameNS(NOK_NS, "NextOfKinFamilyName").item(0).getTextContent());
@@ -116,18 +121,18 @@ public class STSUtils {
         return trcDetails.getElementsByTagNameNS(TRC_NS, "PrescriptionId").item(0).getTextContent();
     }
 
-    public static String getPurposeOfUse(final SOAPElement body) {
+    public static String getPurposeOfUse(final SOAPElement body, final String namespace, final String localParametersName) {
 
-        if (body.getElementsByTagNameNS(TRC_NS, "TRCParameters").getLength() < 1) {
-            throw new WebServiceException("No TRC Parameters in RST");
+        if (body.getElementsByTagNameNS(namespace, localParametersName).getLength() < 1) {
+            throw new WebServiceException(String.format("No local parameters name [%s] found in request", localParametersName));
         }
 
-        final SOAPElement trcDetails = (SOAPElement) body.getElementsByTagNameNS(TRC_NS, "TRCParameters").item(0);
-        if (trcDetails.getElementsByTagNameNS(TRC_NS, "PurposeOfUse").item(0) == null) {
+        final SOAPElement trcDetails = (SOAPElement) body.getElementsByTagNameNS(namespace, localParametersName).item(0);
+        if (trcDetails.getElementsByTagNameNS(namespace, "PurposeOfUse").item(0) == null) {
             return null;
         }
 
-        final String purposeOfUse = trcDetails.getElementsByTagNameNS(TRC_NS, "PurposeOfUse").item(0).getTextContent();
+        final String purposeOfUse = trcDetails.getElementsByTagNameNS(namespace, "PurposeOfUse").item(0).getTextContent();
         if (purposeOfUse != null && (!StringUtils.equals("TREATMENT", purposeOfUse) && !StringUtils.equals("EMERGENCY", purposeOfUse))) {
             throw new WebServiceException("Purpose of Use MUST be either TREATMENT of EMERGENCY");
         }

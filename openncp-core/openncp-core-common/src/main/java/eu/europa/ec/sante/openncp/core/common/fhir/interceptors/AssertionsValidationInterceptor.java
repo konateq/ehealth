@@ -8,13 +8,11 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
-import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -24,46 +22,34 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
-@Interceptor
+@Interceptor(order = AssertionsReportingInterceptor.ORDER + 1)
 @Component
-public class TrcInterceptor implements FhirCustomInterceptor {
+public class AssertionsValidationInterceptor implements FhirCustomInterceptor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrcInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AssertionsValidationInterceptor.class);
+
     private final ServerContext serverContext;
     private final AssertionValidator assertionValidator;
 
-
-    public TrcInterceptor(final ServerContext serverContext, final AssertionValidator assertionValidator) {
+    public AssertionsValidationInterceptor(final AssertionValidator assertionValidator, final ServerContext serverContext) {
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
         this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
     }
 
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
-    public void validateTrcAssertionIfApplicable(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final RestOperationTypeEnum restOperationTypeEnum) {
-        final EuRequestDetails euRequestDetails = EuRequestDetails.of(theRequestDetails);
-        if (euRequestDetails.getRestOperationType() == RestOperationTypeEnum.METADATA) {
-            LOGGER.debug("The request was a METADATA request, skipping TRC assertion verification");
-            return;
-        }
-
+    public void validateAssertions(final RequestDetails theRequestDetails, final ServletRequestDetails servletRequestDetails, final RestOperationTypeEnum restOperationTypeEnum) {
         final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
         final SamlDetails samlDetails = auditSecurityInfo.getSamlDetails();
-        final List<AssertionDetails> assertions = samlDetails.getAssertions();
-        final Optional<AssertionDetails> trcAssertionDetails = samlDetails.getAssertionDetails(AssertionType.TRC);
-        if (trcAssertionDetails.isPresent()) {
-            final Optional<AssertionValidationResult> validationResult = assertionValidator.validate(trcAssertionDetails.get(), assertions);
-            if (validationResult.isPresent()) {
-                final List<String> failedValidationMessages = validationResult.get().getFailedValidationMessages();
-                if (!failedValidationMessages.isEmpty()) {
-                    throw new AuthenticationException(String.format("Validation failed for assertion [%s]: %s", trcAssertionDetails.get().getAssertionType(), StringUtils.join(failedValidationMessages, "\n")));
-                }
-            }
-        } else {
-            LOGGER.info("No TRC assertion found: {}", euRequestDetails.getResourceType());
+        samlDetails.getAssertionDetails(AssertionType.HCP).orElseThrow(() -> new AuthenticationException("No valid HCP assertion found"));
+
+        final List<AssertionValidationResult> validationResults = assertionValidator.validate(samlDetails.getAssertions());
+        final List<String> failedValidationMessages = validationResults.stream().flatMap(assertionValidationResult -> assertionValidationResult.getFailedValidationMessages().stream()).collect(Collectors.toList());
+        if (!failedValidationMessages.isEmpty()) {
+            throw new AuthenticationException(String.format("Validation failed for assertions with the following details: %s", StringUtils.join(failedValidationMessages, "\n")));
         }
     }
 }
