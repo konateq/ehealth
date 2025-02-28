@@ -80,7 +80,7 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
         try {
             // these calls are both getters and checkers of message.
             // So we call them first
-            final String purposeOfUse = STSUtils.getPurposeOfUse(body);
+            final String purposeOfUse = STSUtils.getPurposeOfUse(body, STSUtils.TRC_NS, "TRCParameters");
             final String dispensationPinCode = STSUtils.getDispensationPinCode(body);
             final String prescriptionId = STSUtils.getPrescriptionId(body);
             final List<String> patientIDs = getPatientIDs(body);

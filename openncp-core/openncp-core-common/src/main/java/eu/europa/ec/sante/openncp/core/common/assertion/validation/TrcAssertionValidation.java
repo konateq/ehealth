@@ -1,8 +1,8 @@
 package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
-import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.saml.FieldValueValidators;
 import eu.europa.ec.sante.openncp.core.common.assertion.saml.RequiredFieldValidators;
@@ -41,7 +41,7 @@ public class TrcAssertionValidation extends BaseAssertionValidation {
                     return ImmutableAssertionValidationDetail.builder()
                             .key(AssertionValidationKey.TRC_ADVICE)
                             .status(AssertionValidationDetailStatus.FAILED)
-                            .message("Could not check TRC advice ID reference because the HCP assertion was not present")
+                            .message("Failed TRC advice ID reference check")
                             .build();
                 }
             }).orElseGet(() -> ImmutableAssertionValidationDetail.builder()

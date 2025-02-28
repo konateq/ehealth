@@ -8,5 +8,6 @@ public enum AssertionValidationKey {
     REQUIRED_FIELDS,
     SIGNATURE,
     POLICIES,
-    TRC_ADVICE
+    TRC_ADVICE,
+    NOK_SUBJECT_REFERENCE,
 }

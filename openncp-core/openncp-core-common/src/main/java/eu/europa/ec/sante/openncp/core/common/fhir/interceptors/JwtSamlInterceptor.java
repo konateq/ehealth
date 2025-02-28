@@ -6,8 +6,6 @@ import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
-import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.ServerContext;
@@ -34,11 +32,13 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
-@Interceptor(order = Integer.MIN_VALUE)
+@Interceptor(order = JwtSamlInterceptor.ORDER)
 @Component
 public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtSamlInterceptor.class);
+
+    public static final int ORDER = Integer.MIN_VALUE;
 
     private final TokenProvider tokenProvider;
     private final ServerContext serverContext;
@@ -56,6 +56,7 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
         this.serverContext = Validate.notNull(serverContext, "serverContext must not be null");
     }
 
+
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_PROCESSED)
     public void incomingRequestPreProcessed(final HttpServletRequest theRequest, final HttpServletResponse theResponse) {
         LOGGER.info("Validating the incoming JWT bearer token from the request.");
@@ -67,8 +68,6 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
 
         final DecodedJWT jwt = tokenProvider.verifyToken(jwtToken.get().getToken());
         final SamlDetails samlDetails = SamlDetails.of(jwt);
-
-        validateAssertions(samlDetails);
 
         final String ipAddress = Objects.requireNonNullElseGet(theRequest.getHeader("X-FORWARDED-FOR"), theRequest::getRemoteAddr);
         final InetAddress hostIp;
@@ -91,22 +90,6 @@ public class JwtSamlInterceptor implements FhirCustomInterceptor {
         final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(hcpAssertion.getSubject().getNameID().getValue(), hcpAssertion.getIssuer().getValue(), null);
         authentication.setDetails(auditSecurityInfo);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
-    private void validateAssertions(final SamlDetails samlDetails) {
-        final Assertion hcpAssertion = samlDetails.getHcpAssertionDetails()
-                .map(AssertionDetails::getAssertion)
-                .orElseThrow(() -> new InsufficientAuthenticationException("No valid HCP assertion found"));
-
-        if (GazelleValidation.isValidationEnable()) {
-            GazelleValidation.logAndValidateHCPAssertion(hcpAssertion, serverContext.getNcpSide());
-            samlDetails.getAssertionDetails(AssertionType.TRC)
-                    .map(AssertionDetails::getAssertion)
-                    .ifPresent(trcAssertion -> GazelleValidation.validateTRCAssertion(trcAssertion, serverContext.getNcpSide()));
-            samlDetails.getAssertionDetails(AssertionType.NOK)
-                    .map(AssertionDetails::getAssertion)
-                    .ifPresent(trcAssertion -> GazelleValidation.validateNOKAssertion(trcAssertion, serverContext.getNcpSide()));
-        }
     }
 
     private String getRequestSummary(final HttpServletRequest request) {

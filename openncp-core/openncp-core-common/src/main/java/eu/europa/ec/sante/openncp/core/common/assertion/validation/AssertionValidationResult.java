@@ -1,8 +1,9 @@
 package eu.europa.ec.sante.openncp.core.common.assertion.validation;
 
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
-import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,8 +28,15 @@ public interface AssertionValidationResult {
     }
 
     default List<String> getFailedValidationMessages() {
-        return getFailedValidationDetails()
-                .map(assertionValidationDetail -> String.format("Failed assertion validation [%s] with message [%s] and throwable [%s]", assertionValidationDetail.getKey(), assertionValidationDetail.getMessage().orElse(null), assertionValidationDetail.getError().orElse(null)))
+        return (List<String>) getFailedValidationDetails()
+                .map(assertionValidationDetail -> String.format("Failed assertion [%s] for validation key [%s] with message [%s] and throwable [%s]",
+                        getAssertionDetails()
+                                .map(assertionDetails -> assertionDetails.getAssertionType())
+                                .map(Enum::name)
+                                .orElse("Unknown"),
+                        assertionValidationDetail.getKey(),
+                        assertionValidationDetail.getMessage().orElse(StringUtils.EMPTY),
+                        assertionValidationDetail.getError().orElse(null)))
                 .collect(Collectors.toList());
     }
 

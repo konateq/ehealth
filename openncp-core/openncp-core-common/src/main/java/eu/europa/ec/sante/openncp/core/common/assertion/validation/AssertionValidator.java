@@ -41,12 +41,4 @@ public class AssertionValidator {
                 .map(Optional::get)
                 .collect(Collectors.toList());
     }
-
-//    public List<AssertionValidationResult> validate(final List<Assertion> assertions) {
-//        return assertions.stream()
-//                .map(assertionToCheck -> validate(assertionToCheck, assertions))
-//                .filter(Optional::isPresent)
-//                .map(Optional::get)
-//                .collect(Collectors.toList());
-//    }
 }

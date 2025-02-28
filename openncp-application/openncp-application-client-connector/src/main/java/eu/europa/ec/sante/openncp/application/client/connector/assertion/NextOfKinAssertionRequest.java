@@ -19,7 +19,9 @@ public interface NextOfKinAssertionRequest extends AssertionRequest {
 
     String getPurposeOfUse();
 
-    Optional<String> getNextOfKinId();
+    String getPatientId();
+
+    String getNextOfKinId();
 
     Optional<String> getNextOfKinFamilyName();
 
@@ -60,55 +62,51 @@ public interface NextOfKinAssertionRequest extends AssertionRequest {
             tokenElem.addTextNode(SAML20_TOKEN_URN);
 
             final var assertionParamName = soapFactory.createName("NoKParameters", "nok", NOK_NS);
-            final SOAPElement assertionParamElement = rstElem.addChildElement(assertionParamName);
+            final SOAPElement nokParametersElement = rstElem.addChildElement(assertionParamName);
 
-            final var purposeOfUseName = soapFactory.createName("PurposeOfUse", "nok", NOK_NS);
-            final SOAPElement purposeOfUseElem = assertionParamElement.addChildElement(purposeOfUseName);
-            purposeOfUseElem.addTextNode(getPurposeOfUse());
-
-            getNextOfKinId().ifPresent(nextOfKinId -> {
-                addElementToAssertion(soapFactory, "NextOfKinId", assertionParamElement, nextOfKinId);
-            });
+            addElementToParameters(soapFactory, "PatientId", nokParametersElement, getPatientId());
+            addElementToParameters(soapFactory, "PurposeOfUse", nokParametersElement, getPurposeOfUse());
+            addElementToParameters(soapFactory, "NextOfKinId", nokParametersElement, getNextOfKinId());
 
             getNextOfKinFirstName().ifPresent(nextOfKinFirstName -> {
-                addElementToAssertion(soapFactory, "NextOfKinFirstName", assertionParamElement, nextOfKinFirstName);
+                addElementToParameters(soapFactory, "NextOfKinFirstName", nokParametersElement, nextOfKinFirstName);
             });
 
             getNextOfKinFamilyName().ifPresent(nextOfKinFamilyName -> {
-                addElementToAssertion(soapFactory, "NextOfKinFamilyName", assertionParamElement, nextOfKinFamilyName);
+                addElementToParameters(soapFactory, "NextOfKinFamilyName", nokParametersElement, nextOfKinFamilyName);
             });
 
             getNextOfKinGender().filter(StringUtils::isNotBlank).ifPresent(nextOfKinGender -> {
-                addElementToAssertion(soapFactory, "NextOfKinGender", assertionParamElement, nextOfKinGender);
+                addElementToParameters(soapFactory, "NextOfKinGender", nokParametersElement, nextOfKinGender);
             });
 
             getNextOfKinAddressStreet().filter(StringUtils::isNotBlank).ifPresent(nextOfKinAddressStreet -> {
-                addElementToAssertion(soapFactory, "NextOfKinAddressStreet", assertionParamElement, nextOfKinAddressStreet);
+                addElementToParameters(soapFactory, "NextOfKinAddressStreet", nokParametersElement, nextOfKinAddressStreet);
             });
 
             getNextOfKinAddressCity().filter(StringUtils::isNotBlank).ifPresent(nextOfKinAddressCity -> {
-                addElementToAssertion(soapFactory, "NextOfKinAddressCity", assertionParamElement, nextOfKinAddressCity);
+                addElementToParameters(soapFactory, "NextOfKinAddressCity", nokParametersElement, nextOfKinAddressCity);
             });
 
             getNextOfKinAddressPostalCode().filter(StringUtils::isNotBlank).ifPresent(nextOfKinAddressPostalCode -> {
-                addElementToAssertion(soapFactory, "NextOfKinAddressPostalCode", assertionParamElement, nextOfKinAddressPostalCode);
+                addElementToParameters(soapFactory, "NextOfKinAddressPostalCode", nokParametersElement, nextOfKinAddressPostalCode);
             });
 
             getNextOfKinAddressCountry().filter(StringUtils::isNotBlank).ifPresent(nextOfKinAddressCountry -> {
-                addElementToAssertion(soapFactory, "NextOfKinAddressCountry", assertionParamElement, nextOfKinAddressCountry);
+                addElementToParameters(soapFactory, "NextOfKinAddressCountry", nokParametersElement, nextOfKinAddressCountry);
             });
 
             getNextOfKinBirthDate()
                     .map(birthDate -> birthDate.format(DATE_FORMATTER))
                     .ifPresent(nextOfKinBirthDate -> {
-                        addElementToAssertion(soapFactory, "NextOfKinBirthDate", assertionParamElement, nextOfKinBirthDate);
+                        addElementToParameters(soapFactory, "NextOfKinBirthDate", nokParametersElement, nextOfKinBirthDate);
                     });
         } catch (final SOAPException ex) {
             throw new STSClientException("Error creating the SOAP body", ex);
         }
     }
 
-    private static void addElementToAssertion(final SOAPFactory soapFactory, final String name, final SOAPElement assertionParamElement, final String value) {
+    private static void addElementToParameters(final SOAPFactory soapFactory, final String name, final SOAPElement assertionParamElement, final String value) {
         try {
             final var idName = soapFactory.createName(name, "nok", NOK_NS);
             final SOAPElement element = assertionParamElement.addChildElement(idName);
