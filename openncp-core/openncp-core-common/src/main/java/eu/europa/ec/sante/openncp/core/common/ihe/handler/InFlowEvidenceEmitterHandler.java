@@ -146,13 +146,13 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
                     loggerClinical.debug("AxisService CustomSchemaNameSuffix: '{}'", axisService.getCustomSchemaNameSuffix());
                     loggerClinical.debug("AxisService endpointName: '{}'", axisService.getEndpointName());
                     final Map<String, AxisEndpoint> axisEndpoints = axisService.getEndpoints();
-                    for (final String key : axisEndpoints.keySet()) {
-                        final AxisEndpoint axisEndpoint = axisEndpoints.get(key);
-                        loggerClinical.debug("AxisEndpoint calculatedEndpointURL: '{}'", axisEndpoint.calculateEndpointURL());
-                        loggerClinical.debug("AxisEndpoint alias: '{}'", axisEndpoint.getAlias());
-                        loggerClinical.debug("AxisEndpoint endpointURL: '{}'", axisEndpoint.getEndpointURL());
-                        loggerClinical.debug("AxisEndpoint active: '{}'", axisEndpoint.isActive());
-                    }
+//                    for (final String key : axisEndpoints.keySet()) {
+//                        final AxisEndpoint axisEndpoint = axisEndpoints.get(key);
+//                        loggerClinical.debug("AxisEndpoint calculatedEndpointURL: '{}'", axisEndpoint.calculateEndpointURL());
+//                        loggerClinical.debug("AxisEndpoint alias: '{}'", axisEndpoint.getAlias());
+//                        loggerClinical.debug("AxisEndpoint endpointURL: '{}'", axisEndpoint.getEndpointURL());
+//                        loggerClinical.debug("AxisEndpoint active: '{}'", axisEndpoint.isActive());
+//                    }
                     loggerClinical.debug("AxisService EPRs: '{}'", Arrays.toString(axisService.getEPRs()));
                     loggerClinical.debug("AxisService name: '{}'", axisService.getName());
                     loggerClinical.debug("AxisService isClientSide: '{}'", axisService.isClientSide());

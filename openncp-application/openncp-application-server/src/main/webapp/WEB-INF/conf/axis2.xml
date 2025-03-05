@@ -476,7 +476,6 @@
         <phase name="EvidenceEmitterPhase">
             <handler name="EvidenceEmitterHandler"
                      class="eu.europa.ec.sante.openncp.core.common.ihe.handler.InFlowEvidenceEmitterHandler"/>
-                <!--ee.affecto.epsos.ws.handler.InFlowEvidenceEmitterHandler -->
         </phase>
     </phaseOrder>
     <phaseOrder type="OutFlow">
