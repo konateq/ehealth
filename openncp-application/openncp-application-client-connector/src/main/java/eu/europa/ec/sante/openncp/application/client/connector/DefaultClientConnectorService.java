@@ -247,9 +247,9 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param searchParams  - Search parameters to uniquely define the patient.
+     * @param assertions   - Map of assertions required by the transaction (HCP, NoK optional).
+     * @param countryCode  - ISO Country code of the patient country of origin.
+     * @param searchParams - Search parameters to uniquely define the patient.
      * @return List of PatientMyHealthEu resources
      * @throws ClientConnectorException
      */
@@ -260,9 +260,9 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param searchParams  - Search parameters to match the DocumentReferences.
+     * @param assertions   - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode  - ISO Country code of the patient country of origin.
+     * @param searchParams - Search parameters to match the DocumentReferences.
      * @return List of DocumentReference Resources
      * @throws ClientConnectorException
      */
@@ -273,9 +273,9 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param searchParams  - Search parameters to identify the Bundle.
+     * @param assertions   - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode  - ISO Country code of the patient country of origin.
+     * @param searchParams - Search parameters to identify the Bundle.
      * @return List of Bundle resources
      * @throws ClientConnectorException
      */
@@ -286,16 +286,16 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     }
 
     /**
-     * @param assertions    - Map of assertions required by the transaction (HCP, TRC, NoK optional).
-     * @param countryCode   - ISO Country code of the patient country of origin.
-     * @param id            - Identifier of the bundle
+     * @param assertions  - Map of assertions required by the transaction (HCP, TRC, NoK optional).
+     * @param countryCode - ISO Country code of the patient country of origin.
+     * @param id          - Identifier of the bundle
      * @return List of Bundle resources
      * @throws ClientConnectorException
      */
     @Override
     public ResponseEntity<String> queryBundleFhirById(final Map<AssertionType, Assertion> assertions, final String countryCode, final String id) throws ClientConnectorException {
         final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" +id);
+        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" + id);
     }
 
 

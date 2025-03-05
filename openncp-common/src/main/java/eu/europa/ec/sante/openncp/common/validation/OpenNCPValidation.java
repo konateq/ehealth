@@ -90,10 +90,20 @@ public class OpenNCPValidation {
 
     /**
      * @param assertion
-     * @param schematron
      * @param ncpSide
      */
-    private static void validateAssertion(final Assertion assertion, final String schematron, final NcpSide ncpSide) {
+    public static void validateNOKAssertion(final Assertion assertion, final NcpSide ncpSide) {
+
+        LOGGER.info("validate NOK Assertion...");
+        validateAssertion(assertion, ValidatorUtil.EHDSI_ASSERTION_NOK, ncpSide);
+    }
+
+    /**
+     * @param assertion
+     * @param validator
+     * @param ncpSide
+     */
+    private static void validateAssertion(final Assertion assertion, final String validator, final NcpSide ncpSide) {
 
         LOGGER.info("[Validation Service: Assertion Validator]");
         try {
@@ -104,17 +114,16 @@ public class OpenNCPValidation {
                 new Thread(() -> {
                     final StopWatch watch = new StopWatch();
                     watch.start();
-                    final String xmlResult;
-                    final SchematronValidator schematronValidator = GazelleValidatorFactory.getSchematronValidator();
-                    xmlResult = schematronValidator.validateObject(base64, schematron, schematron);
+                    final AssertionValidator assertionValidator = GazelleValidatorFactory.getAssertionValidator();
+                    final String xmlResult = assertionValidator.validateBase64Document(base64, validator);
                     final DetailedResult detailedResult = DetailedResultUnMarshaller.unmarshal(xmlResult);
-                    ReportBuilder.build(ReportBuilder.formatDate(), schematron, ObjectType.ASSERTION.toString(), base64, detailedResult, xmlResult, ncpSide);
+                    ReportBuilder.build(ReportBuilder.formatDate(), validator, ObjectType.ASSERTION.toString(), base64, detailedResult, xmlResult, ncpSide);
                     watch.stop();
                     LOGGER.info(MSG_VALIDATION_EXECUTION, watch.getTime());
                 }).start();
 
             } else {
-                ReportBuilder.build(ReportBuilder.formatDate(), schematron, ObjectType.ASSERTION.toString(), base64, ncpSide);
+                ReportBuilder.build(ReportBuilder.formatDate(), validator, ObjectType.ASSERTION.toString(), base64, ncpSide);
             }
         } catch (final TransformerException e) {
             LOGGER.error("TransformerException: '{}'", e.getMessage(), e);
@@ -248,6 +257,8 @@ public class OpenNCPValidation {
         LOGGER.info("[Validation Service: FHIR Validator]");
         if (isRemoteValidationEnable()) {
             //TODO Remote validation to be implemented for FHIR resources
+            LOGGER.warn("Remote validation is not yet implemented for HL7 FHIR Resources");
+            ReportBuilder.build(ReportBuilder.formatDate(), fhirModel, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         } else {
             ReportBuilder.build(ReportBuilder.formatDate(), fhirModel, ObjectType.FHIR.toString(), fhirResource, ncpSide);
         }

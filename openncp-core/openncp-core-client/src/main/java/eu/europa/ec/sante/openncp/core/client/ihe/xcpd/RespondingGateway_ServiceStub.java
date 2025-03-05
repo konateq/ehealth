@@ -20,6 +20,8 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.handler.InFlowEvidenceEmitterHandler;
+import eu.europa.ec.sante.openncp.core.common.ihe.handler.OutFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import org.apache.axiom.om.*;
@@ -34,11 +36,10 @@ import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.client.Stub;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.description.AxisOperation;
-import org.apache.axis2.description.AxisService;
-import org.apache.axis2.description.OutInAxisOperation;
-import org.apache.axis2.description.WSDL2Constants;
+import org.apache.axis2.description.*;
+import org.apache.axis2.engine.Phase;
 import org.apache.axis2.kernel.http.HTTPConstants;
+import org.apache.axis2.phaseresolver.PhaseException;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.axis2.wsdl.WSDLConstants;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +47,10 @@ import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -70,6 +74,7 @@ public class RespondingGateway_ServiceStub extends Stub {
     private static final Logger LOGGER = LoggerFactory.getLogger(RespondingGateway_ServiceStub.class);
     private static final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private static final JAXBContext wsContext;
+    private static final int TIME_OUT_IN_MILLI_SECONDS = 180000;
     private static int counter = 0;
 
     static {
@@ -121,10 +126,56 @@ public class RespondingGateway_ServiceStub extends Stub {
         _serviceClient.getOptions().setTo(new EndpointReference(targetEndpoint));
         _serviceClient.getOptions().setUseSeparateListener(useSeparateListener);
         //  Wait time after which a client times out in a blocking scenario: 3 minutes
-        _serviceClient.getOptions().setTimeOutInMilliSeconds(180000);
+        _serviceClient.getOptions().setTimeOutInMilliSeconds(TIME_OUT_IN_MILLI_SECONDS);
+        _serviceClient.getOptions().setProperty(HTTPConstants.SO_TIMEOUT, TIME_OUT_IN_MILLI_SECONDS);
+        _serviceClient.getOptions().setProperty(HTTPConstants.CONNECTION_TIMEOUT, TIME_OUT_IN_MILLI_SECONDS);
 
         // Set the soap version
         _serviceClient.getOptions().setSoapVersionURI(SOAP12Constants.SOAP_ENVELOPE_NAMESPACE_URI);
+
+        try {
+            // Enabling WS Addressing module.
+            this._getServiceClient().engageModule("addressing");
+
+            LOGGER.debug("Adding custom phase for Outflow Evidence Emitter processing");
+            var outFlowHandlerDescription = new HandlerDescription("OutFlowEvidenceEmitterHandler");
+            outFlowHandlerDescription.setHandler(new OutFlowEvidenceEmitterHandler());
+            var axisConfiguration = this._getServiceClient().getServiceContext()
+                    .getConfigurationContext().getAxisConfiguration();
+            List<Phase> outFlowPhasesList = axisConfiguration.getOutFlowPhases();
+            var outFlowEvidenceEmitterPhase = new Phase("OutFlowEvidenceEmitterPhase");
+            try {
+                outFlowEvidenceEmitterPhase.addHandler(outFlowHandlerDescription);
+            } catch (PhaseException ex) {
+                LOGGER.error("PhaseException: '{}'", ex.getMessage(), ex);
+            }
+            outFlowPhasesList.add(outFlowEvidenceEmitterPhase);
+            axisConfiguration.setGlobalOutPhase(outFlowPhasesList);
+        } catch (AxisFault e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            // Enabling WS Addressing module.
+            this._getServiceClient().engageModule("addressing");
+
+            LOGGER.debug("Adding custom phase for InFlow Evidence Emitter processing");
+            var inFlowHandlerDescription = new HandlerDescription("InFlowEvidenceEmitterHandler");
+            inFlowHandlerDescription.setHandler(new InFlowEvidenceEmitterHandler());
+            var axisConfiguration = this._getServiceClient().getServiceContext()
+                    .getConfigurationContext().getAxisConfiguration();
+            List<Phase> inFlowPhasesList = axisConfiguration.getOutFlowPhases();
+            var inFlowEvidenceEmitterPhase = new Phase("InFlowEvidenceEmitterPhase");
+            try {
+                inFlowEvidenceEmitterPhase.addHandler(inFlowHandlerDescription);
+            } catch (PhaseException ex) {
+                LOGGER.error("PhaseException: '{}'", ex.getMessage(), ex);
+            }
+            inFlowPhasesList.add(inFlowEvidenceEmitterPhase);
+            axisConfiguration.setGlobalOutPhase(inFlowPhasesList);
+        } catch (AxisFault e) {
+            throw new RuntimeException(e);
+        }
 
         // Enabling Axis2 - SSL 2 ways communication (not active by default).
         try {
@@ -556,7 +607,7 @@ public class RespondingGateway_ServiceStub extends Stub {
 
         try {
             final JAXBContext context = wsContext;
-            final Unmarshaller unmarshaller = context.createUnmarshaller();
+            final javax.xml.bind.Unmarshaller unmarshaller = context.createUnmarshaller();
 
             return unmarshaller.unmarshal(param.getXMLStreamReaderWithoutCaching(), type).getValue();
 
@@ -565,13 +616,13 @@ public class RespondingGateway_ServiceStub extends Stub {
         }
     }
 
-    private EventLog createAndSendEventLog(final PRPAIN201305UV02 sended, final PRPAIN201306UV02 received, final MessageContext msgContext,
+    private EventLog createAndSendEventLog(final PRPAIN201305UV02 sent, final PRPAIN201306UV02 received, final MessageContext msgContext,
                                            final SOAPEnvelope _returnEnv, final SOAPEnvelope env, final Assertion idAssertion, final String address, final String dstHomeCommunityId) {
 
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         eventLog.setNcpSide(NcpSide.NCP_B);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
-        EventLogUtil.prepareXCPDCommonLog(eventLog, msgContext, sended, received);
+        EventLogUtil.prepareXCPDCommonLog(eventLog, msgContext, sent, received);
         EventLogClientUtil.sendEventLog(eventLog);
         return eventLog;
     }

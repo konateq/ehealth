@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
 
-    <display-name>MyHealth@EU - OpenNCP WS Server - ${project.version}</display-name>
+    <display-name>MyHealth@EU - OpenNCP WS Client - ${project.version}</display-name>
 
     <!--listener>
         <listener-class>eu.europa.ec.sante.ehdsi.openncp.cc.WebAppContextListener</listener-class>

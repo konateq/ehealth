@@ -23,7 +23,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
         }
 
         addParticipantObject(message, eventLog.getHciIdentifier(), Short.valueOf("2"), Short.valueOf("24"),
-                "Patient", "ITI-55", "IHE Transactions", "Patient Number",
+                null, "ITI-55", "IHE Transactions", "Patient Number",
                 "Cross Gateway Patient Discovery", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
 
         return message;
@@ -40,6 +40,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     true, eventLog.getSourceip());
+            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
                     AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
@@ -58,7 +59,7 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
                         "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
-                    Short.valueOf("3"), "9", "errormsg");
+                    Short.valueOf("3"), "9", "errormsg","");
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(message.toString());
             }

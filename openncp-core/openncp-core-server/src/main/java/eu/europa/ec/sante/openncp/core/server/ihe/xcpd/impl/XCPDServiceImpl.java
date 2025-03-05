@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
+import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -69,8 +70,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     private final SAML2Validator saml2Validator;
 
     public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final SAML2Validator saml2Validator) {
-        this.patientSearchService = Validate.notNull(patientSearchService);
-        this.saml2Validator = Validate.notNull(saml2Validator);
+        this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
+        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
     }
 
     private String getParticipantObjectID(final II id) {
@@ -85,7 +86,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         final String userIdAlias = SoapElementHelper.getAssertionsSPProvidedId(soapHeader);
-        eventLog.setHR_UserID(StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "" + "<" + SoapElementHelper.getUserID(soapHeader)
+        eventLog.setHR_UserID(StringUtils.isNotBlank(userIdAlias) ? userIdAlias : "<" + SoapElementHelper.getUserID(soapHeader)
                 + "@" + SoapElementHelper.getAssertionsIssuer(soapHeader) + ">");
         eventLog.setHR_AlternativeUserID(SoapElementHelper.getAlternateUserID(soapHeader));
         eventLog.setHR_RoleID(SoapElementHelper.getRoleID(soapHeader));
@@ -99,11 +100,12 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : inputMessage.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
             requestParticipantObjectIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
         }
+        eventLog.setPS_ParticipantObjectIDs(requestParticipantObjectIds);
         final ArrayList<String> responseParticipantObjectIds = new ArrayList<>();
         for (final PRPAIN201306UV02MFMIMT700711UV01Subject1 subject1 : outputMessage.getControlActProcess().getSubject()) {
             responseParticipantObjectIds.add(getParticipantObjectID(subject1.getRegistrationEvent().getSubject1().getPatient().getId().get(0)));
         }
-        eventLog.setPT_ParticipantObjectIDs(CollectionUtils.isNotEmpty(responseParticipantObjectIds) ? responseParticipantObjectIds : requestParticipantObjectIds);
+        eventLog.setPT_ParticipantObjectIDs(responseParticipantObjectIds);
 
         // Check if patient id mapping has occurred, prepare event log for patient audit mapping in this case
         if (!CollectionUtils.isEqualCollection(responseParticipantObjectIds, requestParticipantObjectIds)) {
@@ -571,7 +573,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         patientSearchService.setSOAPHeader(shElement);
 
         try {
-            sigCountryCode = saml2Validator.validateXCPDHeader(shElement);
+            sigCountryCode = saml2Validator.validateHCPHeader(shElement);
 
             final String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
             final String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();

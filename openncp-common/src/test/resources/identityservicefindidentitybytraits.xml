@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
-    <EventIdentification EventActionCode="E" EventDateTime="2024-07-16T16:19:22.080+02:00" EventOutcomeIndicator="0">
+    <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T12:05:14.809+01:00" EventOutcomeIndicator="0">
         <EventID csd-code="110112" codeSystemName="DCM" displayName="XCPD::CrossGatewayPatientDiscovery" originalText="Query"/>
         <EventTypeCode csd-code="ITI-55" codeSystemName="IHE Transactions" displayName="IdentityService::FindIdentityByTraits" originalText="XCPD::CrossGatewayPatientDiscovery"/>
     </EventIdentification>
     <ActiveParticipant UserID="HR User ID" AlternativeUserID="HR Alternative User ID" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110153" codeSystemName="DCM" originalText="Source Role ID"/>
     </ActiveParticipant>
+    <ActiveParticipant UserID="eHealth OpenNCP EU Portal" AlternativeUserID="eHealth OpenNCP EU Portal" UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
+        <RoleIDCode csd-code="110152" codeSystemName="DCM" originalText="Destination Role ID"/>
+    </ActiveParticipant>
     <ActiveParticipant UserID="Service Consumer" AlternativeUserID="Service Consumer" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
-        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer"
-                    originalText="eHealth DSI Service Consumer"/>
+        <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer" originalText="eHealth DSI Service Consumer"/>
     </ActiveParticipant>
     <ActiveParticipant UserID="Service Provider" AlternativeUserID="Service Provider" UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
-        <RoleIDCode csd-code="ServiceProvider" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Provider"
-                    originalText="eHealth DSI Service Provider"/>
+        <RoleIDCode csd-code="ServiceProvider" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Provider" originalText="eHealth DSI Service Provider"/>
     </ActiveParticipant>
     <ActiveParticipant UserID="Service Provider" AlternativeUserID="Service Provider" UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="MasterPatientIndex" codeSystemName="eHealth DSI" displayName="Master Patient Index" originalText="Master Patient Index"/>
@@ -23,17 +24,17 @@
     </AuditSourceIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="PS Participant Object ID" ParticipantObjectTypeCode="1" ParticipantObjectTypeCodeRole="1">
         <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number" originalText="Patient Number"/>
+        <ParticipantObjectName>PatientSource</ParticipantObjectName>
     </ParticipantObjectIdentification>
     <ParticipantObjectIdentification ParticipantObjectID="2-1234-W7^^^&amp;1.3.6.1.4.1.48336.1000&amp;ISO" ParticipantObjectTypeCode="1" ParticipantObjectTypeCodeRole="1">
         <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number" originalText="Patient Number"/>
+        <ParticipantObjectName>PatientTarget</ParticipantObjectName>
     </ParticipantObjectIdentification>
-    <ParticipantObjectIdentification ParticipantObjectID="secondIdentifier" ParticipantObjectTypeCode="1"
-                                     ParticipantObjectTypeCodeRole="1">
-        <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number"
-                                     originalText="Patient Number"/>
+    <ParticipantObjectIdentification ParticipantObjectID="secondIdentifier" ParticipantObjectTypeCode="1" ParticipantObjectTypeCodeRole="1">
+        <ParticipantObjectIDTypeCode csd-code="2" codeSystemName="DCM" displayName="Patient Number" originalText="Patient Number"/>
+        <ParticipantObjectName>PatientTarget</ParticipantObjectName>
     </ParticipantObjectIdentification>
-    <ParticipantObjectIdentification ParticipantObjectID="2.16.17.710.850.1000.990.1" ParticipantObjectTypeCode="2"
-                                     ParticipantObjectTypeCodeRole="24">
+    <ParticipantObjectIdentification ParticipantObjectID="2.16.17.710.850.1000.990.1" ParticipantObjectTypeCode="2" ParticipantObjectTypeCodeRole="24">
         <ParticipantObjectIDTypeCode csd-code="ITI-55" codeSystemName="IHE Transactions" displayName="Patient Number" originalText="Cross Gateway Patient Discovery"/>
         <ParticipantObjectQuery>UXVlcnkgQnkgUGFyYW1ldGVy</ParticipantObjectQuery>
         <ParticipantObjectDetail type="ihe:homeCommunityID" value="Mi4xNi4xNy43MTAuODUwLjEwMDAuOTkwLjE="/>

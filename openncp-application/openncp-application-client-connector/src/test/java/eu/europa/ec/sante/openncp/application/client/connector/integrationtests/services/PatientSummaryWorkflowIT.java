@@ -16,17 +16,14 @@ import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+import javax.xml.namespace.QName;
 import javax.xml.ws.soap.SOAPFaultException;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -112,46 +109,6 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
-    void retrieveUnknownDocument() throws ClientConnectorException, STSClientException, MarshallingException, MalformedURLException, TransformerException {
-        final Map<AssertionType, Assertion> assertions = new HashMap<>();
-        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
-
-        final PatientId patientId = objectFactory.createPatientId();
-        patientId.setRoot("1.3.6.1.4.1.48336");
-        patientId.setExtension("2-1234-W8");
-
-        final var documentId = objectFactory.createDocumentId();
-        documentId.setDocumentUniqueId("wrongId");
-        documentId.setRepositoryUniqueId("1.3.6.1.4.1.48336");
-
-        assertions.put(AssertionType.HCP, clinicalAssertion);
-        final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
-        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
-
-        final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
-        classCode.setNodeRepresentation(ClassCode.PS_CLASSCODE.getCode());
-        classCode.setSchema("2.16.840.1.113883.6.1");
-        classCode.setValue(Constants.PS_TITLE);
-
-        try {
-            EpsosDocument be = clientConnectorService.retrieveDocument(assertions, "BE", documentId, "1.3.6.1.4.1.48336", classCode, null);
-        } catch (Exception e) {
-            Throwable cause = e.getCause();
-            if (e instanceof SOAPFaultException){
-                StringWriter sw = new StringWriter();
-                TransformerFactory.newInstance().newTransformer().transform(
-                        new DOMSource(((SOAPFaultException)e).getFault()), new StreamResult(sw));
-                System.out.println(sw);
-            }
-            throw e;
-        }
-
-//        assertThatExceptionOfType(SOAPFaultException.class)
-//                .isThrownBy(() -> )
-//                .withMessageContaining("^[National Infrastructure Mock] No PS List Found");
-    }
-
-    @Test
     void bugtrigger_EHEALTH_10535() throws MalformedURLException, MarshallingException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
@@ -177,5 +134,37 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         assertThatExceptionOfType(SOAPFaultException.class)
                 .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", differentPatientId, List.of(classCode), null))
                 .withMessageContaining("The request is not containing a proper PS identifier.");
+    }
+
+    @Test
+    void bugtrigger_EHEALTH_13227_missing_fault_code() throws MalformedURLException, MarshallingException {
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("unknown-patient");
+
+        final PatientDemographics patientDemographics = objectFactory.createPatientDemographics();
+        patientDemographics.getPatientId().add(patientId);
+
+        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+
+        assertThatExceptionOfType(SOAPFaultException.class)
+                .isThrownBy(() -> clientConnectorService.queryPatient(assertions, "BE", patientDemographics))
+                .extracting(SOAPFaultException::getFault)
+                .satisfies(fault -> {
+                    assertThat(fault.getFaultCode()).contains("Receiver");
+                    assertThat(fault.getFaultString()).contains("NoPatientIdDiscoveredException");
+
+                    final List<QName> subCodes = StreamSupport.stream(
+                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
+                    ).collect(Collectors.toList());
+                    assertThat(subCodes)
+                            .hasSize(1)
+                            .extracting(QName::getLocalPart)
+                            .containsExactly("ERROR_PI_NO_MATCH");
+                });
     }
 }

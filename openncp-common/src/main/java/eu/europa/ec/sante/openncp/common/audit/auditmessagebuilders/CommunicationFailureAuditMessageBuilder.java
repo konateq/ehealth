@@ -33,7 +33,7 @@ public class CommunicationFailureAuditMessageBuilder extends AbstractAuditMessag
                         "Patient Number", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
-                    Short.valueOf("3"), "9", "errormsg");
+                    Short.valueOf("3"), "9", "errormsg","");
         } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }

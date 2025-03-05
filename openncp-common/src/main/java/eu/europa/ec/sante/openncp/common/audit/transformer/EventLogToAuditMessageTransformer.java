@@ -23,7 +23,7 @@ import java.io.StringWriter;
 
 @Component
 public class EventLogToAuditMessageTransformer implements AuditMessageTransformer {
-    private final static Logger LOGGER = LoggerFactory.getLogger(AuditService.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(EventLogToAuditMessageTransformer.class);
     private JAXBContext jaxbContext;
 
     @Override

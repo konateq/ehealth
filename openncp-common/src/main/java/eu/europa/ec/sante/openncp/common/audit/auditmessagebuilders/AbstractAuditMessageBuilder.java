@@ -34,6 +34,7 @@ public abstract class AbstractAuditMessageBuilder {
         participantObjectIdentification.setParticipantObjectID(participantId);
         participantObjectIdentification.setParticipantObjectTypeCode(participantCode.toString());
         participantObjectIdentification.setParticipantObjectTypeCodeRole(participantRole.toString());
+        participantObjectIdentification.setParticipantObjectName(participantName);
 
         final ParticipantObjectIDTypeCode codedValue = new ParticipantObjectIDTypeCode();
         codedValue.setCsdCode(PS_ObjectCode);
@@ -55,7 +56,6 @@ public abstract class AbstractAuditMessageBuilder {
                 participantObjectIdentification.setParticipantObjectQuery(PS_getQueryByParameterPayload.getBytes(StandardCharsets.UTF_8));
             }
         }
-
         participantObjectIdentification.setParticipantObjectIDTypeCode(codedValue);
         auditMessage.getParticipantObjectIdentification().add(participantObjectIdentification);
         return auditMessage;
@@ -80,11 +80,11 @@ public abstract class AbstractAuditMessageBuilder {
             addAuditSource(message, eventLog.getAS_AuditSourceId());
             for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
                 addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
-                        "Patient", "2", AuditConstant.RFC3881, "Patient Number",
+                        "PatientSource", "2", AuditConstant.RFC3881, "Patient Number",
                         "Cross Gateway Patient Discovery", eventLog.getQueryByParameter(), eventLog.getHciIdentifier());
             }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
-                    Short.valueOf("3"), "9", "errormsg");
+                    Short.valueOf("3"), "9", "errormsg","");
         } catch (final Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
         }
@@ -212,7 +212,7 @@ public abstract class AbstractAuditMessageBuilder {
      */
     AuditMessage addError(final AuditMessage auditMessage, final String errorMessagePartObjectId, final byte[] errorMessagePartObjectDetail,
                           final Short errorMessageCode, final Short errorMessageCodeRole, final String errorMessageTypeCode,
-                          final String errorMessageQualifier) {
+                          final String errorMessageQualifier,final String participantObjectName) {
 
         // Error Message handling for audit purpose
         if (StringUtils.isNotBlank(errorMessagePartObjectId)) {
@@ -235,6 +235,7 @@ public abstract class AbstractAuditMessageBuilder {
                 typeValuePairType.setValue(errorMessagePartObjectDetail);
                 participantObjectIdentificationType.getParticipantObjectDetail().add(typeValuePairType);
             }
+            participantObjectIdentificationType.setParticipantObjectName(participantObjectName);
             auditMessage.getParticipantObjectIdentification().add(participantObjectIdentificationType);
 
         } else {

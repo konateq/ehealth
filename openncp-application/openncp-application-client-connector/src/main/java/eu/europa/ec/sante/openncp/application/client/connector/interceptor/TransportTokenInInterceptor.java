@@ -19,6 +19,11 @@ public class TransportTokenInInterceptor extends AbstractPhaseInterceptor<Messag
         final AssertionInfoMap assertionInfoMap = message.get(AssertionInfoMap.class);
         final Collection<AssertionInfo> transportTokenAssertions = assertionInfoMap.getAssertionInfo(SP12Constants.TRANSPORT_TOKEN);
         transportTokenAssertions.forEach(assertionInfo -> assertionInfo.setAsserted(true));
+
+        final AssertionInfoMap assertionInfoMapSamlToken = message.get(AssertionInfoMap.class);
+        final Collection<AssertionInfo> transportTokenAssertionsSamlToken = assertionInfoMapSamlToken.getAssertionInfo(SP12Constants.SAML_TOKEN);
+        transportTokenAssertionsSamlToken.forEach(assertionInfo -> assertionInfo.setAsserted(true));
+
     }
 
     public void handleFault(final Message messageParam) {
