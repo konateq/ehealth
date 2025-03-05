@@ -5,12 +5,16 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.*;
@@ -48,6 +52,7 @@ import java.io.StringReader;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class XCPDServiceImpl implements XCPDServiceInterface {
@@ -67,11 +72,13 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory objectFactory = new ObjectFactory();
     private final PatientSearchInterface patientSearchService;
-    private final SAML2Validator saml2Validator;
+    private final AssertionValidator assertionValidator;
+    private final PolicyAssertionManager policyAssertionManager;
 
-    public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final SAML2Validator saml2Validator) {
+    public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager) {
         this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
-        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
+        this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
 
     private String getParticipantObjectID(final II id) {
@@ -116,9 +123,9 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             final String detail = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
             final String errorCode = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
 
-            if(errorCode.equals(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode())) {
+            if (errorCode.equals(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode())) {
                 eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
-            }else{
+            } else {
                 eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
             }
             eventLog.setEM_ParticipantObjectID(errorCode);
@@ -573,7 +580,25 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         patientSearchService.setSOAPHeader(shElement);
 
         try {
-            sigCountryCode = saml2Validator.validateHCPHeader(shElement);
+            final List<AssertionDetails> assertions = AssertionUtil.toAssertions(shElement);
+            final List<AssertionValidationResult> assertionValidationResults = assertionValidator.validate(assertions);
+            final List<String> failedValidationMessages = assertionValidationResults.stream()
+                    .flatMap((AssertionValidationResult assertionValidationResult) -> assertionValidationResult.getFailedValidationMessages().stream())
+                    .collect(Collectors.toList());
+            if (!failedValidationMessages.isEmpty()) {
+                throw new InsufficientRightsException(String.format("Assertion validation error: [%s]", String.join("\n", failedValidationMessages)));
+            }
+
+            final AssertionDetails hcpAssertionDetails = assertionValidationResults.stream()
+                    .map(AssertionValidationResult::getAssertionDetails)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP)
+                    .findFirst()
+                    .orElseThrow(() -> new InsufficientRightsException("No valid HCP assertion found"));
+
+            policyAssertionManager.xcpdPermissionValidator(hcpAssertionDetails.getAssertion());
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
 
             final String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
             final String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();
@@ -677,7 +702,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                             XCPDErrorCode.AnswerNotAvailable,
                             OpenNCPErrorCode.ERROR_PI_NO_MATCH,
                             codeContext,
-                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() +")");
+                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() + ")");
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";
@@ -706,7 +731,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                      *  (both the root and extension) to PDP, if required by PDP procedures.
                      */
                     for (var i = 0; i < demographicsList.size(); i++) {
-                        if (!saml2Validator.isConsentGiven(demographicsList.get(i).getIdList().get(0).getExtension(), countryCode)) {
+                        if (!policyAssertionManager.isConsentGiven(demographicsList.get(i).getIdList().get(0).getExtension(), countryCode)) {
                             // This patient data cannot be sent to Country B
                             demographicsList.remove(i);
                             i--;
@@ -730,12 +755,6 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 // Preparing demographic query not allowed error
                 fillOutputMessage(outputMessage, XCPDErrorCode.DemographicsQueryNotAllowed, OpenNCPErrorCode.ERROR_PI_GENERIC, "Queries are only available with patient identifiers");
             }
-        } catch (final MissingFieldException missingFieldException) {
-            logger.error(missingFieldException.getMessage(), missingFieldException);
-            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_MISSING_REQUIRED_FIELDS, missingFieldException.getMessage());
-        } catch (final InvalidFieldException invalidFieldException) {
-            logger.error(invalidFieldException.getMessage(), invalidFieldException);
-            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_INCORRECT_FORMATTING, invalidFieldException.getMessage());
         } catch (final OpenNCPErrorCodeException e) {
             logger.error(e.getMessage(), e);
             fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage());
@@ -743,7 +762,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             logger.error(e.getMessage(), e);
             final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
             fillOutputMessage(outputMessage, e.getXcpdErrorCode(), e.getOpenncpErrorCode(), codeContext, Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY));
-        }  catch (final NIException e) {
+        } catch (final NIException e) {
             logger.error(e.getMessage(), e);
             final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
             fillOutputMessage(outputMessage, XCPDErrorCode.NationalInfrastructure, e.getOpenncpErrorCode(), codeContext, Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY));

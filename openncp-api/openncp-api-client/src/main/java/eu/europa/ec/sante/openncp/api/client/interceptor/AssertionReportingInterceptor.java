@@ -1,11 +1,11 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import eu.europa.ec.sante.openncp.api.client.AssertionContext;
-import eu.europa.ec.sante.openncp.api.client.AssertionContextProvider;
+import eu.europa.ec.sante.openncp.api.client.RequestContext;
+import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -21,27 +21,28 @@ public class AssertionReportingInterceptor extends AbstractPhaseInterceptor<Mess
 
     public AssertionReportingInterceptor() {
         super(Phase.PRE_INVOKE);
+        addAfter(AssertionsInInterceptor.class.getName());
     }
 
     public void handleMessage(final Message message) {
-        if (!OpenNCPValidation.isValidationEnable()) {
+        if (!GazelleValidation.isValidationEnable()) {
             LOGGER.info("OpenNCP validation is disabled, not reporting any assertions.");
             return;
         }
 
         LOGGER.info("Reporting assertions");
-        final AssertionContext assertionContext = AssertionContextProvider.getAssertionContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
-        final SamlDetails samlDetails = assertionContext.getSamlDetails();
+        final RequestContext requestContext = RequestContextProvider.getRequestContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
+        final SamlDetails samlDetails = requestContext.getSamlDetails();
 
-        samlDetails.getAssertion(AssertionType.HCP)
+        samlDetails.getAssertionDetails(AssertionType.HCP)
                 .map(AssertionDetails::getAssertion)
-                .ifPresent(assertion -> OpenNCPValidation.validateHCPAssertion(assertion, NcpSide.NCP_B));
-        samlDetails.getAssertion(AssertionType.TRC)
+                .ifPresent(assertion -> GazelleValidation.logAndValidateHCPAssertion(assertion, NcpSide.NCP_B));
+        samlDetails.getAssertionDetails(AssertionType.TRC)
                 .map(AssertionDetails::getAssertion)
-                .ifPresent(assertion -> OpenNCPValidation.validateTRCAssertion(assertion, NcpSide.NCP_B));
-        samlDetails.getAssertion(AssertionType.NOK)
+                .ifPresent(assertion -> GazelleValidation.validateTRCAssertion(assertion, NcpSide.NCP_B));
+        samlDetails.getAssertionDetails(AssertionType.NOK)
                 .map(AssertionDetails::getAssertion)
-                .ifPresent(assertion -> OpenNCPValidation.validateNoKAssertion(assertion, NcpSide.NCP_B));
+                .ifPresent(assertion -> GazelleValidation.validateNoKAssertion(assertion, NcpSide.NCP_B));
     }
 
     public void handleFault(final Message messageParam) {

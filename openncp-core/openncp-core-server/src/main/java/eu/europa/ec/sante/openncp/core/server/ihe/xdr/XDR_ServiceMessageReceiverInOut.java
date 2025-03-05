@@ -10,7 +10,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcEntry;
@@ -155,8 +155,8 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                     final Element incomingMessage = XMLUtils.toDOM(msgContext.getEnvelope().getBody().getFirstElement());
                     final String requestMessage = XMLUtil.prettyPrint(incomingMessage);
                     final ClassCode classCode = retrieveClassCodeFromIncomingMessage(incomingMessage);
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateXDRMessage(requestMessage, NcpSide.NCP_A, classCode);
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateXDRMessage(requestMessage, NcpSide.NCP_A, classCode);
                     }
                     final ProvideAndRegisterDocumentSetRequestType wrappedParam = (ProvideAndRegisterDocumentSetRequestType) fromOM(
                             msgContext.getEnvelope().getBody().getFirstElement(),
@@ -181,8 +181,8 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                     /* Validate outgoing response */
                     final String responseMessage = XMLUtil.prettyPrint(XMLUtils.toDOM(envelope.getBody().getFirstElement()));
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateXDRMessage(responseMessage, NcpSide.NCP_A, classCode);
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateXDRMessage(responseMessage, NcpSide.NCP_A, classCode);
                     }
                     if (loggerClinical.isDebugEnabled() && !StringUtils.equals(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name())) {
                         loggerClinical.debug("Response Header:\n{}", envelope.getHeader());

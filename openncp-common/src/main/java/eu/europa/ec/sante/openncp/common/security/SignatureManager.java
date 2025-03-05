@@ -86,10 +86,7 @@ public class SignatureManager {
      * @param assertion The SAML Assertion that will be validated by the method.
      * @throws SMgrException When the validation of the signature fails
      */
-    public String verifySAMLAssertion(final Assertion assertion) throws SMgrException {
-
-        String sigCountryCode = null;
-
+    public void verifySAMLAssertion(final Assertion assertion) throws SMgrException {
         try {
             final var profileValidator = new SAMLSignatureProfileValidator();
             final var assertionSignature = assertion.getSignature();
@@ -107,9 +104,6 @@ public class SignatureManager {
             }
             if (certificates.size() == 1) {
                 cert = certificates.get(0);
-                // Mustafa: When not called through https, we can use the country code of the signature cert
-                final String certificateDN = cert.getSubjectDN().getName();
-                sigCountryCode = certificateDN.substring(certificateDN.indexOf("C=") + 2, certificateDN.indexOf("C=") + 4);
             } else {
                 throw new SMgrException("More than one certificate found in KeyInfo");
             }
@@ -145,8 +139,6 @@ public class SignatureManager {
         } catch (final CertificateException ex) {
             logger.error(null, ex);
         }
-
-        return sigCountryCode;
     }
 
     /**

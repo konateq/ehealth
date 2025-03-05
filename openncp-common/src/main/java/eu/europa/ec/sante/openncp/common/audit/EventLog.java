@@ -367,7 +367,7 @@ public class EventLog {
                                               final XMLGregorianCalendar EI_EventDateTime, final EventOutcomeIndicator EI_EventOutcomeIndicator,
                                               final String PC_UserID, final String PC_RoleID, final String HR_UserID, final String HR_RoleID,
                                               final String HR_AlternativeUserID, final String SC_UserID, final String SP_UserID,
-                                              final String AS_AuditSourceId, final List<String> NOK_ParticipantObjectIDs, final String eventTargetObjectId,
+                                              final String AS_AuditSourceId, final String NOK_ParticipantObjectID, final String eventTargetObjectId,
                                               final String ReqM_ParticipantObjectID, final byte[] ReqM_ParticipantObjectDetail,
                                               final String ResM_ParticipantObjectID, final byte[] ResM_ParticipantObjectDetail,
                                               final String sourceIp, final String targetIp, final NcpSide ncpSide) {
@@ -386,7 +386,7 @@ public class EventLog {
         eventLog.setSC_UserID(nullToEmptyString(SC_UserID));
         eventLog.setSP_UserID(nullToEmptyString(SP_UserID));
         eventLog.setAS_AuditSourceId(nullToEmptyString(AS_AuditSourceId));
-        eventLog.setPT_ParticipantObjectIDs(NOK_ParticipantObjectIDs);
+        eventLog.setPT_ParticipantObjectIDs(List.of(NOK_ParticipantObjectID));
         eventLog.getEventTargetParticipantObjectIds().add(nullToEmptyString(eventTargetObjectId));
         //  TODO: Audit - Event Target
         eventLog.setReqM_ParticipantObjectID(nullToEmptyString(ReqM_ParticipantObjectID));
