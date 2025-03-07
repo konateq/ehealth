@@ -9,7 +9,7 @@ import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrDocumentSource;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrRequest;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrRequestDts;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrResponse;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public class DispensationService {
      * @throws ParseException
      */
     public XdrResponse initialize(final EpsosDocument document, final PatientDemographics patient, final String countryCode,
-                                         final Map<AssertionType, Assertion> assertionMap) throws XDRException, ParseException {
+                                         final Map<AssertionType, Assertion> assertionMap) throws OpenNCPException, ParseException {
 
         LOGGER.info("[CC] Dispense Service: Initialize");
         final XdrRequest request = XdrRequestDts.newInstance(document, patient);
@@ -90,7 +90,7 @@ public class DispensationService {
      * <dd>eDispensations are not rolled back automatically by the country of affiliation </dl>
      */
     public XdrResponse discard(final EpsosDocument document, final PatientDemographics patient, final String countryCode,
-                                      final Map<AssertionType, Assertion> assertionMap) throws XDRException, ParseException {
+                                      final Map<AssertionType, Assertion> assertionMap) throws OpenNCPException, ParseException {
 
         LOGGER.info("[CC] Dispense Service: DISCARD");
         try {

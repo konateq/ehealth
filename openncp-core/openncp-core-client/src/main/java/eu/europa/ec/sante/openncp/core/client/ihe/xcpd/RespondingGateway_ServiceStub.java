@@ -19,7 +19,9 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcEntry;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.ExceptionWithContext;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.InFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.OutFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
@@ -58,7 +60,6 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.lang.reflect.Method;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -241,7 +242,7 @@ public class RespondingGateway_ServiceStub extends Stub {
      * @param assertionMap
      * @return
      */
-    public PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PRPAIN201305UV02 prpain201305UV02, final Map<AssertionType, Assertion> assertionMap, final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
+    public PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PRPAIN201305UV02 prpain201305UV02, final Map<AssertionType, Assertion> assertionMap, final String dstHomeCommunityId) throws OpenNCPException {
 
         MessageContext _messageContext = null;
         MessageContext _returnMessageContext = null;
@@ -329,7 +330,7 @@ public class RespondingGateway_ServiceStub extends Stub {
                 // NRO NCPB_XCPD_REQ - "XCPD Request sent. EVIDENCE NRO"
 
             } catch (final Exception ex) {
-                throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH,ex.getMessage());
+                throw new OpenNCPException(OpenNCPErrorCode.ERROR_PI_NO_MATCH,ex);
             }
 
             // XCPD response end time
@@ -406,7 +407,8 @@ public class RespondingGateway_ServiceStub extends Stub {
                     /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
                     eadcError = "Could not find configurations in the Central Services for [" + this.countryCode.toLowerCase(Locale.ENGLISH)
                             + RegisteredService.PATIENT_IDENTIFICATION_SERVICE.getServiceName() + "], the service will fail.";
-                    LOGGER.error(eadcError);                    throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
+                    LOGGER.error(eadcError);
+                    throw new OpenNCPException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
                 }
             }
 
@@ -484,33 +486,15 @@ public class RespondingGateway_ServiceStub extends Stub {
 
         } catch (final AxisFault axisFault) {
 
-            //  TODO A.R. Audit log SOAP Fault is still missing
-            final OMElement faultElt = axisFault.getDetail();
-
-            if (faultElt != null && faultExceptionNameMap.containsKey(faultElt.getQName())) {
-
-                /* make the fault by reflection */
-                try {
-                    final String exceptionClassName = (String) faultExceptionClassNameMap.get(faultElt.getQName());
-                    final var exceptionClass = Class.forName(exceptionClassName);
-                    final Exception ex = (Exception) exceptionClass.getDeclaredConstructor().newInstance();
-                    // message class
-                    final String messageClassName = (String) faultMessageMap.get(faultElt.getQName());
-                    final var messageClass = Class.forName(messageClassName);
-                    final Object messageObject = fromOM(faultElt, messageClass, null);
-                    final Method method = exceptionClass.getMethod("setFaultMessage", messageClass);
-                    method.invoke(ex, messageObject);
-
-                    throw new java.rmi.RemoteException(ex.getMessage(), ex);
-
-                } catch (final Exception e) {
-                    // we cannot instantiate the class - throw the original Axis fault
-                    eadcError = axisFault.getMessage();
-                    throw new RuntimeException(axisFault.getMessage(), axisFault);
-                }
+            String errorCode = getSubcodeFromValue(axisFault);
+            if (errorCode != null) {
+                OpenNCPErrorCode openNCPErrorCode = OpenNCPErrorCode.getErrorCode(errorCode);
+                eadcError = openNCPErrorCode.getCode();
+                throw new OpenNCPException(openNCPErrorCode, "AxisFault", null);
+            } else {
+                eadcError = OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE.getCode();
+                throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, "AxisFault", null);
             }
-            eadcError = OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE.getCode();
-            throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, "AxisFault");
         } finally {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 try {
@@ -720,5 +704,24 @@ public class RespondingGateway_ServiceStub extends Stub {
         public boolean isDestructiveWrite() {
             return false;
         }
+    }
+
+    private String getSubcodeFromValue(AxisFault fault) {
+        try {
+            // Extract the detail element from the fault
+            OMElement detailElement = fault.getDetail();
+            if (detailElement != null) {
+                OMElement subcodeElement = detailElement.getFirstChildWithName(new QName("Subcode"));
+                if (subcodeElement != null) {
+                    OMElement valueElement = subcodeElement.getFirstChildWithName(new QName("Value"));
+                    if (valueElement != null) {
+                        return valueElement.getText();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error extracting the Subcode from the AxisFault.");
+        }
+        return null;
     }
 }

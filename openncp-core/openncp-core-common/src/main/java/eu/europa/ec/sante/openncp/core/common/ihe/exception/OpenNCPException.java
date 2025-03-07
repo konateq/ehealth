@@ -5,13 +5,13 @@ import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 /**
  * Holds exceptions originated in the XDR Submit process.
  */
-public class XDRException extends ExceptionWithContext {
+public class OpenNCPException extends ExceptionWithContext {
 
-    public XDRException(OpenNCPErrorCode openncpErrorCode, Throwable e) {
+    public OpenNCPException(OpenNCPErrorCode openncpErrorCode, Throwable e) {
         super(openncpErrorCode, e);
     }
 
-    public XDRException(OpenNCPErrorCode openncpErrorCode, String message, String codeContext) {
+    public OpenNCPException(OpenNCPErrorCode openncpErrorCode, String message, String codeContext) {
         super(openncpErrorCode, message, codeContext);
     }
 
