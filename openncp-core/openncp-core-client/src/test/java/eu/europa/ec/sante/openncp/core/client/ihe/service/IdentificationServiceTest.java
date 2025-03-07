@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,7 +42,7 @@ public class IdentificationServiceTest {
      * {@link IdentificationService#findIdentityByTraits(PatientDemographics, Map, String)}
      */
     @Test
-    public void testFindIdentityByTraits() throws NoPatientIdDiscoveredException, ParseException {
+    public void testFindIdentityByTraits() throws OpenNCPException, ParseException {
         // Arrange
         ArrayList<PatientDemographics> patientDemographicsList = new ArrayList<>();
 
@@ -79,7 +80,7 @@ public class IdentificationServiceTest {
      * {@link IdentificationService#findIdentityByTraits(PatientDemographics, Map, String)}
      */
     @Test
-    public void testFindIdentityByTraitsNoPatient() throws NoPatientIdDiscoveredException, ParseException {
+    public void testFindIdentityByTraitsNoPatient() throws OpenNCPException, ParseException {
         PatientDemographics patient = new PatientDemographics();
         patient.setAdministrativeGender(PatientDemographics.Gender.FEMALE);
         patient.setBirthDate(Date.from(LocalDate.of(1970, 1, 1).atStartOfDay().atZone(ZoneOffset.UTC).toInstant()));
@@ -96,10 +97,10 @@ public class IdentificationServiceTest {
         patient.setTelephone("6625550144");
 
         when(xcpdInitGateway.patientDiscovery(patient,
-                new HashMap<>(), "GB")).thenThrow(new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred"));
+                new HashMap<>(), "GB")).thenThrow(new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred", "codeContext"));
 
 
-        assertThrows(NoPatientIdDiscoveredException.class,
+        assertThrows(OpenNCPException.class,
                 () -> identificationService.findIdentityByTraits(patient, new HashMap<>(), "GB"));
         verify(xcpdInitGateway).patientDiscovery(isA(PatientDemographics.class), isA(Map.class), eq("GB"));
     }

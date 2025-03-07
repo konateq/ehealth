@@ -14,13 +14,13 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.OrCDDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -42,7 +42,7 @@ public class PatientServiceTest {
      * {@link PatientService#retrieve(XDSDocument, String, String, String, Map)}
      */
     @Test
-    public void testRetrieve() throws XCAException, UnsupportedEncodingException {
+    public void testRetrieve() throws OpenNCPException, UnsupportedEncodingException {
         // Arrange
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument("AXAXAXAX".getBytes("UTF-8"));
@@ -103,11 +103,11 @@ public class PatientServiceTest {
      * {@link PatientService#retrieve(XDSDocument, String, String, String, Map)}
      */
     @Test
-    public void testRetrieve2() throws XCAException {
+    public void testRetrieve2() throws OpenNCPException {
         // Arrange
         when(xcaInitGateway.crossGatewayRetrieve(Mockito.<XDSDocument>any(), Mockito.<String>any(), Mockito.<String>any(),
                 Mockito.<String>any(), Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any()))
-                .thenThrow(new XCAException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred", "Context"));
+                .thenThrow(new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred", "Context"));
 
         GenericDocumentCode classCode = new GenericDocumentCode();
         classCode.setSchema("Schema");
@@ -144,7 +144,7 @@ public class PatientServiceTest {
         document.setSubstitution("Substitution");
 
         // Act and Assert
-        assertThrows(XCAException.class, () -> patientService.retrieve(document, "42", "GB", "en", new HashMap<>()));
+        assertThrows(OpenNCPException.class, () -> patientService.retrieve(document, "42", "GB", "en", new HashMap<>()));
         verify(xcaInitGateway).crossGatewayRetrieve(isA(XDSDocument.class), eq("42"), eq("GB"), eq("en"), isA(Map.class),
                 eq("PatientService"));
     }
