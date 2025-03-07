@@ -167,6 +167,31 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
+    void bugtrigger_EHEALTH_10546() throws MalformedURLException, MarshallingException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        final Assertion clinicalAssertion = AssertionUtils.createPharmacistAssertion(keyStoreManager, "Marie Curie", "marie@ehdsi.eu");
+
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("2-1234-W8");
+
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+        final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
+        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
+
+        final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
+        classCode.setNodeRepresentation(ClassCode.PS_CLASSCODE.getCode());
+        classCode.setSchema("2.16.840.1.113883.6.1");
+        classCode.setValue(Constants.PS_TITLE);
+
+        List<EpsosDocument> requestedDocuments = clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null);
+
+//        assertThatExceptionOfType(SOAPFaultException.class)
+//                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
+//                .withMessageContaining("The request is not containing a proper PS identifier.");
+    }
+
+    @Test
     void bugtrigger_EHEALTH_9827() throws MalformedURLException, MarshallingException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertion(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
