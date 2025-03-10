@@ -1256,23 +1256,4 @@ public class RespondingGateway_ServiceStub extends Stub {
             return false;
         }
     }
-
-    private String getSubcodeFromValue(AxisFault fault) {
-        try {
-            // Extract the detail element from the fault
-            OMElement detailElement = fault.getDetail();
-            if (detailElement != null) {
-                OMElement subcodeElement = detailElement.getFirstChildWithName(new QName("Subcode"));
-                if (subcodeElement != null) {
-                    OMElement valueElement = subcodeElement.getFirstChildWithName(new QName("Value"));
-                    if (valueElement != null) {
-                        return valueElement.getText();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error extracting the Subcode from the AxisFault.");
-        }
-        return null;
-    }
 }

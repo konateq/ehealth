@@ -184,11 +184,21 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         classCode.setSchema("2.16.840.1.113883.6.1");
         classCode.setValue(Constants.PS_TITLE);
 
-        List<EpsosDocument> requestedDocuments = clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null);
+        assertThatExceptionOfType(SOAPFaultException.class)
+                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
+                .extracting(SOAPFaultException::getFault)
+                .satisfies(fault -> {
+                    assertThat(fault.getFaultCode()).contains("Receiver");
+                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
 
-//        assertThatExceptionOfType(SOAPFaultException.class)
-//                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
-//                .withMessageContaining("The request is not containing a proper PS identifier.");
+                    final List<QName> subCodes = StreamSupport.stream(
+                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
+                    ).collect(Collectors.toList());
+                    assertThat(subCodes)
+                            .hasSize(1)
+                            .extracting(QName::getLocalPart)
+                            .containsExactly(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getCode());
+                });
     }
 
     @Test
