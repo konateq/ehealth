@@ -33,14 +33,16 @@ public class EventLogToAuditMessageTransformer implements AuditMessageTransforme
     public AuditMessage transform(final Object message) {
         final EventLog eventlog = (EventLog) message;
         Validate.notNull(message, "Eventlog message cannot be null.");
+        final EventType eventType = eventlog.getEventType();
+        Validate.notNull(eventType, "EventType must not be null.");
 
-        LOGGER.debug("createAuditMessage(EventLog '{}')", eventlog.getEventType());
+        LOGGER.debug("createAuditMessage(EventLog '{}')", eventType);
         //TODO: Check if the Audit Message return with a null value shall be considered as fatal?
-        final AuditMessage auditMessage = eventlog.getEventType().buildAuditMessage(eventlog);
+        final AuditMessage auditMessage = eventType.buildAuditMessage(eventlog);
 
         //  Non Repudiation information are not relevant for SML/SMP process
-        if (eventlog.getEventType() != EventType.SMP_QUERY
-                && eventlog.getEventType() != EventType.SMP_PUSH) {
+        if (eventType != EventType.SMP_QUERY
+                && eventType != EventType.SMP_PUSH) {
 
             AuditTrailUtils.getInstance().addNonRepudiationSection(auditMessage, eventlog.getReqM_ParticipantObjectID(),
                     eventlog.getReqM_ParticipantObjectDetail(), eventlog.getResM_ParticipantObjectID(),

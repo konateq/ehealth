@@ -67,6 +67,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /*
  *  RespondingGateway_ServiceStub java implementation
@@ -579,11 +580,11 @@ public class RespondingGateway_ServiceStub extends Stub {
 
         } catch (final AxisFault axisFault) {
 
-            String errorCode = getSubcodeFromValue(axisFault);
-            if (errorCode != null) {
-                OpenNCPErrorCode openNCPErrorCode = OpenNCPErrorCode.getErrorCode(errorCode);
-                eadcError = openNCPErrorCode.getCode();
-                throw new OpenNCPException(openNCPErrorCode, "AxisFault", null);
+            final Optional<String> errorCode = axisFault.getFaultSubCodes().stream().map(QName::getLocalPart).findFirst();
+            Optional<OpenNCPErrorCode> openNCPErrorCode = errorCode.map(OpenNCPErrorCode::getErrorCode);
+            if (openNCPErrorCode.isPresent()) {
+                eadcError = openNCPErrorCode.get().getCode();
+                throw new OpenNCPException(openNCPErrorCode.get(), axisFault);
             } else {
                 eadcError = OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE.getCode();
                 throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, "AxisFault", null);
@@ -1254,24 +1255,5 @@ public class RespondingGateway_ServiceStub extends Stub {
         public boolean isDestructiveWrite() {
             return false;
         }
-    }
-
-    private String getSubcodeFromValue(AxisFault fault) {
-        try {
-            // Extract the detail element from the fault
-            OMElement detailElement = fault.getDetail();
-            if (detailElement != null) {
-                OMElement subcodeElement = detailElement.getFirstChildWithName(new QName("Subcode"));
-                if (subcodeElement != null) {
-                    OMElement valueElement = subcodeElement.getFirstChildWithName(new QName("Value"));
-                    if (valueElement != null) {
-                        return valueElement.getText();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error extracting the Subcode from the AxisFault.");
-        }
-        return null;
     }
 }

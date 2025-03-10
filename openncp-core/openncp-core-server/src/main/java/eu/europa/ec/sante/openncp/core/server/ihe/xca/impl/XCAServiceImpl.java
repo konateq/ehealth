@@ -89,7 +89,6 @@ import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 public class XCAServiceImpl implements XCAServiceInterface {
 
     private static final DatatypeFactory DATATYPE_FACTORY;
-    private static final String NO_EVENT_IDENTIFICATION_INFORMATION_FOUND = "No event identification information found!";
 
     static {
         try {
@@ -461,8 +460,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
         }
 
         for (final ClassCode classCodeValue : classCodeValues) {
-            policyAssertionManager.xcaPermissionvalidator(requestData.getHcpAssertionDetails().getAssertion(), classCodeValue);
             try {
+                policyAssertionManager.xcaPermissionvalidator(requestData.getHcpAssertionDetails().getAssertion(), classCodeValue);
                 switch (classCodeValue) {
                     case EP_CLASSCODE:
 

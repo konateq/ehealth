@@ -8,6 +8,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.*;
@@ -183,11 +184,21 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         classCode.setSchema("2.16.840.1.113883.6.1");
         classCode.setValue(Constants.PS_TITLE);
 
-        List<EpsosDocument> requestedDocuments = clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null);
+        assertThatExceptionOfType(SOAPFaultException.class)
+                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
+                .extracting(SOAPFaultException::getFault)
+                .satisfies(fault -> {
+                    assertThat(fault.getFaultCode()).contains("Receiver");
+                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
 
-//        assertThatExceptionOfType(SOAPFaultException.class)
-//                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
-//                .withMessageContaining("The request is not containing a proper PS identifier.");
+                    final List<QName> subCodes = StreamSupport.stream(
+                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
+                    ).collect(Collectors.toList());
+                    assertThat(subCodes)
+                            .hasSize(1)
+                            .extracting(QName::getLocalPart)
+                            .containsExactly(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getCode());
+                });
     }
 
     @Test
@@ -210,7 +221,7 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
                 .extracting(SOAPFaultException::getFault)
                 .satisfies(fault -> {
                     assertThat(fault.getFaultCode()).contains("Receiver");
-                    assertThat(fault.getFaultString()).contains("NoPatientIdDiscoveredException");
+                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getDescription());
 
                     final List<QName> subCodes = StreamSupport.stream(
                             ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
@@ -218,7 +229,7 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
                     assertThat(subCodes)
                             .hasSize(1)
                             .extracting(QName::getLocalPart)
-                            .containsExactly("ERROR_PI_NO_MATCH");
+                            .containsExactly(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode());
                 });
     }
 }
