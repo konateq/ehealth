@@ -783,7 +783,7 @@
         </repository>
         <repository>
             <id>gazelle</id>
-            <url>https://gazelle.ihe.net/nexus/content/repositories/public/</url>
+            <url>https://nexus.ihe-catalyst.net/repository/maven-public/</url>
         </repository>
     </repositories>
 
