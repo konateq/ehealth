@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="XDR_Service" targetNamespace="urn:ihe:iti:xds-b:2007" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:ihe="urn:ihe:iti:xds-b:2007" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/">
+<documentation>IHE XDR Document Recipient Service (OpenNCP Specific)</documentation>
+  <types>
+    <xsd:schema elementFormDefault="qualified" targetNamespace="urn:ihe:iti:xds-b:2007" xmlns:ihe="urn:ihe:iti:xds-b:2007">
+			<!-- Include the message schema -->
+			<xsd:include schemaLocation="schema/IHEXDS.xsd"/>
+		</xsd:schema>
+    <xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0">
+			<!-- Include the message schema -->
+			<xsd:include schemaLocation="schema/rs.xsd"/>
+		</xsd:schema>
+    <xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
+			<!-- Include the message schema -->
+			<xsd:include schemaLocation="schema/lcm.xsd"/>
+		</xsd:schema>
+    <xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
+			<!-- Include the message schema -->
+			<xsd:include schemaLocation="schema/rim.xsd"/>
+		</xsd:schema>
+  </types>
+  <message name="ProvideAndRegisterDocumentSet-b_Message">
+<documentation>Provide and Register Document Set</documentation>
+    <part name="body" element="ihe:ProvideAndRegisterDocumentSetRequest">
+    </part>
+  </message>
+  <message name="ProvideAndRegisterDocumentSet-bResponse_Message">
+<documentation>Provide And Register Document Set Response</documentation>
+    <part name="body" element="rs:RegistryResponse">
+    </part>
+  </message>
+  <portType name="DocumentRecipient_PortType">
+    <operation name="DocumentRecipient_ProvideAndRegisterDocumentSet-b">
+      <input message="ihe:ProvideAndRegisterDocumentSet-b_Message" wsaw:Action="urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-b">
+    </input>
+      <output message="ihe:ProvideAndRegisterDocumentSet-bResponse_Message" wsaw:Action="urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-bResponse">
+    </output>
+    </operation>
+  </portType>
+  <binding name="DocumentRecipient_Binding" type="ihe:DocumentRecipient_PortType">
+    <soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="DocumentRecipient_ProvideAndRegisterDocumentSet-b">
+      <soap12:operation soapAction="urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-b"/>
+      <input>
+        <soap12:body use="literal"/>
+      </input>
+      <output>
+        <soap12:body use="literal"/>
+      </output>
+    </operation>
+  </binding>
+  <service name="XDR_Service">
+    <port name="DocumentRecipient_Port_Soap12" binding="ihe:DocumentRecipient_Binding">
+      <soap12:address location="http://localhost:8080/axis2/services/DocumentRecipient_Soap12"/>
+    </port>
+  </service>
+</definitions>
