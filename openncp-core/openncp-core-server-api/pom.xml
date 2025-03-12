@@ -52,6 +52,9 @@
                                     <wsdl>${basedir}/src/main/resources/xcpd/XCPD_Service.wsdl</wsdl>
                                     <wsdlLocation>classpath:xcpd/XCPD_Service.wsdl</wsdlLocation>
                                     <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <bindingFiles>
+                                        <bindingFile>${basedir}/src/main/resources/xcpd/bindings.xjb</bindingFile>
+                                    </bindingFiles>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/main/resources/xdr/XDR_Service.wsdl</wsdl>

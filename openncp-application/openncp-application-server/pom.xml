@@ -24,21 +24,24 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-webapp</artifactId>
-            <version>${axis2.version}</version>
-            <type>war</type>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-lang3</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>${commons-fileupload.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-features-logging</artifactId>
+            <version>${cxf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-bindings-soap</artifactId>
+            <version>${cxf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-core</artifactId>
+            <version>${cxf.version}</version>
         </dependency>
     </dependencies>
 
@@ -72,128 +75,12 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.axis2</groupId>
-                <artifactId>axis2-aar-maven-plugin</artifactId>
-                <version>${axis2.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <id>XCPD_aar_generation</id>
-                        <goals>
-                            <goal>aar</goal>
-                        </goals>
-                        <configuration>
-                            <includeDependencies>false</includeDependencies>
-                            <classesDirectory>src/main/resources/aar/xcpd</classesDirectory>
-                            <servicesXmlFile>src/main/resources/aar/xcpd/META-INF/services.xml</servicesXmlFile>
-                            <wsdlFile>src/main/resources/aar/xcpd/META-INF/XCPD_Service.wsdl</wsdlFile>
-                            <wsdlFileName>XCPD_Service.wsdl</wsdlFileName>
-                            <outputDirectory>${project.basedir}/target/${project.build.finalName}/WEB-INF/services</outputDirectory>
-                            <aarDirectory>target/aar/build/xcpd</aarDirectory>
-                            <aarName>epsos-xcpd-service</aarName>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <id>XCA_aar_generation</id>
-                        <goals>
-                            <goal>aar</goal>
-                        </goals>
-                        <configuration>
-                            <includeDependencies>false</includeDependencies>
-                            <classesDirectory>src/main/resources/aar/xca</classesDirectory>
-                            <servicesXmlFile>src/main/resources/aar/xca/META-INF/services.xml</servicesXmlFile>
-                            <wsdlFile>src/main/resources/aar/xca/META-INF/XCA_Service.wsdl</wsdlFile>
-                            <wsdlFileName>XCA_Service.wsdl</wsdlFileName>
-                            <outputDirectory>${project.basedir}/target/${project.build.finalName}/WEB-INF/services</outputDirectory>
-                            <aarDirectory>target/aar/build/xca</aarDirectory>
-                            <aarName>epsos-xca-service</aarName>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <id>XDR_aar_generation</id>
-                        <goals>
-                            <goal>aar</goal>
-                        </goals>
-                        <configuration>
-                            <includeDependencies>false</includeDependencies>
-                            <classesDirectory>src/main/resources/aar/xdr</classesDirectory>
-                            <servicesXmlFile>src/main/resources/aar/xdr/META-INF/services.xml</servicesXmlFile>
-                            <wsdlFile>src/main/resources/aar/xdr/META-INF/XDR_Service.wsdl</wsdlFile>
-                            <wsdlFileName>XDR_Service.wsdl</wsdlFileName>
-                            <outputDirectory>${project.basedir}/target/${project.build.finalName}/WEB-INF/services</outputDirectory>
-                            <aarDirectory>target/aar/build/xdr</aarDirectory>
-                            <aarName>epsos-xdr-service</aarName>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.2</version>
                 <configuration>
-                    <dependentWarIncludes/>
-                    <dependentWarExcludes>
-                        WEB-INF/lib/log4j-api-2.17.2.jar,
-                        WEB-INF/lib/log4j-core-2.17.2.jar,
-                        WEB-INF/lib/log4j-jcl-2.17.2.jar,
-                        WEB-INF/lib/commons-lang3-3.12.0.jar
-                    </dependentWarExcludes>
-                    <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <nonFilteredFileExtensions>
-                        <nonFilteredFileExtension>aar</nonFilteredFileExtension>
-                    </nonFilteredFileExtensions>
-                    <webResources>
-                        <resource>
-                            <directory>src/main/resources/servicedata</directory>
-                            <includes>
-                                <include>ServiceData.xml</include>
-                            </includes>
-                            <targetPath>WEB-INF/services/META-INF</targetPath>
-                        </resource>
-                        <resource>
-                            <directory>target</directory>
-                            <includes>
-                                <include>${project.build.finalName}.aar</include>
-                            </includes>
-                            <targetPath>WEB-INF/services</targetPath>
-                        </resource>
-                    </webResources>
-                    <packagingExcludes>
-                        WEB-INF/lib/checker-qual-3.8.0.jar,
-                        WEB-INF/lib/commons-codec-1.11.jar,
-                        WEB-INF/lib/commons-fileupload-1.4.jar,
-                        WEB-INF/lib/commons-logging-1.1.1.jar,
-                        WEB-INF/lib/error_prone_annotations-2.5.1.jar,
-                        WEB-INF/lib/error_prone_annotations-2.7.1.jar,
-                        WEB-INF/lib/guava-30.1.1-jre.jar,
-                        WEB-INF/lib/guava-31.0.1-jre.jar,
-                        WEB-INF/lib/HikariCP-java7-2.4.13.jar,
-                        WEB-INF/lib/httpclient-4.5.13.jar,
-                        WEB-INF/lib/httpcore-4.4.13.jar,
-                        WEB-INF/lib/istack-commons-runtime-3.0.7.jar,
-                        WEB-INF/lib/jakarta.activation-1.2.1.jar,
-                        WEB-INF/lib/jakarta.activation-api-1.2.1.jar,
-                        WEB-INF/lib/jaxb-runtime-2.3.1.jar,
-                        WEB-INF/lib/jaxen-1.1.6.jar,
-                        WEB-INF/lib/joda-time-2.10.5.jar,
-                        WEB-INF/lib/neethi-3.1.1.jar,
-                        WEB-INF/lib/spring-aop-5.3.9.jar,
-                        WEB-INF/lib/spring-aop-5.3.20.jar,
-                        WEB-INF/lib/spring-expression-5.3.9.jar,
-                        WEB-INF/lib/spring-jcl-5.3.9.jar,
-                        WEB-INF/lib/spring-jcl-5.3.20.jar,
-                        WEB-INF/lib/txw2-2.3.1.jar,
-                        WEB-INF/lib/xalan-2.7.2.jar,
-                        WEB-INF/lib/xercesImpl-${xerces.version}.jar
-                        WEB-INF/lib/commons-lang3-3.12.0.jar
-                    </packagingExcludes>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>

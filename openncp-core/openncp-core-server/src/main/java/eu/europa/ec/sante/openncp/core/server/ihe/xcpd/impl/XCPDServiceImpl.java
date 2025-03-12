@@ -13,7 +13,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
@@ -22,15 +21,13 @@ import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfac
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
 import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceInterface;
-import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.v3.*;
 import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -43,6 +40,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.soap.SOAPHeader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.math.BigInteger;
@@ -113,12 +111,15 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         }
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
         if (!outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
-            final String detail = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
+            final String detail = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent().stream()
+                    .findFirst()
+                    .map(serializable -> (String) serializable)
+                    .orElse(StringUtils.EMPTY);
             final String errorCode = outputMessage.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
 
-            if(errorCode.equals(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode())) {
+            if (errorCode.equals(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode())) {
                 eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
-            }else{
+            } else {
                 eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
             }
             eventLog.setEM_ParticipantObjectID(errorCode);
@@ -128,8 +129,8 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         }
     }
 
-    public PRPAIN201306UV02 queryPatient(final PRPAIN201305UV02 request, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-
+    @Override
+    public PRPAIN201306UV02 queryPatient(PRPAIN201305UV02 request, SOAPHeader soapHeader, EventLog eventLog) throws Exception {
         final var response = objectFactory.createPRPAIN201306UV02();
         pRPAIN201306UV02Builder(request, response, soapHeader, eventLog);
         return response;
@@ -241,11 +242,11 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     private PN getName(final PatientDemographics pd) {
         final var result = objectFactory.createPN();
         final var enFamily = objectFactory.createEnFamily();
-        enFamily.setContent(pd.getFamilyName());
+        enFamily.getContent().add(pd.getFamilyName());
         result.getContent().add(objectFactory.createENFamily(enFamily));
 
         final var enGiven = objectFactory.createEnGiven();
-        enGiven.setContent(pd.getGivenName());
+        enGiven.getContent().add(pd.getGivenName());
         result.getContent().add(objectFactory.createENGiven(enGiven));
         return result;
     }
@@ -256,27 +257,27 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         // Adding the city
         if (StringUtils.isNotBlank(patientDemographics.getCity())) {
             final var city = objectFactory.createAdxpCity();
-            city.setContent(StringUtils.strip(patientDemographics.getCity()));
+            city.getContent().add(StringUtils.strip(patientDemographics.getCity()));
             result.getContent().add(objectFactory.createADCity(city));
         }
 
         // Adding the postal code
         if (StringUtils.isNotBlank(patientDemographics.getPostalCode())) {
             final var postal = objectFactory.createAdxpPostalCode();
-            postal.setContent(StringUtils.strip(patientDemographics.getPostalCode()));
+            postal.getContent().add(StringUtils.strip(patientDemographics.getPostalCode()));
             result.getContent().add(objectFactory.createADPostalCode(postal));
         }
 
         // Adding the address street line
         if (StringUtils.isNotBlank(patientDemographics.getStreetAddress())) {
             final var street = objectFactory.createAdxpStreetAddressLine();
-            street.setContent(StringUtils.strip(patientDemographics.getStreetAddress()));
+            street.getContent().add(StringUtils.strip(patientDemographics.getStreetAddress()));
             result.getContent().add(objectFactory.createADStreetAddressLine(street));
         }
 
         // Adding the country
         final var country = objectFactory.createAdxpCountry();
-        country.setContent(patientDemographics.getCountry());
+        country.getContent().add(patientDemographics.getCountry());
         result.getContent().add(objectFactory.createADCountry(country));
 
         return result;
@@ -371,10 +372,10 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             acknowledgementDetail.setCode(codeCE);
 
             acknowledgementDetail.setText(objectFactory.createED());
-            acknowledgementDetail.getText().setContent(context);
+            acknowledgementDetail.getText().getContent().add(context);
 
             final ST location = objectFactory.createST();
-            location.setContent(locationText);
+            location.getContent().add(locationText);
             acknowledgementDetail.getLocation().add(location);
 
             acknowledgement.getAcknowledgementDetail().add(acknowledgementDetail);
@@ -427,16 +428,28 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                                 final String eName = element.getName().getLocalPart();
                                 if (StringUtils.equals("city", eName)) {
                                     final AdxpCity ac = (AdxpCity) element.getValue();
-                                    patientDemographics.setCity(StringUtils.strip(ac.getContent()));
+                                    patientDemographics.setCity(StringUtils.strip(ac.getContent().stream()
+                                            .findFirst()
+                                            .map(serializable -> (String) serializable)
+                                            .orElse(StringUtils.EMPTY)));
                                 } else if (StringUtils.equals("streetName", eName)) {
                                     final AdxpStreetName asn = (AdxpStreetName) element.getValue();
-                                    patientDemographics.setStreetAddress(StringUtils.strip(asn.getContent()));
+                                    patientDemographics.setStreetAddress(StringUtils.strip(asn.getContent().stream()
+                                            .findFirst()
+                                            .map(serializable -> (String) serializable)
+                                            .orElse(StringUtils.EMPTY)));
                                 } else if (StringUtils.equals("country", eName)) {
                                     final AdxpCountry ac = (AdxpCountry) element.getValue();
-                                    patientDemographics.setCountry(StringUtils.strip(ac.getContent()));
+                                    patientDemographics.setCountry(StringUtils.strip(ac.getContent().stream()
+                                            .findFirst()
+                                            .map(serializable -> (String) serializable)
+                                            .orElse(StringUtils.EMPTY)));
                                 } else if (StringUtils.equals("postalCode", eName)) {
                                     final AdxpPostalCode apc = (AdxpPostalCode) element.getValue();
-                                    patientDemographics.setPostalCode(StringUtils.strip(apc.getContent()));
+                                    patientDemographics.setPostalCode(StringUtils.strip(apc.getContent().stream()
+                                            .findFirst()
+                                            .map(serializable -> (String) serializable)
+                                            .orElse(StringUtils.EMPTY)));
                                 }
                             }
                         }
@@ -457,10 +470,16 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                                 final String eName = element.getName().getLocalPart();
                                 if (StringUtils.equals("given", eName)) {
                                     final EnGiven eg = (EnGiven) element.getValue();
-                                    patientDemographics.setGivenName(eg.getContent());
+                                    patientDemographics.setGivenName(eg.getContent().stream()
+                                            .findFirst()
+                                            .map(serializable -> (String) serializable)
+                                            .orElse(StringUtils.EMPTY));
                                 } else if (StringUtils.equals("family", eName)) {
                                     final EnFamily ef = (EnFamily) element.getValue();
-                                    patientDemographics.setFamilyName(ef.getContent());
+                                    patientDemographics.setFamilyName(ef.getContent().stream()
+                                            .findFirst()
+                                            .map(serializable -> (String) serializable)
+                                            .orElse(StringUtils.EMPTY));
                                 }
                             }
                         }
@@ -563,17 +582,10 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         outputMessage.getControlActProcess().getQueryAck().getQueryId().setRoot(inputQBP.getQueryId().getRoot());
         outputMessage.getControlActProcess().getQueryAck().getQueryId().setExtension(inputQBP.getQueryId().getExtension());
 
-        final Element shElement;
-        try {
-            shElement = XMLUtils.toDOM(soapHeader);
-        } catch (final Exception e) {
-            logger.error("SOAP header jaxb to dom failed.", e);
-            throw e;
-        }
-        patientSearchService.setSOAPHeader(shElement);
+        patientSearchService.setSOAPHeader(soapHeader);
 
         try {
-            sigCountryCode = saml2Validator.validateHCPHeader(shElement);
+            sigCountryCode = saml2Validator.validateHCPHeader(soapHeader);
 
             final String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
             final String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();
@@ -642,7 +654,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                             Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
                             Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode(),
                             new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCPD_REQ",
-                            SoapElementHelper.getHCPAssertion(shElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
+                            SoapElementHelper.getHCPAssertion(soapHeader).getID() + "__" + DateUtil.getCurrentTimeGMT());
                 } catch (final Exception e) {
                     logger.error(ExceptionUtils.getStackTrace(e));
                 }
@@ -677,7 +689,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                             XCPDErrorCode.AnswerNotAvailable,
                             OpenNCPErrorCode.ERROR_PI_NO_MATCH,
                             codeContext,
-                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() +")");
+                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() + ")");
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";
@@ -743,7 +755,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
             logger.error(e.getMessage(), e);
             final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
             fillOutputMessage(outputMessage, e.getXcpdErrorCode(), e.getOpenncpErrorCode(), codeContext, Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY));
-        }  catch (final NIException e) {
+        } catch (final NIException e) {
             logger.error(e.getMessage(), e);
             final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
             fillOutputMessage(outputMessage, XCPDErrorCode.NationalInfrastructure, e.getOpenncpErrorCode(), codeContext, Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY));
@@ -792,7 +804,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
         // Prepare Audit Log
         try {
-            prepareEventLog(eventLog, inputMessage, outputMessage, shElement);
+            prepareEventLog(eventLog, inputMessage, outputMessage, soapHeader);
             logger.info("Preparing Event Log: '{}' - SC UserId: '{}' - SP UserId: '{}'", eventLog.getEventType(),
                     eventLog.getSC_UserID(), eventLog.getSP_UserID());
 
