@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import net.RFC3881.dicom.AuditMessage;
 
 public class DispensationDiscardServiceAuditMessageBuilder extends AbstractAuditMessageBuilder implements AuditMessageBuilder {
+
     @Override
     public AuditMessage build(final EventLog eventLog) {
         final AuditMessage message = createAuditTrailForHCPAssurance(eventLog);
