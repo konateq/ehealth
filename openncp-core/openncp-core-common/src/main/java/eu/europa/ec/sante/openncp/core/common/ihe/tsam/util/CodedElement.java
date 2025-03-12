@@ -89,6 +89,18 @@ public class CodedElement {
         this.valueSetVersion = vsVersion;
     }
 
+    public CodedElement(String code, String codeSystem, String oid, String version, String vsOid, String vsVersion, String displayName) {
+
+        super();
+        this.code = code;
+        this.codeSystem = codeSystem;
+        this.oid = oid;
+        this.version = version;
+        this.vsOid = vsOid;
+        this.valueSetVersion = vsVersion;
+        this.displayName = displayName;
+    }
+
     public Element getOriginalXMlElement() {
         return originalXMlElement;
     }
