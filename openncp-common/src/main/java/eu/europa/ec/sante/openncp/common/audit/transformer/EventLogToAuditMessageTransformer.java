@@ -68,10 +68,10 @@ public class EventLogToAuditMessageTransformer implements AuditMessageTransforme
             // Infer model according to NCP Side and EventCode
             NcpSide ncpSide = eventLog.getNcpSide();
 
-            if (StringUtils.equals(eventLog.getEventType().getCode(), "EHDSI-CF")) {
+            if (StringUtils.equals(eventLog.getEventType().getEventTypeCode().getCsdCode(), "EHDSI-CF")) {
                 throw new UnsupportedOperationException("EventCode not supported.");
             }
-            GazelleValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getCode(), ncpSide);
+            GazelleValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getEventTypeCode().getCsdCode(), ncpSide);
         } catch (JAXBException e) {
             LOGGER.error("JAXBException: {}", e.getMessage(), e);
         } catch (Exception e) {

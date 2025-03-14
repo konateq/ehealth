@@ -665,7 +665,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                     EvidenceUtils.createEvidenceREMNRO(doc, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
                             Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
                             Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode(),
+                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getEventTypeCode().getCsdCode(),
                             new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCPD_REQ",
                             SoapElementHelper.getHCPAssertion(shElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
                 } catch (final Exception e) {

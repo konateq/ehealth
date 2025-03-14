@@ -1144,7 +1144,7 @@ public class RespondingGateway_ServiceStub extends Stub {
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-        final EventType eventType = EventType.determineEventTypeForXCAQuery(classCodes);
+        final EventType eventType = EventType.XCA_SERVICE_LIST;
         final TransactionName transactionName = TransactionName.determineTransactionNameForXCAQuery(classCodes);
         EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, eventType, transactionName);
         eventLog.setNcpSide(NcpSide.NCP_B);
@@ -1161,7 +1161,7 @@ public class RespondingGateway_ServiceStub extends Stub {
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
         eventLog.setEI_EventActionCode(EventActionCode.CREATE);
-        final EventType eventType = EventType.determineEventTypeForXCARetrieve(classCode);
+        final EventType eventType = EventType.XCA_SERVICE_RETRIEVE_NCP_B;
         final TransactionName transactionName = TransactionName.determineTransactionNameForXCARetrieve(classCode);
         EventLogUtil.prepareXCACommonLogRetrieve(eventLog, msgContext, request, response, eventType, transactionName);
         eventLog.setNcpSide(NcpSide.NCP_B);

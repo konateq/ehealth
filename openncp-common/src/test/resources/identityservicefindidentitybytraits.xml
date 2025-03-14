@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
     <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T12:05:14.809+01:00" EventOutcomeIndicator="0">
-        <EventID csd-code="110112" codeSystemName="DCM" displayName="XCPD::CrossGatewayPatientDiscovery" originalText="Query"/>
-        <EventTypeCode csd-code="ITI-55" codeSystemName="IHE Transactions" displayName="IdentityService::FindIdentityByTraits" originalText="XCPD::CrossGatewayPatientDiscovery"/>
+        <EventID csd-code="110112" codeSystemName="DCM" originalText="Query"/>
+        <EventTypeCode csd-code="ITI-55" codeSystemName="IHE Transactions" originalText="Cross Gateway Patient Discovery"/>
     </EventIdentification>
     <ActiveParticipant UserID="HR User ID" AlternativeUserID="HR Alternative User ID" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110153" codeSystemName="DCM" originalText="Source Role ID"/>

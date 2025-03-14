@@ -1,12 +1,12 @@
 package eu.europa.ec.sante.openncp.core.server.abusedetection;
 
 import com.ibatis.common.jdbc.ScriptRunner;
-import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.audit.AuditTrailUtils;
 import eu.europa.ec.sante.openncp.common.audit.EventType;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
+import eu.europa.ec.sante.openncp.core.common.ihe.abusedetection.*;
 import net.RFC3881.dicom.ActiveParticipantContents;
 import net.RFC3881.dicom.AuditMessage;
 import net.RFC3881.dicom.ParticipantObjectIdentificationContents;
@@ -52,7 +52,7 @@ public class AbuseDetectionService implements Job {
     private static final String JDBC_OPEN_ATNA = "jdbc/OPEN_ATNA";
     private static final String JDBC_EHNCP_PROPERTY = "jdbc/ConfMgr";
     private static final String ORACLE = "oracle";
-    private static List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> abuseList = new ArrayList<>();
+    private static List<AbuseEvent> abuseList = new ArrayList<>();
     private static long lastIdAnalyzed = -1;
     private final Logger logger = LoggerFactory.getLogger(AbuseDetectionService.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
@@ -117,7 +117,7 @@ public class AbuseDetectionService implements Job {
                     }
                 }
 
-                List<eu.europa.ec.sante.openncp.core.common.abusedetection.MessagesRecord> records = retrieveAuditEvents(query);
+                List<MessagesRecord> records = retrieveAuditEvents(query);
                 if (!records.isEmpty()) {
                     records.forEach(p -> {
                         try {
@@ -127,7 +127,7 @@ public class AbuseDetectionService implements Job {
                                 lastIdAnalyzed = p.getId();
                             }
                         } catch (JAXBException e) {
-                            throw new eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseDetectionException(e);
+                            throw new AbuseDetectionException(e);
                         }
                     });
                     // Check for anomalies in the actual set of Audits and purge from the set those outdated
@@ -139,7 +139,7 @@ public class AbuseDetectionService implements Job {
                 throw new RuntimeException(e);
             }
         } catch (SchedulerException e) {
-            throw new eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseDetectionException(e);
+            throw new AbuseDetectionException(e);
         } finally {
             try {
                 scheduler.resumeJob(jobExecutionContext.getJobDetail().getKey());
@@ -171,16 +171,16 @@ public class AbuseDetectionService implements Job {
         }
     }
 
-    private List<eu.europa.ec.sante.openncp.core.common.abusedetection.MessagesRecord> retrieveAuditEvents(String sqlSelect) throws Exception {
+    private List<MessagesRecord> retrieveAuditEvents(String sqlSelect) throws Exception {
 
-        List<eu.europa.ec.sante.openncp.core.common.abusedetection.MessagesRecord> listXmlRecords = new ArrayList<>();
+        List<MessagesRecord> listXmlRecords = new ArrayList<>();
 
         try (Connection sqlConnection = dbConnect(AbuseDetectionService.JDBC_OPEN_ATNA);
              Statement stmt = sqlConnection.createStatement()) {
 
             ResultSet resultSet = stmt.executeQuery(sqlSelect);
             while (resultSet.next()) {
-                eu.europa.ec.sante.openncp.core.common.abusedetection.MessagesRecord record = new eu.europa.ec.sante.openncp.core.common.abusedetection.MessagesRecord();
+                MessagesRecord record = new MessagesRecord();
                 record.setId(resultSet.getLong("id"));
                 if("postgresql".equals(databaseProduct)) {
                     var messageContent = resultSet.getBytes("messageContent");
@@ -217,8 +217,8 @@ public class AbuseDetectionService implements Job {
         }
     }
 
-    private boolean setAbuseErrorEvent(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseType abuseType, String description, int numRequests,
-                                       eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent eventBegin, eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent eventEnd) {
+    private boolean setAbuseErrorEvent(AbuseType abuseType, String description, int numRequests,
+                                       AbuseEvent eventBegin, AbuseEvent eventEnd) {
 
         String eventDescription = description.substring(0, Math.min(description.length(), ANOMALY_DESCRIPTION_SIZE));
 
@@ -360,7 +360,7 @@ public class AbuseDetectionService implements Job {
     }
     */
 
-    private AuditMessage readAuditString(eu.europa.ec.sante.openncp.core.common.abusedetection.MessagesRecord rec) throws JAXBException {
+    private AuditMessage readAuditString(MessagesRecord rec) throws JAXBException {
 
         try {
             if (StringUtils.contains(rec.getXml(), "AuditMessage")) {
@@ -376,114 +376,58 @@ public class AbuseDetectionService implements Job {
                         DateTimeZone.forTimeZone(TimeZone.getDefault()));
 
                 boolean evtPresent = false;
-                eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.TRANSACTION_UNKNOWN;
-                if (StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getCsdCode()) &&
-                        org.apache.commons.lang3.StringUtils.equals("XCPD::CrossGatewayPatientDiscovery",
-                                EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheTransactionName()) &&
+                AbuseTransactionType transactionType = AbuseTransactionType.TRANSACTION_UNKNOWN;
+                if (org.apache.commons.lang3.StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getEventTypeCode().getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("Cross Gateway Patient Discovery",
+                                EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getEventTypeCode().getOriginalText()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode()))) {
+                                        EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getEventTypeCode().getCsdCode()))) {
                     evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCPD_SERVICE_REQUEST;
+                    transactionType = AbuseTransactionType.XCPD_SERVICE_REQUEST;
                 }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_LIST.getCsdCode()) &&
-                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayQuery",
-                                EventType.PATIENT_SERVICE_LIST.getIheTransactionName()) &&
+                if (!evtPresent && org.apache.commons.lang3.StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.XCA_SERVICE_LIST.getEventTypeCode().getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("Cross Gateway Query",
+                                EventType.XCA_SERVICE_LIST.getEventTypeCode().getOriginalText()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.PATIENT_SERVICE_LIST.getIheCode())) /*&&
+                                        EventType.XCA_SERVICE_LIST.getEventTypeCode().getCsdCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
                                         ClassCode.PS_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCA_SERVICE_REQUEST;
+                    transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
-                if (!evtPresent && /*StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_RETRIEVE.getCsdCode()) &&*/  // csdCode for this event is 110107 on client and 110106 on server, so there would be an ambiguity
-                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
-                                EventType.PATIENT_SERVICE_RETRIEVE.getIheTransactionName()) &&
+                if (!evtPresent && org.apache.commons.lang3.StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.XDR_SERVICE_NCP_A.getEventTypeCode().getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("Provide and Register Document Set-b",
+                                EventType.XDR_SERVICE_NCP_A.getEventTypeCode().getOriginalText()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode())) /*&&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.PS_CLASSCODE.getCode()))*/) {
-                    evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCA_SERVICE_REQUEST;
-                }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.ORDER_SERVICE_LIST.getCsdCode()) &&
-                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
-                                EventType.ORDER_SERVICE_LIST.getIheTransactionName()) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_LIST.getIheCode())) /*&&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EP_CLASSCODE.getCode()))*/) {
-                    evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCA_SERVICE_REQUEST;
-                }
-                if (!evtPresent && /*StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.PATIENT_SERVICE_RETRIEVE.getCsdCode()) &&*/ // csdCode for this event is 110107 on client and 110106 on server, so there would be an ambiguity
-                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
-                                EventType.ORDER_SERVICE_RETRIEVE.getIheTransactionName()) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORDER_SERVICE_RETRIEVE.getIheCode())) /*&&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
-                                        ClassCode.EP_CLASSCODE.getCode()))*/) {
-                    evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCA_SERVICE_REQUEST;
-                }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.DISPENSATION_SERVICE_INITIALIZE.getCsdCode()) &&
-                        org.apache.commons.lang3.StringUtils.equals("XDR::ProvideandRegisterDocumentSet-b",
-                                EventType.DISPENSATION_SERVICE_INITIALIZE.getIheTransactionName()) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.DISPENSATION_SERVICE_DISCARD.getIheCode())) /*&&
+                                        EventType.XDR_SERVICE_NCP_A.getEventTypeCode().getCsdCode())) /*&&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> StringUtils.equals(c.getCsdCode(),
                                         ClassCode.EDD_CLASSCODE.getCode()))*/) {
                     evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XDR_SERVICE_REQUEST;
+                    transactionType = AbuseTransactionType.XDR_SERVICE_REQUEST;
                 }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.ORCD_SERVICE_LIST.getCsdCode()) &&
-                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayQuery",
-                                EventType.ORCD_SERVICE_LIST.getIheTransactionName()) &&
+                if (!evtPresent && org.apache.commons.lang3.StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
+                        EventType.XCA_SERVICE_RETRIEVE_NCP_A.getEventTypeCode().getCsdCode()) &&
+                        org.apache.commons.lang3.StringUtils.equals("Cross Gateway Retrieve",
+                                EventType.XCA_SERVICE_RETRIEVE_NCP_A.getEventTypeCode().getOriginalText()) &&
                         au.getEventIdentification().getEventTypeCode()
                                 .stream()
                                 .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORCD_SERVICE_LIST.getIheCode()))) {
+                                        EventType.XCA_SERVICE_RETRIEVE_NCP_A.getEventTypeCode().getCsdCode()))) {
                     evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCA_SERVICE_REQUEST;
-                }
-                if (!evtPresent && StringUtils.equals(au.getEventIdentification().getEventID().getCsdCode(),
-                        EventType.ORCD_SERVICE_RETRIEVE.getIheCode()) &&
-                        org.apache.commons.lang3.StringUtils.equals("XCA::CrossGatewayRetrieve",
-                                EventType.ORCD_SERVICE_RETRIEVE.getIheTransactionName()) &&
-                        au.getEventIdentification().getEventTypeCode()
-                                .stream()
-                                .anyMatch(c -> org.apache.commons.lang3.StringUtils.equals(c.getCsdCode(),
-                                        EventType.ORCD_SERVICE_RETRIEVE.getIheCode()))) {
-                    evtPresent = true;
-                    transactionType = eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCA_SERVICE_REQUEST;
+                    transactionType = AbuseTransactionType.XCA_SERVICE_REQUEST;
                 }
 
                 if (evtPresent) {
@@ -505,7 +449,7 @@ public class AbuseDetectionService implements Job {
                             .collect(Collectors.joining());
 
                     abuseList.add(
-                            new eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent(au.getEventIdentification().getEventID(),
+                            new AbuseEvent(au.getEventIdentification().getEventID(),
                                     simplePoc,
                                     participant,
                                     dt,
@@ -517,13 +461,13 @@ public class AbuseDetectionService implements Job {
                 return au;
             }
         } catch (Exception e) {
-            throw new eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseDetectionException(e);
+            throw new AbuseDetectionException(e);
         }
 
         return null;
     }
 
-    private int getElapsedTimeBetweenEvents(List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> listEvt, int beg, int end) {
+    private int getElapsedTimeBetweenEvents(List<AbuseEvent> listEvt, int beg, int end) {
         if (beg < 0 || end < 0) {
             return 0;
         }
@@ -543,7 +487,7 @@ public class AbuseDetectionService implements Job {
         return Seconds.secondsBetween(t1, t2).getSeconds();
     }
 
-    private List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> checkAnomalies(List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> list) {
+    private List<AbuseEvent> checkAnomalies(List<AbuseEvent> list) {
 
         int areqr = Integer.parseInt(Constants.ABUSE_ALL_REQUEST_REFERENCE_REQUEST_PERIOD);
         int upatr = Integer.parseInt(Constants.ABUSE_UNIQUE_PATIENT_REFERENCE_REQUEST_PERIOD);
@@ -557,8 +501,8 @@ public class AbuseDetectionService implements Job {
             return list;
         }
 
-        List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> sortedAllList = list.stream()
-                .sorted(Comparator.comparing(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent::getRequestDateTime))
+        List<AbuseEvent> sortedAllList = list.stream()
+                .sorted(Comparator.comparing(AbuseEvent::getRequestDateTime))
                 .collect(Collectors.toList());
         if (areqr > 0 && sortedAllList.size() > areqThreshold) { // Analyze ALL requests
             int index = 0;
@@ -586,7 +530,7 @@ public class AbuseDetectionService implements Job {
                     int elapsed = getElapsedTimeBetweenEvents(sortedAllList, beg, end);
                     if (elapsed < areqr) {
                         String abuseDescription = String.format(DESCRIPTION_ALL, tot, elapsed, areqThreshold);
-                        if (setAbuseErrorEvent(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseType.ALL, abuseDescription, tot, sortedAllList.get(beg), sortedAllList.get(end))) {
+                        if (setAbuseErrorEvent(AbuseType.ALL, abuseDescription, tot, sortedAllList.get(beg), sortedAllList.get(end))) {
                             if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
                                 loggerClinical.error("WARNING_SEC_UNEXPECTED_NUMBER_OF_REQUESTS : [Total requests: '{}' exceeding " +
                                                 "threshold of: '{}' requests inside an interval of '{}' seconds] - begin event : ['{}'] end event: ['{}']",
@@ -604,17 +548,17 @@ public class AbuseDetectionService implements Job {
 
         //////////////////////////////////////////////////////////////////////
 
-        List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> distinctPatientIds = list.stream()
-                .filter(distinctByKey(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent::getPatientId))
+        List<AbuseEvent> distinctPatientIds = list.stream()
+                .filter(distinctByKey(AbuseEvent::getPatientId))
                 .collect(Collectors.toList());
         if (upatr > 0 && sortedAllList.size() > upatThreshold) { // Analyze unique Patient requests
             if (!distinctPatientIds.isEmpty()) {
                 distinctPatientIds.forEach(pat -> {
-                    List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> sortedXcpdList = list.stream()
-                            .filter(p -> p.getTransactionType().equals(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseTransactionType.XCPD_SERVICE_REQUEST))
+                    List<AbuseEvent> sortedXcpdList = list.stream()
+                            .filter(p -> p.getTransactionType().equals(AbuseTransactionType.XCPD_SERVICE_REQUEST))
                             .filter(p -> p.getPatientId().equals(pat.getPatientId()))
-                            .sorted(Comparator.comparing(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent::getPatientId))
-                            .sorted(Comparator.comparing(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent::getRequestDateTime))
+                            .sorted(Comparator.comparing(AbuseEvent::getPatientId))
+                            .sorted(Comparator.comparing(AbuseEvent::getRequestDateTime))
                             .collect(Collectors.toList());
 
                     Period diff = Period.ZERO;
@@ -643,7 +587,7 @@ public class AbuseDetectionService implements Job {
                             int elapsed = getElapsedTimeBetweenEvents(sortedXcpdList, beg, end);
                             if (elapsed < upatr) {
                                 String abuseDescription = String.format(DESCRIPTION_PAT, tot, elapsed, upatThreshold);
-                                if (setAbuseErrorEvent(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseType.PAT, abuseDescription, tot, sortedXcpdList.get(beg), sortedXcpdList.get(end))) {
+                                if (setAbuseErrorEvent(AbuseType.PAT, abuseDescription, tot, sortedXcpdList.get(beg), sortedXcpdList.get(end))) {
                                     if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
                                         loggerClinical.error("WARNING_SEC_UNEXPECTED_NUMBER_OF_REQUESTS_FOR_UNIQUE_PATIENT : " +
                                                         "[Total requests: '{}' exceeding threshold of: '{}' requests inside an interval " +
@@ -661,8 +605,8 @@ public class AbuseDetectionService implements Job {
 
         // strip from table file older than ABUSE_ALL_REQUEST_REFERENCE_REQUEST_PERIOD
         int purgeLimit = NumberUtils.max(new int[]{areqr, upocr, upatr});
-        List<eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent> ret = list.stream()
-                .sorted(Comparator.comparing(eu.europa.ec.sante.openncp.core.common.abusedetection.AbuseEvent::getRequestDateTime))
+        List<AbuseEvent> ret = list.stream()
+                .sorted(Comparator.comparing(AbuseEvent::getRequestDateTime))
                 .filter(p -> getElapsedSecondsBetweenDateTime(
                                 p.getRequestDateTime(),
                                 new LocalDateTime(
@@ -696,7 +640,7 @@ public class AbuseDetectionService implements Job {
     private String getTypeCodes(List<CodedValueType> eventTypeCode) {
         StringBuilder val = new StringBuilder();
         for (CodedValueType t : eventTypeCode) {
-            val.append("EventTypeCode ").append(t.getCode()).append(" - ").append(t.getDisplayName()).append(" ");
+            val.append("EventTypeCodeType ").append(t.getCode()).append(" - ").append(t.getDisplayName()).append(" ");
         }
         return StringUtils.trim(val.toString());
     }
