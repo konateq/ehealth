@@ -159,13 +159,12 @@ public class XCAServiceImpl implements XCAServiceInterface {
     private void prepareEventLogForQuery(final EventLog eventLog, final AdhocQueryRequest request, final AdhocQueryResponse response, final Element sh, final ClassCode classCode) {
 
         logger.info("method prepareEventLogForQuery(Request: '{}', ClassCode: '{}')", request.getId(), classCode);
+        eventLog.setEventType(EventType.XCA_SERVICE_LIST);
         if (classCode == null) {
             // In case the document is not found, audit log cannot be properly filled, as we don't know the event type
             // Log this under Order Service
-            eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
             eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
         } else {
-            eventLog.setEventType(EventType.determineEventTypeForXCAQuery(List.of(classCode)));
             eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCAQuery(List.of(classCode)));
         }
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
@@ -234,15 +233,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
                                             final boolean documentReturned, final OMElement registryErrorList, final Element sh, final ClassCode classCode) {
 
         logger.info("method prepareEventLogForRetrieve({})", classCode);
-        if (classCode == null) {
-            // In case the document is not found, audit log cannot be properly filled, as we don't know the event type
-            // Log this under Order Service
-            eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
-            eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
-        } else {
-            eventLog.setEventType(EventType.determineEventTypeForXCARetrieve(classCode));
-            eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCARetrieve(classCode));
-        }
+        eventLog.setEventType(EventType.XCA_SERVICE_RETRIEVE_NCP_A);
+        eventLog.setEI_TransactionName(classCode != null ? TransactionName.determineTransactionNameForXCARetrieve(classCode) : TransactionName.ORDER_SERVICE_RETRIEVE);
         eventLog.setEI_EventActionCode(EventActionCode.READ);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.getEventTargetParticipantObjectIds().add(request.getDocumentRequest().get(0).getDocumentUniqueId());
@@ -452,7 +444,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                     Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
                     Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
                     Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.PATIENT_SERVICE_LIST.getIheCode(), new DateTime(),
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.XCA_SERVICE_LIST.getEventTypeCode().getCsdCode(), new DateTime(),
                     EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_LIST_REQ", messageUUID);
         } catch (final Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
@@ -785,7 +777,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
                         Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
                         Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode(), new DateTime(),
+                        EventType.XCA_SERVICE_RETRIEVE_NCP_A.getEventTypeCode().getCsdCode(), new DateTime(),
                         EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_RETRIEVE_REQ",
                         SoapElementHelper.getTRCAssertion(soapHeaderElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
             } catch (final Exception e) {

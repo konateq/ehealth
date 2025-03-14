@@ -526,8 +526,8 @@ public class DocumentRecipient_ServiceStub extends Stub {
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        EventLogUtil.prepareXDRCommonLog(eventLog, request, rel);
         eventLog.setNcpSide(NcpSide.NCP_B);
+        EventLogUtil.prepareXDRCommonLog(eventLog, request, rel);
         EventLogClientUtil.sendEventLog(eventLog);
         return eventLog;
     }

@@ -37,7 +37,7 @@ public class SamlNextOfKinIssuer {
      * @param keyStoreManager
      */
     public SamlNextOfKinIssuer(final KeyStoreManager keyStoreManager) {
-        this.keyStoreManager = Validate.notNull(keyStoreManager);
+        this.keyStoreManager = Validate.notNull(keyStoreManager, "keyStoreManager must not be null");
     }
 
     //    /**

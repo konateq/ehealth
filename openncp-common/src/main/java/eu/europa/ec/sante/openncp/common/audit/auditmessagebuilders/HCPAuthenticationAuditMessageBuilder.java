@@ -19,8 +19,10 @@ public class HCPAuthenticationAuditMessageBuilder extends AbstractAuditMessageBu
         // Audit Source
         addAuditSource(message, eventLog.getAS_AuditSourceId());
         // Event Identification
-        addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(),
-                eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
+        addEventIdentification(message,
+                eventLog.getEventType(),
+                eventLog.getEI_EventDateTime(),
+                eventLog.getEI_EventOutcomeIndicator());
         // Point Of Care
         addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
         // Human Requester

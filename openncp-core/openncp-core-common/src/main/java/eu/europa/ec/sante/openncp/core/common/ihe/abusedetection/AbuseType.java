@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.abusedetection;
+package eu.europa.ec.sante.openncp.core.common.ihe.abusedetection;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
