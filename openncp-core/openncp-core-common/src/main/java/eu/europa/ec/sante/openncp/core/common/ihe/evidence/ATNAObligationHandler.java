@@ -17,12 +17,12 @@ public class ATNAObligationHandler implements ObligationHandler {
     private static final String EVENT_ACTION_CODE = "EventActionCode";
     private static final String EVENT_DATE_TIME = "EventDateTime";
     private static final String EVENT_OUTCOME_INDICATOR = "EventOutcomeIndicator";
-    private static final String EVENT_ID = "EventID";
+    private static final String EVENT_ID = "EventIDType";
     private static final String CODE = "code";
     private static final String CODE_SYSTEM = "codeSystem";
     private static final String CODE_SYSTEM_NAME = "codeSystemName";
     private static final String DISPLAY_NAME = "displayName";
-    private static final String EVENT_TYPE_CODE = "EventTypeCode";
+    private static final String EVENT_TYPE_CODE = "EventTypeCodeType";
     private static final String ACTIVE_PARTICIPANT = "ActiveParticipant";
     private static final String ALTERNATIVE_USER_ID = "AlternativeUserID";
     private static final String NETWORK_ACCESS_POINT_ID = "NetworkAccessPointID";

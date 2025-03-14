@@ -110,7 +110,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
     private void prepareEventLogForDiscardMedication(final EventLog eventLog, final String discardId, final ProvideAndRegisterDocumentSetRequestType request,
                                                      final RegistryResponseType response, final Element soapHeader) {
 
-        eventLog.setEventType(EventType.DISPENSATION_SERVICE_DISCARD);
+        eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
         eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
         eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
@@ -163,7 +163,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
     public void prepareEventLogForDispensationInitialize(final EventLog eventLog, final ProvideAndRegisterDocumentSetRequestType request,
                                                          final RegistryResponseType response, final Element sh) {
 
-        eventLog.setEventType(EventType.DISPENSATION_SERVICE_INITIALIZE);
+        eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
         eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
         eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));

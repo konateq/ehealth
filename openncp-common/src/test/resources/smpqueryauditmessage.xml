@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
     <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T12:16:50.142+01:00" EventOutcomeIndicator="0">
-        <EventID csd-code="SMP" codeSystemName="EHDSI-193" displayName="SMP::Query" originalText="SMP::Query"/>
-        <EventTypeCode csd-code="EHDSI-193" codeSystemName="IHE Transactions" displayName="SMP::Query" originalText="SMP::Query"/>
-        <EventTypeCode csd-code="SMP" codeSystemName="EHDSI-193" displayName="SMP::Query" originalText="SMP::Query"/>
+        <EventID csd-code="110100" codeSystemName="DCM" originalText="Application Activity"/>
+        <EventTypeCode csd-code="EHDSI-193" codeSystemName="eHDSI Transactions" originalText="SMP Query"/>
     </EventIdentification>
     <ActiveParticipant UserID="ncp-ppt.pt.ehealth.testa.eu" AlternativeUserID="ncp-ppt.pt.ehealth.testa.eu" UserIsRequestor="true" NetworkAccessPointID="10.200.137.161" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer" originalText="eHealth DSI Service Consumer"/>

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.abusedetection;
+package eu.europa.ec.sante.openncp.core.common.ihe.abusedetection;
 
 public class AbuseDetectionException extends RuntimeException {
 

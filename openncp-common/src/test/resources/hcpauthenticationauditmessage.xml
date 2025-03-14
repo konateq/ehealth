@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
     <EventIdentification EventActionCode="E" EventDateTime="2024-07-17T11:12:31.296+02:00" EventOutcomeIndicator="0">
-        <EventID csd-code="110112" codeSystemName="DCM" displayName="XUA::ProvideX-UserAssertion" originalText="Query"/>
-        <EventTypeCode csd-code="ITI-40" codeSystemName="IHE Transactions" displayName="identityProvider::HPAuthentication" originalText="XUA::ProvideX-UserAssertion"/>
+        <EventID csd-code="110114" codeSystemName="DCM" originalText="User Authentication"/>
+        <EventTypeCode csd-code="ITI-40" codeSystemName="IHE Transactions" originalText="Provide X-User Assertion"/>
     </EventIdentification>
     <ActiveParticipant UserID="eHealth OpenNCP EU Portal" AlternativeUserID="eHealth OpenNCP EU Portal"
                        UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">

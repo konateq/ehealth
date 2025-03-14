@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.common.audit.auditmessagebuilders;
 
 import eu.europa.ec.sante.openncp.common.audit.AuditConstant;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
+import eu.europa.ec.sante.openncp.common.audit.EventType;
 import net.RFC3881.dicom.AuditMessage;
 import net.RFC3881.dicom.ObjectFactory;
 import org.apache.commons.collections.CollectionUtils;
@@ -33,9 +34,9 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
 
         final ObjectFactory of = new ObjectFactory();
         final AuditMessage message = of.createAuditMessage();
-        addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
-                eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
+        final EventType eventType = eventLog.getEventType();
+        addEventIdentification(message, eventType, eventLog.getEI_EventDateTime(),
+                eventLog.getEI_EventOutcomeIndicator());
         addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                 true, eventLog.getSourceip());
         addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
