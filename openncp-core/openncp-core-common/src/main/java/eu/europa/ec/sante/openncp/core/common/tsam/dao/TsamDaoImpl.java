@@ -179,9 +179,9 @@ public class TsamDaoImpl implements TsamDao {
             return new ArrayList<>();
         }
 
-        final List<CodeSystemConcept> codeSystemConcepts = codeSystemConceptRepository.findCodeSystemConceptsByValueSetVersionsIsOrderByIdAsc(valueSetVersion.getId());
+        final List<CodeSystemConcept> codeSystemConcepts = codeSystemConceptRepository.findCodeSystemConceptsByValueSetVersionsIdOrderByIdAsc(valueSetVersion.getId());
 
-        final List<Designation> designations = designationRepository.findByValueSetVersion(valueSetVersion.getVersionName());
+        final List<Designation> designations = designationRepository.findByValueSetVersionId(valueSetVersion.getId());
 
         final List<RetrievedConcept> result = new ArrayList<>();
         RetrievedConcept retrievedConcept;

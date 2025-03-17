@@ -22,6 +22,9 @@ public class DesignationRepositoryTest {
 
     private static final String CURRENT_STATUS = "current";
 
+    private static long valueSetVersionId1;
+    private static long valueSetVersionId2;
+
     @Autowired
     private ValueSetVersionRepository valueSetVersionRepository;
 
@@ -29,8 +32,8 @@ public class DesignationRepositoryTest {
     private DesignationRepository designationRepository;
 
     @Test
-    public void testFindByValueSetVersion() {
-        List<Designation> designations = designationRepository.findByValueSetVersion("202310");
+    public void testFindByValueSetVersionId() {
+        List<Designation> designations = designationRepository.findByValueSetVersionId(valueSetVersionId1);
         Assert.assertFalse(designations.isEmpty());
         Assert.assertEquals(2, designations.size());
     }
@@ -46,8 +49,10 @@ public class DesignationRepositoryTest {
     @Before
     public void prefillDatabase() {
         if (!setUpIsDone) {
-            valueSetVersionRepository.save(buildValueSetVersion(CURRENT_STATUS, "202310"));
-            valueSetVersionRepository.save(buildValueSetVersion(CURRENT_STATUS, "202210"));
+            final ValueSetVersion vsv1 = valueSetVersionRepository.save(buildValueSetVersion(CURRENT_STATUS, "202310"));
+            valueSetVersionId1 = vsv1.getId();
+            final ValueSetVersion vsv2 = valueSetVersionRepository.save(buildValueSetVersion(CURRENT_STATUS, "202210"));
+            valueSetVersionId2 = vsv2.getId();
             setUpIsDone=true;
         }
     }
