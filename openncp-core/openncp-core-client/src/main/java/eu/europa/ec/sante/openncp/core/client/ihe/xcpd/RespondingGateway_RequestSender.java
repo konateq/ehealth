@@ -9,6 +9,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201306UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -35,15 +36,15 @@ public final class RespondingGateway_RequestSender {
      */
     public static PRPAIN201306UV02 respondingGateway_PRPA_IN201305UV02(final PatientDemographics patientDemographics,
                                                                        final Map<AssertionType, Assertion> assertionMap, final String countryCode)
-            throws NoPatientIdDiscoveredException {
+            throws OpenNCPException {
 
         final var dynamicDiscoveryService = new DynamicDiscoveryService();
-        String endpointUrl = null;
+        String endpointUrl;
         try {
             endpointUrl = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH),
                                                                  RegisteredService.PATIENT_IDENTIFICATION_SERVICE);
         } catch (final ConfigurationManagerException e) {
-            throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
+            throw new OpenNCPException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
         }
 
         final String dstHomeCommunityId = OidUtil.getHomeCommunityId(countryCode.toLowerCase(Locale.ENGLISH));
@@ -57,7 +58,7 @@ public final class RespondingGateway_RequestSender {
 
     private static PRPAIN201306UV02 sendRequest(final String endpointUrl, final PRPAIN201305UV02 pRPAIN201305UV022, final Map<AssertionType, Assertion> assertionMap,
                                                 final String countryCode,
-                                                final String dstHomeCommunityId) throws NoPatientIdDiscoveredException {
+                                                final String dstHomeCommunityId) throws OpenNCPException {
 
         final var respondingGatewayServiceStub = new RespondingGateway_ServiceStub(endpointUrl);
         // Dummy handler for any mustUnderstand

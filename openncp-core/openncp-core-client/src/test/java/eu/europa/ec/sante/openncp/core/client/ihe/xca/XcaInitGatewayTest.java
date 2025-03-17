@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +36,7 @@ public class XcaInitGatewayTest {
      * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
-    public void testCrossGatewayQuery() throws XCAException {
+    public void testCrossGatewayQuery() throws OpenNCPException {
         // Arrange
         PatientId pid = new PatientId("Root", "Extension");
 
@@ -57,7 +57,7 @@ public class XcaInitGatewayTest {
      * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
-    public void testCrossGatewayQuery2() throws XCAException {
+    public void testCrossGatewayQuery2() throws OpenNCPException {
         // Arrange
         PatientId pid = new PatientId("9.9.9-U", "Extension");
 
@@ -78,7 +78,7 @@ public class XcaInitGatewayTest {
      * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
-    public void testCrossGatewayQuery3() throws XCAException {
+    public void testCrossGatewayQuery3() throws OpenNCPException {
         // Arrange
         PatientId pid = Mockito.mock(PatientId.class);
         when(pid.getExtension()).thenReturn("Extension");
@@ -105,7 +105,7 @@ public class XcaInitGatewayTest {
      * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
-    public void testCrossGatewayQuery4() throws XCAException {
+    public void testCrossGatewayQuery4() throws OpenNCPException {
         // Arrange
         PatientId pid = mock(PatientId.class);
         when(pid.getExtension()).thenReturn("Extension");
@@ -137,7 +137,7 @@ public class XcaInitGatewayTest {
      * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
-    public void testCrossGatewayQuery5() throws XCAException {
+    public void testCrossGatewayQuery5() throws OpenNCPException {
         // Arrange
         PatientId pid = mock(PatientId.class);
         when(pid.getExtension()).thenReturn("Extension");
@@ -174,7 +174,7 @@ public class XcaInitGatewayTest {
      * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
-    public void testCrossGatewayQuery6() throws XCAException {
+    public void testCrossGatewayQuery6() throws OpenNCPException {
         // Arrange
         PatientId pid = mock(PatientId.class);
         when(pid.getExtension()).thenReturn(" ");

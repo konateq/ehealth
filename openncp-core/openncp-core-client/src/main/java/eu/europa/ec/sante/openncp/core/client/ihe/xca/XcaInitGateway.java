@@ -24,7 +24,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQu
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryResponse;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
@@ -69,7 +69,7 @@ public class XcaInitGateway {
                                                   final List<GenericDocumentCode> documentCodes,
                                                   final FilterParams filterParams,
                                                   final Map<AssertionType, Assertion> assertionMap,
-                                                  final String service) throws XCAException {
+                                                  final String service) throws OpenNCPException {
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             final StringBuilder builder = new StringBuilder();
@@ -124,7 +124,7 @@ public class XcaInitGateway {
     public RetrieveDocumentSetResponseType.DocumentResponse crossGatewayRetrieve(final XDSDocument document, final String homeCommunityId,
                                                                                  final String countryCode, final String targetLanguage,
                                                                                  final Map<AssertionType, Assertion> assertionMap,
-                                                                                 final String service) throws XCAException {
+                                                                                 final String service) throws OpenNCPException {
 
         LOGGER.info("QueryResponse crossGatewayQuery('{}','{}','{}','{}','{}', '{}')", homeCommunityId, countryCode,
                 targetLanguage, assertionMap.get(AssertionType.HCP).getID(),
@@ -213,9 +213,9 @@ public class XcaInitGateway {
      * Processes registry errors from the {@link AdhocQueryResponse} message, by reporting them to the logging system.
      *
      * @param registryErrorList the list of errors from the {@link AdhocQueryResponse} message.
-     * @throws XCAException thrown when an error has a severity of type "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error".
+     * @throws OpenNCPException thrown when an error has a severity of type "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error".
      */
-    private static void processRegistryErrors(final RegistryErrorList registryErrorList) throws XCAException {
+    private static void processRegistryErrors(final RegistryErrorList registryErrorList) throws OpenNCPException {
         // A.R. ++ Error processing. For retrieve. Is it needed?
         // We don't want to break on TSAM errors anyway...
 
@@ -259,7 +259,7 @@ public class XcaInitGateway {
                         if (LOGGER.isErrorEnabled()) {
                             LOGGER.error("Registry Errors: '{}'", msg);
                         }
-                        throw new XCAException(openncpErrorCode, codeContext, location);
+                        throw new OpenNCPException(openncpErrorCode, codeContext, location);
                     }
                 }
             }

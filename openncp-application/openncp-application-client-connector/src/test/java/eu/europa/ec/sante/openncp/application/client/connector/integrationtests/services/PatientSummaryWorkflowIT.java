@@ -8,6 +8,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.*;
@@ -166,6 +167,41 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
+    void bugtrigger_EHEALTH_10546() throws MalformedURLException, MarshallingException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        final Assertion clinicalAssertion = AssertionUtils.createPharmacistAssertion(keyStoreManager, "Marie Curie", "marie@ehdsi.eu");
+
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("2-1234-W8");
+
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+        final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
+        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
+
+        final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
+        classCode.setNodeRepresentation(ClassCode.PS_CLASSCODE.getCode());
+        classCode.setSchema("2.16.840.1.113883.6.1");
+        classCode.setValue(Constants.PS_TITLE);
+
+        assertThatExceptionOfType(SOAPFaultException.class)
+                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
+                .extracting(SOAPFaultException::getFault)
+                .satisfies(fault -> {
+                    assertThat(fault.getFaultCode()).contains("Receiver");
+                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
+
+                    final List<QName> subCodes = StreamSupport.stream(
+                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
+                    ).collect(Collectors.toList());
+                    assertThat(subCodes)
+                            .hasSize(1)
+                            .extracting(QName::getLocalPart)
+                            .containsExactly(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getCode());
+                });
+    }
+
+    @Test
     void bugtrigger_EHEALTH_13227_missing_fault_code() throws MalformedURLException, MarshallingException {
 
         final ObjectFactory objectFactory = new ObjectFactory();
@@ -185,7 +221,7 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
                 .extracting(SOAPFaultException::getFault)
                 .satisfies(fault -> {
                     assertThat(fault.getFaultCode()).contains("Receiver");
-                    assertThat(fault.getFaultString()).contains("NoPatientIdDiscoveredException");
+                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getDescription());
 
                     final List<QName> subCodes = StreamSupport.stream(
                             ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
@@ -193,7 +229,7 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
                     assertThat(subCodes)
                             .hasSize(1)
                             .extracting(QName::getLocalPart)
-                            .containsExactly("ERROR_PI_NO_MATCH");
+                            .containsExactly(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode());
                 });
     }
 }
