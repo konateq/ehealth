@@ -18,5 +18,5 @@ public interface CodeSystemConceptRepository extends JpaRepository<CodeSystemCon
     List<Designation> findDesignationByIdAndDesignationLanguageCode(@Param("id") Long id, @Param("languageCode") String languageCode);
 
 
-    List<CodeSystemConcept> findCodeSystemConceptsByValueSetVersionsIsOrderByIdAsc(long id);
+    List<CodeSystemConcept> findCodeSystemConceptsByValueSetVersionsIdOrderByIdAsc(long id);
 }
