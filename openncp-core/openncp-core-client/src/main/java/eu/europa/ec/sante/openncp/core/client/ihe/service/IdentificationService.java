@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.client.ihe.service;
 
 
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdInitGateway;
+import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import org.apache.commons.lang3.Validate;
@@ -15,9 +15,9 @@ import java.util.Map;
 @Service
 public class IdentificationService {
 
-    final XcpdInitGateway xcpdInitGateway;
+    final XcpdGateway xcpdInitGateway;
 
-    public IdentificationService(final XcpdInitGateway xcpdInitGateway) {
+    public IdentificationService(final XcpdGateway xcpdInitGateway) {
         this.xcpdInitGateway = Validate.notNull(xcpdInitGateway, "XcpdInitGateway cannot be null");
     }
 

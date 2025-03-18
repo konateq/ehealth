@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdInitGateway;
+import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 
@@ -34,7 +34,7 @@ public class IdentificationServiceTest {
     private IdentificationService identificationService;
 
     @Mock
-    private XcpdInitGateway xcpdInitGateway;
+    private XcpdGateway xcpdInitGateway;
 
     /**
      * Method under test:

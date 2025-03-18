@@ -45,58 +45,6 @@
             <artifactId>quartz</artifactId>
             <scope>compile</scope>
         </dependency>
-        <!-- Axis 2 dependencies -->
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-kernel</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-transport-http</artifactId>
-            <version>${axis2.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpcore</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpclient</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-transport-local</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>addressing</artifactId>
-            <version>${axis2.version}</version>
-            <classifier>classpath-module</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-xmlbeans</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-xmlbeans-codegen</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-adb</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-jaxws</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
@@ -107,10 +55,33 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxws</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.xml.ws</groupId>
+                    <artifactId>jaxws-rt</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-transports-http</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
         <resources>
+            <!-- Copy generated WSDL files into the classpath -->
+            <resource>
+                <directory>target/wsdl</directory>
+                <targetPath>wsdl</targetPath>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
@@ -125,6 +96,108 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
+            </plugin>
+            <!-- Unpack the WSDL from the server JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <!-- 1. Unpack the WSDL file -->
+                    <execution>
+                        <id>unpack-wsdl</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>eu.europa.ec.sante</groupId>
+                                    <artifactId>openncp-core-server-api</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <includes>xcpd/XCPD_Service.wsdl</includes>
+                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <!-- 2. Unpack the schema files -->
+                    <execution>
+                        <id>unpack-schema</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>eu.europa.ec.sante</groupId>
+                                    <artifactId>openncp-core-server-api</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <!-- Unpack the entire schema folder -->
+                                    <includes>xcpd/schema/**</includes>
+                                    <!-- Place the schemas in the wsdl folder so it is the same structure as the server: .../xcpd/schema -->
+                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <!-- 3. Unpack the bindings file -->
+                    <execution>
+                        <id>unpack-bindings</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>eu.europa.ec.sante</groupId>
+                                    <artifactId>openncp-core-server-api</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <includes>xcpd/bindings.xjb</includes>
+                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Generate CXF client stubs -->
+            <plugin>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-codegen-plugin</artifactId>
+                <version>${cxf.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <wsdlOptions>
+                                <wsdlOption>
+                                    <!-- Reference the unpacked WSDL -->
+                                    <wsdl>${project.build.directory}/wsdl/xcpd/XCPD_Service.wsdl</wsdl>
+                                    <wsdlLocation>classpath:wsdl/xcpd/XCPD_Service.wsdl</wsdlLocation>
+                                    <!-- Set the wsdlRoot to the target directory so that the relative reference "schema/PRPA_IN201305UV02.xsd" resolves to target/schema/PRPA_IN201305UV02.xsd -->
+                                    <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <bindingFiles>
+                                        <bindingFile>${project.build.directory}/wsdl/xcpd/bindings.xjb</bindingFile>
+                                    </bindingFiles>
+                                    <extraargs>
+                                        <extraarg>-p</extraarg>
+                                        <extraarg>eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated</extraarg>
+                                    </extraargs>
+                                </wsdlOption>
+                            </wsdlOptions>
+                        </configuration>
+                        <goals>
+                            <goal>wsdl2java</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

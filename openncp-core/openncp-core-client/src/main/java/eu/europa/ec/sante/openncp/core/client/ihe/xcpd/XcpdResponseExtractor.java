@@ -1,25 +1,27 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class RespondingGateway_RequestReceiver {
+public class XcpdResponseExtractor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RespondingGateway_RequestReceiver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XcpdResponseExtractor.class);
 
-    private RespondingGateway_RequestReceiver() {
+    private XcpdResponseExtractor() {
     }
 
     /**
@@ -34,7 +36,7 @@ public class RespondingGateway_RequestReceiver {
      * @see PRPAIN201306UV02
      * @see List
      */
-    public static List<PatientDemographics> respondingGateway_PRPA_IN201306UV02(final PRPAIN201306UV02 pRPA_IN201306UV02)
+    public static List<PatientDemographics> extract(final PRPAIN201306UV02 pRPA_IN201306UV02)
             throws NoPatientIdDiscoveredException {
 
         final List<PatientDemographics> patients = new ArrayList<>(1);
@@ -48,7 +50,7 @@ public class RespondingGateway_RequestReceiver {
                 try {
                     if (pRPA_IN201306UV02.getControlActProcess().getSubject().get(0).getRegistrationEvent() != null) {
                         if (pRPA_IN201306UV02.getControlActProcess().getSubject().get(0).getRegistrationEvent().getSubject1() != null) {
-                            PatientDemographics pd = new PatientDemographics();
+                            final PatientDemographics pd = new PatientDemographics();
 
                             // Set pd.id and pd.homeCommunityId
                             if (!pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getId().isEmpty()) {
@@ -60,7 +62,7 @@ public class RespondingGateway_RequestReceiver {
                                 if (pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson() != null) {
                                     // Set pd.administrativeGender
                                     if (pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAdministrativeGenderCode() != null) {
-                                        String sAdministrativeGender = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAdministrativeGenderCode().getCode();
+                                        final String sAdministrativeGender = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAdministrativeGenderCode().getCode();
                                         if (sAdministrativeGender != null) {
                                             pd.setAdministrativeGender(PatientDemographics.Gender.parseGender(sAdministrativeGender));
                                         }
@@ -68,9 +70,9 @@ public class RespondingGateway_RequestReceiver {
 
                                     // Set pd.birthDate
                                     if (pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getBirthTime() != null) {
-                                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
-                                        Date birthDate;
-                                        String sBirthdate;
+                                        final SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+                                        final Date birthDate;
+                                        final String sBirthdate;
 
                                         try {
                                             sBirthdate = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getBirthTime().getValue().substring(0, 8);
@@ -78,7 +80,7 @@ public class RespondingGateway_RequestReceiver {
                                                 birthDate = df.parse(sBirthdate);
                                                 pd.setBirthDate(birthDate);
                                             }
-                                        } catch (ParseException ex) {
+                                        } catch (final ParseException ex) {
                                             throw new RuntimeException(ex);
                                         }
                                     }
@@ -86,16 +88,15 @@ public class RespondingGateway_RequestReceiver {
                                     // Set pd.familyName and pd.givenName
                                     if (!pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getName().isEmpty()) {
                                         for (int i = 0; i < pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getName().get(0).getContent().size(); i++) {
-                                            Object o = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getName().get(0).getContent().get(i);
+                                            final Object o = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getName().get(0).getContent().get(i);
                                             if (o instanceof JAXBElement) {
-                                                @SuppressWarnings("unchecked")
-                                                JAXBElement<Object> temp = (JAXBElement<Object>) o;
+                                                @SuppressWarnings("unchecked") final JAXBElement<Object> temp = (JAXBElement<Object>) o;
                                                 if (temp.getValue() instanceof EnFamily) {
-                                                    EnFamily family = (EnFamily) temp.getValue();
-                                                    pd.setFamilyName(family.getContent());
+                                                    final EnFamily family = (EnFamily) temp.getValue();
+                                                    pd.setFamilyName(extractContent(family.getContent()));
                                                 } else if (temp.getValue() instanceof EnGiven) {
-                                                    EnGiven given = (EnGiven) temp.getValue();
-                                                    pd.setGivenName(given.getContent());
+                                                    final EnGiven given = (EnGiven) temp.getValue();
+                                                    pd.setGivenName(extractContent(given.getContent()));
                                                 }
                                             }
                                         }
@@ -104,25 +105,24 @@ public class RespondingGateway_RequestReceiver {
                                     // Set pd.city , pd.country , pd.postalCode and pd.streetAddress
                                     if (!pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAddr().isEmpty()) {
                                         for (int i = 0; i < pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAddr().get(0).getContent().size(); i++) {
-                                            Object o = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAddr().get(0).getContent().get(i);
+                                            final Object o = pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAddr().get(0).getContent().get(i);
                                             if (o instanceof JAXBElement) {
-                                                @SuppressWarnings("unchecked")
-                                                JAXBElement<Object> temp = (JAXBElement<Object>) pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAddr().get(0).getContent().get(i);
+                                                @SuppressWarnings("unchecked") final JAXBElement<Object> temp = (JAXBElement<Object>) pRPA_IN201306UV02.getControlActProcess().getSubject().get(s).getRegistrationEvent().getSubject1().getPatient().getPatientPerson().getValue().getAddr().get(0).getContent().get(i);
                                                 if (temp.getValue() instanceof AdxpCity) {
-                                                    AdxpCity city = (AdxpCity) temp.getValue();
-                                                    pd.setCity(city.getContent());
+                                                    final AdxpCity city = (AdxpCity) temp.getValue();
+                                                    pd.setCity(extractContent(city.getContent()));
                                                 } else if (temp.getValue() instanceof AdxpCountry) {
-                                                    AdxpCountry country = (AdxpCountry) temp.getValue();
-                                                    pd.setCountry(country.getContent());
+                                                    final AdxpCountry country = (AdxpCountry) temp.getValue();
+                                                    pd.setCountry(extractContent(country.getContent()));
                                                 } else if (temp.getValue() instanceof AdxpPostalCode) {
-                                                    AdxpPostalCode postalCode = (AdxpPostalCode) temp.getValue();
-                                                    pd.setPostalCode(postalCode.getContent());
+                                                    final AdxpPostalCode postalCode = (AdxpPostalCode) temp.getValue();
+                                                    pd.setPostalCode(extractContent(postalCode.getContent()));
                                                 } else if (temp.getValue() instanceof AdxpStreetName) {
-                                                    AdxpStreetName streetName = (AdxpStreetName) temp.getValue();
-                                                    pd.setStreetAddress(streetName.getContent());
+                                                    final AdxpStreetName streetName = (AdxpStreetName) temp.getValue();
+                                                    pd.setStreetAddress(extractContent(streetName.getContent()));
                                                 } else if (temp.getValue() instanceof AdxpStreetAddressLine) {
-                                                    AdxpStreetAddressLine streetAddressLine = (AdxpStreetAddressLine) temp.getValue();
-                                                    pd.setStreetAddress(streetAddressLine.getContent());
+                                                    final AdxpStreetAddressLine streetAddressLine = (AdxpStreetAddressLine) temp.getValue();
+                                                    pd.setStreetAddress(extractContent(streetAddressLine.getContent()));
                                                 }
                                             }
                                         }
@@ -133,7 +133,7 @@ public class RespondingGateway_RequestReceiver {
                             patients.add(pd);
                         }
                     }
-                } catch (ParseException pe) {
+                } catch (final ParseException pe) {
                     throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, pe);
                 }
             }
@@ -143,9 +143,9 @@ public class RespondingGateway_RequestReceiver {
             String xcpdErrorCodeValue = null;
             String openncpErrorCodeValue = null;
             String locationValue = null;
-            MCAIMT900001UV01DetectedIssueEvent detectedIssueEvent = getDetectedIssueEvent(pRPA_IN201306UV02);
+            final MCAIMT900001UV01DetectedIssueEvent detectedIssueEvent = getDetectedIssueEvent(pRPA_IN201306UV02);
 
-            String acknowledgementDetailText = getAcknowledgementDetailText(pRPA_IN201306UV02);
+            final String acknowledgementDetailText = getAcknowledgementDetailText(pRPA_IN201306UV02);
 
             // Tries to retrieve DetectedIssueEvent to fill error message
             if (detectedIssueEvent != null) {
@@ -164,8 +164,8 @@ public class RespondingGateway_RequestReceiver {
                 }
             }
 
-            XCPDErrorCode xcpdErrorCode= XCPDErrorCode.getErrorCode(xcpdErrorCodeValue);
-            OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.getErrorCode(openncpErrorCodeValue);
+            final XCPDErrorCode xcpdErrorCode = XCPDErrorCode.getErrorCode(xcpdErrorCodeValue);
+            final OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.getErrorCode(openncpErrorCodeValue);
 
             if(xcpdErrorCode == null && openncpErrorCode == null){
                 LOGGER.warn("No error code found in the XCPD response : " + errorMsg);
@@ -183,7 +183,7 @@ public class RespondingGateway_RequestReceiver {
                 && pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail() != null
                 && !pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()
                 && pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent() != null) {
-            return pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
+            return extractContent(pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent());
         }
         return null;
     }
@@ -206,7 +206,7 @@ public class RespondingGateway_RequestReceiver {
                 && !pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()
                 && pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation() != null
                 && !pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation().isEmpty() ) {
-            return pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation().get(0).getContent();
+            return extractContent(pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation().get(0).getContent());
         }
         return null;
     }
@@ -221,5 +221,13 @@ public class RespondingGateway_RequestReceiver {
             return pRPA_IN201306UV02.getControlActProcess().getReasonOf().get(0).getDetectedIssueEvent();
         }
         return null;
+    }
+
+    private static String extractContent(final List<Serializable> content) {
+        if (content != null && !content.isEmpty()) {
+            return (String) content.get(0);
+        } else {
+            return StringUtils.EMPTY;
+        }
     }
 }
