@@ -1,0 +1,122 @@
+=== Introduction
+
+In order to run an instance of OpenNCP, following certificates need to be created:
+
+- Service Consumer (NCP Client);
+- Service Provider (NCP Server);
+- NCP Signature;
+
+These certificates need to be stored in particular keystores and truststores, according to the following rules:
+
+[cols="1,1, 1"]
+|===
+|Type|Description|Name
+
+|Service Provider Keystore
+|stores NCP server certificate(s)
+|gazelle-service-provider-keystore.jks
+
+|Service Consumer Keystore
+|stores NCP client certificate(s)
+|gazelle-service-consumer-keystore.jks
+
+|Signature Keystore
+|stores NCP signature certificate(s)
+|gazelle-signature-keystore.jks
+
+|Truststore
+|stores all the certificates (including trusted certificates from external parties)
+|eu-truststore.jks
+|===
+
+The files need to be put in the 'keystore' folder in the openncp-configuration directory.
+
+==== TLS certificates
+
+The TLS certificate is contained in a Java Key Store (jks) and contains the private certificate of your Access Point where the Truststore only contains the public certificate of the other party's (or other parties) Access point.
+It used for the service consumer and the service provider and for the SMP registration and using the eHDSI X509 profile.
+The TLS certificate is also configured to be used with the web manager:
+
+[source,properties]
+----
+GTW_TLS_CLIENT_CERT_ALIAS=gazelle.ncp-sc.openncp.dg-sante.eu
+GTW_TLS_CLIENT_CERT_PWD=gazelle
+GTW_TLS_CLIENT_KEYSTORE_PATH=/opt/openncp-configuration/keystore/gazelle-service-consumer-keystore.jks
+GTW_TLS_CLIENT_KEYSTORE_PWD=gazelle
+----
+
+==== Seal certificates
+
+The Seal certificate is used for signing documents:
+
+- Audit messages
+- Non-repudiation evidences
+- National SMP files (before registration in the SMP server)
+
+==== Truststore
+
+You must only add the public certificate of the other party's (or parties) Access Point to your Truststore, not your public certificate).
+In the case of MyHealth@EU, the root and intermediate certificates of the certificate chain that issued the TLS certificates of the other Parties need to be added.
+The eu-truststore.jks that is included in the openncp source code already contains all the needed root and intermediate certificates needed and can be used as is.
+
+The truststore also needs to be configured to be used by the web manager
+[source,properties]
+----
+GTW_TRUSTSTORE_PATH=/opt/openncp-configuration/keystore/eu-truststore.jks
+GTW_TRUSTSTORE_PWD=changeit
+----
+
+==== Certificate generation
+
+The Certificate request procedure is explained here:
+
+[cols="1,1"]
+|===
+|Environment|Procedure
+
+|Test
+|certificates need to be generated using the Gazelle Security Suite - https://gazelle.ehdsi.eu/gss
+
+|Acceptance
+|https://webgate.ec.europa.eu/fpfis/wikis/x/BgSEPg
+
+|Production
+|https://webgate.ec.europa.eu/fpfis/wikis/x/BgSEPg
+
+|===
+
+===== Gazelle security suite (GSS)
+
+In the Gazelle Security Suite (GSS), the user need to logged in using his/her IHE account. In the top menu, the menu item 'Request a certificate' under 'PKI' needs to be chosen.
+
+2 certificate types need to be created:
+. Epsos TLS with a key size of at least 2048 (4096 recommended), that will be used for both the service consumer keystore and the service provider keystore
+. Epsos Seal with a key size of at least 2048 (4096 recommended), that will be used for the signature keystore
+
+After the files are generated, they need to be signed by an administrator. After they are signed, they can be downloaded in *.pem format or as a jks keystore.
+The keystores will contain the root certificate, together with the certificate itself. The name of the alias and the password has to be set to the exact same name specified in the properties database:
+
+[source,properties]
+----
+# Truststore
+TRUSTSTORE_PATH=/opt/openncp-configuration/keystore/eu-truststore.jks
+TRUSTSTORE_PASSWORD=changeit
+
+# Service Provider keystore
+SP_KEYSTORE_PASSWORD=gazelle
+SP_KEYSTORE_PATH=/opt/openncp-configuration/keystore/gazelle-service-provider-keystore.jks
+SP_PRIVATEKEY_ALIAS=gazelle.ncp-sp.openncp.dg-sante.eu
+SP_PRIVATEKEY_PASSWORD=gazelle
+
+# Service Consumer keystore
+SC_KEYSTORE_PASSWORD=gazelle
+SC_KEYSTORE_PATH=/opt/openncp-configuration/keystore/gazelle-service-consumer-keystore.jks
+SC_PRIVATEKEY_ALIAS=gazelle.ncp-sc.openncp.dg-sante.eu
+SC_PRIVATEKEY_PASSWORD=gazelle
+
+# Signature keystore
+NCP_SIG_KEYSTORE_PASSWORD=gazelle
+NCP_SIG_KEYSTORE_PATH=/opt/openncp-configuration/keystore/gazelle-signature-keystore.jks
+NCP_SIG_PRIVATEKEY_ALIAS=gazelle.ncp-signature.openncp.dg-sante.eu
+NCP_SIG_PRIVATEKEY_PASSWORD=gazelle
+----
