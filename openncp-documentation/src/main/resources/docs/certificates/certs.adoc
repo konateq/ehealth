@@ -68,7 +68,7 @@ GTW_TRUSTSTORE_PWD=changeit
 
 ==== Certificate generation
 
-The Certificate request procedure is explained here:
+The Certificate request procedure is different for Test and Acceptance/Production and is explained here:
 
 [cols="1,1"]
 |===
@@ -90,11 +90,12 @@ The Certificate request procedure is explained here:
 In the Gazelle Security Suite (GSS), the user need to logged in using his/her IHE account. In the top menu, the menu item 'Request a certificate' under 'PKI' needs to be chosen.
 
 2 certificate types need to be created:
+
 . Epsos TLS with a key size of at least 2048 (4096 recommended), that will be used for both the service consumer keystore and the service provider keystore
 . Epsos Seal with a key size of at least 2048 (4096 recommended), that will be used for the signature keystore
 
 After the files are generated, they need to be signed by an administrator. After they are signed, they can be downloaded in *.pem format or as a jks keystore.
-The keystores will contain the root certificate, together with the certificate itself. The name of the alias and the password has to be set to the exact same name specified in the properties database:
+The jks will contain the root certificate, together with the certificate itself. The name of the aliases and the passwords of the different keystores has to be set to the exact same name specified in the EHNCP_PROPERTY database:
 
 [source,properties]
 ----
