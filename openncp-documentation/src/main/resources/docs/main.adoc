@@ -17,6 +17,9 @@ include::fhir/visualisation.adoc[]
 // This will be generated
 include::fhir/api/index.adoc[]
 
+== Certificates
+include::certificates/certs.adoc[]
+
 == Releases
 include::releases/v8.0.0.adoc[]
 include::releases/v8.0.1.adoc[]
