@@ -1,8 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.config;
 
-import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionReportingInterceptor;
 import eu.europa.ec.sante.openncp.api.client.interceptor.*;
-import eu.europa.ec.sante.openncp.api.client.interceptor.HcpAssertionValidationInterceptor;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
@@ -68,6 +66,7 @@ public class WebServiceConfig {
 
         endpoint.getProperties().put(SecurityConstants.SIGNATURE_CRYPTO, signatureCrypto);
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
+        endpoint.getInInterceptors().add(new InboundSecurityInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
         endpoint.getInInterceptors().add(hcpAssertionValidationInterceptor);

@@ -5,7 +5,6 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerExcep
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.InboundSecurityInterceptor;
 import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.PRPAIN201306UV02;
@@ -61,9 +60,8 @@ public class XcpdGateway {
 
         final Client client = ClientProxy.getClient(xcpdPort);
 
-        client.getInInterceptors().add(new InboundSecurityInterceptor());
         client.getOutInterceptors().add(new OutboundSecurityInterceptor());
-        
+
         client.getBus().getFeatures().add(new WSAddressingFeature());
 
         final HTTPConduit conduit = (HTTPConduit) client.getConduit();

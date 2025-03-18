@@ -1,5 +1,7 @@
-package eu.europa.ec.sante.openncp.core.client.ihe.interceptors;
+package eu.europa.ec.sante.openncp.api.client.interceptor;
 
+import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.AbstractSecurityInterceptor;
+import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.headers.Header;
 import org.apache.cxf.interceptor.Fault;
@@ -16,7 +18,6 @@ public class InboundSecurityInterceptor extends AbstractSecurityInterceptor {
 
     public InboundSecurityInterceptor() {
         super(Phase.PRE_PROTOCOL);
-        addBefore(OutboundSecurityInterceptor.class.getName());
     }
 
     @Override
