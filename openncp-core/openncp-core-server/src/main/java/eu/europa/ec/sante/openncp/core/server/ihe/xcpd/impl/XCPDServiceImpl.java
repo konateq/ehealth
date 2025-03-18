@@ -25,6 +25,7 @@ import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
+import eu.europa.ec.sante.openncp.core.server.ihe.NationalConnectorFactory;
 import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceInterface;
 import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axis2.util.XMLUtils;
@@ -34,7 +35,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -71,12 +71,12 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     private final Logger logger = LoggerFactory.getLogger(XCPDServiceImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory objectFactory = new ObjectFactory();
-    private final PatientSearchInterface patientSearchService;
     private final AssertionValidator assertionValidator;
     private final PolicyAssertionManager policyAssertionManager;
+    private final NationalConnectorFactory nationalConnectorFactory;
 
-    public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager) {
-        this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
+    public XCPDServiceImpl(final NationalConnectorFactory nationalConnectorFactory, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager) {
+        this.nationalConnectorFactory = Validate.notNull(nationalConnectorFactory, "nationalConnectorFactory must not be null");
         this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
         this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
@@ -136,9 +136,9 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     }
 
     public PRPAIN201306UV02 queryPatient(final PRPAIN201305UV02 request, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-
+        final PatientSearchInterface patientSearchService = nationalConnectorFactory.createPatientSearchInstance();
         final var response = objectFactory.createPRPAIN201306UV02();
-        pRPAIN201306UV02Builder(request, response, soapHeader, eventLog);
+        pRPAIN201306UV02Builder(patientSearchService, request, response, soapHeader, eventLog);
         return response;
     }
 
@@ -492,7 +492,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         return patientDemographics;
     }
 
-    private void pRPAIN201306UV02Builder(final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
+    private void pRPAIN201306UV02Builder(final PatientSearchInterface patientSearchService, final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
                                          final EventLog eventLog) throws Exception {
 
         final String sigCountryCode;
