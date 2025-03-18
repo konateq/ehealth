@@ -1,11 +1,12 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
-import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerException;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.InboundSecurityInterceptor;
+import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.PRPAIN201306UV02;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.RespondingGatewayPortType;
@@ -27,16 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 import javax.xml.ws.BindingProvider;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.*;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Locale;
@@ -63,16 +60,18 @@ public class XcpdGateway {
         xcpdPort = xcpdService.getRespondingGatewayPortSoap12();
 
         final Client client = ClientProxy.getClient(xcpdPort);
+
+        client.getInInterceptors().add(new InboundSecurityInterceptor());
+        client.getOutInterceptors().add(new OutboundSecurityInterceptor());
+        
         client.getBus().getFeatures().add(new WSAddressingFeature());
 
         final HTTPConduit conduit = (HTTPConduit) client.getConduit();
-
         final TLSClientParameters tlsClientParameters = new TLSClientParameters();
         // This should be configurable, you don't want to disable the CN check in production!!
         tlsClientParameters.setDisableCNCheck(true);
         tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
         tlsClientParameters.setSSLSocketFactory(HttpsClientConfiguration.buildSSLContext().getSocketFactory());
-
         conduit.setTlsClientParameters(tlsClientParameters);
     }
 
@@ -100,6 +99,9 @@ public class XcpdGateway {
         // Override the endpoint address dynamically.
         final BindingProvider bindingProvider = (BindingProvider) xcpdPort;
         bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointUrl);
+        // Also update CXF's internal ClientProxy because we reuse it
+        final Client client = ClientProxy.getClient(xcpdPort);
+        client.getEndpoint().getEndpointInfo().setAddress(endpointUrl);
 
         final String dstHomeCommunityId = OidUtil.getHomeCommunityId(countryCode.toLowerCase(Locale.ENGLISH));
         final PRPAIN201305UV02 xcpdRequest = XcpdMessageBuilder.build(patientDemographics, dstHomeCommunityId);
