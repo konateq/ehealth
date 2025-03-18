@@ -50,6 +50,7 @@ import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xca.DocumentSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.openncp.core.server.ihe.IheErrorCode;
+import eu.europa.ec.sante.openncp.core.server.ihe.NationalConnectorFactory;
 import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.XCAServiceInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.ep.EPExtrinsicObjectBuilder;
@@ -104,10 +105,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
     private final ObjectFactory objectFactory = new ObjectFactory();
     private final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory ofRim = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory();
     private final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory ofRs = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory();
-    private final DocumentSearchInterface documentSearchService;
     private final AssertionValidator assertionValidator;
     private final PolicyAssertionManager policyAssertionManager;
     private final CDATransformationService cdaTransformationService;
+    private final NationalConnectorFactory nationalConnectorFactory;
 
     /**
      * Public Constructor for IHE XCA Profile implementation, the default constructor will handle the loading of
@@ -115,11 +116,11 @@ public class XCAServiceImpl implements XCAServiceInterface {
      *
      * @see ServiceLoader
      */
-    public XCAServiceImpl(final DocumentSearchInterface documentSearchService, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService) {
-        this.documentSearchService = Validate.notNull(documentSearchService, "documentSearchService must not be null");
+    public XCAServiceImpl(final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService, final NationalConnectorFactory nationalConnectorFactory) {
         this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
         this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "cdaTransformationService must not be null");
+        this.nationalConnectorFactory = Validate.notNull(nationalConnectorFactory, "nationalConnectorFactory must not be null");
     }
 
     /**
@@ -127,9 +128,9 @@ public class XCAServiceImpl implements XCAServiceInterface {
      */
     @Override
     public AdhocQueryResponse queryDocument(final AdhocQueryRequest adhocQueryRequest, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-
+        final DocumentSearchInterface documentSearchService = nationalConnectorFactory.createDocumentSearchInstance();
         try {
-            return adhocQueryResponseBuilder(adhocQueryRequest, soapHeader, eventLog);
+            return adhocQueryResponseBuilder(documentSearchService, adhocQueryRequest, soapHeader, eventLog);
         } catch (final UnsupportedOperationException uoe) {
             return handleUnsupportedOperationException(adhocQueryRequest, uoe);
         }
@@ -142,8 +143,8 @@ public class XCAServiceImpl implements XCAServiceInterface {
     @Override
     public void retrieveDocument(final RetrieveDocumentSetRequestType request, final SOAPHeader soapHeader, final EventLog eventLog, final OMElement response)
             throws Exception {
-
-        retrieveDocumentSetBuilder(request, soapHeader, eventLog, response);
+        final DocumentSearchInterface documentSearchService = nationalConnectorFactory.createDocumentSearchInstance();
+        retrieveDocumentSetBuilder(documentSearchService, request, soapHeader, eventLog, response);
     }
 
     public static List<ClassCode> getClassCodesOrCD() {
@@ -347,10 +348,10 @@ public class XCAServiceImpl implements XCAServiceInterface {
     /**
      * Main part of the XCA query operation implementation, builds a AdhocQueryResponse based on the request and SOAP data
      */
-    private AdhocQueryResponse adhocQueryResponseBuilder(final AdhocQueryRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
+    private AdhocQueryResponse adhocQueryResponseBuilder(final DocumentSearchInterface documentSearchService, final AdhocQueryRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
             throws Exception {
 
-        // Extract all necessary data in an data object
+        // Extract all necessary data in a data object
 
         // with this data object, do validation checks
         // List<ValidationResults> validationResults = validationRules.map(validationRule -> validationRule.doCheck(dataObject)).collect(Collectors.toList())
@@ -369,7 +370,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         // Create Registry Object List
         adhocQueryResponse.setRegistryObjectList(ofRim.createRegistryObjectListType());
 
-        final RequestData requestData = extractAndValidateRequestData(soapHeader, classCodeValues, registryErrorList);
+        final RequestData requestData = extractAndValidateRequestData(documentSearchService, soapHeader, classCodeValues, registryErrorList);
         if (requestData.isEmpty()) {
             return adhocQueryResponse;
         }
@@ -543,7 +544,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                             searchCriteria.add(SearchCriteria.Criteria.CREATED_AFTER, filterParams.getCreatedAfter().toString());
                         }
 
-                        final List<OrCDDocumentMetaData> orCDDocumentMetaDataList = getOrCDDocumentMetaDataList(classCodeValue, searchCriteria);
+                        final List<OrCDDocumentMetaData> orCDDocumentMetaDataList = getOrCDDocumentMetaDataList(documentSearchService, classCodeValue, searchCriteria);
 
                         if (orCDDocumentMetaDataList == null) {
                             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_ORCD_GENERIC,
@@ -602,7 +603,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         return SoapElementHelper.getDocumentEntryPatientIdFromTRCAssertion(shElement);
     }
 
-    private List<OrCDDocumentMetaData> getOrCDDocumentMetaDataList(final ClassCode classCode, final SearchCriteria searchCriteria)
+    private List<OrCDDocumentMetaData> getOrCDDocumentMetaDataList(final DocumentSearchInterface documentSearchService, final ClassCode classCode, final SearchCriteria searchCriteria)
             throws NIException, InsufficientRightsException {
 
         List<OrCDDocumentMetaData> orCDDocumentMetaDataList = new ArrayList<>();
@@ -693,7 +694,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
         return returnDoc;
     }
 
-    private void retrieveDocumentSetBuilder(final RetrieveDocumentSetRequestType request, final SOAPHeader soapHeader, final EventLog eventLog, final OMElement omElement)
+    private void retrieveDocumentSetBuilder(final DocumentSearchInterface documentSearchService, final RetrieveDocumentSetRequestType request, final SOAPHeader soapHeader, final EventLog eventLog, final OMElement omElement)
             throws Exception {
 
         final var omNamespace = omFactory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0", "");
@@ -1097,7 +1098,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
     }
 
 
-    private RequestData extractAndValidateRequestData(final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) throws Exception {
+    private RequestData extractAndValidateRequestData(final DocumentSearchInterface documentSearchService, final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) throws Exception {
         Element shElement = null;
         String sigCountryCode = null;
         AssertionDetails hcpAssertionDetails = null;
