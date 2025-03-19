@@ -15,10 +15,10 @@ import java.util.List;
 
 public class AbstractAuditEventProducer {
 
-    protected List<AuditEventData.ParticipantData> createParticipants() {
+    protected static List<AuditEventData.ParticipantData> createParticipants() {
 
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
+        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
         final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
                 .id(usernamePasswordAuthenticationToken.getName())

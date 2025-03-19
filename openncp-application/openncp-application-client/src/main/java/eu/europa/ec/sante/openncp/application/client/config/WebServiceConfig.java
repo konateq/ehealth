@@ -1,8 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.config;
 
-import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionReportingInterceptor;
 import eu.europa.ec.sante.openncp.api.client.interceptor.*;
-import eu.europa.ec.sante.openncp.api.client.interceptor.HcpAssertionValidationInterceptor;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;

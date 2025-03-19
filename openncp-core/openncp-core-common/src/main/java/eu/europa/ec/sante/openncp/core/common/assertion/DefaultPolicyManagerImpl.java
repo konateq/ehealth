@@ -423,56 +423,6 @@ public class DefaultPolicyManagerImpl implements PolicyAssertionManager {
     }
 
     /**
-     * XDR for dispensation service HCER service
-     *
-     * @param assertion - SAML user assertion.
-     * @throws InsufficientRightsException - User doesn't have enough privileges.
-     */
-    private void XDRPermissionValidatorEncounterReport(final Assertion assertion) throws InsufficientRightsException {
-
-        XDRPermissionValidatorSubmitDocument(assertion);
-    }
-
-    /**
-     * XDR for patient consent
-     *
-     * @param assertion - SAML user assertion.
-     * @throws InsufficientRightsException - User doesn't have enough privileges.
-     */
-    private void XDRPermissionValidatorConsent(final Assertion assertion) throws InsufficientRightsException {
-
-        var recordMedicationAdministrationRecord = false;
-
-        final List<XMLObject> permissions = AssertionHelper.getPermissionValuesFromAssertion(assertion);
-        final String role;
-
-        //Check allowed roles
-        try {
-            role = getRoleCodeFromAssertion(assertion);
-        } catch (final MissingFieldException ex) {
-            logger.error(ERROR_ASSERTION_MISSING_FIELD_ROLE, ex.getMessage(), ex);
-            throw new InsufficientRightsException();
-        }
-        if (!XSPARole.containsCode(role)) {
-            logger.error("InsufficientRightsException - Unsupported role (named: '{}') tried to submit consent documents.", role);
-            throw new InsufficientRightsException();
-        }
-
-        //  Check required permissions
-        for (final XMLObject permission : permissions) {
-            if (permission.getDOM() != null && StringUtils.equals(permission.getDOM().getTextContent(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_HL7_PERMISSION_PPD_032)) {
-                recordMedicationAdministrationRecord = true;
-                logger.debug("Found permission for PPD-032 (New Consents and Authorizations)");
-            }
-        }
-
-        if (!recordMedicationAdministrationRecord) {
-            logger.error("InsufficientRightsException for Cross-Community Document Reliable to eConsent request");
-            throw new InsufficientRightsException();
-        }
-    }
-
-    /**
      * Validates if a patient has provided his consent. Default implementation always returns TRUE as the system is using
      * a mocked National Infrastructure.
      *
