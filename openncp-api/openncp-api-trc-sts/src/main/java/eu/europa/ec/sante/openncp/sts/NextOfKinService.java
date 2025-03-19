@@ -82,6 +82,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
 
         try {
             final var nextOfKinDetail = STSUtils.getNextOfKinDetails(body);
+            final String purposeOfUse = STSUtils.getPurposeOfUse(body, STSUtils.NOK_NS, "NoKParameters");
             final String messageId = getMessageIdFromHeader(header);
 
             final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -98,8 +99,8 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
                 }
             }
             final List<Attribute> attributeList = buildNextOfKinAttributes(nextOfKinDetail);
-            final Assertion nextOfKinAssertion = samlNextOfKinIssuer.issueNextOfKinToken(hcpIdAssertion, "doctorId", hcpIdAssertion.getID(), attributeList);
-            logger.info("HCP Assertion Date: '{}' TRC Assertion Date: '{}' -- '{}'", hcpIdAssertion.getIssueInstant().withZone(DateTimeZone.UTC),
+            final Assertion nextOfKinAssertion = samlNextOfKinIssuer.issueNextOfKinToken(hcpIdAssertion, nextOfKinDetail.getPatientId(), purposeOfUse, hcpIdAssertion.getID(), attributeList);
+            logger.info("HCP Assertion Date: '{}' NOK Assertion Date: '{}' -- '{}'", hcpIdAssertion.getIssueInstant().withZone(DateTimeZone.UTC),
                         nextOfKinAssertion.getIssueInstant().withZone(DateTimeZone.UTC), nextOfKinAssertion.getAuthnStatements().isEmpty());
             final Document signedDoc = builder.newDocument();
             final var marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
@@ -124,7 +125,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
             sslCommonName = HttpUtil.getSubjectDN(false);
             sendNOKAuditMessage(samlNextOfKinIssuer.getPointOfCare(), samlNextOfKinIssuer.getHumanRequestorNameId(),
                                 samlNextOfKinIssuer.getHumanRequestorSubjectId(), samlNextOfKinIssuer.getFunctionalRole(),
-                                nextOfKinDetail.getLivingSubjectIds(), samlNextOfKinIssuer.getFacilityType(), nextOfKinAssertion.getID(),
+                    nextOfKinDetail.getLivingSubjectId(), samlNextOfKinIssuer.getFacilityType(), nextOfKinAssertion.getID(),
                                 sslCommonName, messageId, strReqHeader.getBytes(StandardCharsets.UTF_8),
                                 getMessageIdFromHeader(response.getSOAPHeader()), strRespHeader.getBytes(StandardCharsets.UTF_8));
 
@@ -136,7 +137,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
     }
 
     private void sendNOKAuditMessage(final String pointOfCareID, final String humanRequestorNameID, final String humanRequestorSubjectID, final String humanRequestorRole,
-                                     final List<String> nokIDs, final String facilityType, final String assertionId, final String certificateCommonName, final String reqMid,
+                                     final String nokID, final String facilityType, final String assertionId, final String certificateCommonName, final String reqMid,
                                      final byte[] reqSecHeader, final String resMid, final byte[] resSecHeader) {
 
         final var auditService = AuditServiceFactory.getInstance();
@@ -153,7 +154,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
         final EventLog eventLogNOKA = EventLog.createEventLogNOKA(TransactionName.NOK_ASSERTION, EventActionCode.EXECUTE, date,
                                                                   EventOutcomeIndicator.FULL_SUCCESS, pointOfCareID, facilityType, humanRequestorNameID,
                                                                   humanRequestorRole, humanRequestorSubjectID, certificateCommonName, trcCommonName,
-                configurationManager.getProperty("COUNTRY_PRINCIPAL_SUBDIVISION"), nokIDs,
+                configurationManager.getProperty("COUNTRY_PRINCIPAL_SUBDIVISION"), nokID,
                                                             Constants.UUID_PREFIX + assertionId, reqMid, reqSecHeader, resMid, resSecHeader,
                                                             IPUtil.isLocalLoopbackIp(sourceGateway) ? serverName : sourceGateway,
                                                                   STSUtils.getSTSServerIP(), NcpSide.NCP_B);
@@ -165,8 +166,8 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
     private List<Attribute> buildNextOfKinAttributes(final NextOfKinDetail nextOfKinDetail) {
 
         final List<Attribute> attributeList = new ArrayList<>();
-        if (nextOfKinDetail.getLivingSubjectIds() != null && StringUtils.isNotBlank(nextOfKinDetail.getLivingSubjectIds().get(0))) {
-            attributeList.add(SamlIssuerHelper.createAttribute(nextOfKinDetail.getLivingSubjectIds().get(0), "NextOfKinId", Attribute.URI_REFERENCE,
+        if (StringUtils.isNotBlank(nextOfKinDetail.getLivingSubjectId())) {
+            attributeList.add(SamlIssuerHelper.createAttribute(nextOfKinDetail.getLivingSubjectId(), "NextOfKinId", Attribute.URI_REFERENCE,
                                                                "urn:ehdsi:names:subject:nextofkin:id"));
         }
         if (StringUtils.isNotBlank(nextOfKinDetail.getFirstName())) {

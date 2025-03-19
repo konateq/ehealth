@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
@@ -19,7 +19,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.DocumentTransformationException;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
@@ -65,7 +65,7 @@ public class XDSbRepositoryServiceInvoker {
      */
     public RegistryResponseType provideAndRegisterDocumentSet(final XdrRequest request, final String countryCode,
                                                               final Map<AssertionType, Assertion> assertionMap, final ClassCode docClassCode)
-            throws RemoteException, XDRException {
+            throws RemoteException, OpenNCPException {
 
         logger.info("[XDSb Repository] XDR Request: '{}', '{}', '{}'", assertionMap.get(AssertionType.HCP).getID(), countryCode, docClassCode);
         final RegistryResponseType response;
@@ -134,8 +134,8 @@ public class XDSbRepositoryServiceInvoker {
         final byte[] cdaBytes = request.getCda().getBytes(StandardCharsets.UTF_8);
         try {
             /* Validate CDA epSOS Friendly */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCdaDocument(request.getCda(), NcpSide.NCP_B, docClassCode, false);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCdaDocument(request.getCda(), NcpSide.NCP_B, docClassCode, false);
             }
             if (!docClassCode.equals(ClassCode.EDD_CLASSCODE)) {
                 final TMResponseStructure tmResponseStructure = cdaTransformationService.transcode(DomUtils.byteToDocument(cdaBytes), NcpSide.NCP_B);
@@ -147,8 +147,8 @@ public class XDSbRepositoryServiceInvoker {
                 xdrDocument.setValue(cdaBytes);
             }
             /* Validate CDA epSOS Pivot */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCdaDocument(new String(xdrDocument.getValue(), StandardCharsets.UTF_8), NcpSide.NCP_B, docClassCode, true);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCdaDocument(new String(xdrDocument.getValue(), StandardCharsets.UTF_8), NcpSide.NCP_B, docClassCode, true);
             }
         } catch (final DocumentTransformationException ex) {
             logger.error(ex.getLocalizedMessage(), ex);

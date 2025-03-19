@@ -23,7 +23,7 @@ public class XCAListAuditMessageBuilderTest extends XMLTestCase {
     public void testBuild() throws Exception {
         {
             final EventLog eventLog = new EventLog();
-            eventLog.setEventType(EventType.PATIENT_SERVICE_LIST);
+            eventLog.setEventType(EventType.XCA_SERVICE_LIST);
             eventLog.setNcpSide(NcpSide.NCP_A);
             eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_LIST);
             eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);

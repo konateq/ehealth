@@ -13,6 +13,8 @@ import eu.europa.ec.sante.openncp.core.server.nc.mock.common.NationalConnectorGa
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.xml.transform.TransformerException;
@@ -21,6 +23,7 @@ import javax.xml.transform.TransformerException;
  * Mock implementation of the DocumentSubmitInterface, to be replaced nationally.
  */
 @Service
+@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DocumentSubmitMockImpl extends NationalConnectorGateway implements DocumentSubmitInterface {
 
     private final Logger logger = LoggerFactory.getLogger(DocumentSubmitMockImpl.class);

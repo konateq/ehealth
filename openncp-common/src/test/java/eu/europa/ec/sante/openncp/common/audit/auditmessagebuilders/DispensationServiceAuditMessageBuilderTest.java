@@ -25,8 +25,8 @@ public class DispensationServiceAuditMessageBuilderTest extends XMLTestCase {
         {
 
             final EventLog eventLog = new EventLog();
-            eventLog.setEventType(EventType.DISPENSATION_SERVICE_INITIALIZE);
-            eventLog.setNcpSide(NcpSide.NCP_A);
+            eventLog.setEventType(EventType.XDR_SERVICE_NCP_B);
+            eventLog.setNcpSide(NcpSide.NCP_B);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
             eventLog.setEI_EventActionCode(EventActionCode.CREATE);
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);

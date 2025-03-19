@@ -1,13 +1,10 @@
 package eu.europa.ec.sante.openncp.common.audit.transformer;
 
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.AuditService;
 import eu.europa.ec.sante.openncp.common.audit.AuditTrailUtils;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.common.audit.EventType;
-import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
-import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import net.RFC3881.dicom.AuditMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -36,14 +33,16 @@ public class EventLogToAuditMessageTransformer implements AuditMessageTransforme
     public AuditMessage transform(final Object message) {
         final EventLog eventlog = (EventLog) message;
         Validate.notNull(message, "Eventlog message cannot be null.");
+        final EventType eventType = eventlog.getEventType();
+        Validate.notNull(eventType, "EventType must not be null.");
 
-        LOGGER.debug("createAuditMessage(EventLog '{}')", eventlog.getEventType());
+        LOGGER.debug("createAuditMessage(EventLog '{}')", eventType);
         //TODO: Check if the Audit Message return with a null value shall be considered as fatal?
-        final AuditMessage auditMessage = eventlog.getEventType().buildAuditMessage(eventlog);
+        final AuditMessage auditMessage = eventType.buildAuditMessage(eventlog);
 
         //  Non Repudiation information are not relevant for SML/SMP process
-        if (eventlog.getEventType() != EventType.SMP_QUERY
-                && eventlog.getEventType() != EventType.SMP_PUSH) {
+        if (eventType != EventType.SMP_QUERY
+                && eventType != EventType.SMP_PUSH) {
 
             AuditTrailUtils.getInstance().addNonRepudiationSection(auditMessage, eventlog.getReqM_ParticipantObjectID(),
                     eventlog.getReqM_ParticipantObjectDetail(), eventlog.getResM_ParticipantObjectID(),
@@ -52,7 +51,7 @@ public class EventLogToAuditMessageTransformer implements AuditMessageTransforme
 
         //TODO: Check if the Audit Message return with a null value shall be considered as fatal?
         /* Invoke audit message validation services */
-        if (OpenNCPValidation.isValidationEnable()) {
+        if (GazelleValidation.isValidationEnable()) {
             if (auditMessage == null) {
                 LOGGER.error("Validation of the Audit Message cannot proceed on a Null value!!!");
             } else {
@@ -71,10 +70,10 @@ public class EventLogToAuditMessageTransformer implements AuditMessageTransforme
             // Infer model according to NCP Side and EventCode
             NcpSide ncpSide = eventLog.getNcpSide();
 
-            if (StringUtils.equals(eventLog.getEventType().getCode(), "EHDSI-CF")) {
+            if (StringUtils.equals(eventLog.getEventType().getEventTypeCode().getCsdCode(), "EHDSI-CF")) {
                 throw new UnsupportedOperationException("EventCode not supported.");
             }
-            OpenNCPValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getCode(), ncpSide);
+            GazelleValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getEventTypeCode().getCsdCode(), ncpSide);
         } catch (JAXBException e) {
             LOGGER.error("JAXBException: {}", e.getMessage(), e);
         } catch (Exception e) {

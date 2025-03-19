@@ -219,7 +219,7 @@ dGT29iM4xah10aMXPPyio+OjJeyod2ePC65wTpcjtX6J2SLnpI5+u4n9KyMZhIJLOscabyWGo+A=</ds
       </saml2:Attribute>
       <saml2:Attribute FriendlyName="XSPA Purpose Of Use" Name="urn:oasis:names:tc:xspa:1.0:subject:purposeofuse" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
          <saml2:AttributeValue>
-            <PurposeOfUse xmlns="urn:hl7-org:v3" code="TREATMENT" codeSystem="3bc18518-d305-46c2-a8d6-94bd59856e9e" codeSystemName="eHDSI XSPA PurposeOfUse" displayName="TREATMENT" />
+            <PurposeOfUse xmlns="urn:hl7-org:v3" code="TREATMENT" codeSystem="3bc18518-d305-46c2-a8d6-94bd59856e9e" codeSystemName="eHDSI PurposeOfUse" displayName="TREATMENT" />
          </saml2:AttributeValue>
       </saml2:Attribute>
       <saml2:Attribute FriendlyName="XSPA Locality" Name="urn:oasis:names:tc:xspa:1.0:environment:locality" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">

@@ -13,7 +13,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
@@ -25,7 +25,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcEntry;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.InFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.OutFlowEvidenceEmitterHandler;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
@@ -33,10 +33,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
 import org.apache.axiom.om.*;
 import org.apache.axiom.om.ds.AbstractOMDataSource;
-import org.apache.axiom.soap.SOAP12Constants;
-import org.apache.axiom.soap.SOAPEnvelope;
-import org.apache.axiom.soap.SOAPFactory;
-import org.apache.axiom.soap.SOAPHeaderBlock;
+import org.apache.axiom.soap.*;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.OperationClient;
 import org.apache.axis2.client.ServiceClient;
@@ -70,6 +67,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /*
  *  RespondingGateway_ServiceStub java implementation
@@ -273,7 +271,7 @@ public class RespondingGateway_ServiceStub extends Stub {
     public AdhocQueryResponse respondingGateway_CrossGatewayQuery(final AdhocQueryRequest adhocQueryRequest,
                                                                   final Map<AssertionType, Assertion> assertionMap,
                                                                   final List<ClassCode> classCodes)
-            throws java.rmi.RemoteException, XCAException {
+            throws java.rmi.RemoteException, OpenNCPException {
 
         String eadcError = "";
 
@@ -373,7 +371,7 @@ public class RespondingGateway_ServiceStub extends Stub {
                 }
                 logRequestBody = XMLUtil.prettyPrint(XMLUtils.toDOM(env.getBody().getFirstElement()));
             } catch (final Exception ex) {
-                throw new XCAException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), null);
+                throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), null);
             }
             // NRO
 //                try {
@@ -399,8 +397,8 @@ public class RespondingGateway_ServiceStub extends Stub {
             start = System.currentTimeMillis();
 
             /* Validate Request Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, classCodes);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, classCodes);
             }
 
             // TMP
@@ -489,7 +487,7 @@ public class RespondingGateway_ServiceStub extends Stub {
                     /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
                     eadcError = "Could not find configurations in the Central Services for [" + endpoint + "], the service will fail.";
                     LOGGER.error(eadcError);
-                    throw new XCAException(OpenNCPErrorCode.ERROR_GENERIC, e.getMessage(), null);
+                    throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, e.getMessage(), null);
                 }
             }
             _returnMessageContext = _operationClient.getMessageContext(WSDLConstants.MESSAGE_LABEL_IN_VALUE);
@@ -514,12 +512,12 @@ public class RespondingGateway_ServiceStub extends Stub {
                 }
                 logResponseBody = XMLUtil.prettyPrint(XMLUtils.toDOM(_returnEnv.getBody().getFirstElement()));
             } catch (final Exception ex) {
-                throw new XCAException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), null);
+                throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, ex.getMessage(), null);
             }
 
             /* Validate Response Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, classCodes);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, classCodes);
             }
 
             // TMP
@@ -581,37 +579,16 @@ public class RespondingGateway_ServiceStub extends Stub {
             return adhocQueryResponse;
 
         } catch (final AxisFault axisFault) {
-            // TODO A.R. Audit log SOAP Fault is still missing
-            final OMElement faultElt = axisFault.getDetail();
 
-            if (faultElt != null) {
-
-                if (faultExceptionNameMap.containsKey(faultElt.getQName())) {
-
-                    //make the fault by reflection
-                    try {
-                        final String exceptionClassName = (String) faultExceptionClassNameMap.get(faultElt.getQName());
-                        final Class exceptionClass = Class.forName(exceptionClassName);
-                        final Exception ex = (Exception) exceptionClass.getDeclaredConstructor().newInstance();
-                        //message class
-                        final String messageClassName = (String) faultMessageMap.get(faultElt.getQName());
-                        final Class messageClass = Class.forName(messageClassName);
-                        final Object messageObject = fromOM(faultElt, messageClass, null);
-                        final Method m = exceptionClass.getMethod("setFaultMessage", messageClass);
-                        m.invoke(ex, messageObject);
-
-                        throw new java.rmi.RemoteException(ex.getMessage(), ex);
-
-                        /* we cannot instantiate the class - throw the original Axis fault */
-                    } catch (final Exception e) {
-                        eadcError = e.getMessage();
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
-                }
+            final Optional<String> errorCode = axisFault.getFaultSubCodes().stream().map(QName::getLocalPart).findFirst();
+            Optional<OpenNCPErrorCode> openNCPErrorCode = errorCode.map(OpenNCPErrorCode::getErrorCode);
+            if (openNCPErrorCode.isPresent()) {
+                eadcError = openNCPErrorCode.get().getCode();
+                throw new OpenNCPException(openNCPErrorCode.get(), axisFault);
+            } else {
+                eadcError = OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE.getCode();
+                throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, "AxisFault", null);
             }
-            eadcError = OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE.getCode();
-            throw new XCAException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, "AxisFault", null);
-
         } finally {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
@@ -671,7 +648,7 @@ public class RespondingGateway_ServiceStub extends Stub {
     public RetrieveDocumentSetResponseType respondingGateway_CrossGatewayRetrieve(final RetrieveDocumentSetRequestType retrieveDocumentSetRequest,
                                                                                   final Map<AssertionType, Assertion> assertionMap,
                                                                                   final ClassCode classCode)
-            throws java.rmi.RemoteException, XCAException {
+            throws java.rmi.RemoteException, OpenNCPException {
 
         String eadcError = "";
         MessageContext _messageContext = null;
@@ -698,7 +675,6 @@ public class RespondingGateway_ServiceStub extends Stub {
             /*
              * adding SOAP soap_headers
              */
-            final SOAPFactory soapFactory = getFactory(_operationClient.getOptions().getSoapVersionURI());
             final OMFactory factory = OMAbstractFactory.getOMFactory();
 
             final OMNamespace ns2 = factory.createOMNamespace(XCAConstants.SOAP_HEADERS.QUERY.OM_NAMESPACE, "addressing");
@@ -780,12 +756,12 @@ public class RespondingGateway_ServiceStub extends Stub {
 //                    LOGGER.error(ExceptionUtils.getStackTrace(e));
 //                }
             } catch (final Exception ex) {
-                throw new XCAException(getErrorCode(classCode), ex.getMessage(), null);
+                throw new OpenNCPException(getErrorCode(classCode), ex.getMessage(), null);
             }
 
             /* Validate Request Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, List.of(classCode));
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logRequestBody, NcpSide.NCP_B, List.of(classCode));
             }
 
             /*
@@ -877,7 +853,7 @@ public class RespondingGateway_ServiceStub extends Stub {
                     /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
                     eadcError = "Could not find configurations in the Central Services for [" + endpoint + "], the service will fail.";
                     LOGGER.error(eadcError);
-                    throw new XCAException(getErrorCode(classCode), e.getMessage(), null);
+                    throw new OpenNCPException(getErrorCode(classCode), e.getMessage(), null);
                 }
             }
             _returnMessageContext = _operationClient.getMessageContext(WSDLConstants.MESSAGE_LABEL_IN_VALUE);
@@ -893,12 +869,12 @@ public class RespondingGateway_ServiceStub extends Stub {
                 }
                 logResponseBody = XMLUtil.prettyPrint(XMLUtils.toDOM(returnEnv.getBody().getFirstElement()));
             } catch (final Exception ex) {
-                throw new XCAException(getErrorCode(classCode), ex.getMessage(), null);
+                throw new OpenNCPException(getErrorCode(classCode), ex.getMessage(), null);
             }
 
             /* Validate Response Message */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, List.of(classCode));
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCrossCommunityAccess(logResponseBody, NcpSide.NCP_B, List.of(classCode));
             }
 
             /*
@@ -962,7 +938,7 @@ public class RespondingGateway_ServiceStub extends Stub {
                 }
             }
             eadcError = axisFault.getMessage();
-            throw new XCAException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, axisFault.getMessage(), null);
+            throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, axisFault.getMessage(), null);
         } finally {
             if (_messageContext != null && _messageContext.getTransportOut() != null && _messageContext.getTransportOut().getSender() != null) {
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
@@ -1144,7 +1120,7 @@ public class RespondingGateway_ServiceStub extends Stub {
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-        final EventType eventType = EventType.determineEventTypeForXCAQuery(classCodes);
+        final EventType eventType = EventType.XCA_SERVICE_LIST;
         final TransactionName transactionName = TransactionName.determineTransactionNameForXCAQuery(classCodes);
         EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, eventType, transactionName);
         eventLog.setNcpSide(NcpSide.NCP_B);
@@ -1161,7 +1137,7 @@ public class RespondingGateway_ServiceStub extends Stub {
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
         eventLog.setEI_EventActionCode(EventActionCode.CREATE);
-        final EventType eventType = EventType.determineEventTypeForXCARetrieve(classCode);
+        final EventType eventType = EventType.XCA_SERVICE_RETRIEVE_NCP_B;
         final TransactionName transactionName = TransactionName.determineTransactionNameForXCARetrieve(classCode);
         EventLogUtil.prepareXCACommonLogRetrieve(eventLog, msgContext, request, response, eventType, transactionName);
         eventLog.setNcpSide(NcpSide.NCP_B);
