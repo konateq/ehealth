@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryRequestCreator;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryResponseConverter;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
@@ -24,7 +24,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQu
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryResponse;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
@@ -69,7 +69,7 @@ public class XcaInitGateway {
                                                   final List<GenericDocumentCode> documentCodes,
                                                   final FilterParams filterParams,
                                                   final Map<AssertionType, Assertion> assertionMap,
-                                                  final String service) throws XCAException {
+                                                  final String service) throws OpenNCPException {
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             final StringBuilder builder = new StringBuilder();
@@ -124,7 +124,7 @@ public class XcaInitGateway {
     public RetrieveDocumentSetResponseType.DocumentResponse crossGatewayRetrieve(final XDSDocument document, final String homeCommunityId,
                                                                                  final String countryCode, final String targetLanguage,
                                                                                  final Map<AssertionType, Assertion> assertionMap,
-                                                                                 final String service) throws XCAException {
+                                                                                 final String service) throws OpenNCPException {
 
         LOGGER.info("QueryResponse crossGatewayQuery('{}','{}','{}','{}','{}', '{}')", homeCommunityId, countryCode,
                 targetLanguage, assertionMap.get(AssertionType.HCP).getID(),
@@ -178,8 +178,8 @@ public class XcaInitGateway {
 
             try {
                 //  Validate CDA Pivot
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateCdaDocument(new String(pivotDocument, StandardCharsets.UTF_8),
+                if (GazelleValidation.isValidationEnable()) {
+                    GazelleValidation.validateCdaDocument(new String(pivotDocument, StandardCharsets.UTF_8),
                             NcpSide.NCP_B, ClassCode.getByCode(document.getClassCode().getValue()), true);
                 }
                 if (service.equals(Constants.OrCDService)) {
@@ -197,8 +197,8 @@ public class XcaInitGateway {
             } finally {
                 LOGGER.debug("[XCA Init Gateway] Returns Original Document");
                 //  Validate CDA Friendly-B
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateCdaDocument(
+                if (GazelleValidation.isValidationEnable()) {
+                    GazelleValidation.validateCdaDocument(
                             new String(queryResponse.getDocumentResponse().get(0).getDocument(), StandardCharsets.UTF_8),
                             NcpSide.NCP_B, ClassCode.getByCode(document.getClassCode().getValue()), false);
                 }
@@ -213,9 +213,9 @@ public class XcaInitGateway {
      * Processes registry errors from the {@link AdhocQueryResponse} message, by reporting them to the logging system.
      *
      * @param registryErrorList the list of errors from the {@link AdhocQueryResponse} message.
-     * @throws XCAException thrown when an error has a severity of type "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error".
+     * @throws OpenNCPException thrown when an error has a severity of type "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error".
      */
-    private static void processRegistryErrors(final RegistryErrorList registryErrorList) throws XCAException {
+    private static void processRegistryErrors(final RegistryErrorList registryErrorList) throws OpenNCPException {
         // A.R. ++ Error processing. For retrieve. Is it needed?
         // We don't want to break on TSAM errors anyway...
 
@@ -259,7 +259,7 @@ public class XcaInitGateway {
                         if (LOGGER.isErrorEnabled()) {
                             LOGGER.error("Registry Errors: '{}'", msg);
                         }
-                        throw new XCAException(openncpErrorCode, codeContext, location);
+                        throw new OpenNCPException(openncpErrorCode, codeContext, location);
                     }
                 }
             }

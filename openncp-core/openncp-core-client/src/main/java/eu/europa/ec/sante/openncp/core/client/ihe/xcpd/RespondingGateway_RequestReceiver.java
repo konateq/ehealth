@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class RespondingGateway_RequestReceiver {
      * @see List
      */
     public static List<PatientDemographics> respondingGateway_PRPA_IN201306UV02(final PRPAIN201306UV02 pRPA_IN201306UV02)
-            throws NoPatientIdDiscoveredException {
+            throws OpenNCPException {
 
         final List<PatientDemographics> patients = new ArrayList<>(1);
 
@@ -134,7 +135,7 @@ public class RespondingGateway_RequestReceiver {
                         }
                     }
                 } catch (ParseException pe) {
-                    throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, pe);
+                    throw new OpenNCPException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, pe);
                 }
             }
         } else {
@@ -171,7 +172,7 @@ public class RespondingGateway_RequestReceiver {
                 LOGGER.warn("No error code found in the XCPD response : " + errorMsg);
             }
 
-            throw new NoPatientIdDiscoveredException(xcpdErrorCode, openncpErrorCode, acknowledgementDetailText, locationValue);
+            throw new OpenNCPException(openncpErrorCode, acknowledgementDetailText, locationValue);
         }
 
         return patients;

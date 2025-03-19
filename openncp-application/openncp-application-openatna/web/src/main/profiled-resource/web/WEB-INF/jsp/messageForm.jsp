@@ -54,7 +54,7 @@
     <td>Event Id Code :</td>
     <td><form:input path="eventIdCode"/></td>
     <td>Event Type Code :</td>
-    <td><form:input path="eventTypeCode"/></td>
+    <td><form:input path="eventTypeCodeType"/></td>
     <td>Start Date :</td>
     <td><form:input path="startDate" id="enddatepicker"/></td>
 </tr>

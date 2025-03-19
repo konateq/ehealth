@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.assertion;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -135,8 +135,8 @@ public class AssertionServiceImpl implements AssertionService {
             var unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
             var unmarshaller = unmarshallerFactory.getUnmarshaller(assertion);
             var trcAssertion = (Assertion) unmarshaller.unmarshall(assertDoc.getDocumentElement());
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_B);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateTRCAssertion(trcAssertion, NcpSide.NCP_B);
             }
             return trcAssertion;
 

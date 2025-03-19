@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
     <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T11:49:32.927+01:00" EventOutcomeIndicator="0">
-        <EventID csd-code="110112" codeSystemName="DCM" displayName="XCA::CrossGatewayQuery" originalText="Query"/>
-        <EventTypeCode csd-code="ITI-38" codeSystemName="IHE Transactions" displayName="PatientService::List" originalText="XCA::CrossGatewayQuery"/>
+        <EventID csd-code="110112" codeSystemName="DCM" originalText="Query"/>
+        <EventTypeCode csd-code="ITI-38" codeSystemName="IHE Transactions" originalText="Cross Gateway Query"/>
     </EventIdentification>
     <ActiveParticipant UserID="PC User ID" AlternativeUserID="PC User ID" UserIsRequestor="false" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110152" codeSystemName="DCM" originalText="Destination Role ID"/>

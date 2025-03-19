@@ -1,9 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util;
 
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.ImmutableTrcAssertionRequest;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.STSClientException;
-import eu.europa.ec.sante.openncp.application.client.connector.assertion.TrcAssertionRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.assertion.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
@@ -47,16 +44,20 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static org.opensaml.saml.common.xml.SAMLConstants.SAML20_NS;
 
 public class AssertionUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AssertionUtils.class);
 
     public static Assertion createClinicalAssertion(final KeyStoreManager keyStoreManager, final String username, final String fullName,
-                                              final String email) {
+                                                    final String email) {
         final List<String> permissions = new ArrayList<>();
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-003");
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004");
@@ -79,10 +80,54 @@ public class AssertionUtils {
                 "eHDSI EU Testing MedCare Center", permissions, null);
     }
 
-    private static Assertion createHCPAssertion(KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
-                                               final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
-                                               final String organizationId, final String facilityType, final String purposeOfUse,
-                                               final String locality, final List<String> permissions, final String onBehalfId) {
+    public static Assertion createMedicalDoctorAssertion(final KeyStoreManager keyStoreManager,
+                                                         final String fullName,
+                                                         final String email) {
+        final List<String> permissions = new ArrayList<>();
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-003");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-005");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-006");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-010");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-016");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-032");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-033");
+
+        final AssertionUtils.Concept conceptRole = new AssertionUtils.Concept();
+        conceptRole.setCode("221");
+        conceptRole.setCodeSystemId("2.16.840.1.113883.2.9.6.2.7");
+        conceptRole.setCodeSystemName("ISCO");
+        conceptRole.setDisplayName("Medical Doctors");
+
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+                "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
+                "eHDSI EU Testing MedCare Center", permissions, null);
+    }
+
+    public static Assertion createPharmacistAssertion(final KeyStoreManager keyStoreManager,
+                                                         final String fullName,
+                                                         final String email) {
+        final List<String> permissions = new ArrayList<>();
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-006");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-010");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-032");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-033");
+
+        final AssertionUtils.Concept conceptRole = new AssertionUtils.Concept();
+        conceptRole.setCode("2262");
+        conceptRole.setCodeSystemId("2.16.840.1.113883.2.9.6.2.7");
+        conceptRole.setCodeSystemName("ISCO");
+        conceptRole.setDisplayName("Pharmacists");
+
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+                "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Pharmacy", "TREATMENT",
+                "eHDSI EU Testing MedCare Center", permissions, null);
+    }
+
+    private static Assertion createHCPAssertion(final KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
+                                                final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
+                                                final String organizationId, final String facilityType, final String purposeOfUse,
+                                                final String locality, final List<String> permissions, final String onBehalfId) {
 
         Assertion assertion = null;
         try {
@@ -96,7 +141,8 @@ public class AssertionUtils {
             nameId.setValue(email);
             nameId.setFormat(NameID.EMAIL);
 
-            assertion = create(Assertion.class, Assertion.DEFAULT_ELEMENT_NAME);
+
+            assertion = create(Assertion.class, new QName(SAML20_NS, "Assertion"));
             final var issuedInstant = DateTime.now();
             final String assId = "_" + UUID.randomUUID();
             assertion.setID(assId);
@@ -192,7 +238,7 @@ public class AssertionUtils {
             attrStmt.getAttributes().add(attrPID5);
 
             // XSPA Purpose of Use
-            final var attrPID6 = createAttributePurposeOfUse(builderFactory, "XSPA Purpose Of Use","urn:oasis:names:tc:xspa:1.0:subject:purposeofuse", purposeOfUse);
+            final var attrPID6 = createAttributePurposeOfUse(builderFactory, "XSPA Purpose Of Use", "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse", purposeOfUse);
             attrStmt.getAttributes().add(attrPID6);
 
             // XSPA Locality
@@ -222,8 +268,12 @@ public class AssertionUtils {
         return assertion;
     }
 
+    public static String getPatientId(final PatientId patientId) {
+        return patientId.getExtension() + "^^^&" + patientId.getRoot() + "&ISO";
+    }
+
     public static Assertion createTRCAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final PatientId patient, final String purposeOfUse) throws STSClientException, MarshallingException, MalformedURLException {
-        final String patientId = patient.getExtension() + "^^^&" + patient.getRoot() + "&ISO";
+        final String patientId = getPatientId(patient);
         final URL trcServerUrl = new URL(configurationManager.getProperty("secman.sts.url"));
         final TrcAssertionRequest assertionRequest = ImmutableTrcAssertionRequest.builder().location(trcServerUrl).assertion(clinicalAssertion).checkForHostname(false).validationEnabled(false).purposeOfUse(purposeOfUse).patientId(patientId).build();
         final Assertion assertionTRC = assertionService.request(assertionRequest);
@@ -234,12 +284,38 @@ public class AssertionUtils {
         return assertionTRC;
     }
 
+    public static Assertion createNOKAssertion(final AssertionService assertionService, final ConfigurationManager configurationManager, final Assertion clinicalAssertion, final PatientId patientId, final String purposeOfUse, final String nextOfKinId) throws STSClientException, MarshallingException, MalformedURLException {
+        final URL nextOfKinUrl = new URL(configurationManager.getProperty("secman.nextOfKin.url"));
+        final NextOfKinAssertionRequest assertionRequest = ImmutableNextOfKinAssertionRequest.builder()
+                .location(nextOfKinUrl)
+                .assertion(clinicalAssertion)
+                .checkForHostname(false)
+                .validationEnabled(false)
+                .purposeOfUse(purposeOfUse)
+                .patientId(getPatientId(patientId))
+                .nextOfKinId(nextOfKinId)
+                .nextOfKinFirstName("Horst")
+                .nextOfKinFamilyName("Köhler")
+                .nextOfKinAddressStreet("Rue Breydel 4")
+                .nextOfKinAddressCity("Brussels")
+                .nextOfKinAddressPostalCode("1040")
+                .nextOfKinAddressCountry("Belgium")
+                .nextOfKinBirthDate(LocalDate.of(1993, Month.NOVEMBER, 1))
+                .build();
+        final Assertion assertion = assertionService.request(assertionRequest);
+        final var marshaller = new AssertionMarshaller();
+        final Element element = marshaller.marshall(assertion);
+        final Document document = element.getOwnerDocument();
+        LOGGER.info("NOK Assertion: '{}'\n'{}'", assertion.getID(), XmlUtils.getDocumentAsXml(document, false));
+        return assertion;
+    }
+
     private static <T> T create(final Class<T> cls, final QName qname) {
         LOGGER.info("Creating class {}", cls.getName());
         return (T) (XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(qname)).buildObject(qname);
     }
 
-    private static void signSAMLAssertion(KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject, final String keyAlias) throws Exception {
+    private static void signSAMLAssertion(final KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject, final String keyAlias) throws Exception {
 
         LOGGER.info("method signSAMLAssertion('{}')", keyAlias);
 
@@ -389,7 +465,7 @@ public class AssertionUtils {
         final XSAny pou = xsAnyBuilder.buildObject("urn:hl7-org:v3", "PurposeOfUse", "");
         pou.getUnknownAttributes().put(new QName("code"), value);
         pou.getUnknownAttributes().put(new QName("codeSystem"), "3bc18518-d305-46c2-a8d6-94bd59856e9e");
-        pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI XSPA PurposeOfUse");
+        pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI PurposeOfUse");
         pou.getUnknownAttributes().put(new QName("displayName"), value);
         final XSAny pouAttributeValue = xsAnyBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
         pouAttributeValue.getUnknownXMLObjects().add(pou);

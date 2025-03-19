@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
 import eu.europa.ec.sante.openncp.common.context.LogContext;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.ImmutableMetaData;
@@ -15,14 +15,14 @@ import java.util.List;
 
 public class AbstractAuditEventProducer {
 
-    protected List<AuditEventData.ParticipantData> createParticipants() {
+    protected static List<AuditEventData.ParticipantData> createParticipants() {
 
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
+        final UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        final AuditSecurityInfo auditSecurityInfo = (AuditSecurityInfo) usernamePasswordAuthenticationToken.getDetails();
 
         final AuditEventData.ParticipantData serviceConsumer = ImmutableParticipantData.builder()
                 .id(usernamePasswordAuthenticationToken.getName())
-                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertion()
+                .roleCode(auditSecurityInfo.getSamlDetails().getHcpAssertionDetails()
                         .map(AssertionDetails::getElement)
                         .map(SoapElementHelper::getRoleID)
                         .orElse(StringUtils.EMPTY))

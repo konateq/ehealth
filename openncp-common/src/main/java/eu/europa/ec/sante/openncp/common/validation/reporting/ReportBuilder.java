@@ -4,7 +4,7 @@ import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.util.FileSystemUtils;
 import eu.europa.ec.sante.openncp.common.validation.GazelleConfiguration;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import net.ihe.gazelle.jaxb.result.sante.DetailedResult;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -129,7 +129,7 @@ public class ReportBuilder {
             }
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(reportFile.getAbsoluteFile()))) {
 
-                if (!OpenNCPValidation.isRemoteValidationEnable() && !GAZELLE_FORMATTED_REPORT) {
+                if (!GazelleValidation.isRemoteValidationEnable() && !GAZELLE_FORMATTED_REPORT) {
                     bw.write((Base64.isBase64(validationObject) ? new String(Base64.decodeBase64(validationObject), StandardCharsets.UTF_8) : validationObject));
                 } else {
                     bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");

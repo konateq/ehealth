@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
     <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T12:00:22.212+01:00" EventOutcomeIndicator="0">
-        <EventID csd-code="110112" codeSystemName="DCM" displayName="ncpConfigurationManager::ImportNSL" originalText="Query"/>
-        <EventTypeCode csd-code="EHDSI-93" codeSystemName="IHE Transactions" displayName="ncpConfigurationManager::ImportNSL" originalText="ncpConfigurationManager::ImportNSL"/>
+        <EventID csd-code="110100" codeSystemName="DCM" originalText="Application Activity"/>
+        <EventTypeCode csd-code="EHDSI-93" codeSystemName="eHDSI Transactions" originalText="NSL Import"/>
     </EventIdentification>
     <ActiveParticipant UserID="Service Consumer" AlternativeUserID="Service Consumer" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="ServiceConsumer" codeSystemName="eHealth DSI" displayName="eHealth DSI Service Consumer" originalText="eHealth DSI Service Consumer"/>

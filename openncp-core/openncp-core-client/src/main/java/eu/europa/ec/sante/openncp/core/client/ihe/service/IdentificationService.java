@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdInitGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.stereotype.Service;
@@ -52,12 +53,12 @@ public class IdentificationService {
      * @param patient      List of patient identity traits as provided by the patient to the HCP.
      * @param assertionMap [ST] epSOS HCP Identity Assertion, [PT] X.509 NCP-B service certificate
      * @return The Patients found
-     * @throws NoPatientIdDiscoveredException containing the error message
+     * @throws OpenNCPException containing the error message
      */
     public List<PatientDemographics> findIdentityByTraits(final PatientDemographics patient,
                                                                  final Map<AssertionType, Assertion> assertionMap,
                                                                  final String countryCode)
-            throws NoPatientIdDiscoveredException {
+            throws OpenNCPException {
 
         return xcpdInitGateway.patientDiscovery(patient, assertionMap, countryCode);
     }

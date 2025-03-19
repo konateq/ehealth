@@ -29,6 +29,8 @@ import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -57,6 +59,7 @@ import static eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode.ERROR_PS_
 
 
 @Service
+@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DocumentSearchMockImpl extends NationalConnectorGateway implements DocumentSearchInterface {
 
     private static final String PATTERN_EP = "epstore.+\\.xml";

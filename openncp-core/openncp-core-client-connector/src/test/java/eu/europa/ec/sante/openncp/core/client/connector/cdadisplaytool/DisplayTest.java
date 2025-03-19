@@ -74,7 +74,7 @@ public class DisplayTest {
 
     @Test
     public void runFile() throws UITransformationException, IOException {
-        fileTest("/Users/mathiasghys/Downloads/2-1234-W8.xml", TRANSFORMATION.WithOutputAndDefinedPath);
+        fileTest("/Users/mathiasghys/Downloads/1-1234-W8.xml", TRANSFORMATION.WithOutputAndDefinedPath);
     }
 
     @Test

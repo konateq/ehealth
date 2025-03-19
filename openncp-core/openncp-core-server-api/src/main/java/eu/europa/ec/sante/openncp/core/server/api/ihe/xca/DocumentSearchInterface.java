@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.server.api.ihe.xca;
 
 import eu.europa.ec.sante.openncp.core.common.ihe.NationalConnectorInterface;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 

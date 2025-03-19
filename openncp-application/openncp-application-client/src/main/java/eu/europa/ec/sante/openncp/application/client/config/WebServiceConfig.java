@@ -1,8 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.config;
 
-import eu.europa.ec.sante.openncp.api.client.interceptor.AssertionReportingInterceptor;
 import eu.europa.ec.sante.openncp.api.client.interceptor.*;
-import eu.europa.ec.sante.openncp.api.client.interceptor.HcpAssertionValidationInterceptor;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
@@ -60,7 +58,7 @@ public class WebServiceConfig {
     public Endpoint endpoint(final Bus bus,
                              final ClientServicePortType clientConnectorServicePortType,
                              final LoggingFeature loggingFeature,
-                             final HcpAssertionValidationInterceptor hcpAssertionValidationInterceptor,
+                             final AssertionValidationInterceptor assertionValidationInterceptor,
                              final Merlin signatureCrypto) {
         final EndpointImpl endpoint = new EndpointImpl(bus, clientConnectorServicePortType);
         endpoint.getFeatures().add(loggingFeature);
@@ -70,7 +68,8 @@ public class WebServiceConfig {
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
-        endpoint.getInInterceptors().add(hcpAssertionValidationInterceptor);
+        endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
+        endpoint.getInInterceptors().add(assertionValidationInterceptor);
         endpoint.getOutFaultInterceptors().add(new MyHealthEuSoapFaultInterceptor());
         endpoint.publish("/" + clientConnectorServicePortType.getClass().getAnnotation(WebService.class).serviceName());
 

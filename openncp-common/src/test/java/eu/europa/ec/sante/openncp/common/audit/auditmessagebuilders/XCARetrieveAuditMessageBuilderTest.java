@@ -24,7 +24,7 @@ public class XCARetrieveAuditMessageBuilderTest extends XMLTestCase {
     public void testBuild() throws Exception {
         {
             final EventLog eventLog = new EventLog();
-            eventLog.setEventType(EventType.PATIENT_SERVICE_RETRIEVE);
+            eventLog.setEventType(EventType.XCA_SERVICE_RETRIEVE_NCP_A);
             eventLog.setNcpSide(NcpSide.NCP_A);
             eventLog.setEI_TransactionName(TransactionName.PATIENT_SERVICE_RETRIEVE);
             eventLog.setEI_EventActionCode(EventActionCode.VIEW);

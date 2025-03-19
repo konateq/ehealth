@@ -17,9 +17,9 @@ public class CommunicationFailureAuditMessageBuilder extends AbstractAuditMessag
         final ObjectFactory of = new ObjectFactory();
         AuditMessage message = of.createAuditMessage();
         addAuditSource(message, "N/A");
-        addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
-                eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
+        addEventIdentification(message, eventLog.getEventType(),
+                 eventLog.getEI_EventDateTime(),
+                eventLog.getEI_EventOutcomeIndicator());
         addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                 true, eventLog.getSourceip());
         addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,

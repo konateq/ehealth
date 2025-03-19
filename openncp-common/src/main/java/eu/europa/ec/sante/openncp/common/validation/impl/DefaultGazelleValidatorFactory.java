@@ -59,12 +59,12 @@ public class DefaultGazelleValidatorFactory implements IGazelleValidatorFactory 
     }
 
     @Override
-    public AssertionValidator getAssertionValidator() {
+    public DocumentValidator getAssertionValidator() {
 
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setPackagesToScan("net.ihe.gazelle.jaxb.assertion.sante");
 
-        return new AssertionValidatorImpl(createWebServiceTemplate(marshaller, GAZELLE_ASSERTION_VALIDATOR_URI));
+        return new DocumentValidatorImpl(createWebServiceTemplate(marshaller, GAZELLE_ASSERTION_VALIDATOR_URI));
     }
 
     @Override

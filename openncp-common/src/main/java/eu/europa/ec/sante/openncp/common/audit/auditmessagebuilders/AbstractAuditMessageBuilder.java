@@ -1,9 +1,7 @@
 package eu.europa.ec.sante.openncp.common.audit.auditmessagebuilders;
 
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.AuditConstant;
-import eu.europa.ec.sante.openncp.common.audit.EventLog;
-import eu.europa.ec.sante.openncp.common.audit.EventType;
+import eu.europa.ec.sante.openncp.common.audit.*;
 import eu.europa.ec.sante.openncp.common.audit.eventidentification.EventIDBuilder;
 import eu.europa.ec.sante.openncp.common.audit.eventidentification.EventIdentificationContentsBuilder;
 import eu.europa.ec.sante.openncp.common.audit.eventidentification.EventTypeCodeBuilder;
@@ -21,9 +19,6 @@ import java.util.List;
 public abstract class AbstractAuditMessageBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAuditMessageBuilder.class);
-    private static final String SMP_QUERY = "SMP::Query";
-    private static final String SMP_PUSH = "SMP::Push";
-    private static final String SMP = "SMP";
 
     protected AuditMessage addParticipantObject(final AuditMessage auditMessage, final String participantId, final Short participantCode,
                                                 final Short participantRole, final String participantName, final String PS_ObjectCode, final String PS_ObjectCodeName,
@@ -65,9 +60,10 @@ public abstract class AbstractAuditMessageBuilder {
 
             final ObjectFactory of = new ObjectFactory();
             AuditMessage message = of.createAuditMessage();
-            addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                    eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
-                    eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
+            addEventIdentification(message,
+                    eventLog.getEventType(),
+                    eventLog.getEI_EventDateTime(),
+                    eventLog.getEI_EventOutcomeIndicator());
             addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     getUserIsRequestor(eventLog), eventLog.getSourceip());
@@ -88,13 +84,10 @@ public abstract class AbstractAuditMessageBuilder {
 
     protected boolean getUserIsRequestor(final EventLog eventLog) {
         switch (eventLog.getEventType()) {
-            case DISPENSATION_SERVICE_INITIALIZE:
-            case DISPENSATION_SERVICE_DISCARD:
-                return !eventLog.getNcpSide().equals(NcpSide.NCP_B);
-            case ORDER_SERVICE_RETRIEVE:
-            case PATIENT_SERVICE_RETRIEVE:
-            case ORCD_SERVICE_RETRIEVE:
+            case XDR_SERVICE_NCP_A:
                 return false;
+            case XDR_SERVICE_NCP_B:
+                return true;
             default:
                 return eventLog.getNcpSide().equals(NcpSide.NCP_B);
         }
@@ -271,38 +264,34 @@ public abstract class AbstractAuditMessageBuilder {
     /**
      * @param auditMessage
      * @param eventType
-     * @param transactionName
-     * @param eventActionCode
      * @param eventDateTime
      * @param eventOutcomeIndicator
-     * @param ncpSide
      * @return
      */
     AuditMessage addEventIdentification(final AuditMessage auditMessage,
                                         final EventType eventType,
-                                        final String transactionName,
-                                        final String eventActionCode,
                                         final XMLGregorianCalendar eventDateTime,
-                                        final BigInteger eventOutcomeIndicator,
-                                        final NcpSide ncpSide) {
+                                        final BigInteger eventOutcomeIndicator) {
 
-        final EventID eventID = buildEventID(eventType, ncpSide, transactionName);
 
         final EventTypeCode eventTypeCode = new EventTypeCodeBuilder()
-                .codeSystemName("IHE Transactions")
-                .csdCode(eventType.getIheCode())
-                .displayName(transactionName)
-                .originalText(eventType.getIheTransactionName())
+                .codeSystemName(eventType.getEventTypeCode().getCodeSystemName().getName())
+                .csdCode(eventType.getEventTypeCode().getCsdCode())
+                .originalText(eventType.getEventTypeCode().getOriginalText())
                 .build();
-        final EventTypeCode eventTypeCode2 = buildEventTypeCode(eventType);
+
+        final EventID eventID = new EventIDBuilder()
+                .codeSystemName("DCM")
+                .csdCode(eventType.getEventID().getCsdCode())
+                .originalText(eventType.getEventID().getOriginalText())
+                .build();
 
         final EventIdentificationContents eventIdentification = new EventIdentificationContentsBuilder()
-                .eventActionCode(eventActionCode)
+                .eventActionCode(eventType.getEventID().getEventActionCode().getCode())
                 .eventDateTime(eventDateTime)
                 .eventOutcomeIndicator(eventOutcomeIndicator.toString())
                 .eventID(eventID)
                 .eventTypeCode(eventTypeCode)
-                .eventTypeCode(eventTypeCode2)
                 .build();
         auditMessage.setEventIdentification(eventIdentification);
         return auditMessage;
@@ -379,61 +368,6 @@ public abstract class AbstractAuditMessageBuilder {
         return auditMessage;
     }
 
-    private EventTypeCode buildEventTypeCode(final EventType eventType) {
-        EventTypeCode eventTypeCode = null;
-        switch (eventType) {
-            case SMP_QUERY:
-                eventTypeCode = new EventTypeCodeBuilder()
-                        .codeSystemName(eventType.getCode())
-                        .csdCode(SMP)
-                        .displayName(SMP_QUERY)
-                        .originalText(SMP_QUERY)
-                        .build();
-                break;
-            case SMP_PUSH:
-                eventTypeCode = new EventTypeCodeBuilder()
-                        .codeSystemName(eventType.getCode())
-                        .csdCode(SMP)
-                        .displayName(SMP_PUSH)
-                        .originalText(SMP_PUSH)
-                        .build();
-                break;
-            default:
-                break;
-        }
-        return eventTypeCode;
-    }
-
-    private EventID buildEventID(final EventType eventType, final NcpSide ncpSide, final String transactionName) {
-        final EventID eventID;
-        switch (eventType) {
-            case SMP_QUERY:
-                eventID = new EventIDBuilder()
-                        .codeSystemName("EHDSI-193")
-                        .csdCode(SMP)
-                        .displayName(SMP_QUERY)
-                        .originalText(SMP_QUERY)
-                        .build();
-                break;
-            case SMP_PUSH:
-                eventID = new EventIDBuilder()
-                        .codeSystemName("EHDSI-194")
-                        .csdCode(SMP)
-                        .displayName(SMP_PUSH)
-                        .originalText(SMP_PUSH)
-                        .build();
-                break;
-            default:
-                eventID = new EventIDBuilder()
-                        .codeSystemName("DCM")
-                        .csdCode(getCsdCode(ncpSide, eventType))
-                        .displayName(eventType.getIheTransactionName())
-                        .originalText(getOriginalText(ncpSide, eventType))
-                        .build();
-        }
-        return eventID;
-    }
-
     /**
      * @param auditMessage
      * @param auditSource
@@ -463,33 +397,5 @@ public abstract class AbstractAuditMessageBuilder {
 
         auditMessage.setAuditSourceIdentification(auditSourceIdentification);
         return auditMessage;
-    }
-
-    private String getOriginalText(final NcpSide ncpSide, final EventType eventType) {
-        switch (eventType) {
-            case PATIENT_SERVICE_RETRIEVE:
-            case ORDER_SERVICE_RETRIEVE:
-            case ORCD_SERVICE_RETRIEVE:
-                return ncpSide == NcpSide.NCP_A ? "Export" : "Import";
-            case DISPENSATION_SERVICE_INITIALIZE:
-            case DISPENSATION_SERVICE_DISCARD:
-                return ncpSide == NcpSide.NCP_A ? "Import" : "Export";
-            default:
-                return "Query";
-        }
-    }
-
-    private String getCsdCode(final NcpSide ncpSide, final EventType eventType) {
-        switch (eventType) {
-            case PATIENT_SERVICE_RETRIEVE:
-            case ORDER_SERVICE_RETRIEVE:
-            case ORCD_SERVICE_RETRIEVE:
-                return ncpSide == NcpSide.NCP_A ? "110106" : "110107";
-            case DISPENSATION_SERVICE_INITIALIZE:
-            case DISPENSATION_SERVICE_DISCARD:
-                return ncpSide == NcpSide.NCP_A ? "110107" : "110106";
-            default:
-                return "110112";
-        }
     }
 }

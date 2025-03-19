@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.openncp.core.common.ihe.util;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
+import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.audit.*;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
@@ -295,13 +296,9 @@ public class EventLogUtil {
         final List<JAXBElement<? extends IdentifiableType>> registryObjectList = request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable();
         if (registryObjectList != null) {
             for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
-
                 if (identifiable.getValue() instanceof ExtrinsicObjectType) {
-
                     for (final ExternalIdentifierType identifierType : ((ExtrinsicObjectType) identifiable.getValue()).getExternalIdentifier()) {
-
                         if (StringUtils.equals(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME, identifierType.getIdentificationScheme())) {
-
                             documentUniqueId = identifierType.getValue();
                         }
                     }
@@ -338,15 +335,12 @@ public class EventLogUtil {
             }
         }
         LOGGER.info("EventLogUtil: '{}'", classCode);
+        eventLog.setEventType(eventLog.getNcpSide()==NcpSide.NCP_A ? EventType.XDR_SERVICE_NCP_A : EventType.XDR_SERVICE_NCP_B);
+        eventLog.setEI_EventActionCode(EventActionCode.READ);
         if (StringUtils.equals(classCode, ClassCode.ED_CLASSCODE.getCode())) {
-            eventLog.setEventType(EventType.DISPENSATION_SERVICE_INITIALIZE);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
-            eventLog.setEI_EventActionCode(EventActionCode.READ);
-
         } else if (StringUtils.equals(classCode, ClassCode.EDD_CLASSCODE.getCode())) {
-            eventLog.setEventType(EventType.DISPENSATION_SERVICE_DISCARD);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
-            eventLog.setEI_EventActionCode(EventActionCode.READ);
             eventLog.getEventTargetParticipantObjectIds().add(discardId);
         }
 
