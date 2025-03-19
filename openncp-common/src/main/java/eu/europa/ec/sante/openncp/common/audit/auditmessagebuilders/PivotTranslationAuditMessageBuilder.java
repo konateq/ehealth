@@ -25,8 +25,8 @@ public class PivotTranslationAuditMessageBuilder extends AbstractAuditMessageBui
                 eventLog.getEI_EventDateTime(),
                 eventLog.getEI_EventOutcomeIndicator());
 
-        addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
-                AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getTargetip());
+        addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
+                AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
         // Event Target
         addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("4"), Short.valueOf("5"),
                 "in", "eHealth DSI Translation", "Input Data");
