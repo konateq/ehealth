@@ -98,49 +98,14 @@ public abstract class AbstractAuditMessageBuilder {
      * @param userId
      * @param userIsRequester
      * @param code
-     * @param codeSystem
-     * @param displayName
-     * @return
-     */
-    protected AuditMessage addService(final AuditMessage auditMessage, final String userId, final boolean userIsRequester, final String code,
-                                      final String codeSystem, final String displayName) {
-
-        if (StringUtils.isBlank(userId)) {
-            LOGGER.warn("No Service, as this is Service Consumer");
-            throw new IllegalArgumentException("Both ServiceConsumer User ID and ServiceProvider User ID must exist!");
-        } else {
-            final ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
-            activeParticipant.setUserID(userId);
-            activeParticipant.setAlternativeUserID(userId);
-            activeParticipant.setUserIsRequestor(userIsRequester);
-
-            final RoleIDCode serviceConsumerRoleId = new RoleIDCode();
-            serviceConsumerRoleId.setCsdCode(code);
-            serviceConsumerRoleId.setCodeSystemName(codeSystem);
-            serviceConsumerRoleId.setDisplayName(displayName);
-            serviceConsumerRoleId.setOriginalText(displayName);
-            activeParticipant.getRoleIDCode().add(serviceConsumerRoleId);
-            auditMessage.getActiveParticipant().add(activeParticipant);
-        }
-        return auditMessage;
-    }
-
-    /**
-     * @param auditMessage
-     * @param userId
-     * @param userIsRequester
-     * @param code
-     * @param codeSystem
      * @param displayName
      * @param ipAddress
      * @return
      */
-    protected AuditMessage addService(final AuditMessage auditMessage, final String userId, final boolean userIsRequester, final String code,
-                                      final String codeSystem, final String displayName, final String ipAddress) {
+    protected AuditMessage addService(final AuditMessage auditMessage, final String userId, final boolean userIsRequester, final String code, final String displayName, final String ipAddress) {
 
         if (StringUtils.isBlank(userId)) {
-            LOGGER.warn("No Service, as this is Service Consumer");
-            throw new IllegalArgumentException("Both ServiceConsumer User ID and ServiceProvider User ID must exist!");
+            throw new IllegalArgumentException("The UserID and AlternativeUserID must not be blank in the ActiveParticipant object");
         } else {
             final ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
             activeParticipant.setNetworkAccessPointID(ipAddress);
@@ -151,7 +116,7 @@ public abstract class AbstractAuditMessageBuilder {
 
             final RoleIDCode serviceConsumerRoleId = new RoleIDCode();
             serviceConsumerRoleId.setCsdCode(code);
-            serviceConsumerRoleId.setCodeSystemName(codeSystem);
+            serviceConsumerRoleId.setCodeSystemName(AuditConstant.CODE_SYSTEM_EHDSI);
             serviceConsumerRoleId.setDisplayName(displayName);
             serviceConsumerRoleId.setOriginalText(displayName);
             activeParticipant.getRoleIDCode().add(serviceConsumerRoleId);
