@@ -14,24 +14,7 @@ public class NOKAssertionAuditMessageBuilder extends AbstractAuditMessageBuilder
 
     @Override
     public AuditMessage build(final EventLog eventLog) {
-        final ObjectFactory of = new ObjectFactory();
-        AuditMessage message = of.createAuditMessage();
-        // Audit Source
-        addAuditSource(message, eventLog.getAS_AuditSourceId());
-        // Event Identification
-        addEventIdentification(message,
-                eventLog.getEventType(),
-                eventLog.getEI_EventDateTime(),
-                eventLog.getEI_EventOutcomeIndicator());
-        // Point Of Care
-        addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
-        // Human Requestor
-        addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                true, eventLog.getSourceip());
-        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME,
-                eventLog.getSourceip());
-        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
-                eventLog.getTargetip());
+        final AuditMessage message = createBaseAssertionAuditMessage(eventLog);
         for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
             addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("10"), "Guarantor",
                     "7", AuditConstant.RFC3881, "Guarantor Number",

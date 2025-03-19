@@ -68,9 +68,9 @@ public abstract class AbstractAuditMessageBuilder {
             addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                     getUserIsRequestor(eventLog), eventLog.getSourceip());
             addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
-                    AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME); // eventLog.getSourceip()
+                    AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME);
             addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
-                    AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME); // eventLog.getTargetip()
+                    AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME);
             addAuditSource(message, eventLog.getAS_AuditSourceId());
             for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
                 addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
@@ -81,6 +81,32 @@ public abstract class AbstractAuditMessageBuilder {
                     Short.valueOf("3"), "9", "errormsg","");
         return message;
     }
+    protected AuditMessage createBaseAssertionAuditMessage(final EventLog eventLog) {
+        final ObjectFactory of = getObjectFactory();
+        final AuditMessage message = of.createAuditMessage();
+        // Audit Source
+        addAuditSource(message, eventLog.getAS_AuditSourceId());
+        // Event Identification
+        addEventIdentification(message,
+                eventLog.getEventType(),
+                eventLog.getEI_EventDateTime(),
+                eventLog.getEI_EventOutcomeIndicator());
+        // Point Of Care
+        addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
+        // Human Requestor
+        addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
+                true, eventLog.getSourceip());
+        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME,
+                eventLog.getSourceip());
+        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME,
+                eventLog.getTargetip());
+        return message;
+    }
+
+    private static ObjectFactory getObjectFactory() {
+        return new ObjectFactory();
+    }
+
 
     protected boolean getUserIsRequestor(final EventLog eventLog) {
         switch (eventLog.getEventType()) {
@@ -110,6 +136,36 @@ public abstract class AbstractAuditMessageBuilder {
             final ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
             activeParticipant.setNetworkAccessPointID(ipAddress);
             activeParticipant.setNetworkAccessPointTypeCode(getNetworkAccessPointTypeCode(ipAddress));
+            activeParticipant.setUserID(userId);
+            activeParticipant.setAlternativeUserID(userId);
+            activeParticipant.setUserIsRequestor(userIsRequester);
+
+            final RoleIDCode serviceConsumerRoleId = new RoleIDCode();
+            serviceConsumerRoleId.setCsdCode(code);
+            serviceConsumerRoleId.setCodeSystemName(AuditConstant.CODE_SYSTEM_EHDSI);
+            serviceConsumerRoleId.setDisplayName(displayName);
+            serviceConsumerRoleId.setOriginalText(displayName);
+            activeParticipant.getRoleIDCode().add(serviceConsumerRoleId);
+            auditMessage.getActiveParticipant().add(activeParticipant);
+        }
+        return auditMessage;
+    }
+
+    /**
+     * @param auditMessage
+     * @param userId
+     * @param userIsRequester
+     * @param code
+     * @param displayName
+     * @param ipAddress
+     * @return
+     */
+    protected AuditMessage addService(final AuditMessage auditMessage, final String userId, final boolean userIsRequester, final String code, final String displayName) {
+
+        if (StringUtils.isBlank(userId)) {
+            throw new IllegalArgumentException("The UserID and AlternativeUserID must not be blank in the ActiveParticipant object");
+        } else {
+            final ActiveParticipantContents activeParticipant = new ActiveParticipantContents();
             activeParticipant.setUserID(userId);
             activeParticipant.setAlternativeUserID(userId);
             activeParticipant.setUserIsRequestor(userIsRequester);
