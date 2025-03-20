@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.interceptors;
 
+import eu.europa.ec.sante.openncp.core.client.ihe.context.SecurityHeaderContextHolder;
 import org.apache.cxf.binding.soap.SoapHeader;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.headers.Header;
@@ -20,8 +21,7 @@ public class OutboundSecurityInterceptor extends AbstractSecurityInterceptor {
 
     @Override
     public void handleMessage(final SoapMessage message) throws Fault {
-        // Retrieve the security header from request context
-        final Element securityHeader = (Element) message.getExchange().get(SECURITY_HEADER_KEY);
+        final Element securityHeader = SecurityHeaderContextHolder.getSecurityHeader();
 
         if (securityHeader != null) {
             final QName securityQName = new QName(securityHeader.getNamespaceURI(), securityHeader.getLocalName());
@@ -30,5 +30,7 @@ public class OutboundSecurityInterceptor extends AbstractSecurityInterceptor {
             final List<Header> headers = message.getHeaders();
             headers.add(outboundSecurityHeader);
         }
+
+        SecurityHeaderContextHolder.clear();
     }
 }

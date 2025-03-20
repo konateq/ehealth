@@ -1,20 +1,23 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
+import eu.europa.ec.sante.openncp.common.Constant;
+import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
+import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerException;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.PRPAIN201305UV02;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.PRPAIN201306UV02;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.RespondingGatewayPortType;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.XCPDService;
-import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
+import eu.europa.ec.sante.openncp.core.common.SslContextBuilder;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN201305UV02;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN201306UV02;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.RespondingGatewayPortType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.XCPDService;
 import org.apache.commons.lang3.Validate;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
@@ -27,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLContext;
 import javax.xml.ws.BindingProvider;
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -64,12 +68,26 @@ public class XcpdGateway {
 
         client.getBus().getFeatures().add(new WSAddressingFeature());
 
+        final KeystoreDetails serviceConsumerKeystoreDetails = ImmutableKeystoreDetails.builder()
+                .keystoreLocation(configurationManager.getProperty(Constant.SC_KEYSTORE_PATH))
+                .keystorePassword(configurationManager.getProperty(Constant.SC_KEYSTORE_PASSWORD))
+                .alias(configurationManager.getProperty(Constant.SC_PRIVATEKEY_ALIAS))
+                .keyPassword(configurationManager.getProperty(Constant.SC_PRIVATEKEY_PASSWORD))
+                .build();
+        final KeystoreDetails trustStoreKeystoreDetails = ImmutableKeystoreDetails.builder()
+                .keystoreLocation(configurationManager.getProperty(Constant.TRUSTSTORE_PATH))
+                .keystorePassword(configurationManager.getProperty(Constant.TRUSTSTORE_PASSWORD))
+                .build();
+        final SSLContext sslContext = SslContextBuilder.build(serviceConsumerKeystoreDetails, trustStoreKeystoreDetails);
+
         final HTTPConduit conduit = (HTTPConduit) client.getConduit();
         final TLSClientParameters tlsClientParameters = new TLSClientParameters();
         // This should be configurable, you don't want to disable the CN check in production!!
         tlsClientParameters.setDisableCNCheck(true);
         tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        tlsClientParameters.setSSLSocketFactory(HttpsClientConfiguration.buildSSLContext().getSocketFactory());
+
+
+        tlsClientParameters.setSSLSocketFactory(sslContext.getSocketFactory());
         conduit.setTlsClientParameters(tlsClientParameters);
     }
 

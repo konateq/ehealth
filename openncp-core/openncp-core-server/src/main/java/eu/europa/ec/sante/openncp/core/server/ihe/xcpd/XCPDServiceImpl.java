@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl;
+package eu.europa.ec.sante.openncp.core.server.ihe.xcpd;
 
 import eu.europa.ec.sante.openncp.common.audit.*;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
@@ -20,13 +20,12 @@ import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
-import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceInterface;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.v3.*;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class XCPDServiceImpl implements XCPDServiceInterface {
+public class XCPDServiceImpl implements XCPDService {
 
     private static final DatatypeFactory DATATYPE_FACTORY;
     private static final String INSTANCE = "INSTANCE";
@@ -689,7 +688,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                             XCPDErrorCode.AnswerNotAvailable,
                             OpenNCPErrorCode.ERROR_PI_NO_MATCH,
                             codeContext,
-                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.impl.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() + ")");
+                            "eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceImpl.pRPAIN201306UV02Builder(XCPDServiceImpl.java:" + new Throwable().getStackTrace()[0].getLineNumber() + ")");
                     outputMessage.getAcknowledgement().get(0).getTypeCode().setCode("AA");
                 } else {
                     var countryCode = "";

@@ -47,6 +47,10 @@
                                     <wsdl>${basedir}/src/main/resources/xca/XCA_Service.wsdl</wsdl>
                                     <wsdlLocation>classpath:xca/XCA_Service.wsdl</wsdlLocation>
                                     <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <extraargs>
+                                        <extraarg>-p</extraarg>
+                                        <extraarg>eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca</extraarg>
+                                    </extraargs>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/main/resources/xcpd/XCPD_Service.wsdl</wsdl>
@@ -55,11 +59,19 @@
                                     <bindingFiles>
                                         <bindingFile>${basedir}/src/main/resources/xcpd/bindings.xjb</bindingFile>
                                     </bindingFiles>
+                                    <extraargs>
+                                        <extraarg>-p</extraarg>
+                                        <extraarg>eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd</extraarg>
+                                    </extraargs>
                                 </wsdlOption>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/main/resources/xdr/XDR_Service.wsdl</wsdl>
                                     <wsdlLocation>classpath:xdr/XDR_Service.wsdl</wsdlLocation>
                                     <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <extraargs>
+                                        <extraarg>-p</extraarg>
+                                        <extraarg>eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr</extraarg>
+                                    </extraargs>
                                 </wsdlOption>
                             </wsdlOptions>
                         </configuration>

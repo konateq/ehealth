@@ -12,12 +12,12 @@
 
     <modules>
         <module>openncp-core-common</module>
-        <module>openncp-core-client</module>
-        <module>openncp-core-server</module>
         <module>openncp-core-server-api</module>
         <module>openncp-core-server-mock</module>
-        <module>openncp-core-trc-sts</module>
+        <module>openncp-core-server</module>
         <module>openncp-core-client-api</module>
+        <module>openncp-core-client</module>
+        <module>openncp-core-trc-sts</module>
         <module>openncp-core-client-connector</module>
     </modules>
 

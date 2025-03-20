@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common;
 
 import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
 import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -21,7 +22,6 @@ public class HttpsClientConfiguration {
 
     private HttpsClientConfiguration() {
     }
-
 
     public static SSLContext buildSSLContext() throws NoSuchAlgorithmException, KeyManagementException, IOException,
             CertificateException, KeyStoreException, UnrecoverableKeyException {

@@ -9,6 +9,7 @@ import eu.europa.ec.sante.openncp.core.client.ihe.dto.RetrieveDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.SubmitDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dts.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.service.*;
+import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdGateway;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrResponse;
 import eu.europa.ec.sante.openncp.core.client.logging.LoggingSlf4j;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
@@ -39,18 +40,18 @@ public class ClientServiceImpl implements ClientService {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-    private final IdentificationService identificationService;
+    private final XcpdGateway xcpdGateway;
     private final PatientService patientService;
     private final OrderService orderService;
     private final OrCDService orCDService;
     private final DispensationService dispensationService;
 
-    public ClientServiceImpl(final IdentificationService identificationService,
+    public ClientServiceImpl(final XcpdGateway xcpdGateway,
                              final PatientService patientService,
                              final OrderService orderService,
                              final OrCDService orCDService,
                              final DispensationService dispensationService) {
-        this.identificationService = Validate.notNull(identificationService, "IdentificationService cannot be null");
+        this.xcpdGateway = Validate.notNull(xcpdGateway, "XcpdGateway cannot be null");
         this.patientService = Validate.notNull(patientService, "PatientService cannot be null");
         this.orderService = Validate.notNull(orderService, "OrderService cannot be null");
         this.orCDService = Validate.notNull(orCDService, "OrCDService cannot be null");
@@ -122,19 +123,19 @@ public class ClientServiceImpl implements ClientService {
                 switch (ClassCode.getByCode(classCode)) {
                     case PS_CLASSCODE:
                         response = patientService.list(PatientIdDts.toDataModel(patientId), countryCode,
-                                                       GenericDocumentCodeDts.newInstance(documentCodes.get(0)), assertionMap);
+                                GenericDocumentCodeDts.newInstance(documentCodes.get(0)), assertionMap);
                         break;
                     case EP_CLASSCODE:
                         response = orderService.list(PatientIdDts.toDataModel(patientId), countryCode,
-                                                     GenericDocumentCodeDts.newInstance(documentCodes.get(0)), assertionMap);
+                                GenericDocumentCodeDts.newInstance(documentCodes.get(0)), assertionMap);
                         break;
                     case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
                     case ORCD_LABORATORY_RESULTS_CLASSCODE:
                     case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
                     case ORCD_MEDICAL_IMAGES_CLASSCODE:
                         response = orCDService.list(PatientIdDts.toDataModel(patientId), countryCode,
-                                                    GenericDocumentCodeDts.newInstance(documentCodes), FilterParamsDts.newInstance(filterParams),
-                                                    assertionMap);
+                                GenericDocumentCodeDts.newInstance(documentCodes), FilterParamsDts.newInstance(filterParams),
+                                assertionMap);
                         break;
                     default:
                         throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_EXCEPTION + Arrays.toString(documentCodes.toArray()));
@@ -142,7 +143,7 @@ public class ClientServiceImpl implements ClientService {
             } else {
                 if (!documentCodes.contains(ClassCode.EP_CLASSCODE.getCode()) && !documentCodes.contains(ClassCode.PS_CLASSCODE.getCode())) {
                     response = orCDService.list(PatientIdDts.toDataModel(patientId), countryCode, GenericDocumentCodeDts.newInstance(documentCodes),
-                                                FilterParamsDts.newInstance(filterParams), assertionMap);
+                            FilterParamsDts.newInstance(filterParams), assertionMap);
                 } else {
                     throw new ClientConnectorException("Invalid combination of document codes provided: only OrCD document codes can be combined.");
                 }
@@ -222,8 +223,7 @@ public class ClientServiceImpl implements ClientService {
             final String countryCode = queryPatientOperation.getRequest().getCountryCode();
             final Map<AssertionType, Assertion> assertionMap = queryPatientOperation.getSamlDetails().getAssertionMap();
             final List<eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics> patientDemographicsList =
-                    identificationService.findIdentityByTraits(
-                    PatientDemographicsDts.toDataModel(patientDemographics), assertionMap, countryCode);
+                    xcpdGateway.patientDiscovery(PatientDemographicsDts.toDataModel(patientDemographics), assertionMap, countryCode);
 
             final List<PatientDemographics> returnedPatientDemographics = PatientDemographicsDts.fromDataModel(patientDemographicsList);
             queryPatientResponse.getReturn().addAll(returnedPatientDemographics);

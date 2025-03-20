@@ -23,6 +23,11 @@
         </dependency>
         <dependency>
             <groupId>eu.europa.ec.sante</groupId>
+            <artifactId>openncp-core-server-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.sante</groupId>
             <artifactId>openncp-core-common</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -81,134 +86,134 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <resources>
-            <!-- Copy generated WSDL files into the classpath -->
-            <resource>
-                <directory>target/wsdl</directory>
-                <targetPath>wsdl</targetPath>
-                <includes>
-                    <include>**/*</include>
-                </includes>
-                <filtering>false</filtering>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-            <resource>
-                <directory>${project.build.directory}/generated-sources/resources</directory>
-            </resource>
-        </resources>
-        <plugins>
-            <!-- spring-boot-maven-plugin -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
-            </plugin>
-            <!-- Unpack the WSDL from the server JAR -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <!-- 1. Unpack the WSDL file -->
-                    <execution>
-                        <id>unpack-wsdl</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>eu.europa.ec.sante</groupId>
-                                    <artifactId>openncp-core-server-api</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>jar</type>
-                                    <includes>xcpd/XCPD_Service.wsdl</includes>
-                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <!-- 2. Unpack the schema files -->
-                    <execution>
-                        <id>unpack-schema</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>eu.europa.ec.sante</groupId>
-                                    <artifactId>openncp-core-server-api</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>jar</type>
-                                    <!-- Unpack the entire schema folder -->
-                                    <includes>xcpd/schema/**</includes>
-                                    <!-- Place the schemas in the wsdl folder so it is the same structure as the server: .../xcpd/schema -->
-                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <!-- 3. Unpack the bindings file -->
-                    <execution>
-                        <id>unpack-bindings</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>eu.europa.ec.sante</groupId>
-                                    <artifactId>openncp-core-server-api</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>jar</type>
-                                    <includes>xcpd/bindings.xjb</includes>
-                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Generate CXF client stubs -->
-            <plugin>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-codegen-plugin</artifactId>
-                <version>${cxf.version}</version>
-                <executions>
-                    <execution>
-                        <id>generate-sources</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <wsdlOptions>
-                                <wsdlOption>
-                                    <!-- Reference the unpacked WSDL -->
-                                    <wsdl>${project.build.directory}/wsdl/xcpd/XCPD_Service.wsdl</wsdl>
-                                    <wsdlLocation>classpath:wsdl/xcpd/XCPD_Service.wsdl</wsdlLocation>
-                                    <!-- Set the wsdlRoot to the target directory so that the relative reference "schema/PRPA_IN201305UV02.xsd" resolves to target/schema/PRPA_IN201305UV02.xsd -->
-                                    <extendedSoapHeaders>true</extendedSoapHeaders>
-                                    <bindingFiles>
-                                        <bindingFile>${project.build.directory}/wsdl/xcpd/bindings.xjb</bindingFile>
-                                    </bindingFiles>
-                                    <extraargs>
-                                        <extraarg>-p</extraarg>
-                                        <extraarg>eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated</extraarg>
-                                    </extraargs>
-                                </wsdlOption>
-                            </wsdlOptions>
-                        </configuration>
-                        <goals>
-                            <goal>wsdl2java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+<!--    <build>-->
+<!--        <plugins>-->
+<!--            &lt;!&ndash; spring-boot-maven-plugin &ndash;&gt;-->
+<!--            <plugin>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--                <version>${spring-boot.version}</version>-->
+<!--            </plugin>-->
+<!--            &lt;!&ndash; Unpack the WSDL from the server JAR &ndash;&gt;-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-dependency-plugin</artifactId>-->
+<!--                <executions>-->
+<!--                    &lt;!&ndash; 1. Unpack the WSDL file &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <id>unpack-wsdl</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>unpack</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <artifactItems>-->
+<!--                                <artifactItem>-->
+<!--                                    <groupId>eu.europa.ec.sante</groupId>-->
+<!--                                    <artifactId>openncp-core-server-api</artifactId>-->
+<!--                                    <version>${project.version}</version>-->
+<!--                                    <type>jar</type>-->
+<!--                                    <includes>xcpd/XCPD_Service.wsdl</includes>-->
+<!--                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>-->
+<!--                                </artifactItem>-->
+<!--                            </artifactItems>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    &lt;!&ndash; 2. Unpack the schema files &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <id>unpack-schema</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>unpack</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <artifactItems>-->
+<!--                                <artifactItem>-->
+<!--                                    <groupId>eu.europa.ec.sante</groupId>-->
+<!--                                    <artifactId>openncp-core-server-api</artifactId>-->
+<!--                                    <version>${project.version}</version>-->
+<!--                                    <type>jar</type>-->
+<!--                                    &lt;!&ndash; Unpack the entire schema folder &ndash;&gt;-->
+<!--                                    <includes>xcpd/schema/**</includes>-->
+<!--                                    &lt;!&ndash; Place the schemas in the wsdl folder so it is the same structure as the server: .../xcpd/schema &ndash;&gt;-->
+<!--                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>-->
+<!--                                </artifactItem>-->
+<!--                            </artifactItems>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    &lt;!&ndash; 3. Unpack the bindings file &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <id>unpack-bindings</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>unpack</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <artifactItems>-->
+<!--                                <artifactItem>-->
+<!--                                    <groupId>eu.europa.ec.sante</groupId>-->
+<!--                                    <artifactId>openncp-core-server-api</artifactId>-->
+<!--                                    <version>${project.version}</version>-->
+<!--                                    <type>jar</type>-->
+<!--                                    <includes>xcpd/bindings.xjb</includes>-->
+<!--                                    <outputDirectory>${project.build.directory}/wsdl</outputDirectory>-->
+<!--                                </artifactItem>-->
+<!--                            </artifactItems>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+<!--            &lt;!&ndash; Generate CXF client stubs &ndash;&gt;-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.cxf</groupId>-->
+<!--                <artifactId>cxf-codegen-plugin</artifactId>-->
+<!--                <version>${cxf.version}</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>generate-sources</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <configuration>-->
+<!--                            <wsdlOptions>-->
+<!--                                <wsdlOption>-->
+<!--                                    &lt;!&ndash; Reference the unpacked WSDL &ndash;&gt;-->
+<!--                                    <wsdl>${project.build.directory}/wsdl/xcpd/XCPD_Service.wsdl</wsdl>-->
+<!--                                    <wsdlLocation>classpath:wsdl/xcpd/XCPD_Service.wsdl</wsdlLocation>-->
+<!--                                    &lt;!&ndash; Set the wsdlRoot to the target directory so that the relative reference "schema/PRPA_IN201305UV02.xsd" resolves to target/schema/PRPA_IN201305UV02.xsd &ndash;&gt;-->
+<!--                                    <extendedSoapHeaders>true</extendedSoapHeaders>-->
+<!--                                    <bindingFiles>-->
+<!--                                        <bindingFile>${project.build.directory}/wsdl/xcpd/bindings.xjb</bindingFile>-->
+<!--                                    </bindingFiles>-->
+<!--                                    <extraargs>-->
+<!--                                        <extraarg>-p</extraarg>-->
+<!--                                        <extraarg>eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated</extraarg>-->
+<!--                                    </extraargs>-->
+<!--                                </wsdlOption>-->
+<!--                            </wsdlOptions>-->
+<!--                        </configuration>-->
+<!--                        <goals>-->
+<!--                            <goal>wsdl2java</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+<!--        </plugins>-->
+<!--        <resources>-->
+<!--            &lt;!&ndash; Copy generated WSDL files into the classpath &ndash;&gt;-->
+<!--            <resource>-->
+<!--                <directory>target/wsdl</directory>-->
+<!--                <targetPath>wsdl</targetPath>-->
+<!--                <includes>-->
+<!--                    <include>**/*</include>-->
+<!--                </includes>-->
+<!--                <filtering>false</filtering>-->
+<!--            </resource>-->
+<!--            <resource>-->
+<!--                <directory>src/main/resources</directory>-->
+<!--                <filtering>true</filtering>-->
+<!--            </resource>-->
+<!--            <resource>-->
+<!--                <directory>${project.build.directory}/generated-sources/resources</directory>-->
+<!--            </resource>-->
+<!--        </resources>-->
+<!--    </build>-->
 </project>

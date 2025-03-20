@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.generated.*;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
@@ -167,7 +167,7 @@ public class XcpdResponseExtractor {
             final XCPDErrorCode xcpdErrorCode = XCPDErrorCode.getErrorCode(xcpdErrorCodeValue);
             final OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.getErrorCode(openncpErrorCodeValue);
 
-            if(xcpdErrorCode == null && openncpErrorCode == null){
+            if (xcpdErrorCode == null && openncpErrorCode == null) {
                 LOGGER.warn("No error code found in the XCPD response : " + errorMsg);
             }
 
@@ -205,7 +205,7 @@ public class XcpdResponseExtractor {
                 && pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail() != null
                 && !pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()
                 && pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation() != null
-                && !pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation().isEmpty() ) {
+                && !pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation().isEmpty()) {
             return extractContent(pRPA_IN201306UV02.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getLocation().get(0).getContent());
         }
         return null;

@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.application.server.config;
 
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
-import ihe.iti.xcpd._2009.RespondingGatewayPortType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.RespondingGatewayPortType;
 import org.apache.cxf.Bus;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.jaxws.EndpointImpl;
@@ -54,7 +54,7 @@ public class WebServiceConfig {
     }
 
     @Bean
-    public Endpoint endpoint(final Bus bus,
+    public Endpoint xcpdEndpoint(final Bus bus,
                              final RespondingGatewayPortType xcpdPortType,
                              final LoggingFeature loggingFeature,
                              final Merlin signatureCrypto) {
