@@ -354,7 +354,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         } catch (final NIException e) {
             logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(org.apache.commons.lang.exception.ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + " (" +  documentId + ")^" + e.getMessage(), "", Arrays.stream(org.apache.commons.lang.exception.ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
         } catch (final Exception e) {
             logger.error("Generic Exception: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(

@@ -793,7 +793,7 @@ public class XCAServiceImpl implements XCAServiceInterface {
                         .add(SearchCriteria.Criteria.REPOSITORY_ID, repositoryId));
             } catch (final NIException e) {
                 logger.error("NIException: '{}'", e.getMessage(), e);
-                final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                final var codeContext = e.getOpenncpErrorCode().getDescription() + " ("+ documentId + ")^" + e.getMessage();
                 RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, e.getOpenncpErrorCode(), codeContext, e,
                         RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 failure = true;
