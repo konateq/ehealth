@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.core.client.api.*;
 import eu.europa.ec.sante.openncp.core.client.ihe.ClientService;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.*;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
+import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;
 import org.apache.commons.lang3.Validate;
 import org.apache.cxf.feature.Features;
 import org.slf4j.Logger;
@@ -25,7 +26,8 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     private final ClientService clientService;
 
-    private static final String CLIENT_CONNECTOR_EXCEPTION_MESSAGE = "No assertion context found";
+    private static final String ASSERTION_CONTEXT_MISSING = "No assertion context found";
+    private static final String SAMLDETAILS_MISSING = "No saml details found";
 
     public ClientServiceImpl(@Qualifier("iheClientService") final ClientService clientService) {
         this.clientService = Validate.notNull(clientService);
@@ -33,10 +35,11 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public String submitDocument(final SubmitDocumentRequest submitDocumentRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = SecurityContextProvider.getSecurityContext()
                 .orElseThrow(() -> new ClientException(
-                        CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
-                .getSamlDetails();
+                        ASSERTION_CONTEXT_MISSING))
+                .getSamlDetails()
+                .orElseThrow(() -> new ClientException(SAMLDETAILS_MISSING));
 
         final SubmitDocumentOperation submitDocumentOperation = ImmutableSubmitDocumentOperation.builder()
                 .samlDetails(samlDetails)
@@ -47,10 +50,11 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public List<EpsosDocument> queryDocuments(final QueryDocumentRequest queryDocumentRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = SecurityContextProvider.getSecurityContext()
                 .orElseThrow(() -> new ClientException(
-                        CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
-                .getSamlDetails();
+                        ASSERTION_CONTEXT_MISSING))
+                .getSamlDetails()
+                .orElseThrow(() -> new ClientException(SAMLDETAILS_MISSING));
 
         final QueryDocumentOperation queryDocumentOperation = ImmutableQueryDocumentOperation.builder()
                 .samlDetails(samlDetails)
@@ -63,10 +67,11 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public EpsosDocument retrieveDocument(final RetrieveDocumentRequest retrieveDocumentRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = SecurityContextProvider.getSecurityContext()
                 .orElseThrow(() -> new ClientException(
-                        CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
-                .getSamlDetails();
+                        ASSERTION_CONTEXT_MISSING))
+                .getSamlDetails()
+                .orElseThrow(() -> new ClientException(SAMLDETAILS_MISSING));
 
         final RetrieveDocumentOperation retrieveDocumentOperation = ImmutableRetrieveDocumentOperation.builder()
                 .samlDetails(samlDetails)
@@ -77,10 +82,11 @@ public class ClientServiceImpl implements ClientServicePortType {
 
     @Override
     public List<PatientDemographics> queryPatient(final QueryPatientRequest queryPatientRequest) {
-        final SamlDetails samlDetails = AssertionContextProvider.getAssertionContext()
+        final SamlDetails samlDetails = SecurityContextProvider.getSecurityContext()
                 .orElseThrow(() -> new ClientException(
-                        CLIENT_CONNECTOR_EXCEPTION_MESSAGE))
-                .getSamlDetails();
+                        ASSERTION_CONTEXT_MISSING))
+                .getSamlDetails()
+                .orElseThrow(() -> new ClientException(SAMLDETAILS_MISSING));
 
         final QueryPatientOperation queryPatientOperation = ImmutableQueryPatientOperation.builder()
                 .samlDetails(samlDetails)

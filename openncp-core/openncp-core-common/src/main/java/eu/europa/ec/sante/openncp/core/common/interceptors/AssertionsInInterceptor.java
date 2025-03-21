@@ -1,10 +1,9 @@
-package eu.europa.ec.sante.openncp.api.client.interceptor;
+package eu.europa.ec.sante.openncp.core.common.interceptors;
 
-import eu.europa.ec.sante.openncp.api.client.AssertionContext;
-import eu.europa.ec.sante.openncp.api.client.AssertionContextProvider;
-import eu.europa.ec.sante.openncp.api.client.ImmutableAssertionContext;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
+import eu.europa.ec.sante.openncp.core.common.ImmutableSecurityContext;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
+import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.headers.Header;
@@ -54,9 +53,15 @@ public class AssertionsInInterceptor extends AbstractSoapInterceptor {
         }
 
         final SamlDetails samlDetails = SamlDetails.of(assertions);
-        final AssertionContext assertionContext = ImmutableAssertionContext.builder().samlDetails(samlDetails).build();
-
-        AssertionContextProvider.setAssertionContext(assertionContext);
+        SecurityContextProvider
+                .getSecurityContext()
+                .map(ImmutableSecurityContext::copyOf)
+                .map(immutableSecurityContext -> immutableSecurityContext.withSamlDetails(samlDetails))
+                .ifPresentOrElse(SecurityContextProvider::setAssertionContext,
+                        () -> SecurityContextProvider.setAssertionContext(ImmutableSecurityContext.builder()
+                                .samlDetails(samlDetails)
+                                .build())
+                );
     }
 
     private Optional<Assertion> toAssertion(final Element element) {

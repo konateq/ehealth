@@ -7,8 +7,6 @@ import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
@@ -17,6 +15,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
@@ -25,7 +24,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +127,7 @@ public class XCPDServiceImpl implements XCPDService {
     }
 
     @Override
-    public PRPAIN201306UV02 queryPatient(PRPAIN201305UV02 request, SOAPHeader soapHeader, EventLog eventLog) throws Exception {
+    public PRPAIN201306UV02 queryPatient(final PRPAIN201305UV02 request, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
         final var response = objectFactory.createPRPAIN201306UV02();
         pRPAIN201306UV02Builder(request, response, soapHeader, eventLog);
         return response;
@@ -741,12 +739,12 @@ public class XCPDServiceImpl implements XCPDService {
                 // Preparing demographic query not allowed error
                 fillOutputMessage(outputMessage, XCPDErrorCode.DemographicsQueryNotAllowed, OpenNCPErrorCode.ERROR_PI_GENERIC, "Queries are only available with patient identifiers");
             }
-        } catch (final MissingFieldException missingFieldException) {
-            logger.error(missingFieldException.getMessage(), missingFieldException);
-            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_MISSING_REQUIRED_FIELDS, missingFieldException.getMessage());
-        } catch (final InvalidFieldException invalidFieldException) {
-            logger.error(invalidFieldException.getMessage(), invalidFieldException);
-            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_INCORRECT_FORMATTING, invalidFieldException.getMessage());
+//        } catch (final MissingFieldException missingFieldException) {
+//            logger.error(missingFieldException.getMessage(), missingFieldException);
+//            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_MISSING_REQUIRED_FIELDS, missingFieldException.getMessage());
+//        } catch (final InvalidFieldException invalidFieldException) {
+//            logger.error(invalidFieldException.getMessage(), invalidFieldException);
+//            fillOutputMessage(outputMessage, XCPDErrorCode.InternalError, OpenNCPErrorCode.ERROR_PI_INCORRECT_FORMATTING, invalidFieldException.getMessage());
         } catch (final OpenNCPErrorCodeException e) {
             logger.error(e.getMessage(), e);
             fillOutputMessage(outputMessage, XCPDErrorCode.InsufficientRights, e.getErrorCode(), e.getMessage());

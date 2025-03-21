@@ -11,7 +11,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;

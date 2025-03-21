@@ -1,10 +1,10 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import eu.europa.ec.sante.openncp.api.client.AssertionContext;
-import eu.europa.ec.sante.openncp.api.client.AssertionContextProvider;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
+import eu.europa.ec.sante.openncp.core.common.SecurityContext;
+import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
@@ -43,8 +43,8 @@ public class HcpAssertionValidationInterceptor extends AbstractPhaseInterceptor<
             return;
         }
 
-        final AssertionContext assertionContext = AssertionContextProvider.getAssertionContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
-        final SamlDetails samlDetails = assertionContext.getSamlDetails();
+        final SecurityContext securityContext = SecurityContextProvider.getSecurityContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
+        final SamlDetails samlDetails = securityContext.getSamlDetails().orElseThrow(() -> new RuntimeException("SamlDetails is null"));
         final AssertionDetails hcpAssertionDetails = samlDetails.getHcpAssertion().orElseThrow(() -> new AuthenticationException("A HCP assertion is mandatory."));
 
         try {

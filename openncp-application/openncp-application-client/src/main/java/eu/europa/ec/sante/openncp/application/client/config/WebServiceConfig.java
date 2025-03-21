@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.api.client.interceptor.*;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
+import eu.europa.ec.sante.openncp.core.common.interceptors.AssertionsInInterceptor;
 import org.apache.cxf.Bus;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.jaxws.EndpointImpl;

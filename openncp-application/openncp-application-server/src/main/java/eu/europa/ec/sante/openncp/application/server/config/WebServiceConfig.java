@@ -2,6 +2,8 @@ package eu.europa.ec.sante.openncp.application.server.config;
 
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
+import eu.europa.ec.sante.openncp.core.common.interceptors.AssertionsInInterceptor;
+import eu.europa.ec.sante.openncp.core.common.interceptors.SoapMessageInterceptor;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.RespondingGatewayPortType;
 import org.apache.cxf.Bus;
 import org.apache.cxf.ext.logging.LoggingFeature;
@@ -59,6 +61,8 @@ public class WebServiceConfig {
                              final LoggingFeature loggingFeature,
                              final Merlin signatureCrypto) {
         final EndpointImpl endpoint = new EndpointImpl(bus, xcpdPortType);
+        endpoint.getInInterceptors().add(new AssertionsInInterceptor());
+        endpoint.getInInterceptors().add(new SoapMessageInterceptor());
         endpoint.getFeatures().add(loggingFeature);
         endpoint.getFeatures().add(new WSAddressingFeature());
 
