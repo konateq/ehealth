@@ -96,8 +96,34 @@ public class SAML {
      */
     public static XMLObject fromElement(final Element element) throws UnmarshallingException {
 
+        // Clone the hcpAss element into a new namespace-aware DOM document
+        // This is really needed because else we get the error:
+        // NOT_FOUND_ERR: An attempt is made to reference a node in a context where it does not exist.
+        // This is because with a normal unmarshall, the id's of the assertion are linked
+        // to a different owner document creating the error in com.sun.org.apache.xerces.internal.dom.ElementImpl.setIdAttributeNode
+        //  if (at.getOwnerElement() != this) {
+        //      String msg = DOMMessageFormatter.formatMessage(
+        //                      DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+        //      throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+        //  }
+        final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true); // critical!
+        final DocumentBuilder db;
+        try {
+            db = dbf.newDocumentBuilder();
+        } catch (final ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        final Document newDoc = db.newDocument();
+        final Element importedElement = (Element) newDoc.importNode(element, true);
+        newDoc.appendChild(importedElement);
+
         final Unmarshaller unmarshaller = XMLObjectProviderRegistrySupport.getUnmarshallerFactory().getUnmarshaller(element);
-        return unmarshaller.unmarshall(element);
+        if (unmarshaller == null) {
+            throw new IllegalStateException("No unmarshaller found for element: " + importedElement.getNodeName());
+        }
+
+        return unmarshaller.unmarshall(importedElement);
     }
 
     /**

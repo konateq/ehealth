@@ -21,6 +21,10 @@ import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.kernel.http.HTTPConstants;
 import org.apache.axis2.transport.http.TransportHeaders;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.binding.soap.SoapMessage;
+import org.apache.cxf.helpers.CastUtils;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.jetbrains.annotations.NotNull;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.slf4j.Logger;
@@ -29,9 +33,12 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
+import javax.xml.soap.Node;
+import javax.xml.soap.SOAPHeader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 // Common part for client and server logging
 // TODO A.R. Should be moved into openncp-util later to avoid duplication
@@ -153,7 +160,7 @@ public class EventLogUtil {
     }
 
     @NotNull
-    private static List<String> getDocumentIds(AdhocQueryResponse response) {
+    private static List<String> getDocumentIds(final AdhocQueryResponse response) {
         final List<String> documentIds = new ArrayList<>();
         final List<JAXBElement<? extends IdentifiableType>> registryObjectList = response.getRegistryObjectList().getIdentifiable();
         for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
@@ -172,7 +179,7 @@ public class EventLogUtil {
         return documentIds;
     }
 
-    public static void setDocumentType(EventLog eventLog, AdhocQueryRequest request) {
+    public static void setDocumentType(final EventLog eventLog, final AdhocQueryRequest request) {
         for (final SlotType1 slotType1 : request.getAdhocQuery().getSlot()) {
             if (StringUtils.equals(slotType1.getName(), "$XDSDocumentEntryClassCode")) {
                 String documentType = slotType1.getValueList().getValue().get(0);
@@ -379,6 +386,15 @@ public class EventLogUtil {
         }
     }
 
+    public static String getMessageID(final SOAPHeader header) {
+        final Iterator<Node> it = header.getChildElements(new QName("http://www.w3.org/2005/08/addressing", "MessageID"));
+        if (it.hasNext()) {
+            return it.next().getTextContent();
+        } else {
+            return "NA";
+        }
+    }
+
     public static String getAttributeValue(final Attribute attribute) {
 
         String attributeValue = null;
@@ -439,17 +455,59 @@ public class EventLogUtil {
         }
     }
 
+    public static String getSourceGatewayIdentifier(final SoapMessage soapMessage) {
+        // Get HTTP headers as a map (key: header name, value: list of header values)
+        final Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>) soapMessage.get(Message.PROTOCOL_HEADERS));
+        String headerClientIp = null;
+        if (headers != null) {
+            final List<String> forwardedForList = headers.get("X-Forwarded-For");
+            if (forwardedForList != null && !forwardedForList.isEmpty()) {
+                LOGGER.debug("--> X-Forwarded-For Address: '{}'", headerClientIp);
+                headerClientIp = forwardedForList.get(0);
+            }
+        }
+
+        if (StringUtils.isNotBlank(headerClientIp)) {
+            // If multiple IPs are present, take the first one
+            if (headerClientIp.contains(",")) {
+                return headerClientIp.split(",")[0].trim();
+            } else {
+                return headerClientIp.trim();
+            }
+        }
+
+        final HttpServletRequest httpServletRequest = (HttpServletRequest) soapMessage.get(AbstractHTTPDestination.HTTP_REQUEST);
+        if (httpServletRequest != null) {
+            final String clientIp = httpServletRequest.getRemoteAddr();
+            if (IPUtil.isLocalLoopbackIp(clientIp)) {
+                LOGGER.debug("Client Server Name: '{}'", httpServletRequest.getServerName());
+                return httpServletRequest.getServerName();
+            } else {
+                LOGGER.debug("Client IP: '{}'", clientIp);
+                return clientIp;
+            }
+        }
+
+        return StringUtils.EMPTY;
+    }
+
     public static String getTargetGatewayIdentifier() {
         return IPUtil.getPrivateServerIp();
+    }
+
+    public static String getClientCommonName(final HttpServletRequest httpServletRequest) {
+        return HttpUtil.getClientCertificate(httpServletRequest);
     }
 
     public static String getClientCommonName(final MessageContext messageContext) {
 
         final HttpServletRequest servletRequest = (HttpServletRequest) messageContext.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
-        return HttpUtil.getClientCertificate(servletRequest);
+        return getClientCommonName(servletRequest);
     }
 
     private static String getParticipantObjectID(final II id) {
         return id.getExtension() + "^^^&" + id.getRoot() + "&ISO";
     }
+
+
 }
