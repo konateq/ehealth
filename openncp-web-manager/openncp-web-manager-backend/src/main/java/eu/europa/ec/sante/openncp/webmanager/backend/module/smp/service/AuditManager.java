@@ -58,7 +58,7 @@ public class AuditManager {
         final EventLog eventLog = createDynamicDiscoveryEventLog(TransactionName.SMP_QUERY, objectID, errorMessagePartObjectId,
                 errorMessagePartObjectDetail, smpServerUri);
         eventLog.setEventType(EventType.SMP_QUERY);
-        eventLog.setNcpSide(NcpSide.NCP_A);
+        eventLog.setNcpSide(NcpSide.NCP_B);
         auditService.write(eventLog, "13", "2");
     }
 
