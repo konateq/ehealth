@@ -54,7 +54,6 @@ public class XcaService implements RespondingGatewayPortType {
         final SoapMessage soapMessage = (SoapMessage) PhaseInterceptorChain.getCurrentMessage();
         final HttpServletRequest httpServletRequest = (HttpServletRequest) soapMessage.get(AbstractHTTPDestination.HTTP_REQUEST);
 
-
         final SOAPHeader soapHeader = SecurityContextProvider.getSecurityContext()
                 .flatMap(SecurityContext::getSoapHeader)
                 .orElseThrow(() -> new RuntimeException("No SOAP header found"));

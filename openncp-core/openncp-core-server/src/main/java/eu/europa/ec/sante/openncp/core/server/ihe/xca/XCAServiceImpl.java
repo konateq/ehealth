@@ -8,9 +8,11 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
+import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
@@ -27,19 +29,19 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMRespon
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.ITMTSAMError;
+import eu.europa.ec.sante.openncp.core.common.tsam.error.TMError;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xca.DocumentSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
+import eu.europa.ec.sante.openncp.core.server.ihe.IheErrorCode;
 import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ep.EPExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.orcd.OrCDExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ps.PSExtrinsicObjectBuilder;
 import org.apache.axiom.om.OMAbstractFactory;
-import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
-import org.apache.axiom.om.OMNamespace;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -49,14 +51,23 @@ import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import javax.xml.namespace.QName;
 import javax.xml.soap.SOAPHeader;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.util.*;
 
@@ -117,8 +128,7 @@ public class XCAServiceImpl implements XCAService {
     public RetrieveDocumentSetResponse retrieveDocument(final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
             throws Exception {
 
-//        retrieveDocumentSetBuilder(request, soapHeader, eventLog);
-        return null;
+        return retrieveDocumentSetBuilder(request, soapHeader, eventLog);
     }
 
     public static List<ClassCode> getClassCodesOrCD() {
@@ -205,7 +215,7 @@ public class XCAServiceImpl implements XCAService {
     }
 
     private void prepareEventLogForRetrieve(final EventLog eventLog, final RetrieveDocumentSetRequest request, final boolean errorsDiscovered,
-                                            final boolean documentReturned, final OMElement registryErrorList, final Element sh, final ClassCode classCode) {
+                                            final boolean documentReturned, final RegistryErrorList registryErrorList, final Element sh, final ClassCode classCode) {
 
         logger.info("method prepareEventLogForRetrieve({})", classCode);
         if (classCode == null) {
@@ -239,21 +249,31 @@ public class XCAServiceImpl implements XCAService {
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 
         if (errorsDiscovered) {
-            final Iterator<OMElement> re = registryErrorList.getChildElements();
+            final List<RegistryError> registryErrors = registryErrorList.getRegistryErrors();
             //Include only the first error in the audit log.
-            if (re.hasNext()) {
-                final OMElement error = re.next();
+            if (!registryErrors.isEmpty()) {
+                final RegistryError error = registryErrors.get(0);
                 if (logger.isDebugEnabled()) {
                     try {
-                        logger.debug("Error to be included in audit: '{}'", XMLUtil.prettyPrint(XMLUtils.toDOM(error)));
+                        logger.debug("Error to be included in audit: '{}'", registryErrorToXml(error));
                     } catch (final Exception e) {
                         logger.debug("Exception: '{}'", e.getMessage(), e);
                     }
                 }
-                eventLog.setEM_ParticipantObjectID(error.getAttributeValue(new QName("", "errorCode")));
-                eventLog.setEM_ParticipantObjectDetail(error.getAttributeValue(new QName("", "codeContext")).getBytes());
+                eventLog.setEM_ParticipantObjectID(error.getErrorCode());
+                eventLog.setEM_ParticipantObjectDetail(error.getCodeContext().getBytes());
             }
         }
+    }
+
+    public String registryErrorToXml(final RegistryError error) throws Exception {
+        final JAXBContext jaxbContext = JAXBContext.newInstance(RegistryError.class);
+        final Marshaller marshaller = jaxbContext.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+
+        final StringWriter writer = new StringWriter();
+        marshaller.marshal(error, writer);
+        return writer.toString();
     }
 
     private List<ClassCode> getDocumentEntryClassCodes(final AdhocQueryRequest request) {
@@ -620,7 +640,7 @@ public class XCAServiceImpl implements XCAService {
         }
     }
 
-    private Document transformDocument(final Document doc, final OMElement registryErrorList, final OMElement registryResponseElement, final boolean isTranscode,
+    private Document transformDocument(final Document doc, final RegistryErrorList registryErrorList, final RegistryResponseType registryResponseElement, final boolean isTranscode,
                                        final EventLog eventLog) {
 
         logger.debug("Transforming document, isTranscode: '{}' - Event Type: '{}'", isTranscode, eventLog.getEventType());
@@ -653,20 +673,17 @@ public class XCAServiceImpl implements XCAService {
                 tmResponse = cdaTransformationService.translate(doc, Constants.LANGUAGE_CODE, NcpSide.NCP_A);
             }
 
-            final OMNamespace ns = registryResponseElement.getNamespace();
-            final var ons = omFactory.createOMNamespace(ns.getNamespaceURI(), "a");
-
             for (final ITMTSAMError error : tmResponse.getErrors()) {
-                RegistryErrorUtils.addErrorOMMessage(ons, registryErrorList, error, operationType, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, error, operationType, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
             }
 
             for (final ITMTSAMError warning : tmResponse.getWarnings()) {
-                RegistryErrorUtils.addErrorOMMessage(ons, registryErrorList, warning, operationType, RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, warning, operationType, RegistryErrorSeverity.ERROR_SEVERITY_WARNING);
             }
 
             returnDoc = Base64Util.decode(tmResponse.getResponseCDA());
-            if (registryErrorList.getChildElements().hasNext()) {
-                registryResponseElement.addChild(registryErrorList);
+            if (!registryErrorList.getRegistryErrors().isEmpty()) {
+                registryResponseElement.setRegistryErrorList(registryErrorList);
             }
         } catch (final Exception e) {
             logger.error(e.getMessage(), e);
@@ -675,359 +692,330 @@ public class XCAServiceImpl implements XCAService {
         return returnDoc;
     }
 
-//    private void retrieveDocumentSetBuilder(final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog, final OMElement omElement)
-//            throws Exception {
-//
-//        final var omNamespace = omFactory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0", "");
-//        final var registryResponse = omFactory.createOMElement("RegistryResponse", omNamespace);
-//        final var registryErrorList = omFactory.createOMElement("RegistryErrorList", omNamespace);
-//        final OMNamespace ns2 = omElement.getNamespace();
-//        final var documentResponse = omFactory.createOMElement("DocumentResponse", ns2);
-//
-//        var documentReturned = false;
-//        var failure = false;
-//
-//        final Element soapHeaderElement;
-//        ClassCode classCodeValue = null;
-//
-//        // Start processing within a labeled block, break on certain errors
-//        processLabel:
-//        {
-//            try {
-//                soapHeaderElement = XMLUtils.toDOM(soapHeader);
-//            } catch (final Exception e) {
-//                logger.error(null, e);
-//                throw e;
-//            }
-//
-//            documentSearchService.setSOAPHeader(soapHeaderElement);
-//
-//            final String documentId = request.getDocumentRequests().get(0).getDocumentUniqueId();
-//            final String fullPatientId = extractFullPatientId(soapHeaderElement);
-//            final String repositoryId = getRepositoryUniqueId(request);
-//            if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-//                loggerClinical.debug("Retrieving clinical document by criteria:\nPatient ID: '{}'\nDocument ID: '{}'\nRepository ID: '{}'",
-//                        fullPatientId, documentId, repositoryId);
-//            }
-//            //try getting country code from the certificate
-//            String countryCode = null;
-//            final String distinguishedName = eventLog.getSC_UserID();
-//            logger.info("[Certificate] Distinguished Name: '{}'", distinguishedName);
-//            final int cIndex = distinguishedName.indexOf("C=");
-//            if (cIndex > 0) {
-//                countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
-//            }
-//            // Mustafa: This part is added for handling consents when the call is not https. In this case, we check
-//            // the country code of the signature certificate that ships within the HCP assertion
-//            // TODO: Might be necessary to remove later, although it does no harm in reality!
-//            if (countryCode == null) {
-//                logger.info("Could not get client country code from the service consumer certificate. " +
-//                        "The reason can be that the call was not via HTTPS. " +
-//                        "Will check the country code from the signature certificate now.");
-//                countryCode = saml2Validator.getCountryCodeFromHCPAssertion(soapHeaderElement);
-//                if (countryCode != null) {
-//                    logger.info("Found the client country code via the signature certificate.");
-//                } else {
-//                    failure = true;
-//                    RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS,
-//                            OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription(),
-//                            RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                    break processLabel;
-//                }
-//            }
-//
-//            logger.info("The client country code to be used by the PDP '{}' ", countryCode);
-//
-//            // Then, it is the Policy Decision Point (PDP) that decides according to the consent of the patient
-//            if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
-//                failure = true;
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_PS_NO_CONSENT,
-//                        OpenNCPErrorCode.ERROR_PS_NO_CONSENT.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                break processLabel;
-//            }
-//
-//            // Evidence for call to NI for XCA Retrieve
-//            /* Joao: we MUST generate NRO when NCPA sends to NI.This was throwing errors because we were not passing an XML document.
-//                We're passing data like:
-//                "SearchCriteria: {patientId = 12445ASD}"
-//                So we provided an XML representation of such data */
-//            try {
-//                EvidenceUtils.createEvidenceREMNRO(DocumentFactory.createSearchCriteria().addPatientId(fullPatientId).asXml(),
-//                        Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-//                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-//                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode(), new DateTime(),
-//                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_RETRIEVE_REQ",
-//                        SoapElementHelper.getTRCAssertion(soapHeaderElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-//            } catch (final Exception e) {
-//                logger.error("createEvidenceREMNRO: '{}'", ExceptionUtils.getStackTrace(e), e);
-//            }
-//
-//            //TODO: EHNCP-1271 - Shall we indicate a specific ERROR Code???
-//            final EPSOSDocument epsosDoc;
-//            try {
-//                epsosDoc = documentSearchService.getDocument(DocumentFactory.createSearchCriteria()
-//                        .add(SearchCriteria.Criteria.DOCUMENT_ID, documentId)
-//                        .addPatientId(fullPatientId)
-//                        .add(SearchCriteria.Criteria.REPOSITORY_ID, repositoryId));
-//            } catch (final NIException e) {
-//                logger.error("NIException: '{}'", e.getMessage(), e);
-//                final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, e.getOpenncpErrorCode(), codeContext, e,
-//                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                failure = true;
-//                break processLabel;
-//            }
-//
-//            if (epsosDoc == null) {
-//
-//                //  Evidence for response from NI in case of failure
-//                //  This should be NRR of NCPA receiving from NI. This was throwing errors because we were not passing an XML document.
-//                //  We're passing data like: "SearchCriteria: {patientId = 12445ASD}"
-//                //  So we provided an XML representation of such data. Still, evidence is generated based on request data, not response.
-//                //  This NRR is optional as per the CP. So we leave this commented.
-//                //                try {
-//                //                    EvidenceUtils.createEvidenceREMNRR(DocumentFactory.createSearchCriteria().add(Criteria.PatientId, patientId)
-//                //                    .asXml(),
-//                //                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                //                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                //                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                //                            IHEEventType.epsosPatientServiceRetrieve.getCode(),
-//                //                            new DateTime(),
-//                //                            EventOutcomeIndicator.TEMPORAL_FAILURE.getCode().toString(),
-//                //                            "NI_XCA_RETRIEVE_RES_FAIL",
-//                //                            Helper.getTRCAssertion(soapHeaderElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-//                //                } catch (Exception e) {
-//                //                    logger.error(ExceptionUtils.getStackTrace(e));
-//                //                }
-//                logger.error("[National Connector] No document returned by the National Infrastructure");
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, IheErrorCode.XDSMissingDocument,
-//                        OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getCode() + " : " +
-//                                OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getDescription(),
-//                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                break processLabel;
-//            }
-//
-//            // Evidence for response from NI in case of success
-//            /* Joao: This should be NRR of NCPA receiving from NI.
-//                    This was throwing errors because we were not passing an XML document.
-//                    We're passing data like:
-//                    "SearchCriteria: {patientId = 12445ASD}"
-//                    So we provided an XML representation of such data. Still, evidence is generated based on request data, not response.
-//                    This NRR is optional as per the CP. So we leave this commented */
-//            //            try {
-//            //                EvidenceUtils.createEvidenceREMNRR(DocumentFactory.createSearchCriteria().add(Criteria.PatientId, patientId).asXml(),
-//            //                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//            //                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//            //                        tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//            //                        IHEEventType.epsosPatientServiceRetrieve.getCode(),
-//            //                        new DateTime(),
-//            //                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//            //                        "NI_XCA_RETRIEVE_RES_SUCC",
-//            //                        DateUtil.getCurrentTimeGMT());
-//            //            } catch (Exception e) {
-//            //                logger.error(ExceptionUtils.getStackTrace(e));
-//            //            }
-//
-//            classCodeValue = epsosDoc.getClassCode();
-//
-//            try {
-//                saml2Validator.validateXCAHeader(soapHeaderElement, classCodeValue);
-//            } catch (final InvalidFieldException e) {
-//                logger.error(e.getMessage(), e);
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_PS_INCORRECT_FORMATTING, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//            } catch (final MissingFieldException e) {
-//                logger.error(e.getMessage(), e);
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_PS_MISSING_REQUIRED_FIELDS, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//            } catch (final OpenNCPErrorCodeException e) {
-//                logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, e.getErrorCode(), e.getMessage(),
-//                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                break processLabel;
-//            } catch (final SMgrException e) {
-//                logger.error("SMgrException: '{}'", e.getMessage(), e);
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC, e.getMessage(),
-//                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                break processLabel;
-//            }
-//
-//            logger.info("XCA Retrieve Request is valid.");
-//            final var homeCommunityId = omFactory.createOMElement("HomeCommunityId", ns2);
-//            homeCommunityId.setText(request.getDocumentRequests().get(0).getHomeCommunityId());
-//            documentResponse.addChild(homeCommunityId);
-//
-//            final var repositoryUniqueId = omFactory.createOMElement("RepositoryUniqueId", ns2);
-//            repositoryUniqueId.setText(request.getDocumentRequests().get(0).getRepositoryUniqueId());
-//            documentResponse.addChild(repositoryUniqueId);
-//
-//            final var documentUniqueId = omFactory.createOMElement("DocumentUniqueId", ns2);
-//            documentUniqueId.setText(documentId);
-//            documentResponse.addChild(documentUniqueId);
-//
-//            final var mimeType = omFactory.createOMElement("mimeType", ns2);
-//            mimeType.setText(MediaType.TEXT_XML_VALUE);
-//            documentResponse.addChild(mimeType);
-//
-//            final var document = omFactory.createOMElement("Document", omFactory.createOMNamespace("urn:ihe:iti:xds-b:2007", ""));
-//            logger.info("XCA Retrieve Response has been created.");
-//            try {
-//                Document doc = epsosDoc.getDocument();
-//                logger.info("Client userID: '{}'", eventLog.getSC_UserID());
-//
-//                if (doc != null) {
-//                    logger.info("[National Infrastructure] CDA Document:\n'{}'", epsosDoc.getClassCode().getCode());
-//                    /* Validate CDA eHDSI Friendly */
-//                    if (OpenNCPValidation.isValidationEnable()) {
-//
-//                        OpenNCPValidation.validateCdaDocument(XMLUtil.documentToString(epsosDoc.getDocument()), NcpSide.NCP_A,
-//                                epsosDoc.getClassCode(), false);
-//                    }
-//                    // Transcode to eHDSI Pivot
-//                    if (!getClassCodesOrCD().contains(classCodeValue)) {
-//                        doc = transformDocument(doc, registryErrorList, registryResponse, true, eventLog);
-//                    }
-//                    if (!checkIfOnlyWarnings(registryErrorList)) {
-//
-//                        // If the transformation process has raised at least one FATAL Error, we should determine which
-//                        // XCAError code has to be provided according the corresponding TM Error Code
-//                        final Iterator<OMElement> errors = registryErrorList.getChildElements();
-//                        while (errors.hasNext()) {
-//
-//                            final OMElement errorCode = errors.next();
-//                            logger.error("Error: '{}'-'{}'", errorCode.getText(), errorCode.getAttributeValue(QName.valueOf("errorCode")));
-//                            logger.error("TRANSCODING ERROR: '{}'-'{}'", TMError.ERROR_REQUIRED_CODED_ELEMENT_NOT_TRANSCODED.getCode(),
-//                                    errorCode.getAttributeValue(QName.valueOf("errorCode")));
-//
-//                            if (StringUtils.startsWith(errorCode.getAttributeValue(QName.valueOf("errorCode")), "45")) {
-//
-//                                OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_TRANSCODING_ERROR;
-//                                String openNcpErrorCodeDescription = openncpErrorCode.getDescription();
-//                                final String errorCodeContext = errorCode.getAttributeValue(QName.valueOf("codeContext"));
-//
-//                                if (Objects.requireNonNull(classCodeValue) == EP_CLASSCODE) {
-//                                    openncpErrorCode = OpenNCPErrorCode.ERROR_EP_MISSING_EXPECTED_MAPPING;
-//                                } else if (classCodeValue == PS_CLASSCODE) {
-//                                    openncpErrorCode = OpenNCPErrorCode.ERROR_PS_MISSING_EXPECTED_MAPPING;
-//                                }
-//                                if (StringUtils.isNotBlank(errorCodeContext)) {
-//                                    openNcpErrorCodeDescription = openncpErrorCode.getDescription() + " [" + errorCodeContext + "]";
-//                                }
-//
-//                                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, openncpErrorCode, openNcpErrorCodeDescription,
-//                                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//                                // If the error is FATAL flag failure has been set to true
-//                                failure = true;
-//                                break;
-//                            }
-//                        }
-//                    } else {
-//                        /* Validate CDA eHDSI Pivot if no error during the transformation */
-//                        if (OpenNCPValidation.isValidationEnable()) {
-//                            OpenNCPValidation.validateCdaDocument(XMLUtils.toOM(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
-//                                    epsosDoc.getClassCode(), true);
-//                        }
-//                    }
-//                }
-//
-//                // If there is no failure during the process, the CDA document has been attached to the response
-//                logger.info("Error Registry: Failure '{}'", failure);
-//                if (!failure) {
-//                    ByteArrayDataSource dataSource = null;
-//                    if (doc != null) {
-//                        dataSource = new ByteArrayDataSource(XMLUtils.toOM(doc.getDocumentElement()).toString().getBytes(), "text/xml;charset=UTF-8");
-//                    }
-//                    final var dataHandler = new DataHandler(dataSource);
-//                    final var textData = omFactory.createOMText(dataHandler, true);
-//                    textData.setOptimize(true);
-//                    document.addChild(textData);
-//
-//                    logger.debug("Returning document '{}'", documentId);
-//                    documentResponse.addChild(document);
-//                    documentReturned = true;
-//                }
-//            } catch (final Exception e) {
-//                OpenNCPErrorCode code = OpenNCPErrorCode.ERROR_GENERIC;
-//
-//                switch (classCodeValue) {
-//                    case EP_CLASSCODE:
-//                        code = OpenNCPErrorCode.ERROR_EP_GENERIC;
-//                        break;
-//                    case PS_CLASSCODE:
-//                        code = OpenNCPErrorCode.ERROR_PS_GENERIC;
-//                        break;
-//                    case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
-//                    case ORCD_LABORATORY_RESULTS_CLASSCODE:
-//                    case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
-//                    case ORCD_MEDICAL_IMAGES_CLASSCODE:
-//                        code = OpenNCPErrorCode.ERROR_ORCD_GENERIC;
-//                        break;
-//                }
-//
-//                failure = true;
-//                logger.error("Exception: '{}'", e.getMessage(), e);
-//                RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, code, e.getMessage(),
-//                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-//            }
-//        }
-//
-//        // If the registryErrorList is empty or contains only Warning, the status of the request is SUCCESS
-//        if (!registryErrorList.getChildElements().hasNext()) {
-//            logger.info("XCA Retrieve Document - Transformation Status: '{}'\nDefault Case", AdhocQueryResponseStatus.SUCCESS);
-//            registryResponse.addAttribute(omFactory.createOMAttribute("status", null, AdhocQueryResponseStatus.SUCCESS));
-//        } else {
-//            if (checkIfOnlyWarnings(registryErrorList)) {
-//                logger.info("XCA Retrieve Document - Transformation Status: '{}'\nCheck Warning", AdhocQueryResponseStatus.SUCCESS);
-//                registryResponse.addAttribute(omFactory.createOMAttribute("status", null, AdhocQueryResponseStatus.SUCCESS));
-//            } else if (failure) {
-//                // If there is a failure during the request process, the status is FAILURE
-//                logger.info("XCA Retrieve Document - Transformation Status: '{}'\nCheck Warning Failure: '{}'", AdhocQueryResponseStatus.FAILURE,
-//                        failure);
-//                registryResponse.addAttribute(omFactory.createOMAttribute("status", null, AdhocQueryResponseStatus.FAILURE));
-//            } else {
-//                //  Otherwise the status is PARTIAL SUCCESS
-//                logger.info("XCA Retrieve Document - Transformation Status: '{}'\nOtherwise...", AdhocQueryResponseStatus.PARTIAL_SUCCESS);
-//                registryResponse.addAttribute(omFactory.createOMAttribute("status", null, AdhocQueryResponseStatus.PARTIAL_SUCCESS));
-//            }
-//        }
-//
-//        logger.info("Preparing Event Log of the Response:");
-//        try {
-//            final boolean errorsDiscovered = registryErrorList.getChildElements().hasNext();
-//            if (errorsDiscovered) {
-//                registryResponse.addChild(registryErrorList);
-//            }
-//            omElement.addChild(registryResponse);
-//            if (documentReturned) {
-//                omElement.addChild(documentResponse);
-//            }
-//            prepareEventLogForRetrieve(eventLog, request, errorsDiscovered, documentReturned, registryErrorList, soapHeaderElement, classCodeValue);
-//        } catch (final Exception ex) {
-//            logger.error("Prepare Audit log failed. '{}'", ex.getMessage(), ex);
-//            // TODO: TWG to decide if this is this fatal
-//        }
-//    }
+    public byte[] documentToByteArray(final Document doc) throws Exception {
+        final TransformerFactory tf = TransformerFactory.newInstance();
+        final Transformer transformer = tf.newTransformer();
+        // Optionally set output properties
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        transformer.transform(new DOMSource(doc), new StreamResult(baos));
+        return baos.toByteArray();
+    }
+
+    private RetrieveDocumentSetResponse retrieveDocumentSetBuilder(final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
+            throws Exception {
+
+        final RegistryErrorList registryErrorList = objectFactory.createRegistryErrorList();
+        final RetrieveDocumentSetResponse documentSetResponse = objectFactory.createRetrieveDocumentSetResponse();
+        final RegistryResponseType registryResponse = objectFactory.createRegistryResponseType();
+        documentSetResponse.setRegistryResponse(registryResponse);
+        final RetrieveDocumentSetResponse.DocumentResponse documentResponse = objectFactory.createRetrieveDocumentSetResponseDocumentResponse();
+
+        var documentReturned = false;
+        var failure = false;
+
+        ClassCode classCodeValue = null;
+
+        // Start processing within a labeled block, break on certain errors
+        processLabel:
+        {
+
+            documentSearchService.setSOAPHeader(soapHeader);
+
+            final String documentId = request.getDocumentRequests().get(0).getDocumentUniqueId();
+            final String fullPatientId = extractFullPatientId(soapHeader);
+            final String repositoryId = getRepositoryUniqueId(request);
+            if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
+                loggerClinical.debug("Retrieving clinical document by criteria:\nPatient ID: '{}'\nDocument ID: '{}'\nRepository ID: '{}'",
+                        fullPatientId, documentId, repositoryId);
+            }
+            //try getting country code from the certificate
+            String countryCode = null;
+            final String distinguishedName = eventLog.getSC_UserID();
+            logger.info("[Certificate] Distinguished Name: '{}'", distinguishedName);
+            final int cIndex = distinguishedName.indexOf("C=");
+            if (cIndex > 0) {
+                countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
+            }
+            // Mustafa: This part is added for handling consents when the call is not https. In this case, we check
+            // the country code of the signature certificate that ships within the HCP assertion
+            // TODO: Might be necessary to remove later, although it does no harm in reality!
+            if (countryCode == null) {
+                logger.info("Could not get client country code from the service consumer certificate. " +
+                        "The reason can be that the call was not via HTTPS. " +
+                        "Will check the country code from the signature certificate now.");
+                countryCode = saml2Validator.getCountryCodeFromHCPAssertion(soapHeader);
+                if (countryCode != null) {
+                    logger.info("Found the client country code via the signature certificate.");
+                } else {
+                    failure = true;
+                    RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS,
+                            OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                    break processLabel;
+                }
+            }
+
+            logger.info("The client country code to be used by the PDP '{}' ", countryCode);
+
+            // Then, it is the Policy Decision Point (PDP) that decides according to the consent of the patient
+            if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+                failure = true;
+                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_NO_CONSENT,
+                        OpenNCPErrorCode.ERROR_PS_NO_CONSENT.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                break processLabel;
+            }
+
+            // Evidence for call to NI for XCA Retrieve
+            /* Joao: we MUST generate NRO when NCPA sends to NI.This was throwing errors because we were not passing an XML document.
+                We're passing data like:
+                "SearchCriteria: {patientId = 12445ASD}"
+                So we provided an XML representation of such data */
+            try {
+                EvidenceUtils.createEvidenceREMNRO(DocumentFactory.createSearchCriteria().addPatientId(fullPatientId).asXml(),
+                        Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
+                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
+                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode(), new DateTime(),
+                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_RETRIEVE_REQ",
+                        SoapElementHelper.getTRCAssertion(soapHeader).getID() + "__" + DateUtil.getCurrentTimeGMT());
+            } catch (final Exception e) {
+                logger.error("createEvidenceREMNRO: '{}'", ExceptionUtils.getStackTrace(e), e);
+            }
+
+            //TODO: EHNCP-1271 - Shall we indicate a specific ERROR Code???
+            final EPSOSDocument epsosDoc;
+            try {
+                epsosDoc = documentSearchService.getDocument(DocumentFactory.createSearchCriteria()
+                        .add(SearchCriteria.Criteria.DOCUMENT_ID, documentId)
+                        .addPatientId(fullPatientId)
+                        .add(SearchCriteria.Criteria.REPOSITORY_ID, repositoryId));
+            } catch (final NIException e) {
+                logger.error("NIException: '{}'", e.getMessage(), e);
+                final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), codeContext, e,
+                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+
+                failure = true;
+                break processLabel;
+            }
+
+            if (epsosDoc == null) {
+
+                //  Evidence for response from NI in case of failure
+                //  This should be NRR of NCPA receiving from NI. This was throwing errors because we were not passing an XML document.
+                //  We're passing data like: "SearchCriteria: {patientId = 12445ASD}"
+                //  So we provided an XML representation of such data. Still, evidence is generated based on request data, not response.
+                //  This NRR is optional as per the CP. So we leave this commented.
+                //                try {
+                //                    EvidenceUtils.createEvidenceREMNRR(DocumentFactory.createSearchCriteria().add(Criteria.PatientId, patientId)
+                //                    .asXml(),
+                //                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
+                //                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                //                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+                //                            IHEEventType.epsosPatientServiceRetrieve.getCode(),
+                //                            new DateTime(),
+                //                            EventOutcomeIndicator.TEMPORAL_FAILURE.getCode().toString(),
+                //                            "NI_XCA_RETRIEVE_RES_FAIL",
+                //                            Helper.getTRCAssertion(soapHeaderElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
+                //                } catch (Exception e) {
+                //                    logger.error(ExceptionUtils.getStackTrace(e));
+                //                }
+                logger.error("[National Connector] No document returned by the National Infrastructure");
+                RegistryErrorUtils.addErrorMessage(registryErrorList, IheErrorCode.XDSMissingDocument,
+                        OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getCode() + " : " +
+                                OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getDescription(),
+                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                break processLabel;
+            }
+
+            // Evidence for response from NI in case of success
+            /* Joao: This should be NRR of NCPA receiving from NI.
+                    This was throwing errors because we were not passing an XML document.
+                    We're passing data like:
+                    "SearchCriteria: {patientId = 12445ASD}"
+                    So we provided an XML representation of such data. Still, evidence is generated based on request data, not response.
+                    This NRR is optional as per the CP. So we leave this commented */
+            //            try {
+            //                EvidenceUtils.createEvidenceREMNRR(DocumentFactory.createSearchCriteria().add(Criteria.PatientId, patientId).asXml(),
+            //                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
+            //                        tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
+            //                        tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+            //                        IHEEventType.epsosPatientServiceRetrieve.getCode(),
+            //                        new DateTime(),
+            //                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+            //                        "NI_XCA_RETRIEVE_RES_SUCC",
+            //                        DateUtil.getCurrentTimeGMT());
+            //            } catch (Exception e) {
+            //                logger.error(ExceptionUtils.getStackTrace(e));
+            //            }
+
+            classCodeValue = epsosDoc.getClassCode();
+
+            try {
+                saml2Validator.validateXCAHeader(soapHeader, classCodeValue);
+            } catch (final InvalidFieldException e) {
+                logger.error(e.getMessage(), e);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_INCORRECT_FORMATTING, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            } catch (final MissingFieldException e) {
+                logger.error(e.getMessage(), e);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_MISSING_REQUIRED_FIELDS, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            } catch (final OpenNCPErrorCodeException e) {
+                logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getErrorCode(), e.getMessage(),
+                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                break processLabel;
+            } catch (final SMgrException e) {
+                logger.error("SMgrException: '{}'", e.getMessage(), e);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC, e.getMessage(),
+                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                break processLabel;
+            }
+
+            logger.info("XCA Retrieve Request is valid.");
+            documentResponse.setHomeCommunityId(request.getDocumentRequests().get(0).getHomeCommunityId());
+            documentResponse.setRepositoryUniqueId(request.getDocumentRequests().get(0).getRepositoryUniqueId());
+            documentResponse.setDocumentUniqueId(documentId);
+            documentResponse.setMimeType(MediaType.TEXT_XML_VALUE);
+
+            logger.info("XCA Retrieve Response has been created.");
+            try {
+                Document doc = epsosDoc.getDocument();
+                logger.info("Client userID: '{}'", eventLog.getSC_UserID());
+
+                if (doc != null) {
+                    logger.info("[National Infrastructure] CDA Document:\n'{}'", epsosDoc.getClassCode().getCode());
+                    /* Validate CDA eHDSI Friendly */
+                    if (OpenNCPValidation.isValidationEnable()) {
+                        OpenNCPValidation.validateCdaDocument(XMLUtil.documentToString(epsosDoc.getDocument()), NcpSide.NCP_A,
+                                epsosDoc.getClassCode(), false);
+                    }
+                    // Transcode to eHDSI Pivot
+                    if (!getClassCodesOrCD().contains(classCodeValue)) {
+                        doc = transformDocument(doc, registryErrorList, registryResponse, true, eventLog);
+                    }
+                    if (!checkIfOnlyWarnings(registryErrorList)) {
+
+                        // If the transformation process has raised at least one FATAL Error, we should determine which
+                        // XCAError code has to be provided according the corresponding TM Error Code
+                        final List<RegistryError> errors = registryErrorList.getRegistryErrors();
+                        for (final RegistryError error : errors) {
+
+                            logger.error("Error: '{}'-'{}'", error.getErrorCode(), error.getValue());
+                            logger.error("TRANSCODING ERROR: '{}'-'{}'", TMError.ERROR_REQUIRED_CODED_ELEMENT_NOT_TRANSCODED.getCode(),
+                                    error.getErrorCode());
+
+                            if (StringUtils.startsWith(error.getErrorCode(), "45")) {
+
+                                OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_TRANSCODING_ERROR;
+                                String openNcpErrorCodeDescription = openncpErrorCode.getDescription();
+                                final String errorCodeContext = error.getCodeContext();
+
+                                if (Objects.requireNonNull(classCodeValue) == EP_CLASSCODE) {
+                                    openncpErrorCode = OpenNCPErrorCode.ERROR_EP_MISSING_EXPECTED_MAPPING;
+                                } else if (classCodeValue == PS_CLASSCODE) {
+                                    openncpErrorCode = OpenNCPErrorCode.ERROR_PS_MISSING_EXPECTED_MAPPING;
+                                }
+                                if (StringUtils.isNotBlank(errorCodeContext)) {
+                                    openNcpErrorCodeDescription = openncpErrorCode.getDescription() + " [" + errorCodeContext + "]";
+                                }
+
+                                RegistryErrorUtils.addErrorMessage(registryErrorList, openncpErrorCode, openNcpErrorCodeDescription,
+                                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                                // If the error is FATAL flag failure has been set to true
+                                failure = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        /* Validate CDA eHDSI Pivot if no error during the transformation */
+                        if (OpenNCPValidation.isValidationEnable()) {
+                            OpenNCPValidation.validateCdaDocument(XMLUtils.toOM(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
+                                    epsosDoc.getClassCode(), true);
+                        }
+                    }
+                }
+
+                // If there is no failure during the process, the CDA document has been attached to the response
+                logger.info("Error Registry: Failure '{}'", failure);
+                if (!failure) {
+                    final byte[] documentBytes = documentToByteArray(doc);
+                    documentResponse.setDocument(documentBytes);
+                    documentReturned = true;
+                }
+            } catch (final Exception e) {
+                OpenNCPErrorCode code = OpenNCPErrorCode.ERROR_GENERIC;
+
+                switch (classCodeValue) {
+                    case EP_CLASSCODE:
+                        code = OpenNCPErrorCode.ERROR_EP_GENERIC;
+                        break;
+                    case PS_CLASSCODE:
+                        code = OpenNCPErrorCode.ERROR_PS_GENERIC;
+                        break;
+                    case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
+                    case ORCD_LABORATORY_RESULTS_CLASSCODE:
+                    case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
+                    case ORCD_MEDICAL_IMAGES_CLASSCODE:
+                        code = OpenNCPErrorCode.ERROR_ORCD_GENERIC;
+                        break;
+                }
+
+                failure = true;
+                logger.error("Exception: '{}'", e.getMessage(), e);
+                RegistryErrorUtils.addErrorMessage(registryErrorList, code, e.getMessage(),
+                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+            }
+        }
+
+        // If the registryErrorList is empty or contains only Warning, the status of the request is SUCCESS
+        if (registryErrorList.getRegistryErrors().isEmpty()) {
+            logger.info("XCA Retrieve Document - Transformation Status: '{}'\nDefault Case", AdhocQueryResponseStatus.SUCCESS);
+            registryResponse.setStatus(AdhocQueryResponseStatus.SUCCESS);
+        } else {
+            if (checkIfOnlyWarnings(registryErrorList)) {
+                logger.info("XCA Retrieve Document - Transformation Status: '{}'\nCheck Warning", AdhocQueryResponseStatus.SUCCESS);
+                registryResponse.setStatus(AdhocQueryResponseStatus.SUCCESS);
+            } else if (failure) {
+                // If there is a failure during the request process, the status is FAILURE
+                logger.info("XCA Retrieve Document - Transformation Status: '{}'\nCheck Warning Failure: '{}'", AdhocQueryResponseStatus.FAILURE,
+                        failure);
+                registryResponse.setStatus(AdhocQueryResponseStatus.FAILURE);
+            } else {
+                //  Otherwise the status is PARTIAL SUCCESS
+                logger.info("XCA Retrieve Document - Transformation Status: '{}'\nOtherwise...", AdhocQueryResponseStatus.PARTIAL_SUCCESS);
+                registryResponse.setStatus(AdhocQueryResponseStatus.PARTIAL_SUCCESS);
+            }
+        }
+
+        logger.info("Preparing Event Log of the Response:");
+        try {
+            final boolean errorsDiscovered = !registryErrorList.getRegistryErrors().isEmpty();
+            if (errorsDiscovered) {
+                registryResponse.setRegistryErrorList(registryErrorList);
+            }
+
+            if (documentReturned) {
+                documentSetResponse.getDocumentResponses().add(documentResponse);
+            }
+            prepareEventLogForRetrieve(eventLog, request, errorsDiscovered, documentReturned, registryErrorList, soapHeader, classCodeValue);
+        } catch (final Exception ex) {
+            logger.error("Prepare Audit log failed. '{}'", ex.getMessage(), ex);
+            // TODO: TWG to decide if this is this fatal
+        }
+
+        return documentSetResponse;
+    }
 
     /**
      * This method will check if the Registry error list only contains Warnings.
      *
      * @return boolean value, indicating if the list only contains warnings.
      */
-    private boolean checkIfOnlyWarnings(final OMElement registryErrorList) {
-
-        var onlyWarnings = true;
-        OMElement element;
-        final Iterator<OMElement> it = registryErrorList.getChildElements();
-
-        while (it.hasNext()) {
-            element = it.next();
-            if (StringUtils.equals(element.getAttribute(QName.valueOf("severity")).getAttributeValue(),
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR.getText())) {
-                logger.debug("Error has been detected for Element: '{}'", element.getText());
-                onlyWarnings = false;
-            }
-        }
-        return onlyWarnings;
+    private boolean checkIfOnlyWarnings(final RegistryErrorList registryErrorList) {
+        return RegistryErrorSeverity.ERROR_SEVERITY_ERROR.getText().equals(registryErrorList.getHighestSeverity());
     }
 
     /**

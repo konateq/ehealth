@@ -18,10 +18,10 @@ import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrResponse;
 import eu.europa.ec.sante.openncp.core.client.logging.LoggingSlf4j;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocumentSetResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -193,19 +193,21 @@ public class ClientServiceImpl implements ClientService {
 
             logger.info("[ClientConnector retrieveDocument()] homeCommunityId: '{}' targetLanguage: '{}'", homeCommunityId, targetLanguage);
             final ClassCode classCode = ClassCode.getByCode(documentCode.getValue());
-            final RetrieveDocumentSetResponseType.DocumentResponse documentResponse;
+            final RetrieveDocumentSetResponse.DocumentResponse documentResponse;
             switch (classCode) {
                 case PS_CLASSCODE:
                     documentResponse = patientService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 case EP_CLASSCODE:
-                    documentResponse = orderService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
+                    documentResponse = null;
+//                    documentResponse = orderService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
                 case ORCD_LABORATORY_RESULTS_CLASSCODE:
                 case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
                 case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                    documentResponse = orCDService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
+                    documentResponse = null;
+//                    documentResponse = orCDService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 default:
                     throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_EXCEPTION + documentCode.getValue());

@@ -71,7 +71,7 @@ public class RetrieveDocumentSetResponseType {
      * @param value allowed object is
      *              {@link RegistryResponseType }
      */
-    public void setRegistryResponse(RegistryResponseType value) {
+    public void setRegistryResponse(final RegistryResponseType value) {
         this.registryResponse = value;
     }
 
@@ -161,7 +161,7 @@ public class RetrieveDocumentSetResponseType {
          * @param value allowed object is
          *              {@link String }
          */
-        public void setHomeCommunityId(String value) {
+        public void setHomeCommunityId(final String value) {
             this.homeCommunityId = value;
         }
 
@@ -181,7 +181,7 @@ public class RetrieveDocumentSetResponseType {
          * @param value allowed object is
          *              {@link String }
          */
-        public void setRepositoryUniqueId(String value) {
+        public void setRepositoryUniqueId(final String value) {
             this.repositoryUniqueId = value;
         }
 
@@ -201,7 +201,7 @@ public class RetrieveDocumentSetResponseType {
          * @param value allowed object is
          *              {@link String }
          */
-        public void setDocumentUniqueId(String value) {
+        public void setDocumentUniqueId(final String value) {
             this.documentUniqueId = value;
         }
 
@@ -221,7 +221,7 @@ public class RetrieveDocumentSetResponseType {
          * @param value allowed object is
          *              {@link String }
          */
-        public void setMimeType(String value) {
+        public void setMimeType(final String value) {
             this.mimeType = value;
         }
 
@@ -241,7 +241,7 @@ public class RetrieveDocumentSetResponseType {
          * @param value allowed object is
          *              byte[]
          */
-        public void setDocument(byte[] value) {
+        public void setDocument(final byte[] value) {
             this.document = value;
         }
     }

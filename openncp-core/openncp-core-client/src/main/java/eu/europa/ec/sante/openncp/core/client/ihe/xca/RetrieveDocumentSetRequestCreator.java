@@ -2,17 +2,17 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocumentSetRequest;
 import org.apache.commons.lang3.StringUtils;
 
-public class RetrieveDocumentSetRequestTypeCreator {
+public class RetrieveDocumentSetRequestCreator {
 
-    public RetrieveDocumentSetRequestType createRetrieveDocumentSetRequestType(String documentId, String homeCommunityId, String repositoryUniqId) throws XCAException {
+    public RetrieveDocumentSetRequest createRetrieveDocumentSetRequestType(final String documentId, String homeCommunityId, final String repositoryUniqId) throws XCAException {
 
-        RetrieveDocumentSetRequestType retrieveDocumentSetRequest = new RetrieveDocumentSetRequestType();
-        RetrieveDocumentSetRequestType.DocumentRequest documentRequest = new RetrieveDocumentSetRequestType.DocumentRequest();
+        final RetrieveDocumentSetRequest retrieveDocumentSetRequest = new RetrieveDocumentSetRequest();
+        final RetrieveDocumentSetRequest.DocumentRequest documentRequest = new RetrieveDocumentSetRequest.DocumentRequest();
         if (!OidUtil.isValidHomeCommunityId(StringUtils.remove(homeCommunityId, Constants.OID_PREFIX))) {
             throw new XCAException(OpenNCPErrorCode.ERROR_GENERIC, "Invalid message: HomeCommunity format not correct", null);
         }
@@ -30,7 +30,7 @@ public class RetrieveDocumentSetRequestTypeCreator {
         // Set DocumentRequest/DocumentUniqueId
         documentRequest.setDocumentUniqueId(documentId);
 
-        retrieveDocumentSetRequest.getDocumentRequest().add(documentRequest);
+        retrieveDocumentSetRequest.getDocumentRequests().add(documentRequest);
 
         return retrieveDocumentSetRequest;
     }
