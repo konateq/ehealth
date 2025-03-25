@@ -45,7 +45,7 @@ public class OrCDService {
                                                                             final String targetLanguage,
                                                                             final Map<AssertionType, Assertion> assertionMap)
             throws XCAException {
-
-        return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.ORCD_SERVICE.getServiceName());
+        return null;
+//        return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.ORCD_SERVICE.getServiceName());
     }
 }

@@ -1,64 +1,40 @@
 package eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
-import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.audit.*;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
-import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
-import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
-import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.IHEEventType;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.XDRServiceInterface;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.DiscardDispenseDetails;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.DocumentFactory;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPSOSDocument;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.*;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ClassificationType;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExternalIdentifierType;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExtrinsicObjectType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
-import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.DocumentTransformationException;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoConsentException;
-import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
-import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
-import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.DomUtils;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xdr.DocumentSubmitInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
-import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import org.apache.axiom.soap.SOAPHeader;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 @Service
 public class XDRServiceImpl implements XDRServiceInterface {
@@ -233,154 +209,154 @@ public class XDRServiceImpl implements XDRServiceInterface {
      */
     public RegistryResponseType discardMedicationDispensed(final ProvideAndRegisterDocumentSetRequestType request,
                                                            final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-
-        logger.info("Processing Discard Dispense Medication");
-        final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
-        final Element soapHeaderElement = XMLUtils.toDOM(soapHeader);
-        documentSubmitInterface.setSOAPHeader(soapHeaderElement);
-
-        //  Validate HCP SAML token according de Medication Discard Dispense rule:
-        String sealCountryCode = null;
-
-        try {
-            sealCountryCode = saml2Validator.validateXDRHeader(soapHeaderElement, ClassCode.EDD_CLASSCODE);
-
-        } catch (final MissingFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_MISSING_REQUIRED_FIELDS,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final InvalidFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_INCORRECT_FORMATTING,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final OpenNCPErrorCodeException | SMgrException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_SEC_GENERIC,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-
-        final String fullPatientId = getDocumentEntryPatientId(request);
-        if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-            loggerClinical.info("Received a Discard eDispense document for patient: '{}'", fullPatientId);
-        }
-        String countryCode = "";
-        final String distinguishedName = eventLog.getSC_UserID();
-        final int cIndex = distinguishedName.indexOf("C=");
-
-        if (cIndex > 0) {
-            countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
-        } else {
-            logger.info("Could not get client country code from the service consumer certificate. " +
-                    "The reason can be that the call was not via HTTPS. Will check the country code from the signature certificate now.");
-            if (sealCountryCode != null) {
-                logger.info("Found the client country code via the signature certificate.");
-                countryCode = sealCountryCode;
-            }
-        }
-        logger.info("The client country code to be used by the PDP: '{}'", countryCode);
-        if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
-            logger.debug("No consent given, throwing InsufficientRightsException");
-            final NoConsentException e = new NoConsentException(null);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    e.getOpenncpErrorCode(),
-                    e.getMessage(),
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-
-        final RegistryResponseType response = new RegistryResponseType();
-        String documentId = "";
-        String discardId = "";
-        String discardDate = "";
-
-        try {
-            final org.w3c.dom.Document domDocument = DomUtils.byteToDocument(request.getDocument().get(0).getValue());
-            final EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
-            documentId = getDocumentId(epsosDocument.getDocument());
-            // Evidence for call to NI for XDR submit (dispensation)
-            // Joao: here we have a Document, so we can generate the mandatory NRO
-            try {
-                EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), Constants.NCP_SIG_KEYSTORE_PATH,
-                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                        Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                        IHEEventType.DISPENSATION_SERVICE_INITIALIZE.getCode(), new DateTime(),
-                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
-                        Objects.requireNonNull(SoapElementHelper.getTRCAssertion(soapHeaderElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
-            } catch (final Exception e) {
-                logger.error(ExceptionUtils.getStackTrace(e));
-            }
-
-            final List<JAXBElement<? extends IdentifiableType>> registryObjectList = request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable();
-            if (registryObjectList != null) {
-                for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
-
-                    if (identifiable.getValue() instanceof ExtrinsicObjectType) {
-                        final List<SlotType1> slotType1List = identifiable.getValue().getSlot();
-                        for (final SlotType1 slotType1 : slotType1List) {
-                            if (StringUtils.equals(slotType1.getName(), "creationTime")) {
-                                discardDate = slotType1.getValueList().getValue().get(0);
-                            }
-                        }
-                    } else if (identifiable.getValue() instanceof RegistryPackageType) {
-                        final RegistryPackageType registryPackageType = (RegistryPackageType) identifiable.getValue();
-                        for (final ExternalIdentifierType externalIdentifier : registryPackageType.getExternalIdentifier()) {
-                            if (StringUtils.equals(externalIdentifier.getIdentificationScheme(), "urn:uuid:96fdda7c-d067-4183-912e-bf5ee74998a8")) {
-                                discardId = externalIdentifier.getValue();
-                            }
-                        }
-                    }
-                }
-            }
-            //  Call to National Connector
-            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(XDRConstants.REGISTRY_PACKAGE.SUBMISSION_TIME_FORMAT);
-            final DiscardDispenseDetails discardDetails = new DiscardDispenseDetails();
-            discardDetails.setDispenseId(documentId);
-            discardDetails.setDiscardId(discardId);
-            discardDetails.setDiscardDate(simpleDateFormat.parse(discardDate));
-            discardDetails.setPatientId(fullPatientId);
-            discardDetails.setHealthCareProvider(SoapElementHelper.getAlternateUserID(soapHeaderElement));
-            discardDetails.setHealthCareProviderId(SoapElementHelper.getAssertionsSPProvidedId(soapHeaderElement));
-            discardDetails.setHealthCareProviderFacility(SoapElementHelper.getXSPALocality(soapHeaderElement));
-            discardDetails.setHealthCareProviderOrganization(SoapElementHelper.getOrganization(soapHeaderElement));
-            discardDetails.setHealthCareProviderOrganizationId(SoapElementHelper.getOrganizationId(soapHeaderElement));
-            documentSubmitInterface.cancelDispensation(discardDetails, epsosDocument);
-
-        } catch (final NIException e) {
-            logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
-        } catch (final Exception e) {
-            logger.error("Generic Exception: '{}'", e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_GENERIC,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-
-        if (registryErrorList.getRegistryError().isEmpty()) {
-            response.setStatus(AdhocQueryResponseStatus.SUCCESS);
-        } else {
-            response.setRegistryErrorList(registryErrorList);
-            response.setStatus(AdhocQueryResponseStatus.FAILURE);
-        }
-        prepareEventLogForDiscardMedication(eventLog, discardId, request, response, soapHeaderElement);
-
-        return response;
+        return null;
+//        logger.info("Processing Discard Dispense Medication");
+//        final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
+//        final Element soapHeaderElement = XMLUtils.toDOM(soapHeader);
+//        documentSubmitInterface.setSOAPHeader(soapHeaderElement);
+//
+//        //  Validate HCP SAML token according de Medication Discard Dispense rule:
+//        String sealCountryCode = null;
+//
+//        try {
+//            sealCountryCode = saml2Validator.validateXDRHeader(soapHeaderElement, ClassCode.EDD_CLASSCODE);
+//
+//        } catch (final MissingFieldException e) {
+//            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_ED_MISSING_REQUIRED_FIELDS,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        } catch (final InvalidFieldException e) {
+//            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_ED_INCORRECT_FORMATTING,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        } catch (final OpenNCPErrorCodeException | SMgrException e) {
+//            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_SEC_GENERIC,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        }
+//
+//        final String fullPatientId = getDocumentEntryPatientId(request);
+//        if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
+//            loggerClinical.info("Received a Discard eDispense document for patient: '{}'", fullPatientId);
+//        }
+//        String countryCode = "";
+//        final String distinguishedName = eventLog.getSC_UserID();
+//        final int cIndex = distinguishedName.indexOf("C=");
+//
+//        if (cIndex > 0) {
+//            countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
+//        } else {
+//            logger.info("Could not get client country code from the service consumer certificate. " +
+//                    "The reason can be that the call was not via HTTPS. Will check the country code from the signature certificate now.");
+//            if (sealCountryCode != null) {
+//                logger.info("Found the client country code via the signature certificate.");
+//                countryCode = sealCountryCode;
+//            }
+//        }
+//        logger.info("The client country code to be used by the PDP: '{}'", countryCode);
+//        if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+//            logger.debug("No consent given, throwing InsufficientRightsException");
+//            final NoConsentException e = new NoConsentException(null);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    e.getOpenncpErrorCode(),
+//                    e.getMessage(),
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        }
+//
+//        final RegistryResponseType response = new RegistryResponseType();
+//        String documentId = "";
+//        String discardId = "";
+//        String discardDate = "";
+//
+//        try {
+//            final org.w3c.dom.Document domDocument = DomUtils.byteToDocument(request.getDocument().get(0).getValue());
+//            final EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
+//            documentId = getDocumentId(epsosDocument.getDocument());
+//            // Evidence for call to NI for XDR submit (dispensation)
+//            // Joao: here we have a Document, so we can generate the mandatory NRO
+//            try {
+//                EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), Constants.NCP_SIG_KEYSTORE_PATH,
+//                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                        Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
+//                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
+//                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                        IHEEventType.DISPENSATION_SERVICE_INITIALIZE.getCode(), new DateTime(),
+//                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
+//                        Objects.requireNonNull(SoapElementHelper.getTRCAssertion(soapHeaderElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
+//            } catch (final Exception e) {
+//                logger.error(ExceptionUtils.getStackTrace(e));
+//            }
+//
+//            final List<JAXBElement<? extends IdentifiableType>> registryObjectList = request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable();
+//            if (registryObjectList != null) {
+//                for (final JAXBElement<? extends IdentifiableType> identifiable : registryObjectList) {
+//
+//                    if (identifiable.getValue() instanceof ExtrinsicObjectType) {
+//                        final List<SlotType1> slotType1List = identifiable.getValue().getSlot();
+//                        for (final SlotType1 slotType1 : slotType1List) {
+//                            if (StringUtils.equals(slotType1.getName(), "creationTime")) {
+//                                discardDate = slotType1.getValueList().getValue().get(0);
+//                            }
+//                        }
+//                    } else if (identifiable.getValue() instanceof RegistryPackageType) {
+//                        final RegistryPackageType registryPackageType = (RegistryPackageType) identifiable.getValue();
+//                        for (final ExternalIdentifierType externalIdentifier : registryPackageType.getExternalIdentifier()) {
+//                            if (StringUtils.equals(externalIdentifier.getIdentificationScheme(), "urn:uuid:96fdda7c-d067-4183-912e-bf5ee74998a8")) {
+//                                discardId = externalIdentifier.getValue();
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            //  Call to National Connector
+//            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(XDRConstants.REGISTRY_PACKAGE.SUBMISSION_TIME_FORMAT);
+//            final DiscardDispenseDetails discardDetails = new DiscardDispenseDetails();
+//            discardDetails.setDispenseId(documentId);
+//            discardDetails.setDiscardId(discardId);
+//            discardDetails.setDiscardDate(simpleDateFormat.parse(discardDate));
+//            discardDetails.setPatientId(fullPatientId);
+//            discardDetails.setHealthCareProvider(SoapElementHelper.getAlternateUserID(soapHeaderElement));
+//            discardDetails.setHealthCareProviderId(SoapElementHelper.getAssertionsSPProvidedId(soapHeaderElement));
+//            discardDetails.setHealthCareProviderFacility(SoapElementHelper.getXSPALocality(soapHeaderElement));
+//            discardDetails.setHealthCareProviderOrganization(SoapElementHelper.getOrganization(soapHeaderElement));
+//            discardDetails.setHealthCareProviderOrganizationId(SoapElementHelper.getOrganizationId(soapHeaderElement));
+//            documentSubmitInterface.cancelDispensation(discardDetails, epsosDocument);
+//
+//        } catch (final NIException e) {
+//            logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
+//            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+//        } catch (final Exception e) {
+//            logger.error("Generic Exception: '{}'", e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_ED_GENERIC,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        }
+//
+//        if (registryErrorList.getRegistryError().isEmpty()) {
+//            response.setStatus(AdhocQueryResponseStatus.SUCCESS);
+//        } else {
+//            response.setRegistryErrorList(registryErrorList);
+//            response.setStatus(AdhocQueryResponseStatus.FAILURE);
+//        }
+//        prepareEventLogForDiscardMedication(eventLog, discardId, request, response, soapHeaderElement);
+//
+//        return response;
     }
 
     /**
@@ -392,188 +368,188 @@ public class XDRServiceImpl implements XDRServiceInterface {
      */
     public RegistryResponseType saveDispensation(final ProvideAndRegisterDocumentSetRequestType request, final SOAPHeader soapHeader,
                                                  final EventLog eventLog) throws Exception {
-
-        logger.info("Processing Dispense Medication");
-        final RegistryResponseType response = new RegistryResponseType();
-        String sealCountryCode = null;
-
-        Element shElement;
-        try {
-            shElement = XMLUtils.toDOM(soapHeader);
-        } catch (final Exception e) {
-            logger.error(e.getMessage());
-            throw e;
-        }
-        documentSubmitInterface.setSOAPHeader(shElement);
-
-        final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
-        try {
-            sealCountryCode = saml2Validator.validateXDRHeader(shElement, ClassCode.ED_CLASSCODE);
-
-        } catch (final MissingFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_MISSING_REQUIRED_FIELDS,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final InvalidFieldException e) {
-            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_ED_INCORRECT_FORMATTING,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final OpenNCPErrorCodeException e) {
-            logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    e.getErrorCode(),
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final SMgrException e) {
-            logger.error("SMgrException: '{}'", e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    OpenNCPErrorCode.ERROR_SEC_GENERIC,
-                    e.getMessage(),
-                    e,
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-
-        final String fullPatientId = getDocumentEntryPatientId(request);
-        if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
-            loggerClinical.info("Received a eDispense document for patient: '{}'", fullPatientId);
-        }
-        String countryCode = "";
-        final String distinguishedName = eventLog.getSC_UserID();
-        final int cIndex = distinguishedName.indexOf("C=");
-
-        if (cIndex > 0) {
-            countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
-        }
-        // Mustafa: This part is added for handling consents when the call is not https.
-        // In this case, we check the country code of the signature certificate that ships within the HCP assertion.
-        // Might be necessary to remove later, although it does no harm in reality!
-        else {
-            logger.info("Could not get client country code from the service consumer certificate. " +
-                    "The reason can be that the call was not via HTTPS. Will check the country code from the signature certificate now.");
-            if (sealCountryCode != null) {
-                logger.info("Found the client country code via the signature certificate.");
-                countryCode = sealCountryCode;
-            }
-        }
-        logger.info("The client country code to be used by the PDP: '{}'", countryCode);
-        if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
-            logger.debug("No consent given, throwing InsufficientRightsException");
-            final NoConsentException e = new NoConsentException(null);
-            RegistryErrorUtils.addErrorMessage(
-                    registryErrorList,
-                    e.getOpenncpErrorCode(),
-                    e.getMessage(),
-                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-        if (!registryErrorList.getRegistryError().isEmpty()) {
-            response.setRegistryErrorList(registryErrorList);
-            response.setStatus(AdhocQueryResponseStatus.FAILURE);
-        } else {
-            try {
-                shElement = XMLUtils.toDOM(soapHeader);
-            } catch (final Exception e) {
-                logger.error(e.getMessage());
-                throw e;
-            }
-
-            for (int i = 0; i < request.getDocument().size(); i++) {
-
-                final ProvideAndRegisterDocumentSetRequestType.Document doc = request.getDocument().get(i);
-                byte[] docBytes = doc.getValue();
-                org.w3c.dom.Document domDocument = null;
-                try {
-
-                    //  Validate CDA epSOS Pivot.
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCdaDocument(new String(doc.getValue(), StandardCharsets.UTF_8),
-                                NcpSide.NCP_A, obtainClassCode(request), true);
-                    }
-
-                    //  Reset the response document to a translated version.
-                    final TMResponseStructure tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(docBytes), Constants.LANGUAGE_CODE);
-                    domDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
-                    docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
-
-
-                    // Validate CDA epSOS Pivot
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCdaDocument(new String(docBytes, StandardCharsets.UTF_8), NcpSide.NCP_A,
-                                obtainClassCode(request), false);
-                    }
-                } catch (final DocumentTransformationException ex) {
-                    logger.error(ex.getLocalizedMessage(), ex);
-                }
-
-                try {
-                    final EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
-                    // Evidence for call to NI for XDR submit (dispensation)
-                    // Joao: here we have a Document, so we can generate the mandatory NRO
-                    try {
-                        EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), Constants.NCP_SIG_KEYSTORE_PATH,
-                                Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                                Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                                Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-                                Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                                IHEEventType.DISPENSATION_SERVICE_INITIALIZE.getCode(), new DateTime(),
-                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
-                                Objects.requireNonNull(SoapElementHelper.getTRCAssertion(shElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                    } catch (final Exception e) {
-                        logger.error(ExceptionUtils.getStackTrace(e));
-                    }
-                    // Call to National Connector
-                    final String documentId = getDocumentId(epsosDocument.getDocument());
-                    documentSubmitInterface.submitDispensation(epsosDocument);
-
-                    // Evidence for response from NI for XDR submit (dispensation)
-                    /* Joao: the NRR is being generated based on the request message (submitted document). The interface for document submission does not return
-                    any response for the submit service. This NRR is optional as per the CP. Left commented for now. */
+        return null;
+//        logger.info("Processing Dispense Medication");
+//        final RegistryResponseType response = new RegistryResponseType();
+//        String sealCountryCode = null;
+//
+//        Element shElement;
+//        try {
+//            shElement = XMLUtils.toDOM(soapHeader);
+//        } catch (final Exception e) {
+//            logger.error(e.getMessage());
+//            throw e;
+//        }
+//        documentSubmitInterface.setSOAPHeader(shElement);
+//
+//        final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
+//        try {
+//            sealCountryCode = saml2Validator.validateXDRHeader(shElement, ClassCode.ED_CLASSCODE);
+//
+//        } catch (final MissingFieldException e) {
+//            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_ED_MISSING_REQUIRED_FIELDS,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        } catch (final InvalidFieldException e) {
+//            logger.error("'{}': '{}'", e.getClass().getName(), e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_ED_INCORRECT_FORMATTING,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        } catch (final OpenNCPErrorCodeException e) {
+//            logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    e.getErrorCode(),
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        } catch (final SMgrException e) {
+//            logger.error("SMgrException: '{}'", e.getMessage(), e);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    OpenNCPErrorCode.ERROR_SEC_GENERIC,
+//                    e.getMessage(),
+//                    e,
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        }
+//
+//        final String fullPatientId = getDocumentEntryPatientId(request);
+//        if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
+//            loggerClinical.info("Received a eDispense document for patient: '{}'", fullPatientId);
+//        }
+//        String countryCode = "";
+//        final String distinguishedName = eventLog.getSC_UserID();
+//        final int cIndex = distinguishedName.indexOf("C=");
+//
+//        if (cIndex > 0) {
+//            countryCode = distinguishedName.substring(cIndex + 2, cIndex + 4);
+//        }
+//        // Mustafa: This part is added for handling consents when the call is not https.
+//        // In this case, we check the country code of the signature certificate that ships within the HCP assertion.
+//        // Might be necessary to remove later, although it does no harm in reality!
+//        else {
+//            logger.info("Could not get client country code from the service consumer certificate. " +
+//                    "The reason can be that the call was not via HTTPS. Will check the country code from the signature certificate now.");
+//            if (sealCountryCode != null) {
+//                logger.info("Found the client country code via the signature certificate.");
+//                countryCode = sealCountryCode;
+//            }
+//        }
+//        logger.info("The client country code to be used by the PDP: '{}'", countryCode);
+//        if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+//            logger.debug("No consent given, throwing InsufficientRightsException");
+//            final NoConsentException e = new NoConsentException(null);
+//            RegistryErrorUtils.addErrorMessage(
+//                    registryErrorList,
+//                    e.getOpenncpErrorCode(),
+//                    e.getMessage(),
+//                    RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//        }
+//        if (!registryErrorList.getRegistryError().isEmpty()) {
+//            response.setRegistryErrorList(registryErrorList);
+//            response.setStatus(AdhocQueryResponseStatus.FAILURE);
+//        } else {
+//            try {
+//                shElement = XMLUtils.toDOM(soapHeader);
+//            } catch (final Exception e) {
+//                logger.error(e.getMessage());
+//                throw e;
+//            }
+//
+//            for (int i = 0; i < request.getDocument().size(); i++) {
+//
+//                final ProvideAndRegisterDocumentSetRequestType.Document doc = request.getDocument().get(i);
+//                byte[] docBytes = doc.getValue();
+//                org.w3c.dom.Document domDocument = null;
+//                try {
+//
+//                    //  Validate CDA epSOS Pivot.
+//                    if (OpenNCPValidation.isValidationEnable()) {
+//                        OpenNCPValidation.validateCdaDocument(new String(doc.getValue(), StandardCharsets.UTF_8),
+//                                NcpSide.NCP_A, obtainClassCode(request), true);
+//                    }
+//
+//                    //  Reset the response document to a translated version.
+//                    final TMResponseStructure tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(docBytes), Constants.LANGUAGE_CODE);
+//                    domDocument = Base64Util.decode(tmResponseStructure.getResponseCDA());
+//                    docBytes = XMLUtils.toOM(domDocument.getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+//
+//
+//                    // Validate CDA epSOS Pivot
+//                    if (OpenNCPValidation.isValidationEnable()) {
+//                        OpenNCPValidation.validateCdaDocument(new String(docBytes, StandardCharsets.UTF_8), NcpSide.NCP_A,
+//                                obtainClassCode(request), false);
+//                    }
+//                } catch (final DocumentTransformationException ex) {
+//                    logger.error(ex.getLocalizedMessage(), ex);
+//                }
+//
+//                try {
+//                    final EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
+//                    // Evidence for call to NI for XDR submit (dispensation)
+//                    // Joao: here we have a Document, so we can generate the mandatory NRO
 //                    try {
-//                        EvidenceUtils.createEvidenceREMNRR(epsosDocument.toString(),
-//                                tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                                tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                                tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                                IHEEventType.epsosDispensationServiceInitialize.getCode(),
-//                                new DateTime(),
-//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                                "NI_XDR_DISP_RES",
-//                                Helper.getDocumentEntryPatientIdFromTRCAssertion(shElement) + "__" + DateUtil.getCurrentTimeGMT());
-//                    } catch (Exception e) {
+//                        EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), Constants.NCP_SIG_KEYSTORE_PATH,
+//                                Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                                Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
+//                                Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
+//                                Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+//                                IHEEventType.DISPENSATION_SERVICE_INITIALIZE.getCode(), new DateTime(),
+//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
+//                                Objects.requireNonNull(SoapElementHelper.getTRCAssertion(shElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
+//                    } catch (final Exception e) {
 //                        logger.error(ExceptionUtils.getStackTrace(e));
 //                    }
-                } catch (final NIException e) {
-                    logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-                    registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
-                } catch (final Exception e) {
-                    logger.error("Generic Exception: '{}'", e.getMessage(), e);
-                    RegistryErrorUtils.addErrorMessage(
-                            registryErrorList,
-                            OpenNCPErrorCode.ERROR_ED_GENERIC,
-                            e.getMessage(),
-                            e,
-                            RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-                }
-            }
-            if (!registryErrorList.getRegistryError().isEmpty()) {
-                response.setRegistryErrorList(registryErrorList);
-                response.setStatus(AdhocQueryResponseStatus.FAILURE);
-            } else {
-                response.setStatus(AdhocQueryResponseStatus.SUCCESS);
-            }
-        }
-        prepareEventLogForDispensationInitialize(eventLog, request, response, shElement);
-
-        return response;
+//                    // Call to National Connector
+//                    final String documentId = getDocumentId(epsosDocument.getDocument());
+//                    documentSubmitInterface.submitDispensation(epsosDocument);
+//
+//                    // Evidence for response from NI for XDR submit (dispensation)
+//                    /* Joao: the NRR is being generated based on the request message (submitted document). The interface for document submission does not return
+//                    any response for the submit service. This NRR is optional as per the CP. Left commented for now. */
+////                    try {
+////                        EvidenceUtils.createEvidenceREMNRR(epsosDocument.toString(),
+////                                tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
+////                                tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
+////                                tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+////                                IHEEventType.epsosDispensationServiceInitialize.getCode(),
+////                                new DateTime(),
+////                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+////                                "NI_XDR_DISP_RES",
+////                                Helper.getDocumentEntryPatientIdFromTRCAssertion(shElement) + "__" + DateUtil.getCurrentTimeGMT());
+////                    } catch (Exception e) {
+////                        logger.error(ExceptionUtils.getStackTrace(e));
+////                    }
+//                } catch (final NIException e) {
+//                    logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
+//                    registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+//                } catch (final Exception e) {
+//                    logger.error("Generic Exception: '{}'", e.getMessage(), e);
+//                    RegistryErrorUtils.addErrorMessage(
+//                            registryErrorList,
+//                            OpenNCPErrorCode.ERROR_ED_GENERIC,
+//                            e.getMessage(),
+//                            e,
+//                            RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+//                }
+//            }
+//            if (!registryErrorList.getRegistryError().isEmpty()) {
+//                response.setRegistryErrorList(registryErrorList);
+//                response.setStatus(AdhocQueryResponseStatus.FAILURE);
+//            } else {
+//                response.setStatus(AdhocQueryResponseStatus.SUCCESS);
+//            }
+//        }
+//        prepareEventLogForDispensationInitialize(eventLog, request, response, shElement);
+//
+//        return response;
     }
 
     /**

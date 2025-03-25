@@ -37,7 +37,7 @@ public class PatientService {
                                                                             final String countryCode,
                                                                             final String targetLanguage,
                                                                             final Map<AssertionType, Assertion> assertionMap) throws XCAException {
-
-        return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.PATIENT_SERVICE.getServiceName());
+        return null;
+//        return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.PATIENT_SERVICE.getServiceName());
     }
 }

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder;
+package eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
@@ -6,23 +6,18 @@ import eu.europa.ec.sante.openncp.core.common.ihe.constants.ClassificationScheme
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPSOSDocumentMetaData;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExternalIdentifierType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExtrinsicObjectType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
-
 import eu.europa.ec.sante.openncp.core.server.CodeSystem;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
 import eu.europa.ec.sante.openncp.core.server.ihe.XDSMetaData;
-import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.ClassificationBuilder;
-import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.SlotBuilder;
+import eu.europa.ec.sante.openncp.core.server.ihe.xca.ClassificationBuilder;
+import eu.europa.ec.sante.openncp.core.server.ihe.xca.SlotBuilder;
 import org.springframework.http.MediaType;
 
 import java.util.UUID;
 
 public abstract class AbstractExtrinsicObjectBuilder {
 
-    protected static ExtrinsicObjectType build(AdhocQueryRequest request, ExtrinsicObjectType eot, EPSOSDocumentMetaData documentMetaData, ObjectFactory ofRim, String uuid, String title) {
+    protected static ExtrinsicObjectType build(final AdhocQueryRequest request, final ExtrinsicObjectType eot, final EPSOSDocumentMetaData documentMetaData, final ObjectFactory ofRim, final String uuid, final String title) {
 
         // Set Extrinsic Object
         eot.setStatus(IheConstants.REGREP_STATUSTYPE_APPROVED);
@@ -35,38 +30,38 @@ public abstract class AbstractExtrinsicObjectBuilder {
         eot.setMimeType(MediaType.TEXT_XML_VALUE);
 
         // Source Patient Id
-        eot.getSlot().add(SlotBuilder.build("sourcePatientId", getDocumentEntryPatientId(request)));
+        eot.getSlots().add(SlotBuilder.build("sourcePatientId", getDocumentEntryPatientId(request)));
 
         // Size
         // In the case of an On Demand document generation, no information on the size is available at the time of the XCA List
         if (documentMetaData.getSize() != null) {
-            eot.getSlot().add(SlotBuilder.build("size", String.valueOf(documentMetaData.getSize())));
+            eot.getSlots().add(SlotBuilder.build("size", String.valueOf(documentMetaData.getSize())));
         }
 
         // Hash
         // In the case of an On Demand document generation, no information on the hash is available at the time of the XCA List
         if (documentMetaData.getHash() != null) {
-            eot.getSlot().add(SlotBuilder.build("hash", String.valueOf(documentMetaData.getHash())));
+            eot.getSlots().add(SlotBuilder.build("hash", String.valueOf(documentMetaData.getHash())));
         }
 
         // Creation Date (optional)
-        eot.getSlot().add(SlotBuilder.build("creationTime", DateUtil.getDateByDateFormat("yyyyMMddHHmmss", documentMetaData.getEffectiveTime())));
+        eot.getSlots().add(SlotBuilder.build("creationTime", DateUtil.getDateByDateFormat("yyyyMMddHHmmss", documentMetaData.getEffectiveTime())));
 
         // repositoryUniqueId (optional)
-        eot.getSlot().add(SlotBuilder.build("repositoryUniqueId", documentMetaData.getRepositoryId()));
+        eot.getSlots().add(SlotBuilder.build("repositoryUniqueId", documentMetaData.getRepositoryId()));
 
         // LanguageCode (optional)
-        String languageCode = documentMetaData.getLanguage() == null ? Constants.LANGUAGE_CODE : documentMetaData.getLanguage();
-        eot.getSlot().add(SlotBuilder.build("languageCode", languageCode));
+        final String languageCode = documentMetaData.getLanguage() == null ? Constants.LANGUAGE_CODE : documentMetaData.getLanguage();
+        eot.getSlots().add(SlotBuilder.build("languageCode", languageCode));
 
         // ConfidentialityCode
-        String confidentialityCode = documentMetaData.getConfidentiality() == null
+        final String confidentialityCode = documentMetaData.getConfidentiality() == null
                 || documentMetaData.getConfidentiality().getConfidentialityCode() == null ? "N"
                 : documentMetaData.getConfidentiality().getConfidentialityCode();
-        String confidentialityDisplay = documentMetaData.getConfidentiality() == null
+        final String confidentialityDisplay = documentMetaData.getConfidentiality() == null
                 || documentMetaData.getConfidentiality().getConfidentialityDisplay() == null ? "Normal"
                 : documentMetaData.getConfidentiality().getConfidentialityDisplay();
-        eot.getClassification().add(ClassificationBuilder.build(ClassificationScheme.CONFIDENTIALITY.getUuid(),
+        eot.getClassifications().add(ClassificationBuilder.build(ClassificationScheme.CONFIDENTIALITY.getUuid(),
                 uuid, confidentialityCode, CodeSystem.HL7_CONFIDENTIALITY.getOID(), confidentialityDisplay));
 
         // Version Info
@@ -74,33 +69,33 @@ public abstract class AbstractExtrinsicObjectBuilder {
         eot.getVersionInfo().setVersionName("1.1");
 
         // Patient ID
-        eot.getExternalIdentifier().add(makeExternalIdentifier(ClassificationScheme.PATIENT_ID.getUuid(),
+        eot.getExternalIdentifiers().add(makeExternalIdentifier(ClassificationScheme.PATIENT_ID.getUuid(),
                 uuid, getDocumentEntryPatientId(request), XDSMetaData.PATIENT_ID.getName()));
         // Unique ID
-        eot.getExternalIdentifier().add(makeExternalIdentifier(ClassificationScheme.UNIQUE_ID.getUuid(),
+        eot.getExternalIdentifiers().add(makeExternalIdentifier(ClassificationScheme.UNIQUE_ID.getUuid(),
                 uuid, documentMetaData.getId(), XDSMetaData.UNIQUE_ID.getName()));
 
         // Name
         eot.setName(ofRim.createInternationalStringType());
-        eot.getName().getLocalizedString().add(ofRim.createLocalizedStringType());
-        eot.getName().getLocalizedString().get(0).setValue(title);
+        eot.getName().getLocalizedStrings().add(ofRim.createLocalizedString());
+        eot.getName().getLocalizedStrings().get(0).setValue(title);
 
         // Class code
-        eot.getClassification().add(
+        eot.getClassifications().add(
                 ClassificationBuilder.build(ClassificationScheme.CLASS_CODE.getUuid(), uuid,
                         documentMetaData.getClassCode().getCode(), CodeSystem.LOINC.getOID(), title));
 
         // Type code
-        eot.getClassification().add(ClassificationBuilder.build(ClassificationScheme.TYPE_CODE.getUuid(),
+        eot.getClassifications().add(ClassificationBuilder.build(ClassificationScheme.TYPE_CODE.getUuid(),
                 uuid, documentMetaData.getClassCode().getCode(), CodeSystem.LOINC.getOID(), title));
 
         // Healthcare facility code
         // Get healthcare facility info from national implementation
-        eot.getClassification().add(ClassificationBuilder.build(ClassificationScheme.HEALTHCARE_FACILITY_CODE.getUuid(),
+        eot.getClassifications().add(ClassificationBuilder.build(ClassificationScheme.HEALTHCARE_FACILITY_CODE.getUuid(),
                 uuid, Constants.COUNTRY_CODE, CodeSystem.ISO_COUNTRY_CODES.getOID(), Constants.COUNTRY_NAME));
 
         // Practice Setting code
-        eot.getClassification().add(ClassificationBuilder.build(ClassificationScheme.PRACTICE_SETTING_CODE.getUuid(),
+        eot.getClassifications().add(ClassificationBuilder.build(ClassificationScheme.PRACTICE_SETTING_CODE.getUuid(),
                 uuid, "Not Used", "eHDSI Practice Setting Codes-Not Used", "Not Used"));
 
         return eot;
@@ -109,11 +104,11 @@ public abstract class AbstractExtrinsicObjectBuilder {
     /**
      * Extracts the XDS patient ID from the XCA query
      */
-    protected static String getDocumentEntryPatientId(AdhocQueryRequest request) {
+    protected static String getDocumentEntryPatientId(final AdhocQueryRequest request) {
 
-        for (SlotType1 sl : request.getAdhocQuery().getSlot()) {
+        for (final Slot sl : request.getAdhocQuery().getSlots()) {
             if (sl.getName().equals("$XDSDocumentEntryPatientId")) {
-                String patientId = sl.getValueList().getValue().get(0);
+                String patientId = sl.getValueList().getValues().get(0);
                 patientId = patientId.substring(1, patientId.length() - 1);
                 return patientId;
             }
@@ -121,12 +116,12 @@ public abstract class AbstractExtrinsicObjectBuilder {
         return "$XDSDocumentEntryPatientId Not Found!";
     }
 
-    protected static ExternalIdentifierType makeExternalIdentifier(String identificationScheme, String registryObject,
-                                                                   String value, String name) {
+    protected static ExternalIdentifierType makeExternalIdentifier(final String identificationScheme, final String registryObject,
+                                                                   final String value, final String name) {
 
-        var ofRim = new ObjectFactory();
-        var uuid = Constants.UUID_PREFIX + UUID.randomUUID();
-        var externalIdentifierType = ofRim.createExternalIdentifierType();
+        final var ofRim = new ObjectFactory();
+        final var uuid = Constants.UUID_PREFIX + UUID.randomUUID();
+        final var externalIdentifierType = ofRim.createExternalIdentifierType();
         externalIdentifierType.setId(uuid);
         externalIdentifierType.setIdentificationScheme(identificationScheme);
         externalIdentifierType.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier");
@@ -134,8 +129,8 @@ public abstract class AbstractExtrinsicObjectBuilder {
         externalIdentifierType.setValue(value);
 
         externalIdentifierType.setName(ofRim.createInternationalStringType());
-        externalIdentifierType.getName().getLocalizedString().add(ofRim.createLocalizedStringType());
-        externalIdentifierType.getName().getLocalizedString().get(0).setValue(name);
+        externalIdentifierType.getName().getLocalizedStrings().add(ofRim.createLocalizedString());
+        externalIdentifierType.getName().getLocalizedStrings().get(0).setValue(name);
         return externalIdentifierType;
     }
 }

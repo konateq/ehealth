@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.orcd;
+package eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.orcd;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
@@ -6,14 +6,10 @@ import eu.europa.ec.sante.openncp.core.common.ihe.constants.ClassificationScheme
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.OrCDDocumentMetaData;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ObjectFactory;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ClassificationType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.ExtrinsicObjectType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
-import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.ClassificationBuilder;
-import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.SlotBuilder;
-import eu.europa.ec.sante.openncp.core.server.ihe.xca.impl.extrinsicobjectbuilder.AbstractExtrinsicObjectBuilder;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
+import eu.europa.ec.sante.openncp.core.server.ihe.xca.ClassificationBuilder;
+import eu.europa.ec.sante.openncp.core.server.ihe.xca.SlotBuilder;
+import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.AbstractExtrinsicObjectBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,18 +27,18 @@ public class OrCDExtrinsicObjectBuilder extends AbstractExtrinsicObjectBuilder {
      * @param orCDDocumentMetaData
      * @return
      */
-    public static String build(AdhocQueryRequest request,
-                               ExtrinsicObjectType eot,
-                               OrCDDocumentMetaData orCDDocumentMetaData) {
+    public static String build(final AdhocQueryRequest request,
+                               final ExtrinsicObjectType eot,
+                               final OrCDDocumentMetaData orCDDocumentMetaData) {
 
-        var ofRim = new ObjectFactory();
-        var uuid = Constants.UUID_PREFIX + UUID.randomUUID();
+        final var ofRim = new ObjectFactory();
+        final var uuid = Constants.UUID_PREFIX + UUID.randomUUID();
 
         final String title;
         final String nodeRepresentation;
         final String displayName;
 
-        var classCode = orCDDocumentMetaData.getClassCode();
+        final var classCode = orCDDocumentMetaData.getClassCode();
         switch (classCode) {
             case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
                 title = Constants.ORCD_HOSPITAL_DISCHARGE_REPORTS_TITLE;
@@ -84,38 +80,38 @@ public class OrCDExtrinsicObjectBuilder extends AbstractExtrinsicObjectBuilder {
 
         // Description
         eot.setDescription(ofRim.createInternationalStringType());
-        eot.getDescription().getLocalizedString().add(ofRim.createLocalizedStringType());
-        eot.getDescription().getLocalizedString().get(0).setValue(orCDDocumentMetaData.getDescription());
+        eot.getDescription().getLocalizedStrings().add(ofRim.createLocalizedString());
+        eot.getDescription().getLocalizedStrings().get(0).setValue(orCDDocumentMetaData.getDescription());
 
         // FormatCode
-        eot.getClassification().add(ClassificationBuilder.build(ClassificationScheme.FORMAT_CODE.getUuid(),
+        eot.getClassifications().add(ClassificationBuilder.build(ClassificationScheme.FORMAT_CODE.getUuid(),
                 uuid, nodeRepresentation, "eHDSI formatCodes", displayName));
 
         // Service Start time (optional)
-        eot.getSlot().add(SlotBuilder.build("serviceStartTime", DateUtil.getDateByDateFormat("yyyyMMddHHmmss", orCDDocumentMetaData.getServiceStartTime())));
+        eot.getSlots().add(SlotBuilder.build("serviceStartTime", DateUtil.getDateByDateFormat("yyyyMMddHHmmss", orCDDocumentMetaData.getServiceStartTime())));
 
         // Reason of hospitalisation
-        var reasonOfHospitalisation = orCDDocumentMetaData.getReasonOfHospitalisation();
+        final var reasonOfHospitalisation = orCDDocumentMetaData.getReasonOfHospitalisation();
         if (reasonOfHospitalisation != null) {
-            eot.getClassification().add(ClassificationBuilder.build("urn:uuid:2c6b8cb7-8b2a-4051-b291-b1ae6a575ef4",
+            eot.getClassifications().add(ClassificationBuilder.build("urn:uuid:2c6b8cb7-8b2a-4051-b291-b1ae6a575ef4",
                     uuid, reasonOfHospitalisation.getCode(), reasonOfHospitalisation.getCodingScheme(), reasonOfHospitalisation.getText()));
         }
 
         //Authors
-        for (OrCDDocumentMetaData.Author author : orCDDocumentMetaData.getAuthors()) {
-            ClassificationType classificationAuthor = ClassificationBuilder.build(IheConstants.CLASSIFICATION_SCHEME_AUTHOR_UUID,
+        for (final OrCDDocumentMetaData.Author author : orCDDocumentMetaData.getAuthors()) {
+            final ClassificationType classificationAuthor = ClassificationBuilder.build(IheConstants.CLASSIFICATION_SCHEME_AUTHOR_UUID,
                     uuid, "");
 
             if (author.getAuthorPerson() != null) {
-                SlotType1 authorPersonSlot = SlotBuilder.build(IheConstants.AUTHOR_PERSON_STR, author.getAuthorPerson());
-                classificationAuthor.getSlot().add(authorPersonSlot);
+                final Slot authorPersonSlot = SlotBuilder.build(IheConstants.AUTHOR_PERSON_STR, author.getAuthorPerson());
+                classificationAuthor.getSlots().add(authorPersonSlot);
             }
 
             if (author.getAuthorSpeciality() != null && !author.getAuthorSpeciality().isEmpty()) {
-                SlotType1 authorSpecialtySlot = SlotBuilder.build(IheConstants.AUTHOR_SPECIALITY_STR, author.getAuthorSpeciality());
-                classificationAuthor.getSlot().add(authorSpecialtySlot);
+                final Slot authorSpecialtySlot = SlotBuilder.build(IheConstants.AUTHOR_SPECIALITY_STR, author.getAuthorSpeciality());
+                classificationAuthor.getSlots().add(authorSpecialtySlot);
             }
-            eot.getClassification().add(classificationAuthor);
+            eot.getClassifications().add(classificationAuthor);
         }
 
         return uuid;

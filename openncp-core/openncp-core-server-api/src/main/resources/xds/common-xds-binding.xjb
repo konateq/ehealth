@@ -1,0 +1,47 @@
+<jaxb:bindings version="2.1"
+               xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+               xmlns:xs="http://www.w3.org/2001/XMLSchema"
+               xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+               jaxb:extensionBindingPrefixes="xjc">
+
+    <!-- Global bindings that apply to all schemas -->
+    <jaxb:globalBindings>
+        <xjc:simple/>
+        <!-- Optional: Generate more Java-friendly code -->
+        <jaxb:javaType name="java.util.Calendar" xmlType="xs:dateTime"
+                       parseMethod="javax.xml.bind.DatatypeConverter.parseDateTime"
+                       printMethod="javax.xml.bind.DatatypeConverter.printDateTime"/>
+    </jaxb:globalBindings>
+
+    <!-- Bind all files in the XDS schema directory to a common package -->
+    <jaxb:bindings schemaLocation="./schema/IHEXDS.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+    <jaxb:bindings schemaLocation="./schema/lcm.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+    <jaxb:bindings schemaLocation="./schema/query.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+    <jaxb:bindings schemaLocation="./schema/rim.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+    <jaxb:bindings schemaLocation="./schema/rs.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+    <jaxb:bindings schemaLocation="./schema/xml.xsd" node="/xs:schema">
+        <jaxb:schemaBindings>
+            <jaxb:package name="eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds"/>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+</jaxb:bindings>

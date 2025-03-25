@@ -3,10 +3,9 @@ package eu.europa.ec.sante.openncp.core.common.ihe.util;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.audit.*;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
-import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.*;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.II;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -47,66 +46,6 @@ public class EventLogUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventLogUtil.class);
 
     private EventLogUtil() {
-    }
-
-    /**
-     * @param eventLog
-     * @param request
-     * @param response
-     */
-    public static void prepareXCPDCommonLog(final EventLog eventLog, final MessageContext msgContext, final PRPAIN201305UV02 request, final PRPAIN201306UV02 response) {
-
-        // Set Event Identification
-        eventLog.setEventType(EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
-        eventLog.setEI_TransactionName(TransactionName.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
-
-        if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
-
-            final String detail = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
-            final String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
-            if(errorCode.equals(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode())) {
-                eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.TEMPORAL_FAILURE);
-            }else{
-                eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
-            }
-            eventLog.setEM_ParticipantObjectID(errorCode);
-            eventLog.setEM_ParticipantObjectDetail(detail.getBytes());
-        } else {
-            eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
-        }
-        // Set Participant Object: Patient Source
-        final List<String> sourcePatientIds = new ArrayList<>();
-        for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : request.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
-            sourcePatientIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
-        }
-        eventLog.setPS_ParticipantObjectIDs(sourcePatientIds);
-
-        // Set Participant Object: Patient Target
-        final List<String> targetPatientIds = new ArrayList<>();
-        if (!response.getControlActProcess().getSubject().isEmpty()) {
-            for (final PRPAIN201306UV02MFMIMT700711UV01Subject1 subject1 : response.getControlActProcess().getSubject()) {
-                targetPatientIds.add(getParticipantObjectID(subject1.getRegistrationEvent().getSubject1().getPatient().getId().get(0)));
-            }
-        } else {
-            for (final PRPAMT201306UV02LivingSubjectId livingSubjectId : response.getControlActProcess().getQueryByParameter().getValue().getParameterList().getLivingSubjectId()) {
-                targetPatientIds.add(getParticipantObjectID(livingSubjectId.getValue().get(0)));
-            }
-        }
-        eventLog.setPT_ParticipantObjectIDs(targetPatientIds);
-
-        // Set Participant Object: Error Message
-        if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
-
-            final String errorCode = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getCode().getCode();
-            final String error = response.getAcknowledgement().get(0).getAcknowledgementDetail().get(0).getText().getContent();
-            eventLog.setEM_ParticipantObjectID(errorCode);
-            eventLog.setEM_ParticipantObjectDetail(error.getBytes());
-        }
-
-        extractXcpdQueryByParamFromHeader(eventLog, msgContext, "PRPA_IN201305UV02", "controlActProcess", "queryByParameter");
-        extractHCIIdentifierFromHeader(eventLog, msgContext);
-
     }
 
     /**

@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.core.server.ihe.xca.impl;
+package eu.europa.ec.sante.openncp.core.server.ihe.xca;
 
 public enum XCAStatus {
 

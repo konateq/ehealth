@@ -7,7 +7,7 @@ public enum RegistryErrorSeverity {
 
     private final String text;
 
-    RegistryErrorSeverity(String text) {
+    RegistryErrorSeverity(final String text) {
         this.text = text;
     }
 

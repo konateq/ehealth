@@ -1,45 +1,55 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
-import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.Constant;
+import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
+import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerException;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
-import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryRequestCreator;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryResponseConverter;
-import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
+import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
+import eu.europa.ec.sante.openncp.core.common.SslContextBuilder;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryResponse;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
-import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
-import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.TMError;
-import org.apache.axis2.addressing.EndpointReference;
-import org.apache.axis2.util.XMLUtils;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca.RespondingGatewayPortType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca.XCAService;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.AdhocQueryRequest;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.AdhocQueryResponse;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryError;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryErrorList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.ws.addressing.WSAddressingFeature;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.rmi.RemoteException;
+import javax.net.ssl.SSLContext;
+import javax.xml.ws.BindingProvider;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,9 +70,43 @@ public class XcaInitGateway {
     private static final String ERROR_SEVERITY_ERROR = "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error";
 
     private final CDATransformationService cdaTransformationService;
+    private final RespondingGatewayPortType xcaPort;
+    private final ConfigurationManager configurationManager;
+    private final DynamicDiscoveryService discoveryService;
 
-    public XcaInitGateway(final CDATransformationService cdaTransformationService) {
+    public XcaInitGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
+        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
+        this.discoveryService = Validate.notNull(discoveryService, " discoveryService must not be null");
+        final XCAService xcaService = new XCAService();
+        xcaPort = xcaService.getRespondingGatewayPortSoap12();
+
+        final Client client = ClientProxy.getClient(xcaPort);
+
+        client.getOutInterceptors().add(new OutboundSecurityInterceptor());
+
+        client.getBus().getFeatures().add(new WSAddressingFeature());
+
+        final KeystoreDetails serviceConsumerKeystoreDetails = ImmutableKeystoreDetails.builder()
+                .keystoreLocation(configurationManager.getProperty(Constant.SC_KEYSTORE_PATH))
+                .keystorePassword(configurationManager.getProperty(Constant.SC_KEYSTORE_PASSWORD))
+                .alias(configurationManager.getProperty(Constant.SC_PRIVATEKEY_ALIAS))
+                .keyPassword(configurationManager.getProperty(Constant.SC_PRIVATEKEY_PASSWORD))
+                .build();
+        final KeystoreDetails trustStoreKeystoreDetails = ImmutableKeystoreDetails.builder()
+                .keystoreLocation(configurationManager.getProperty(Constant.TRUSTSTORE_PATH))
+                .keystorePassword(configurationManager.getProperty(Constant.TRUSTSTORE_PASSWORD))
+                .build();
+        final SSLContext sslContext = SslContextBuilder.build(serviceConsumerKeystoreDetails, trustStoreKeystoreDetails);
+
+        final HTTPConduit conduit = (HTTPConduit) client.getConduit();
+        final TLSClientParameters tlsClientParameters = new TLSClientParameters();
+        // This should be configurable, you don't want to disable the CN check in production!!
+        tlsClientParameters.setDisableCNCheck(true);
+        tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+
+        tlsClientParameters.setSSLSocketFactory(sslContext.getSocketFactory());
+        conduit.setTlsClientParameters(tlsClientParameters);
     }
 
     public QueryResponse crossGatewayQuery(final PatientId pid, final String countryCode,
@@ -94,120 +138,125 @@ public class XcaInitGateway {
             /* queryRequest */
             final AdhocQueryRequest queryRequest = AdhocQueryRequestCreator.createAdhocQueryRequest(pid.getExtension(), pid.getRoot(), documentCodes, filterParams);
 
-            /* Stub */
-            final var respondingGatewayStub = new RespondingGateway_ServiceStub();
-            final var dynamicDiscoveryService = new DynamicDiscoveryService();
-            final String epr = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
-            respondingGatewayStub.setAddr(epr);
-            respondingGatewayStub._getServiceClient().getOptions().setTo(new EndpointReference(epr));
-            EventLogClientUtil.createDummyMustUnderstandHandler(respondingGatewayStub);
-            respondingGatewayStub.setCountryCode(countryCode);
+            String endpointUrl = null;
+            try {
+                endpointUrl = discoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
+            } catch (final ConfigurationManagerException e) {
+                throw new RuntimeException(e);
+            }
+
+            // Override the endpoint address dynamically.
+            final BindingProvider bindingProvider = (BindingProvider) xcaPort;
+            bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointUrl);
+            // Also update CXF's internal ClientProxy because we reuse it
+            final Client client = ClientProxy.getClient(xcaPort);
+            client.getEndpoint().getEndpointInfo().setAddress(endpointUrl);
 
             /* queryResponse */
             final List<ClassCode> documentClassCodes = new ArrayList<>();
             for (final GenericDocumentCode genericDocumentCode : documentCodes) {
                 documentClassCodes.add(ClassCode.getByCode(genericDocumentCode.getValue()));
             }
-            final AdhocQueryResponse queryResponse = respondingGatewayStub.respondingGateway_CrossGatewayQuery(queryRequest, assertionMap, documentClassCodes);
+            final AdhocQueryResponse queryResponse = xcaPort.respondingGatewayCrossGatewayQuery(queryRequest);
             processRegistryErrors(queryResponse.getRegistryErrorList());
 
             if (queryResponse.getRegistryObjectList() != null) {
                 result = AdhocQueryResponseConverter.convertAdhocQueryResponse(queryResponse);
             }
-        } catch (final RemoteException | RuntimeException ex) {
+        } catch (final RuntimeException ex) {
             throw new RuntimeException(ex);
         }
 
         return result;
     }
 
-    public RetrieveDocumentSetResponseType.DocumentResponse crossGatewayRetrieve(final XDSDocument document, final String homeCommunityId,
-                                                                                 final String countryCode, final String targetLanguage,
-                                                                                 final Map<AssertionType, Assertion> assertionMap,
-                                                                                 final String service) throws XCAException {
-
-        LOGGER.info("QueryResponse crossGatewayQuery('{}','{}','{}','{}','{}', '{}')", homeCommunityId, countryCode,
-                targetLanguage, assertionMap.get(AssertionType.HCP).getID(),
-                assertionMap.get(AssertionType.TRC).getID(), service);
-        RetrieveDocumentSetResponseType.DocumentResponse result = null;
-        final RetrieveDocumentSetResponseType queryResponse;
-        ClassCode classCode = null;
-
-        try {
-
-            final RetrieveDocumentSetRequestType queryRequest = new RetrieveDocumentSetRequestTypeCreator().createRetrieveDocumentSetRequestType(
-                    document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
-
-            final RespondingGateway_ServiceStub stub = new RespondingGateway_ServiceStub();
-            final DynamicDiscoveryService dynamicDiscoveryService = new DynamicDiscoveryService();
-            final String endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
-            stub.setAddr(endpointReference);
-            stub._getServiceClient().getOptions().setTo(new EndpointReference(endpointReference));
-            stub.setCountryCode(countryCode);
-            EventLogClientUtil.createDummyMustUnderstandHandler(stub);
-            // This is a rather dirty hack, but document.getClassCode() returns null for some reason.
-            switch (service) {
-                case Constants.OrderService:
-                case Constants.PatientService:
-                case Constants.OrCDService:
-                    classCode = ClassCode.getByCode(document.getClassCode().getValue());
-                    break;
-                default:
-                    LOGGER.error("Service Not Supported");
-                    //TODO: Has to be managed as an error.
-            }
-            queryResponse = stub.respondingGateway_CrossGatewayRetrieve(queryRequest, assertionMap, classCode);
-
-            if (queryResponse.getRegistryResponse() != null) {
-
-                final var registryErrorList = queryResponse.getRegistryResponse().getRegistryErrorList();
-                processRegistryErrors(registryErrorList);
-            }
-        } catch (final RemoteException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        if (!queryResponse.getDocumentResponse().isEmpty()) {
-            if (queryResponse.getDocumentResponse().size() > 1) {
-                LOGGER.error("More than one documents where retrieved for the current request with parameters document ID: '{}' " +
-                        "- homeCommunityId: '{}' - registry: '{}'", document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
-                //TODO: Shall be a fatal ERROR
-            }
-            // review this try - catch - finally mechanism and the transformation/translation mechanism.
-            final byte[] pivotDocument = queryResponse.getDocumentResponse().get(0).getDocument();
-
-            try {
-                //  Validate CDA Pivot
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateCdaDocument(new String(pivotDocument, StandardCharsets.UTF_8),
-                            NcpSide.NCP_B, ClassCode.getByCode(document.getClassCode().getValue()), true);
-                }
-                if (service.equals(Constants.OrCDService)) {
-                    queryResponse.getDocumentResponse().get(0).setDocument(pivotDocument);
-                } else {
-                    //  Sets the response document to a translated version.
-                    final var tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(pivotDocument), targetLanguage, NcpSide.NCP_B);
-                    final var domDocument = tmResponseStructure.getResponseCDA();
-                    final byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
-                    queryResponse.getDocumentResponse().get(0).setDocument(translatedCDA);
-                }
-
-            } catch (final Exception e) {
-                LOGGER.warn("DocumentTransformationException: CDA cannot be translated: Please check the TM result");
-            } finally {
-                LOGGER.debug("[XCA Init Gateway] Returns Original Document");
-                //  Validate CDA Friendly-B
-                if (OpenNCPValidation.isValidationEnable()) {
-                    OpenNCPValidation.validateCdaDocument(
-                            new String(queryResponse.getDocumentResponse().get(0).getDocument(), StandardCharsets.UTF_8),
-                            NcpSide.NCP_B, ClassCode.getByCode(document.getClassCode().getValue()), false);
-                }
-                //  Returns the original document, even if the translation process fails.
-                result = queryResponse.getDocumentResponse().get(0);
-            }
-        }
-        return result;
-    }
+//    public RetrieveDocumentSetResponseType.DocumentResponse crossGatewayRetrieve(final XDSDocument document, final String homeCommunityId,
+//                                                                                 final String countryCode, final String targetLanguage,
+//                                                                                 final Map<AssertionType, Assertion> assertionMap,
+//                                                                                 final String service) throws XCAException {
+//
+//        LOGGER.info("QueryResponse crossGatewayQuery('{}','{}','{}','{}','{}', '{}')", homeCommunityId, countryCode,
+//                targetLanguage, assertionMap.get(AssertionType.HCP).getID(),
+//                assertionMap.get(AssertionType.TRC).getID(), service);
+//        RetrieveDocumentSetResponseType.DocumentResponse result = null;
+//        final RetrieveDocumentSetResponseType queryResponse;
+//        ClassCode classCode = null;
+//
+//        try {
+//
+//            final RetrieveDocumentSetRequestType queryRequest = new RetrieveDocumentSetRequestTypeCreator().createRetrieveDocumentSetRequestType(
+//                    document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
+//
+//            final RespondingGateway_ServiceStub stub = new RespondingGateway_ServiceStub();
+//            final DynamicDiscoveryService dynamicDiscoveryService = new DynamicDiscoveryService();
+//            final String endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
+//            stub.setAddr(endpointReference);
+//            stub._getServiceClient().getOptions().setTo(new EndpointReference(endpointReference));
+//            stub.setCountryCode(countryCode);
+//            EventLogClientUtil.createDummyMustUnderstandHandler(stub);
+//            // This is a rather dirty hack, but document.getClassCode() returns null for some reason.
+//            switch (service) {
+//                case Constants.OrderService:
+//                case Constants.PatientService:
+//                case Constants.OrCDService:
+//                    classCode = ClassCode.getByCode(document.getClassCode().getValue());
+//                    break;
+//                default:
+//                    LOGGER.error("Service Not Supported");
+//                    //TODO: Has to be managed as an error.
+//            }
+//            queryResponse = stub.respondingGateway_CrossGatewayRetrieve(queryRequest, assertionMap, classCode);
+//
+//            if (queryResponse.getRegistryResponse() != null) {
+//
+//                final var registryErrorList = queryResponse.getRegistryResponse().getRegistryErrorList();
+//                processRegistryErrors(registryErrorList);
+//            }
+//        } catch (final RemoteException ex) {
+//            throw new RuntimeException(ex);
+//        }
+//
+//        if (!queryResponse.getDocumentResponse().isEmpty()) {
+//            if (queryResponse.getDocumentResponse().size() > 1) {
+//                LOGGER.error("More than one documents where retrieved for the current request with parameters document ID: '{}' " +
+//                        "- homeCommunityId: '{}' - registry: '{}'", document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
+//                //TODO: Shall be a fatal ERROR
+//            }
+//            // review this try - catch - finally mechanism and the transformation/translation mechanism.
+//            final byte[] pivotDocument = queryResponse.getDocumentResponse().get(0).getDocument();
+//
+//            try {
+//                //  Validate CDA Pivot
+//                if (OpenNCPValidation.isValidationEnable()) {
+//                    OpenNCPValidation.validateCdaDocument(new String(pivotDocument, StandardCharsets.UTF_8),
+//                            NcpSide.NCP_B, ClassCode.getByCode(document.getClassCode().getValue()), true);
+//                }
+//                if (service.equals(Constants.OrCDService)) {
+//                    queryResponse.getDocumentResponse().get(0).setDocument(pivotDocument);
+//                } else {
+//                    //  Sets the response document to a translated version.
+//                    final var tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(pivotDocument), targetLanguage, NcpSide.NCP_B);
+//                    final var domDocument = tmResponseStructure.getResponseCDA();
+//                    final byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+//                    queryResponse.getDocumentResponse().get(0).setDocument(translatedCDA);
+//                }
+//
+//            } catch (final Exception e) {
+//                LOGGER.warn("DocumentTransformationException: CDA cannot be translated: Please check the TM result");
+//            } finally {
+//                LOGGER.debug("[XCA Init Gateway] Returns Original Document");
+//                //  Validate CDA Friendly-B
+//                if (OpenNCPValidation.isValidationEnable()) {
+//                    OpenNCPValidation.validateCdaDocument(
+//                            new String(queryResponse.getDocumentResponse().get(0).getDocument(), StandardCharsets.UTF_8),
+//                            NcpSide.NCP_B, ClassCode.getByCode(document.getClassCode().getValue()), false);
+//                }
+//                //  Returns the original document, even if the translation process fails.
+//                result = queryResponse.getDocumentResponse().get(0);
+//            }
+//        }
+//        return result;
+//    }
 
     /**
      * Processes registry errors from the {@link AdhocQueryResponse} message, by reporting them to the logging system.
@@ -220,7 +269,7 @@ public class XcaInitGateway {
         // We don't want to break on TSAM errors anyway...
 
         if (registryErrorList != null) {
-            final List<RegistryError> errorList = registryErrorList.getRegistryError();
+            final List<RegistryError> errorList = registryErrorList.getRegistryErrors();
 
             if (errorList != null) {
                 final StringBuilder msg = new StringBuilder();

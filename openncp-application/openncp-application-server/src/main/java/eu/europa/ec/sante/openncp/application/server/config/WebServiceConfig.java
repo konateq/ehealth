@@ -60,14 +60,26 @@ public class WebServiceConfig {
                              final RespondingGatewayPortType xcpdPortType,
                              final LoggingFeature loggingFeature,
                              final Merlin signatureCrypto) {
-        final EndpointImpl endpoint = new EndpointImpl(bus, xcpdPortType);
+        return createEndpoint(bus, xcpdPortType, loggingFeature, signatureCrypto);
+    }
+
+    @Bean
+    public Endpoint xcaEndpoint(final Bus bus,
+                                final eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca.RespondingGatewayPortType xcaPortType,
+                                final LoggingFeature loggingFeature,
+                                final Merlin signatureCrypto) {
+        return createEndpoint(bus, xcaPortType, loggingFeature, signatureCrypto);
+    }
+
+    private Endpoint createEndpoint(final Bus bus, final Object implementor, final LoggingFeature loggingFeature, final Merlin signatureCrypto) {
+        final EndpointImpl endpoint = new EndpointImpl(bus, implementor);
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
         endpoint.getInInterceptors().add(new SoapMessageInterceptor());
         endpoint.getFeatures().add(loggingFeature);
         endpoint.getFeatures().add(new WSAddressingFeature());
 
         endpoint.getProperties().put(SecurityConstants.SIGNATURE_CRYPTO, signatureCrypto);
-        endpoint.publish("/" + xcpdPortType.getClass().getAnnotation(WebService.class).serviceName());
+        endpoint.publish("/" + implementor.getClass().getAnnotation(WebService.class).serviceName());
 
         return endpoint;
     }

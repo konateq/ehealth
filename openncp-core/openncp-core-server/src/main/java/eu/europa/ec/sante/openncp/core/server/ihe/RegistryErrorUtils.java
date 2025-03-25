@@ -2,10 +2,10 @@ package eu.europa.ec.sante.openncp.core.server.ihe;
 
 import eu.europa.ec.sante.openncp.common.error.ErrorCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.ITMTSAMError;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.ObjectFactory;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryError;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryErrorList;
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.OMFactory;
@@ -19,31 +19,31 @@ import java.util.Optional;
 public class RegistryErrorUtils {
 
     private static final OMFactory omFactory = OMAbstractFactory.getOMFactory();
-    private static final ObjectFactory ofRs = new ObjectFactory();
+    private static final ObjectFactory xcaObjectFactory = new ObjectFactory();
 
-    public static void addErrorMessage(RegistryErrorList registryErrorList, ErrorCode errorCode, String codeContext, RegistryErrorSeverity severity) {
-        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, null, severity));
+    public static void addErrorMessage(final RegistryErrorList registryErrorList, final ErrorCode errorCode, final String codeContext, final RegistryErrorSeverity severity) {
+        registryErrorList.getRegistryErrors().add(createErrorMessage(errorCode.getCode(), codeContext, null, severity));
     }
 
-    public static void addErrorMessage(RegistryErrorList registryErrorList, ErrorCode errorCode, String codeContext, Exception e, RegistryErrorSeverity severity) {
-        registryErrorList.getRegistryError().add(createErrorMessage(errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
+    public static void addErrorMessage(final RegistryErrorList registryErrorList, final ErrorCode errorCode, final String codeContext, final Exception e, final RegistryErrorSeverity severity) {
+        registryErrorList.getRegistryErrors().add(createErrorMessage(errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
                 .findFirst()
                 .map(StackTraceElement::toString)
                 .orElse(StringUtils.EMPTY), severity));
     }
 
-    public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ErrorCode errorCode, String codeContext, RegistryErrorSeverity severity) {
+    public static void addErrorOMMessage(final OMNamespace ons, final OMElement registryErrorList, final ErrorCode errorCode, final String codeContext, final RegistryErrorSeverity severity) {
         registryErrorList.addChild(createErrorOMMessage(ons, errorCode.getCode(), codeContext, null, severity));
     }
 
-    public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ErrorCode errorCode, String codeContext, Exception e, RegistryErrorSeverity severity) {
+    public static void addErrorOMMessage(final OMNamespace ons, final OMElement registryErrorList, final ErrorCode errorCode, final String codeContext, final Exception e, final RegistryErrorSeverity severity) {
         registryErrorList.addChild(createErrorOMMessage(ons, errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
                 .findFirst()
                 .map(StackTraceElement::toString)
                 .orElse(StringUtils.EMPTY), severity));
     }
 
-    public static void addErrorOMMessage(OMNamespace ons, OMElement registryErrorList, ITMTSAMError error, String operationType, RegistryErrorSeverity severity) {
+    public static void addErrorOMMessage(final OMNamespace ons, final OMElement registryErrorList, final ITMTSAMError error, final String operationType, final RegistryErrorSeverity severity) {
         registryErrorList.addChild(createErrorOMMessage(ons,
                 error.getCode(),
                 error.getDescription(),
@@ -51,9 +51,9 @@ public class RegistryErrorUtils {
                 severity));
     }
 
-    private static RegistryError createErrorMessage(String errorCode, String codeContext, String location, RegistryErrorSeverity severity) {
+    private static RegistryError createErrorMessage(final String errorCode, final String codeContext, final String location, final RegistryErrorSeverity severity) {
 
-        var registryError = ofRs.createRegistryError();
+        final var registryError = xcaObjectFactory.createRegistryError();
         registryError.setErrorCode(errorCode);
         registryError.setLocation(location);
         registryError.setSeverity(severity.getText());
@@ -61,12 +61,12 @@ public class RegistryErrorUtils {
         return registryError;
     }
 
-    private static OMElement createErrorOMMessage(OMNamespace ons, String errorCode, String codeContext, String location, RegistryErrorSeverity severity) {
+    private static OMElement createErrorOMMessage(final OMNamespace ons, final String errorCode, final String codeContext, final String location, final RegistryErrorSeverity severity) {
 
-        var registryError = omFactory.createOMElement("RegistryError", ons);
+        final var registryError = omFactory.createOMElement("RegistryError", ons);
         registryError.addAttribute(omFactory.createOMAttribute("codeContext", null, codeContext));
         registryError.addAttribute(omFactory.createOMAttribute("errorCode", null, errorCode));
-        String aux = severity != null ? severity.getText() : null;
+        final String aux = severity != null ? severity.getText() : null;
         registryError.addAttribute(omFactory.createOMAttribute("severity", null, aux));
         registryError.addAttribute(omFactory.createOMAttribute("location", null, location));
         return registryError;

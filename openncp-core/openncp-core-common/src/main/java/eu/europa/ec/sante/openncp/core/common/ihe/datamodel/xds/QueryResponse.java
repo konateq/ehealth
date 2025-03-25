@@ -11,7 +11,7 @@ public class QueryResponse {
         return documentAssociations;
     }
 
-    public void setDocumentAssociations(List<XDSDocumentAssociation> documentAssociations) {
+    public void setDocumentAssociations(final List<XDSDocumentAssociation> documentAssociations) {
         this.documentAssociations = documentAssociations;
     }
 
@@ -19,7 +19,7 @@ public class QueryResponse {
         return failureMessages;
     }
 
-    public void setFailureMessages(List<String> failureMessages) {
+    public void setFailureMessages(final List<String> failureMessages) {
         this.failureMessages = failureMessages;
     }
 }

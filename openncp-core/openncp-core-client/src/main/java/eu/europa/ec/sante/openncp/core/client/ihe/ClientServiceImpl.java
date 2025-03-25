@@ -8,7 +8,11 @@ import eu.europa.ec.sante.openncp.core.client.ihe.dto.QueryPatientOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.RetrieveDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dto.SubmitDocumentOperation;
 import eu.europa.ec.sante.openncp.core.client.ihe.dts.*;
-import eu.europa.ec.sante.openncp.core.client.ihe.service.*;
+import eu.europa.ec.sante.openncp.core.client.ihe.service.DispensationService;
+import eu.europa.ec.sante.openncp.core.client.ihe.service.OrCDService;
+import eu.europa.ec.sante.openncp.core.client.ihe.service.OrderService;
+import eu.europa.ec.sante.openncp.core.client.ihe.service.PatientService;
+import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdGateway;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrResponse;
 import eu.europa.ec.sante.openncp.core.client.logging.LoggingSlf4j;
@@ -41,17 +45,20 @@ public class ClientServiceImpl implements ClientService {
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     private final XcpdGateway xcpdGateway;
+    private final XcaInitGateway xcaInitGateway;
     private final PatientService patientService;
     private final OrderService orderService;
     private final OrCDService orCDService;
     private final DispensationService dispensationService;
 
     public ClientServiceImpl(final XcpdGateway xcpdGateway,
+                             final XcaInitGateway xcaInitGateway,
                              final PatientService patientService,
                              final OrderService orderService,
                              final OrCDService orCDService,
                              final DispensationService dispensationService) {
         this.xcpdGateway = Validate.notNull(xcpdGateway, "XcpdGateway cannot be null");
+        this.xcaInitGateway = Validate.notNull(xcaInitGateway, "XcaInitGateway cannot be null");
         this.patientService = Validate.notNull(patientService, "PatientService cannot be null");
         this.orderService = Validate.notNull(orderService, "OrderService cannot be null");
         this.orCDService = Validate.notNull(orCDService, "OrCDService cannot be null");

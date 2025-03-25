@@ -47,6 +47,10 @@
                                     <wsdl>${basedir}/src/main/resources/xca/XCA_Service.wsdl</wsdl>
                                     <wsdlLocation>classpath:xca/XCA_Service.wsdl</wsdlLocation>
                                     <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <bindingFiles>
+                                        <bindingFile>${basedir}/src/main/resources/xds/common-xds-binding.xjb
+                                        </bindingFile>
+                                    </bindingFiles>
                                     <extraargs>
                                         <extraarg>-p</extraarg>
                                         <extraarg>eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca</extraarg>
@@ -68,6 +72,10 @@
                                     <wsdl>${basedir}/src/main/resources/xdr/XDR_Service.wsdl</wsdl>
                                     <wsdlLocation>classpath:xdr/XDR_Service.wsdl</wsdlLocation>
                                     <extendedSoapHeaders>true</extendedSoapHeaders>
+                                    <bindingFiles>
+                                        <bindingFile>${basedir}/src/main/resources/xds/common-xds-binding.xjb
+                                        </bindingFile>
+                                    </bindingFiles>
                                     <extraargs>
                                         <extraarg>-p</extraarg>
                                         <extraarg>eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr</extraarg>

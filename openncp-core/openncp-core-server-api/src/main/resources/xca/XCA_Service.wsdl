@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions name="XCA_Service" targetNamespace="urn:ihe:iti:xds-b:2007" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:ns="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ihe="urn:ihe:iti:xds-b:2007" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/">
+<definitions name="XCA_Service" targetNamespace="urn:ihe:iti:xds-b:2007" xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:ihe="urn:ihe:iti:xds-b:2007" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl"
+             xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0"
+             xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/">
 <documentation>IHE XCA Responding Gateway Service (OpenNCP Specific)</documentation>
   <types>
     <xsd:schema elementFormDefault="qualified">
-			<xsd:import namespace="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" schemaLocation="schema/rs.xsd"/>
-			<xsd:import namespace="urn:ihe:iti:xds-b:2007" schemaLocation="schema/IHEXDS.xsd"/>
-			<xsd:import namespace="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" schemaLocation="schema/query.xsd"/>
+        <xsd:import namespace="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" schemaLocation="../xds/schema/rs.xsd"/>
+        <xsd:import namespace="urn:ihe:iti:xds-b:2007" schemaLocation="../xds/schema/IHEXDS.xsd"/>
+        <xsd:import namespace="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" schemaLocation="../xds/schema/query.xsd"/>
 		</xsd:schema>
   </types>
   <message name="CrossGatewayRetrieve_Message">
