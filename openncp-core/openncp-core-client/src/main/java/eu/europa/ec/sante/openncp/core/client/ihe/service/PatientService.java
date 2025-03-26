@@ -2,7 +2,7 @@ package eu.europa.ec.sante.openncp.core.client.ihe.service;
 
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
+import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
@@ -19,16 +19,16 @@ import java.util.Map;
 @Service
 public class PatientService {
 
-    final XcaInitGateway xcaInitGateway;
+    final XcaGateway xcaGateway;
 
-    public PatientService(final XcaInitGateway xcaInitGateway) {
-        this.xcaInitGateway = Validate.notNull(xcaInitGateway, "XcaInitGateway cannot be null");
+    public PatientService(final XcaGateway xcaGateway) {
+        this.xcaGateway = Validate.notNull(xcaGateway, "XcaInitGateway cannot be null");
     }
 
     public QueryResponse list(final PatientId pid, final String countryCode, final GenericDocumentCode documentCode,
                                      final Map<AssertionType, Assertion> assertionMap) throws XCAException {
 
-        return xcaInitGateway.crossGatewayQuery(pid, countryCode, List.of(documentCode), null, assertionMap,
+        return xcaGateway.crossGatewayQuery(pid, countryCode, List.of(documentCode), null, assertionMap,
                 RegisteredService.PATIENT_SERVICE.getServiceName());
     }
 
@@ -37,6 +37,6 @@ public class PatientService {
                                                                  final String countryCode,
                                                                  final String targetLanguage,
                                                                  final Map<AssertionType, Assertion> assertionMap) throws XCAException {
-        return xcaInitGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.PATIENT_SERVICE.getServiceName());
+        return xcaGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.PATIENT_SERVICE.getServiceName());
     }
 }

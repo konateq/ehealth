@@ -66,9 +66,9 @@ import java.util.stream.Collectors;
  *
  */
 @Service
-public class XcaInitGateway {
+public class XcaGateway {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(XcaInitGateway.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XcaGateway.class);
     private static final Logger LOGGER_CLINICAL = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private static final List<String> TM_ERROR_CODES = Arrays.stream(TMError.values()).map(TMError::getCode).collect(Collectors.toList());
 
@@ -79,7 +79,7 @@ public class XcaInitGateway {
     private final ConfigurationManager configurationManager;
     private final DynamicDiscoveryService discoveryService;
 
-    public XcaInitGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
+    public XcaGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
         this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
         this.discoveryService = Validate.notNull(discoveryService, " discoveryService must not be null");

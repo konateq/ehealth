@@ -12,7 +12,7 @@ import eu.europa.ec.sante.openncp.core.client.ihe.service.DispensationService;
 import eu.europa.ec.sante.openncp.core.client.ihe.service.OrCDService;
 import eu.europa.ec.sante.openncp.core.client.ihe.service.OrderService;
 import eu.europa.ec.sante.openncp.core.client.ihe.service.PatientService;
-import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
+import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaGateway;
 import eu.europa.ec.sante.openncp.core.client.ihe.xcpd.XcpdGateway;
 import eu.europa.ec.sante.openncp.core.client.ihe.xdr.XdrResponse;
 import eu.europa.ec.sante.openncp.core.client.logging.LoggingSlf4j;
@@ -45,20 +45,20 @@ public class ClientServiceImpl implements ClientService {
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     private final XcpdGateway xcpdGateway;
-    private final XcaInitGateway xcaInitGateway;
+    private final XcaGateway xcaGateway;
     private final PatientService patientService;
     private final OrderService orderService;
     private final OrCDService orCDService;
     private final DispensationService dispensationService;
 
     public ClientServiceImpl(final XcpdGateway xcpdGateway,
-                             final XcaInitGateway xcaInitGateway,
+                             final XcaGateway xcaGateway,
                              final PatientService patientService,
                              final OrderService orderService,
                              final OrCDService orCDService,
                              final DispensationService dispensationService) {
         this.xcpdGateway = Validate.notNull(xcpdGateway, "XcpdGateway cannot be null");
-        this.xcaInitGateway = Validate.notNull(xcaInitGateway, "XcaInitGateway cannot be null");
+        this.xcaGateway = Validate.notNull(xcaGateway, "XcaInitGateway cannot be null");
         this.patientService = Validate.notNull(patientService, "PatientService cannot be null");
         this.orderService = Validate.notNull(orderService, "OrderService cannot be null");
         this.orCDService = Validate.notNull(orCDService, "OrCDService cannot be null");
@@ -199,15 +199,13 @@ public class ClientServiceImpl implements ClientService {
                     documentResponse = patientService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 case EP_CLASSCODE:
-                    documentResponse = null;
-//                    documentResponse = orderService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
+                    documentResponse = orderService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 case ORCD_HOSPITAL_DISCHARGE_REPORTS_CLASSCODE:
                 case ORCD_LABORATORY_RESULTS_CLASSCODE:
                 case ORCD_MEDICAL_IMAGING_REPORTS_CLASSCODE:
                 case ORCD_MEDICAL_IMAGES_CLASSCODE:
-                    documentResponse = null;
-//                    documentResponse = orCDService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
+                    documentResponse = orCDService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 default:
                     throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_EXCEPTION + documentCode.getValue());

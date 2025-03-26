@@ -692,18 +692,6 @@ public class XCAServiceImpl implements XCAService {
         return returnDoc;
     }
 
-    public byte[] documentToByteArray(final Document doc) throws Exception {
-        final TransformerFactory tf = TransformerFactory.newInstance();
-        final Transformer transformer = tf.newTransformer();
-        // Optionally set output properties
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        transformer.transform(new DOMSource(doc), new StreamResult(baos));
-        return baos.toByteArray();
-    }
-
     private RetrieveDocumentSetResponse retrieveDocumentSetBuilder(final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
             throws Exception {
 
@@ -941,7 +929,7 @@ public class XCAServiceImpl implements XCAService {
                 // If there is no failure during the process, the CDA document has been attached to the response
                 logger.info("Error Registry: Failure '{}'", failure);
                 if (!failure) {
-                    final byte[] documentBytes = documentToByteArray(doc);
+                    final byte[] documentBytes = XMLUtil.documentToByteArray(doc);
                     documentResponse.setDocument(documentBytes);
                     documentReturned = true;
                 }

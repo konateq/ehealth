@@ -2,32 +2,41 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xdr;
 
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
+import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
+import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
+import eu.europa.ec.sante.openncp.core.common.SslContextBuilder;
+import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.*;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.DocumentTransformationException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
-import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
-import org.apache.axis2.addressing.EndpointReference;
-import org.apache.axis2.util.XMLUtils;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr.DocumentRecipientPortType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr.XDRService;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.ws.addressing.WSAddressingFeature;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
@@ -37,21 +46,63 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import javax.net.ssl.SSLContext;
+import javax.xml.ws.BindingProvider;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class XDSbRepositoryServiceInvoker {
+public class XdrGateway {
 
     //This class implementation needs to be reviewed deeply
-    private static final ObjectFactory ofRim = new ObjectFactory();
-    private final Logger logger = LoggerFactory.getLogger(XDSbRepositoryServiceInvoker.class);
+    private final ObjectFactory objectFactory = new ObjectFactory();
+    private final Logger logger = LoggerFactory.getLogger(XdrGateway.class);
     private final CDATransformationService cdaTransformationService;
+    private final ConfigurationManager configurationManager;
+    private final DocumentRecipientPortType xdrPort;
+    private final DynamicDiscoveryService discoveryService;
 
-    public XDSbRepositoryServiceInvoker(final CDATransformationService cdaTransformationService) {
-        this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
+    public XdrGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
+        this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService must not be null");
+        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
+        this.discoveryService = Validate.notNull(discoveryService, " discoveryService must not be null");
+
+        final XDRService xdrService = new XDRService();
+        xdrPort = xdrService.getDocumentRecipientPortSoap12();
+
+        final Client client = ClientProxy.getClient(xdrPort);
+
+        client.getOutInterceptors().add(new OutboundSecurityInterceptor());
+        client.getBus().getFeatures().add(new WSAddressingFeature());
+
+        final KeystoreDetails serviceConsumerKeystoreDetails = ImmutableKeystoreDetails.builder()
+                .keystoreLocation(configurationManager.getProperty(Constant.SC_KEYSTORE_PATH))
+                .keystorePassword(configurationManager.getProperty(Constant.SC_KEYSTORE_PASSWORD))
+                .alias(configurationManager.getProperty(Constant.SC_PRIVATEKEY_ALIAS))
+                .keyPassword(configurationManager.getProperty(Constant.SC_PRIVATEKEY_PASSWORD))
+                .build();
+        final KeystoreDetails trustStoreKeystoreDetails = ImmutableKeystoreDetails.builder()
+                .keystoreLocation(configurationManager.getProperty(Constant.TRUSTSTORE_PATH))
+                .keystorePassword(configurationManager.getProperty(Constant.TRUSTSTORE_PASSWORD))
+                .build();
+        final SSLContext sslContext = SslContextBuilder.build(serviceConsumerKeystoreDetails, trustStoreKeystoreDetails);
+
+        final HTTPConduit conduit = (HTTPConduit) client.getConduit();
+        final TLSClientParameters tlsClientParameters = new TLSClientParameters();
+        // This should be configurable, you don't want to disable the CN check in production!!
+        tlsClientParameters.setDisableCNCheck(true);
+        tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+
+        tlsClientParameters.setSSLSocketFactory(sslContext.getSocketFactory());
+        conduit.setTlsClientParameters(tlsClientParameters);
     }
 
     /**
@@ -72,25 +123,22 @@ public class XDSbRepositoryServiceInvoker {
         final String submissionSetUuid = Constants.UUID_PREFIX + UUID.randomUUID();
 
         String endpointReference = null;
-        final var dynamicDiscoveryService = new DynamicDiscoveryService();
-
         switch (docClassCode) {
             case ED_CLASSCODE:
             case EDD_CLASSCODE:
-                endpointReference = dynamicDiscoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.DISPENSATION_SERVICE);
+                endpointReference = discoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.DISPENSATION_SERVICE);
                 break;
             default:
                 logger.warn("Document Class Code: '{}' not supported!!! Endpoint cannot be loaded", docClassCode);
                 break;
         }
-        // WebService Client stubs
-        final DocumentRecipient_ServiceStub documentRecipientServiceStub = new DocumentRecipient_ServiceStub(endpointReference);
-        documentRecipientServiceStub._getServiceClient().getOptions().setTo(new EndpointReference(endpointReference));
-        documentRecipientServiceStub.setCountryCode(countryCode);
-        documentRecipientServiceStub.setClassCode(docClassCode);
 
-        // Dummy handler for any mustUnderstand header within server response
-        EventLogClientUtil.createDummyMustUnderstandHandler(documentRecipientServiceStub);
+        // Override the endpoint address dynamically.
+        final BindingProvider bindingProvider = (BindingProvider) xdrPort;
+        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointReference);
+        // Also update CXF's internal ClientProxy because we reuse it
+        final Client client = ClientProxy.getClient(xdrPort);
+        client.getEndpoint().getEndpointInfo().setAddress(endpointReference);
 
         //  Retrieving XDR document from request
         Document document = null;
@@ -101,34 +149,30 @@ public class XDSbRepositoryServiceInvoker {
         }
         final String languageCode = document != null ? getLanguageCode(document) : XDRConstants.EXTRINSIC_OBJECT.LANGUAGE_CODE_DEFAULT_VALUE;
 
-        // ProvideAndRegisterDocumentSetRequestType
-        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ObjectFactory ofXds = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.ObjectFactory();
-        final eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.lcm._3.ObjectFactory ofLcm = new eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.lcm._3.ObjectFactory();
-
-        final ProvideAndRegisterDocumentSetRequestType registerDocumentSetRequest = ofXds.createProvideAndRegisterDocumentSetRequestType();
-        registerDocumentSetRequest.setSubmitObjectsRequest(ofLcm.createSubmitObjectsRequest());
-        registerDocumentSetRequest.getSubmitObjectsRequest().setRegistryObjectList(ofRim.createRegistryObjectListType());
+        final ProvideAndRegisterDocumentSetRequest registerDocumentSetRequest = objectFactory.createProvideAndRegisterDocumentSetRequest();
+        registerDocumentSetRequest.setSubmitObjectsRequest(objectFactory.createSubmitObjectsRequest());
+        registerDocumentSetRequest.getSubmitObjectsRequest().setRegistryObjectList(objectFactory.createRegistryObjectList());
 
         //  XDS Document
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
         final ExtrinsicObjectType extrinsicObject = makeExtrinsicObject(request, uuid, docClassCode, languageCode);
-        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable()
-                .add(ofRim.createExtrinsicObject(extrinsicObject));
+        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiables()
+                .add(objectFactory.createExtrinsicObject(extrinsicObject));
 
         final RegistryPackageType registryPackage = prepareRegistryPackage(request, docClassCode, submissionSetUuid, assertionMap);
-        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable()
-                .add(ofRim.createRegistryPackage(registryPackage));
+        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiables()
+                .add(objectFactory.createRegistryPackage(registryPackage));
 
         final ClassificationType classification = prepareClassification(submissionSetUuid);
-        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable()
-                .add(ofRim.createClassification(classification));
+        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiables()
+                .add(objectFactory.createClassification(classification));
 
         final AssociationType1 association = prepareAssociation(uuid, submissionSetUuid);
-        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable()
-                .add(ofRim.createAssociation(association));
+        registerDocumentSetRequest.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiables()
+                .add(objectFactory.createAssociation(association));
 
         // XDR Document
-        final ProvideAndRegisterDocumentSetRequestType.Document xdrDocument = new ProvideAndRegisterDocumentSetRequestType.Document();
+        final ProvideAndRegisterDocumentSetRequest.Document xdrDocument = objectFactory.createProvideAndRegisterDocumentSetRequestDocument();
         xdrDocument.setId(uuid);
 
         final byte[] cdaBytes = request.getCda().getBytes(StandardCharsets.UTF_8);
@@ -139,8 +183,8 @@ public class XDSbRepositoryServiceInvoker {
             }
             if (!docClassCode.equals(ClassCode.EDD_CLASSCODE)) {
                 final TMResponseStructure tmResponseStructure = cdaTransformationService.transcode(DomUtils.byteToDocument(cdaBytes), NcpSide.NCP_B);
-                final var base64EncodedDocument = tmResponseStructure.getResponseCDA();
-                final byte[] transformedCda = XMLUtils.toOM(Base64Util.decode(base64EncodedDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                final String base64EncodedDocument = tmResponseStructure.getResponseCDA();
+                final byte[] transformedCda = XMLUtil.documentToByteArray(Base64Util.decode(base64EncodedDocument));
                 xdrDocument.setValue(transformedCda);
 
             } else {
@@ -156,9 +200,9 @@ public class XDSbRepositoryServiceInvoker {
         } catch (final Exception ex) {
             logger.error(null, ex);
         }
-        registerDocumentSetRequest.getDocument().add(xdrDocument);
+        registerDocumentSetRequest.getDocuments().add(xdrDocument);
 
-        response = documentRecipientServiceStub.documentRecipient_ProvideAndRegisterDocumentSetB(registerDocumentSetRequest, assertionMap);
+        response = xdrPort.documentRecipientProvideAndRegisterDocumentSetB(registerDocumentSetRequest);
 
         return response;
     }
@@ -168,11 +212,11 @@ public class XDSbRepositoryServiceInvoker {
      * @param value
      * @return
      */
-    private SlotType1 makeSlot(final String name, final String value) {
-        final SlotType1 sl = ofRim.createSlotType1();
+    private Slot makeSlot(final String name, final String value) {
+        final Slot sl = objectFactory.createSlot();
         sl.setName(name);
-        sl.setValueList(ofRim.createValueListType());
-        sl.getValueList().getValue().add(value);
+        sl.setValueList(objectFactory.createValueList());
+        sl.getValueList().getValues().add(value);
         return sl;
     }
 
@@ -188,15 +232,15 @@ public class XDSbRepositoryServiceInvoker {
                                                   final String nodeRepresentation, final String value, final String name) {
 
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
-        final var classificationType = ofRim.createClassificationType();
+        final var classificationType = objectFactory.createClassificationType();
         classificationType.setId(uuid);
         classificationType.setNodeRepresentation(nodeRepresentation);
         classificationType.setClassificationScheme(classificationScheme);
         classificationType.setClassifiedObject(classifiedObject);
-        classificationType.getSlot().add(makeSlot("codingScheme", value));
-        classificationType.setName(ofRim.createInternationalStringType());
-        classificationType.getName().getLocalizedString().add(ofRim.createLocalizedStringType());
-        classificationType.getName().getLocalizedString().get(0).setValue(name);
+        classificationType.getSlots().add(makeSlot("codingScheme", value));
+        classificationType.setName(objectFactory.createInternationalStringType());
+        classificationType.getName().getLocalizedStrings().add(objectFactory.createLocalizedString());
+        classificationType.getName().getLocalizedStrings().get(0).setValue(name);
         return classificationType;
     }
 
@@ -207,9 +251,8 @@ public class XDSbRepositoryServiceInvoker {
      * @return
      */
     private ClassificationType makeClassification0(final String classificationScheme, final String classifiedObject, final String nodeRepresentation) {
-
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
-        final var classificationType = ofRim.createClassificationType();
+        final var classificationType = objectFactory.createClassificationType();
         classificationType.setId(uuid);
         classificationType.setNodeRepresentation(nodeRepresentation);
         classificationType.setClassificationScheme(classificationScheme);
@@ -222,10 +265,9 @@ public class XDSbRepositoryServiceInvoker {
      * @return
      */
     private InternationalStringType makeInternationalString(final String value) {
-
         final var internationalStringType = new InternationalStringType();
-        internationalStringType.getLocalizedString().add(ofRim.createLocalizedStringType());
-        internationalStringType.getLocalizedString().get(0).setValue(value);
+        internationalStringType.getLocalizedStrings().add(objectFactory.createLocalizedString());
+        internationalStringType.getLocalizedStrings().get(0).setValue(value);
         return internationalStringType;
     }
 
@@ -237,18 +279,18 @@ public class XDSbRepositoryServiceInvoker {
      * @return
      */
     private ExternalIdentifierType makeExternalIdentifier(final String identificationScheme, final String registryObject,
-                                                          final String value, final String name) {
+                                                                 final String value, final String name) {
 
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
-        final ExternalIdentifierType ex = ofRim.createExternalIdentifierType();
+        final ExternalIdentifierType ex = objectFactory.createExternalIdentifierType();
         ex.setId(uuid);
         ex.setIdentificationScheme(identificationScheme);
         ex.setObjectType(XDRConstants.REGREP_EXT_IDENT);
         ex.setRegistryObject(registryObject);
         ex.setValue(value);
-        ex.setName(ofRim.createInternationalStringType());
-        ex.getName().getLocalizedString().add(ofRim.createLocalizedStringType());
-        ex.getName().getLocalizedString().get(0).setValue(name);
+        ex.setName(objectFactory.createInternationalStringType());
+        ex.getName().getLocalizedStrings().add(objectFactory.createLocalizedString());
+        ex.getName().getLocalizedStrings().get(0).setValue(name);
         return ex;
     }
 
@@ -276,7 +318,7 @@ public class XDSbRepositoryServiceInvoker {
             logger.warn("PDF document will be processed, but this is not fully supported by current implementation");
         }
 
-        final ExtrinsicObjectType result = ofRim.createExtrinsicObjectType();
+        final ExtrinsicObjectType result = objectFactory.createExtrinsicObjectType();
         final PatientDemographics patient = request.getPatient();
         final var patientId = patient.getIdList().get(0);
 
@@ -287,24 +329,24 @@ public class XDSbRepositoryServiceInvoker {
         result.setStatus(IheConstants.REGREP_STATUSTYPE_APPROVED);
 
         // rim:Slot
-        result.getSlot().add(makeSlot(XDRConstants.EXTRINSIC_OBJECT.CREATION_TIME,
+        result.getSlots().add(makeSlot(XDRConstants.EXTRINSIC_OBJECT.CREATION_TIME,
                 DateUtil.getCurrentTimeUTC(XDRConstants.EXTRINSIC_OBJECT.DATE_FORMAT)));
-        result.getSlot().add(makeSlot(XDRConstants.EXTRINSIC_OBJECT.LANGUAGE_CODE_STR, language));
-        result.getSlot().add(makeSlot(XDRConstants.EXTRINSIC_OBJECT.SOURCE_PATIENT_ID, patientId.toString()));
+        result.getSlots().add(makeSlot(XDRConstants.EXTRINSIC_OBJECT.LANGUAGE_CODE_STR, language));
+        result.getSlots().add(makeSlot(XDRConstants.EXTRINSIC_OBJECT.SOURCE_PATIENT_ID, patientId.toString()));
 
         /*
          * Classification
          */
         // Healthcare facility code
-        result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.HEALTHCAREFACILITY_CODE_SCHEME, uuid,
+        result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.HEALTHCAREFACILITY_CODE_SCHEME, uuid,
                 request.getCountryCode(), XDRConstants.EXTRINSIC_OBJECT.HEALTHCAREFACILITY_CODE_VALUE, request.getCountryName()));
 
         // Practice Setting code
-        result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.PRACTICE_SETTING_CODE_SCHEME, uuid,
+        result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.PRACTICE_SETTING_CODE_SCHEME, uuid,
                 Constants.NOT_USED_FIELD, XDRConstants.EXTRINSIC_OBJECT.PRACTICE_SETTING_CODE_NODEREPR, Constants.NOT_USED_FIELD));
 
         // Confidentiality Code
-        result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.CONFIDENTIALITY_CODE_SCHEME, uuid,
+        result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.CONFIDENTIALITY_CODE_SCHEME, uuid,
                 XDRConstants.EXTRINSIC_OBJECT.CONFIDENTIALITY_CODE_NODEREPR, XDRConstants.EXTRINSIC_OBJECT.CONFIDENTIALITY_CODE_VALUE,
                 XDRConstants.EXTRINSIC_OBJECT.CONFIDENTIALITY_CODE_STR));
 
@@ -312,11 +354,11 @@ public class XDSbRepositoryServiceInvoker {
         switch (docClassCode) {
             case ED_CLASSCODE:
                 //  urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_SCHEME, uuid,
+                result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_SCHEME, uuid,
                         ClassCode.ED_CLASSCODE.getCode(), XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_VALUE, XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_ED_STR));
                 break;
             case EDD_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_SCHEME, uuid,
+                result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_SCHEME, uuid,
                         ClassCode.EDD_CLASSCODE.getCode(), XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_VALUE,
                         XDRConstants.EXTRINSIC_OBJECT.CLASS_CODE_EDD_STR));
                 break;
@@ -328,13 +370,13 @@ public class XDSbRepositoryServiceInvoker {
         //  eHDSI Format Code - urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d
         switch (docClassCode) {
             case ED_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.FormatCode.FORMAT_CODE_SCHEME, uuid,
+                result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.FormatCode.FORMAT_CODE_SCHEME, uuid,
                         XDRConstants.EXTRINSIC_OBJECT.FormatCode.Dispensation.EpsosPivotCoded.NODE_REPRESENTATION,
                         XDRConstants.EXTRINSIC_OBJECT.FormatCode.Dispensation.EpsosPivotCoded.CODING_SCHEME,
                         XDRConstants.EXTRINSIC_OBJECT.FormatCode.Dispensation.EpsosPivotCoded.DISPLAY_NAME));
                 break;
             case EDD_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.FormatCode.FORMAT_CODE_SCHEME, uuid,
+                result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.FormatCode.FORMAT_CODE_SCHEME, uuid,
                         XDRConstants.EXTRINSIC_OBJECT.FormatCode.DispensationDiscard.PivotCoded.NODE_REPRESENTATION,
                         XDRConstants.EXTRINSIC_OBJECT.FormatCode.DispensationDiscard.PivotCoded.CODING_SCHEME,
                         XDRConstants.EXTRINSIC_OBJECT.FormatCode.DispensationDiscard.PivotCoded.DISPLAY_NAME));
@@ -346,11 +388,11 @@ public class XDSbRepositoryServiceInvoker {
 
         //  External Identifiers
         //  XDSDocumentEntry.PatientId
-        result.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_SCHEME,
+        result.getExternalIdentifiers().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_SCHEME,
                 uuid, patientId.toString(), XDRConstants.EXTRINSIC_OBJECT.XDSDOCENTRY_PATID_STR));
 
         /* XDSDocument.UniqueId */
-        result.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME,
+        result.getExternalIdentifiers().add(makeExternalIdentifier(XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_SCHEME,
                 uuid, request.getCdaId(), XDRConstants.EXTRINSIC_OBJECT.XDSDOC_UNIQUEID_STR));
 
         // Version Info not managed, since IHE simulator does not support it, and the message is still valid at EVS.
@@ -361,24 +403,24 @@ public class XDSbRepositoryServiceInvoker {
         // result.setHome(Constants.HOME_COMM_ID) and result.setLid(uuid)
 
         // sourcePatientInfo
-        final SlotType1 slId = makeSlot(XDRConstants.EXTRINSIC_OBJECT.SRC_PATIENT_INFO_STR, "PID-3|" + patientId);
-        slId.getValueList().getValue().add("PID-5|" + patient.getFamilyName() + "^" + patient.getGivenName());
-        slId.getValueList().getValue().add("PID-7|" + new SimpleDateFormat("yyyyMMddkkmmss.SSSZZZZ", Locale.ENGLISH).format(patient.getBirthDate()));
+        final Slot slId = makeSlot(XDRConstants.EXTRINSIC_OBJECT.SRC_PATIENT_INFO_STR, "PID-3|" + patientId);
+        slId.getValueList().getValues().add("PID-5|" + patient.getFamilyName() + "^" + patient.getGivenName());
+        slId.getValueList().getValues().add("PID-7|" + new SimpleDateFormat("yyyyMMddkkmmss.SSSZZZZ", Locale.ENGLISH).format(patient.getBirthDate()));
         if (patient.getAdministrativeGender() != null) {
-            slId.getValueList().getValue().add("PID-8|" + patient.getAdministrativeGender().getValue());
+            slId.getValueList().getValues().add("PID-8|" + patient.getAdministrativeGender().getValue());
         }
-        result.getSlot().add(slId);
+        result.getSlots().add(slId);
 
         // eHDSI Type Code
         switch (docClassCode) {
             case ED_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
+                result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
                         uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensation.NODE_REPRESENTATION,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensation.CODING_SCHEME,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensation.DISPLAY_NAME));
                 break;
             case EDD_CLASSCODE:
-                result.getClassification().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
+                result.getClassifications().add(makeClassification(XDRConstants.EXTRINSIC_OBJECT.TypeCode.TYPE_CODE_SCHEME,
                         uuid, XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.NODE_REPRESENTATION,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.CODING_SCHEME,
                         XDRConstants.EXTRINSIC_OBJECT.TypeCode.EDispensationDiscard.DISPLAY_NAME));
@@ -399,37 +441,37 @@ public class XDSbRepositoryServiceInvoker {
     private RegistryPackageType prepareRegistryPackage(final XdrRequest request, final ClassCode docClassCode, final String submissionSetUuid,
                                                        final Map<AssertionType, Assertion> assertionMap) {
 
-        final var registryPackageType = ofRim.createRegistryPackageType();
+        final var registryPackageType = objectFactory.createRegistryPackageType();
         final var patientId = request.getPatient().getIdList().get(0);
 
         registryPackageType.setId(submissionSetUuid);
         registryPackageType.setObjectType(XDRConstants.REGISTRY_PACKAGE.OBJECT_TYPE_UUID);
 
-        registryPackageType.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.SUBMISSION_TIME_STR,
+        registryPackageType.getSlots().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.SUBMISSION_TIME_STR,
                 DateUtil.getDateByDateFormat(XDRConstants.REGISTRY_PACKAGE.SUBMISSION_TIME_FORMAT)));
         registryPackageType.setName(makeInternationalString(getNameFromClassCode(docClassCode)));
         registryPackageType.setDescription(makeInternationalString(getDescriptionFromClassCode(docClassCode)));
 
         final ClassificationType classification;
         classification = makeClassification0(XDRConstants.REGISTRY_PACKAGE.AUTHOR_CLASSIFICATION_UUID, submissionSetUuid, "");
-        classification.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_INSTITUTION_STR,
-                getAuthorInstitution(request, assertionMap.get(AssertionType.HCP))));
-        classification.getSlot().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_PERSON_STR,
-                getAuthorPerson(request, assertionMap.get(AssertionType.HCP))));
-        registryPackageType.getClassification().add(classification);
+        classification.getSlots().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_INSTITUTION_STR,
+                getAuthorInstitution(assertionMap.get(AssertionType.HCP))));
+        classification.getSlots().add(makeSlot(XDRConstants.REGISTRY_PACKAGE.AUTHOR_PERSON_STR,
+                getAuthorPerson(assertionMap.get(AssertionType.HCP))));
+        registryPackageType.getClassifications().add(classification);
 
-        registryPackageType.getClassification().add(makeClassification(XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_UUID, submissionSetUuid,
+        registryPackageType.getClassifications().add(makeClassification(XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_UUID, submissionSetUuid,
                 docClassCode.getCode(), XDRConstants.REGISTRY_PACKAGE.CODING_SCHEME_VALUE, getSubmissionSetFromClassCode(docClassCode)));
 
-        registryPackageType.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_UNIQUEID_SCHEME,
+        registryPackageType.getExternalIdentifiers().add(makeExternalIdentifier(XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_UNIQUEID_SCHEME,
                 submissionSetUuid, request.getSubmissionSetId(), XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_UNIQUEID_STR));
 
-        registryPackageType.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_PATIENTID_SCHEME,
+        registryPackageType.getExternalIdentifiers().add(makeExternalIdentifier(XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_PATIENTID_SCHEME,
                 submissionSetUuid, patientId.toString(), XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_PATIENTID_STR));
 
         // The XDSSubmissionSet.SourceId value should be the OID of the sender (e.g. HOME_COMMUNITY_ID),
         // according to ITI TF-3, Table 4.1-6, but not all OID prefixes are supported in IHE validator.
-        registryPackageType.getExternalIdentifier().add(makeExternalIdentifier(XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_SOURCEID_SCHEME,
+        registryPackageType.getExternalIdentifiers().add(makeExternalIdentifier(XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_SOURCEID_SCHEME,
                 submissionSetUuid, XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_SOURCEID_VALUE,
                 XDRConstants.REGISTRY_PACKAGE.XDSSUBMSET_SOURCEID_STR));
         return registryPackageType;
@@ -441,7 +483,7 @@ public class XDSbRepositoryServiceInvoker {
      */
     private ClassificationType prepareClassification(final String submissionSetUuid) {
 
-        final var classificationType = ofRim.createClassificationType();
+        final var classificationType = objectFactory.createClassificationType();
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
         classificationType.setId(uuid);
         classificationType.setClassificationNode(XDRConstants.SUBMISSION_SET_CLASSIFICATION.CLASSIFICATION_NODE_UUID);
@@ -458,12 +500,12 @@ public class XDSbRepositoryServiceInvoker {
     private AssociationType1 prepareAssociation(final String targetObject, final String submissionSetUuid) {
 
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
-        final var associationType1 = ofRim.createAssociationType1();
+        final var associationType1 = objectFactory.createAssociationType1();
         associationType1.setId(uuid);
         associationType1.setAssociationType(XDRConstants.REGREP_HAS_MEMBER);
         associationType1.setSourceObject(submissionSetUuid);
         associationType1.setTargetObject(targetObject);
-        associationType1.getSlot().add(makeSlot(XDRConstants.SUBMISSION_SET_STATUS_STR, XDRConstants.ORIGINAL_STR));
+        associationType1.getSlots().add(makeSlot(XDRConstants.SUBMISSION_SET_STATUS_STR, XDRConstants.ORIGINAL_STR));
 
         return associationType1;
     }
@@ -472,10 +514,10 @@ public class XDSbRepositoryServiceInvoker {
      * Obtains the AuthorInstitution information, namely Name and ID from the assertion.
      * And builds an HL7 V2.5 representation of the information.
      *
-     * @param xdrRequest an XDR Request containing the assertion.
+     * @param clinicianAssertion the clinical assertion.
      * @return an HL7 V2.5 representation of the obtained information.
      */
-    private String getAuthorInstitution(final XdrRequest xdrRequest, final Assertion clinicianAssertion) {
+    private String getAuthorInstitution(final Assertion clinicianAssertion) {
 
         final String result;
 
@@ -518,10 +560,10 @@ public class XDSbRepositoryServiceInvoker {
      * Obtains the AuthorPerson information, namely the Author Identifier and Assigning AuthorityId .
      * Then builds an HL7 V2.5 representation of the information.
      *
-     * @param xdrRequest an XDR Request containing the assertion.
+     * @param clinicianAssertion the clinical assertion.
      * @return an HL7 V2.5 representation of the obtained information.
      */
-    private String getAuthorPerson(final XdrRequest xdrRequest, final Assertion clinicianAssertion) {
+    private static String getAuthorPerson(final Assertion clinicianAssertion) {
 
         final String result;
 

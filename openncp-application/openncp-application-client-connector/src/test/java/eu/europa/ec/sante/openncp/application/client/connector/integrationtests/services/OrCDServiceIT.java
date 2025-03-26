@@ -18,6 +18,7 @@ import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -97,5 +98,7 @@ public class OrCDServiceIT  extends BaseIntegrationTest {
 
         final EpsosDocument document = clientConnectorService.retrieveDocument(assertions, "BE", documentId, "1.3.6.1.4.1.48336", classCode, null);
         assertThat(document).isNotNull();
+        assertThat(document.getBase64Binary()).isNotNull();
+        assertThat(document.getBase64Binary()).asString(StandardCharsets.UTF_8).isEqualTo("test");
     }
 }

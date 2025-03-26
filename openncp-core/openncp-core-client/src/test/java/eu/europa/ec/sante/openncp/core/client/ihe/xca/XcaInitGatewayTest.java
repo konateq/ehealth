@@ -29,11 +29,11 @@ public class XcaInitGatewayTest {
     private CDATransformationService cDATransformationService;
 
     @InjectMocks
-    private XcaInitGateway xcaInitGateway;
+    private XcaGateway xcaGateway;
 
     /**
      * Method under test:
-     * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
+     * {@link XcaGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
     public void testCrossGatewayQuery() throws XCAException {
@@ -49,12 +49,12 @@ public class XcaInitGatewayTest {
 
         // Act and Assert
         assertThrows(RuntimeException.class,
-                () -> xcaInitGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
+                () -> xcaGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
     }
 
     /**
      * Method under test:
-     * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
+     * {@link XcaGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
     public void testCrossGatewayQuery2() throws XCAException {
@@ -70,12 +70,12 @@ public class XcaInitGatewayTest {
 
         // Act and Assert
         assertThrows(RuntimeException.class,
-                () -> xcaInitGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
+                () -> xcaGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
     }
 
     /**
      * Method under test:
-     * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
+     * {@link XcaGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
     public void testCrossGatewayQuery3() throws XCAException {
@@ -92,7 +92,7 @@ public class XcaInitGatewayTest {
 
         // Act and Assert
         assertThrows(RuntimeException.class,
-                () -> xcaInitGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
+                () -> xcaGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
         String extension= pid.getExtension();
         String root= pid.getRoot();
         assertEquals("Extension", extension);
@@ -102,7 +102,7 @@ public class XcaInitGatewayTest {
 
     /**
      * Method under test:
-     * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
+     * {@link XcaGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
     public void testCrossGatewayQuery4() throws XCAException {
@@ -125,7 +125,7 @@ public class XcaInitGatewayTest {
 
         // Act and Assert
         assertThrows(RuntimeException.class,
-                () -> xcaInitGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
+                () -> xcaGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
         String extension= pid.getExtension();
         String root= pid.getRoot();
         assertEquals("Extension", extension);
@@ -134,7 +134,7 @@ public class XcaInitGatewayTest {
 
     /**
      * Method under test:
-     * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
+     * {@link XcaGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
     public void testCrossGatewayQuery5() throws XCAException {
@@ -162,7 +162,7 @@ public class XcaInitGatewayTest {
 
         // Act and Assert
         assertThrows(RuntimeException.class,
-                () -> xcaInitGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
+                () -> xcaGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams, new HashMap<>(), "Service"));
         String extension= pid.getExtension();
         String root= pid.getRoot();
         assertEquals("Extension", extension);
@@ -171,7 +171,7 @@ public class XcaInitGatewayTest {
 
     /**
      * Method under test:
-     * {@link XcaInitGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
+     * {@link XcaGateway#crossGatewayQuery(PatientId, String, List, FilterParams, Map, String)}
      */
     @Test
     public void testCrossGatewayQuery6() throws XCAException {
@@ -194,7 +194,7 @@ public class XcaInitGatewayTest {
         filterParams.setMaximumSize(3L);
 
         // Act and Assert
-        assertThrows(RuntimeException.class, () -> xcaInitGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams,
+        assertThrows(RuntimeException.class, () -> xcaGateway.crossGatewayQuery(pid, "GB", documentCodes, filterParams,
                 new HashMap<>(), "java.util.List"));
         String extension= pid.getExtension();
         String root= pid.getRoot();

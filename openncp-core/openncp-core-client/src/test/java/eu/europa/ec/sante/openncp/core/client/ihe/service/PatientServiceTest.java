@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.service;
 
-import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaInitGateway;
+import eu.europa.ec.sante.openncp.core.client.ihe.xca.XcaGateway;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -15,7 +15,7 @@ public class PatientServiceTest {
     private PatientService patientService;
 
     @Mock
-    private XcaInitGateway xcaInitGateway;
+    private XcaGateway xcaGateway;
 
     /**
      * Method under test:

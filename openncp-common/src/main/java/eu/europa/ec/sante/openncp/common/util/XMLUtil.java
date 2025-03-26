@@ -109,20 +109,27 @@ public class XMLUtil {
         return documentBuilder.parse(inputSource);
     }
 
-    public static String documentToString(final Document doc) throws TransformerException {
-
+    public static byte[] documentToByteArray(final Document doc) throws Exception {
         final TransformerFactory factory = getTransformerFactory();
         final Transformer transformer = factory.newTransformer();
-        final StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(doc), new StreamResult(writer));
-        return writer.getBuffer().toString().replaceAll("\n|\r", "");
+        // Optionally set output properties
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        transformer.transform(new DOMSource(doc), new StreamResult(baos));
+        return baos.toByteArray();
+    }
+
+    public static String documentToString(final Document doc) throws TransformerException {
+       return documentToString(doc, true);
     }
 
     public static String documentToString(final Document doc, final boolean omitXmlDeclaration) throws TransformerException {
-
         final TransformerFactory factory = getTransformerFactory();
         final Transformer transformer = factory.newTransformer();
         final StringWriter writer = new StringWriter();
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, omitXmlDeclaration ? "yes" : "no");
         transformer.transform(new DOMSource(doc), new StreamResult(writer));
         return writer.getBuffer().toString().replaceAll("\n|\r", "");
