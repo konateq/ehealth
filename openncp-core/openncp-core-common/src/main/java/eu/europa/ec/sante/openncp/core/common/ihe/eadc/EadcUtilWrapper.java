@@ -1,19 +1,11 @@
 package eu.europa.ec.sante.openncp.core.common.ihe.eadc;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import javax.xml.namespace.QName;
-import javax.xml.parsers.ParserConfigurationException;
-
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.ObjectFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.TransactionInfo;
-import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
+import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.soap.SOAPEnvelope;
 import org.apache.axis2.client.ServiceClient;
@@ -30,6 +22,12 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+
+import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * This class wraps the EADC invocation. As it gathers several aspects required to its proper usage, such as
@@ -188,7 +186,8 @@ public class EadcUtilWrapper {
         transactionInfo.setStartTime(startTime != null ? getDateAsRFC822String(startTime) : null);
         transactionInfo.setEndTime(endTime != null ? getDateAsRFC822String(endTime) : null);
         transactionInfo.setDuration(endTime != null && startTime != null ? String.valueOf(endTime.getTime() - startTime.getTime()) : null);
-        transactionInfo.setHomeAddress(EventLogClientUtil.getSourceGatewayIdentifier());
+        //FIXME KJW
+        transactionInfo.setHomeAddress("FIXME APPLY THE PROPER LOGIC EventLogClientUtil.getSourceGatewayIdentifier()");
         final String sndIso = reqMsgContext != null ? extractSendingCountryIsoFromAssertion(getAssertion(reqMsgContext)) : null;
         transactionInfo.setSndISO(StringUtils.upperCase(sndIso));
         transactionInfo.setSndNCPOID(sndIso != null ? OidUtil.getHomeCommunityId(sndIso.toLowerCase()) : null);
@@ -227,7 +226,8 @@ public class EadcUtilWrapper {
         if (serviceClient != null && serviceClient.getOptions() != null && serviceClient.getOptions().getTo() != null &&
             serviceClient.getOptions().getTo().getAddress() != null) {
             transactionInfo.setReceivingHost(serviceClient.getOptions().getTo().getAddress());
-            transactionInfo.setReceivingAddr(EventLogClientUtil.getTargetGatewayIdentifier(serviceClient.getOptions().getTo().getAddress()));
+            //FIXME KJW
+            transactionInfo.setReceivingAddr("FIXME APPLY THE PROPER LOGICEventLogClientUtil.getTargetGatewayIdentifier(serviceClient.getOptions().getTo().getAddress())");
         }
         if (reqMsgContext != null && reqMsgContext.getOptions() != null && reqMsgContext.getOptions().getAction() != null) {
             transactionInfo.setRequestAction(reqMsgContext.getOptions().getAction());
@@ -310,26 +310,6 @@ public class EadcUtilWrapper {
         dateFormat.setTimeZone(timeZone);
 
         return dateFormat.format(date);
-    }
-
-    /**
-     * Extracts a CDA document from a RetrieveDocumentSetResponseType
-     *
-     * @param retrieveDocumentSetResponseType
-     * @return
-     */
-    public static Document getCDA(final RetrieveDocumentSetResponseType retrieveDocumentSetResponseType) {
-
-        final RetrieveDocumentSetResponseType.DocumentResponse documentResponse;
-
-        if (retrieveDocumentSetResponseType != null && retrieveDocumentSetResponseType.getDocumentResponse() != null &&
-            !retrieveDocumentSetResponseType.getDocumentResponse().isEmpty()) {
-
-            documentResponse = retrieveDocumentSetResponseType.getDocumentResponse().get(0);
-            final byte[] documentData = documentResponse.getDocument();
-            return toXmlDocument(documentData);
-        }
-        return null;
     }
 
     /**

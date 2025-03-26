@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.common.interceptors.AssertionsInInterceptor;
 import eu.europa.ec.sante.openncp.core.common.interceptors.SoapMessageInterceptor;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.RespondingGatewayPortType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr.DocumentRecipientPortType;
 import org.apache.cxf.Bus;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.jaxws.EndpointImpl;
@@ -69,6 +70,14 @@ public class WebServiceConfig {
                                 final LoggingFeature loggingFeature,
                                 final Merlin signatureCrypto) {
         return createEndpoint(bus, xcaPortType, loggingFeature, signatureCrypto);
+    }
+
+    @Bean
+    public Endpoint xdrEndpoint(final Bus bus,
+                                final DocumentRecipientPortType xdrPortType,
+                                final LoggingFeature loggingFeature,
+                                final Merlin signatureCrypto) {
+        return createEndpoint(bus, xdrPortType, loggingFeature, signatureCrypto);
     }
 
     private Endpoint createEndpoint(final Bus bus, final Object implementor, final LoggingFeature loggingFeature, final Merlin signatureCrypto) {
