@@ -40,8 +40,6 @@ import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ep.EPExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.orcd.OrCDExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ps.PSExtrinsicObjectBuilder;
-import org.apache.axiom.om.OMAbstractFactory;
-import org.apache.axiom.om.OMFactory;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -61,12 +59,6 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.soap.SOAPHeader;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.*;
@@ -74,7 +66,7 @@ import java.util.*;
 import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 
 @Service
-public class XCAServiceImpl implements XCAService {
+public class XcaServiceServerSideImpl implements XcaServiceServerSide {
 
     private static final DatatypeFactory DATATYPE_FACTORY;
     private static final String NO_EVENT_IDENTIFICATION_INFORMATION_FOUND = "No event identification information found!";
@@ -87,9 +79,8 @@ public class XCAServiceImpl implements XCAService {
         }
     }
 
-    private final Logger logger = LoggerFactory.getLogger(XCAServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(XcaServiceServerSideImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
-    private final OMFactory omFactory = OMAbstractFactory.getOMFactory();
     private final ObjectFactory objectFactory = new ObjectFactory();
     private final DocumentSearchInterface documentSearchService;
     private final SAML2Validator saml2Validator;
@@ -101,7 +92,7 @@ public class XCAServiceImpl implements XCAService {
      *
      * @see ServiceLoader
      */
-    public XCAServiceImpl(final DocumentSearchInterface documentSearchService, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
+    public XcaServiceServerSideImpl(final DocumentSearchInterface documentSearchService, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
         this.documentSearchService = Validate.notNull(documentSearchService, "documentSearchService must not be null");
         this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "cdaTransformationService must not be null");
@@ -197,7 +188,7 @@ public class XCAServiceImpl implements XCAService {
         return documentIds;
     }
 
-    private void handleEventLogStatus(final EventLog eventLog, final AdhocQueryResponse queryResponse, final AdhocQueryRequest queryRequest) {
+    private static void handleEventLogStatus(final EventLog eventLog, final AdhocQueryResponse queryResponse, final AdhocQueryRequest queryRequest) {
 
         if (queryResponse.getRegistryObjectList() == null) {
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.PERMANENT_FAILURE);
@@ -266,7 +257,7 @@ public class XCAServiceImpl implements XCAService {
         }
     }
 
-    public String registryErrorToXml(final RegistryError error) throws Exception {
+    public static String registryErrorToXml(final RegistryError error) throws Exception {
         final JAXBContext jaxbContext = JAXBContext.newInstance(RegistryError.class);
         final Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
@@ -276,7 +267,7 @@ public class XCAServiceImpl implements XCAService {
         return writer.toString();
     }
 
-    private List<ClassCode> getDocumentEntryClassCodes(final AdhocQueryRequest request) {
+    private static List<ClassCode> getDocumentEntryClassCodes(final AdhocQueryRequest request) {
         final List<ClassCode> classCodes = new ArrayList<>();
         for (final Slot slotType1 : request.getAdhocQuery().getSlots()) {
             if (slotType1.getName().equals("$XDSDocumentEntryClassCode")) {
@@ -293,11 +284,11 @@ public class XCAServiceImpl implements XCAService {
         return classCodes;
     }
 
-    private ClassCode getFirstClassCode(final List<ClassCode> classCodeList) {
+    private static ClassCode getFirstClassCode(final List<ClassCode> classCodeList) {
         return classCodeList.stream().findFirst().orElse(null);
     }
 
-    private FilterParams getFilterParams(final AdhocQueryRequest request) {
+    private static FilterParams getFilterParams(final AdhocQueryRequest request) {
 
         final var filterParams = new FilterParams();
 
@@ -324,7 +315,7 @@ public class XCAServiceImpl implements XCAService {
      *
      * @return repositoryUniqueId
      */
-    private String getRepositoryUniqueId(final RetrieveDocumentSetRequest request) {
+    private static String getRepositoryUniqueId(final RetrieveDocumentSetRequest request) {
 
         return request.getDocumentRequests().get(0).getRepositoryUniqueId();
     }
@@ -1002,7 +993,7 @@ public class XCAServiceImpl implements XCAService {
      *
      * @return boolean value, indicating if the list only contains warnings.
      */
-    private boolean checkIfOnlyWarnings(final RegistryErrorList registryErrorList) {
+    private static boolean checkIfOnlyWarnings(final RegistryErrorList registryErrorList) {
         return RegistryErrorSeverity.ERROR_SEVERITY_ERROR.getText().equals(registryErrorList.getHighestSeverity());
     }
 

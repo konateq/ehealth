@@ -6,7 +6,7 @@ import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN20130
 
 import javax.xml.soap.SOAPHeader;
 
-public interface XCPDService {
+public interface XcpdServiceServerSide {
 
     PRPAIN201306UV02 queryPatient(PRPAIN201305UV02 request, SOAPHeader soapHeader, EventLog eventLog) throws Exception;
 }

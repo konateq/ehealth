@@ -1,15 +1,11 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
-import eu.europa.ec.sante.openncp.common.Constant;
-import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
-import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerException;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
-import eu.europa.ec.sante.openncp.core.common.SslContextBuilder;
+import eu.europa.ec.sante.openncp.core.client.ihe.IhePortTypeFactory;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
@@ -17,27 +13,12 @@ import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN201306UV02;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.RespondingGatewayPortType;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.XCPDService;
 import org.apache.commons.lang3.Validate;
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.frontend.ClientProxy;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.ws.addressing.WSAddressingFeature;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import javax.net.ssl.SSLContext;
-import javax.xml.ws.BindingProvider;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,41 +35,12 @@ public class XcpdGateway {
 
     private final DynamicDiscoveryService discoveryService;
     private final ConfigurationManager configurationManager;
-    private final RespondingGatewayPortType xcpdPort;
+    private final IhePortTypeFactory ihePortTypeFactory;
 
-    public XcpdGateway(final DynamicDiscoveryService discoveryService, final ConfigurationManager configurationManager) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
-        this.discoveryService = Validate.notNull(discoveryService, " discoveryService must not be null");
+    public XcpdGateway(final DynamicDiscoveryService discoveryService, final ConfigurationManager configurationManager, final IhePortTypeFactory ihePortTypeFactory) {
+        this.discoveryService = Validate.notNull(discoveryService, "discoveryService must not be null");
         this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
-        final XCPDService xcpdService = new XCPDService();
-        xcpdPort = xcpdService.getRespondingGatewayPortSoap12();
-
-        final Client client = ClientProxy.getClient(xcpdPort);
-
-        client.getOutInterceptors().add(new OutboundSecurityInterceptor());
-
-        client.getBus().getFeatures().add(new WSAddressingFeature());
-
-        final KeystoreDetails serviceConsumerKeystoreDetails = ImmutableKeystoreDetails.builder()
-                .keystoreLocation(configurationManager.getProperty(Constant.SC_KEYSTORE_PATH))
-                .keystorePassword(configurationManager.getProperty(Constant.SC_KEYSTORE_PASSWORD))
-                .alias(configurationManager.getProperty(Constant.SC_PRIVATEKEY_ALIAS))
-                .keyPassword(configurationManager.getProperty(Constant.SC_PRIVATEKEY_PASSWORD))
-                .build();
-        final KeystoreDetails trustStoreKeystoreDetails = ImmutableKeystoreDetails.builder()
-                .keystoreLocation(configurationManager.getProperty(Constant.TRUSTSTORE_PATH))
-                .keystorePassword(configurationManager.getProperty(Constant.TRUSTSTORE_PASSWORD))
-                .build();
-        final SSLContext sslContext = SslContextBuilder.build(serviceConsumerKeystoreDetails, trustStoreKeystoreDetails);
-
-        final HTTPConduit conduit = (HTTPConduit) client.getConduit();
-        final TLSClientParameters tlsClientParameters = new TLSClientParameters();
-        // This should be configurable, you don't want to disable the CN check in production!!
-        tlsClientParameters.setDisableCNCheck(true);
-        tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-
-
-        tlsClientParameters.setSSLSocketFactory(sslContext.getSocketFactory());
-        conduit.setTlsClientParameters(tlsClientParameters);
+        this.ihePortTypeFactory = Validate.notNull(ihePortTypeFactory, "ihePortTypeFactory must not be null");
     }
 
     /**
@@ -111,17 +63,11 @@ public class XcpdGateway {
         } catch (final ConfigurationManagerException e) {
             throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
         }
-
-        // Override the endpoint address dynamically.
-        final BindingProvider bindingProvider = (BindingProvider) xcpdPort;
-        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointUrl);
-        // Also update CXF's internal ClientProxy because we reuse it
-        final Client client = ClientProxy.getClient(xcpdPort);
-        client.getEndpoint().getEndpointInfo().setAddress(endpointUrl);
+        final RespondingGatewayPortType xcpdPortType = ihePortTypeFactory.createXCPDPort(configurationManager, endpointUrl);
 
         final String dstHomeCommunityId = OidUtil.getHomeCommunityId(countryCode.toLowerCase(Locale.ENGLISH));
         final PRPAIN201305UV02 xcpdRequest = XcpdMessageBuilder.build(patientDemographics, dstHomeCommunityId);
-        final PRPAIN201306UV02 xcpdResponse = xcpdPort.respondingGatewayPRPAIN201305UV02(xcpdRequest);
+        final PRPAIN201306UV02 xcpdResponse = xcpdPortType.respondingGatewayPRPAIN201305UV02(xcpdRequest);
 
         return XcpdResponseExtractor.extract(xcpdResponse);
     }

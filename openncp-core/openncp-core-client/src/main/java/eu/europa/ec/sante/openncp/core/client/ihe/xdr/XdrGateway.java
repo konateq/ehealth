@@ -2,10 +2,7 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xdr;
 
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
-import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
-import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
@@ -13,9 +10,8 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
+import eu.europa.ec.sante.openncp.core.client.ihe.IhePortTypeFactory;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
-import eu.europa.ec.sante.openncp.core.common.SslContextBuilder;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
@@ -27,16 +23,9 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMRespon
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr.DocumentRecipientPortType;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xdr.XDRService;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.frontend.ClientProxy;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.ws.addressing.WSAddressingFeature;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
@@ -46,63 +35,27 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import javax.net.ssl.SSLContext;
-import javax.xml.ws.BindingProvider;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
 public class XdrGateway {
-
     //This class implementation needs to be reviewed deeply
     private final ObjectFactory objectFactory = new ObjectFactory();
     private final Logger logger = LoggerFactory.getLogger(XdrGateway.class);
     private final CDATransformationService cdaTransformationService;
     private final ConfigurationManager configurationManager;
-    private final DocumentRecipientPortType xdrPort;
     private final DynamicDiscoveryService discoveryService;
+    private final IhePortTypeFactory ihePortTypeFactory;
 
-    public XdrGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
+
+    public XdrGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService, final IhePortTypeFactory ihePortTypeFactory) {
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService must not be null");
         this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
         this.discoveryService = Validate.notNull(discoveryService, " discoveryService must not be null");
-
-        final XDRService xdrService = new XDRService();
-        xdrPort = xdrService.getDocumentRecipientPortSoap12();
-
-        final Client client = ClientProxy.getClient(xdrPort);
-
-        client.getOutInterceptors().add(new OutboundSecurityInterceptor());
-        client.getBus().getFeatures().add(new WSAddressingFeature());
-
-        final KeystoreDetails serviceConsumerKeystoreDetails = ImmutableKeystoreDetails.builder()
-                .keystoreLocation(configurationManager.getProperty(Constant.SC_KEYSTORE_PATH))
-                .keystorePassword(configurationManager.getProperty(Constant.SC_KEYSTORE_PASSWORD))
-                .alias(configurationManager.getProperty(Constant.SC_PRIVATEKEY_ALIAS))
-                .keyPassword(configurationManager.getProperty(Constant.SC_PRIVATEKEY_PASSWORD))
-                .build();
-        final KeystoreDetails trustStoreKeystoreDetails = ImmutableKeystoreDetails.builder()
-                .keystoreLocation(configurationManager.getProperty(Constant.TRUSTSTORE_PATH))
-                .keystorePassword(configurationManager.getProperty(Constant.TRUSTSTORE_PASSWORD))
-                .build();
-        final SSLContext sslContext = SslContextBuilder.build(serviceConsumerKeystoreDetails, trustStoreKeystoreDetails);
-
-        final HTTPConduit conduit = (HTTPConduit) client.getConduit();
-        final TLSClientParameters tlsClientParameters = new TLSClientParameters();
-        // This should be configurable, you don't want to disable the CN check in production!!
-        tlsClientParameters.setDisableCNCheck(true);
-        tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-
-        tlsClientParameters.setSSLSocketFactory(sslContext.getSocketFactory());
-        conduit.setTlsClientParameters(tlsClientParameters);
+        this.ihePortTypeFactory = Validate.notNull(ihePortTypeFactory, "ihePortTypeFactory must not be null");
     }
 
     /**
@@ -132,13 +85,7 @@ public class XdrGateway {
                 logger.warn("Document Class Code: '{}' not supported!!! Endpoint cannot be loaded", docClassCode);
                 break;
         }
-
-        // Override the endpoint address dynamically.
-        final BindingProvider bindingProvider = (BindingProvider) xdrPort;
-        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointReference);
-        // Also update CXF's internal ClientProxy because we reuse it
-        final Client client = ClientProxy.getClient(xdrPort);
-        client.getEndpoint().getEndpointInfo().setAddress(endpointReference);
+        final DocumentRecipientPortType xdrPortType = ihePortTypeFactory.createXDRPort(configurationManager, endpointReference);
 
         //  Retrieving XDR document from request
         Document document = null;
@@ -202,7 +149,7 @@ public class XdrGateway {
         }
         registerDocumentSetRequest.getDocuments().add(xdrDocument);
 
-        response = xdrPort.documentRecipientProvideAndRegisterDocumentSetB(registerDocumentSetRequest);
+        response = xdrPortType.documentRecipientProvideAndRegisterDocumentSetB(registerDocumentSetRequest);
 
         return response;
     }
@@ -279,7 +226,7 @@ public class XdrGateway {
      * @return
      */
     private ExternalIdentifierType makeExternalIdentifier(final String identificationScheme, final String registryObject,
-                                                                 final String value, final String name) {
+                                                          final String value, final String name) {
 
         final String uuid = Constants.UUID_PREFIX + UUID.randomUUID();
         final ExternalIdentifierType ex = objectFactory.createExternalIdentifierType();
@@ -563,7 +510,7 @@ public class XdrGateway {
      * @param clinicianAssertion the clinical assertion.
      * @return an HL7 V2.5 representation of the obtained information.
      */
-    private static String getAuthorPerson(final Assertion clinicianAssertion) {
+    private String getAuthorPerson(final Assertion clinicianAssertion) {
 
         final String result;
 
@@ -599,42 +546,6 @@ public class XdrGateway {
         }
 
         return result;
-    }
-
-    /**
-     * This method will determine which EventCode (Name) is present in the Consent Document.
-     *
-     * @param document the consent CDA
-     * @return the EventCode
-     */
-    private String getConsentOptName(final String document) {
-
-        if (document.contains(XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_REPRESENTATION_OPT_OUT)) {
-            return XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_NAME_OPT_OUT;
-        } else if (document.contains(XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_REPRESENTATION_OPT_IN)) {
-            return XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_NAME_OPT_IN;
-        } else {
-            logger.error("Event Code not found in consent document!");
-            return "Event Code not found in consent document!";
-        }
-    }
-
-    /**
-     * This method will determine which EventCode (Code) is present in the Consent Document.
-     *
-     * @param document the consent CDA
-     * @return the EventCode
-     */
-    private String getConsentOptCode(final String document) {
-
-        if (document.contains(XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_REPRESENTATION_OPT_OUT)) {
-            return XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_REPRESENTATION_OPT_OUT;
-        } else if (document.contains(XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_REPRESENTATION_OPT_IN)) {
-            return XDRConstants.EXTRINSIC_OBJECT.EVENT_CODE_NODE_REPRESENTATION_OPT_IN;
-        } else {
-            logger.error("Event Code not found in consent document!");
-            return "Event Code not found in consent document!";
-        }
     }
 
     /**
@@ -694,7 +605,7 @@ public class XdrGateway {
      * @param document - CDA document as DOM object.
      * @return ISO language code of the document.
      */
-    private String getLanguageCode(final Document document) {
+    private static String getLanguageCode(final Document document) {
         final List<Node> nodeList = XMLUtil.getNodeList(document, "ClinicalDocument/languageCode");
         String languageCode = XDRConstants.EXTRINSIC_OBJECT.LANGUAGE_CODE_DEFAULT_VALUE;
         for (final Node node : nodeList) {

@@ -1,10 +1,7 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
-import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.ssl.ImmutableKeystoreDetails;
-import eu.europa.ec.sante.openncp.common.audit.ssl.KeystoreDetails;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerException;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
@@ -14,11 +11,10 @@ import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.core.client.ihe.IhePortTypeFactory;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryRequestCreator;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryResponseConverter;
-import eu.europa.ec.sante.openncp.core.client.ihe.interceptors.OutboundSecurityInterceptor;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
-import eu.europa.ec.sante.openncp.core.common.SslContextBuilder;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
@@ -30,31 +26,16 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATran
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
 import eu.europa.ec.sante.openncp.core.common.tsam.error.TMError;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca.RespondingGatewayPortType;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca.XCAService;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.frontend.ClientProxy;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.ws.addressing.WSAddressingFeature;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import javax.net.ssl.SSLContext;
-import javax.xml.ws.BindingProvider;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,7 +44,6 @@ import java.util.stream.Collectors;
  * <p>
  * This is an implementation of a IHE XCA Initiation Gateway.
  * This class provides the necessary operations to query and retrieve documents.
- *
  */
 @Service
 public class XcaGateway {
@@ -75,50 +55,22 @@ public class XcaGateway {
     private static final String ERROR_SEVERITY_ERROR = "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error";
 
     private final CDATransformationService cdaTransformationService;
-    private final RespondingGatewayPortType xcaPort;
-    private final ConfigurationManager configurationManager;
+    private final IhePortTypeFactory ihePortTypeFactory;
     private final DynamicDiscoveryService discoveryService;
+    private final ConfigurationManager configurationManager;
 
-    public XcaGateway(final CDATransformationService cdaTransformationService, final ConfigurationManager configurationManager, final DynamicDiscoveryService discoveryService) throws UnrecoverableKeyException, CertificateException, NoSuchAlgorithmException, IOException, KeyStoreException, KeyManagementException {
-        this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
-        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
+    public XcaGateway(final CDATransformationService cdaTransformationService, final IhePortTypeFactory ihePortTypeFactory, final DynamicDiscoveryService discoveryService, final ConfigurationManager configurationManager) {
+        this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService must not be null");
+        this.ihePortTypeFactory = Validate.notNull(ihePortTypeFactory, "ihePortTypeFactory must not be null");
         this.discoveryService = Validate.notNull(discoveryService, " discoveryService must not be null");
-        final XCAService xcaService = new XCAService();
-        xcaPort = xcaService.getRespondingGatewayPortSoap12();
-
-        final Client client = ClientProxy.getClient(xcaPort);
-
-        client.getOutInterceptors().add(new OutboundSecurityInterceptor());
-
-        client.getBus().getFeatures().add(new WSAddressingFeature());
-
-        final KeystoreDetails serviceConsumerKeystoreDetails = ImmutableKeystoreDetails.builder()
-                .keystoreLocation(configurationManager.getProperty(Constant.SC_KEYSTORE_PATH))
-                .keystorePassword(configurationManager.getProperty(Constant.SC_KEYSTORE_PASSWORD))
-                .alias(configurationManager.getProperty(Constant.SC_PRIVATEKEY_ALIAS))
-                .keyPassword(configurationManager.getProperty(Constant.SC_PRIVATEKEY_PASSWORD))
-                .build();
-        final KeystoreDetails trustStoreKeystoreDetails = ImmutableKeystoreDetails.builder()
-                .keystoreLocation(configurationManager.getProperty(Constant.TRUSTSTORE_PATH))
-                .keystorePassword(configurationManager.getProperty(Constant.TRUSTSTORE_PASSWORD))
-                .build();
-        final SSLContext sslContext = SslContextBuilder.build(serviceConsumerKeystoreDetails, trustStoreKeystoreDetails);
-
-        final HTTPConduit conduit = (HTTPConduit) client.getConduit();
-        final TLSClientParameters tlsClientParameters = new TLSClientParameters();
-        // This should be configurable, you don't want to disable the CN check in production!!
-        tlsClientParameters.setDisableCNCheck(true);
-        tlsClientParameters.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-
-        tlsClientParameters.setSSLSocketFactory(sslContext.getSocketFactory());
-        conduit.setTlsClientParameters(tlsClientParameters);
+        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
     }
 
     public QueryResponse crossGatewayQuery(final PatientId pid, final String countryCode,
-                                                  final List<GenericDocumentCode> documentCodes,
-                                                  final FilterParams filterParams,
-                                                  final Map<AssertionType, Assertion> assertionMap,
-                                                  final String service) throws XCAException {
+                                           final List<GenericDocumentCode> documentCodes,
+                                           final FilterParams filterParams,
+                                           final Map<AssertionType, Assertion> assertionMap,
+                                           final String service) throws XCAException {
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             final StringBuilder builder = new StringBuilder();
@@ -142,15 +94,14 @@ public class XcaGateway {
 
             /* queryRequest */
             final AdhocQueryRequest queryRequest = AdhocQueryRequestCreator.createAdhocQueryRequest(pid.getExtension(), pid.getRoot(), documentCodes, filterParams);
-
-            final String endpoint = getAndSetEndpoint(countryCode, service);
+            final RespondingGatewayPortType xcaPortType = getEndPointAndCreatePortType(countryCode, service);
 
             /* queryResponse */
             final List<ClassCode> documentClassCodes = new ArrayList<>();
             for (final GenericDocumentCode genericDocumentCode : documentCodes) {
                 documentClassCodes.add(ClassCode.getByCode(genericDocumentCode.getValue()));
             }
-            final AdhocQueryResponse queryResponse = xcaPort.respondingGatewayCrossGatewayQuery(queryRequest);
+            final AdhocQueryResponse queryResponse = xcaPortType.respondingGatewayCrossGatewayQuery(queryRequest);
             processRegistryErrors(queryResponse.getRegistryErrorList());
 
             if (queryResponse.getRegistryObjectList() != null) {
@@ -179,7 +130,7 @@ public class XcaGateway {
 
             final RetrieveDocumentSetRequest queryRequest = new RetrieveDocumentSetRequestCreator().createRetrieveDocumentSetRequestType(
                     document.getDocumentUniqueId(), homeCommunityId, document.getRepositoryUniqueId());
-            final String endpoint = getAndSetEndpoint(countryCode, service);
+            final RespondingGatewayPortType xcaPortType = getEndPointAndCreatePortType(countryCode, service);
 
             // This is a rather dirty hack, but document.getClassCode() returns null for some reason.
             switch (service) {
@@ -192,7 +143,7 @@ public class XcaGateway {
                     LOGGER.error("Service Not Supported");
                     //TODO: Has to be managed as an error.
             }
-            queryResponse = xcaPort.respondingGatewayCrossGatewayRetrieve(queryRequest);
+            queryResponse = xcaPortType.respondingGatewayCrossGatewayRetrieve(queryRequest);
 
             if (queryResponse.getRegistryResponse() != null) {
 
@@ -245,7 +196,7 @@ public class XcaGateway {
         return result;
     }
 
-    private String getAndSetEndpoint(final String countryCode, final String service) {
+    private RespondingGatewayPortType getEndPointAndCreatePortType(final String countryCode, final String service) {
         String endpointUrl = null;
         try {
             endpointUrl = discoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.fromName(service));
@@ -253,14 +204,7 @@ public class XcaGateway {
             throw new RuntimeException(e);
         }
 
-        // Override the endpoint address dynamically.
-        final BindingProvider bindingProvider = (BindingProvider) xcaPort;
-        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointUrl);
-        // Also update CXF's internal ClientProxy because we reuse it
-        final Client client = ClientProxy.getClient(xcaPort);
-        client.getEndpoint().getEndpointInfo().setAddress(endpointUrl);
-
-        return endpointUrl;
+        return ihePortTypeFactory.createXCAPort(configurationManager, endpointUrl);
     }
 
     /**
@@ -290,12 +234,12 @@ public class XcaGateway {
 
                     // Marcelo Fonseca: Added error situation where no document is found or registered, 1101/1102.
                     // (Needs to be revised according to new error communication strategy to the portal).
-                    if (StringUtils.equals(ERROR_SEVERITY_ERROR,severity)
+                    if (StringUtils.equals(ERROR_SEVERITY_ERROR, severity)
                             || errorCode.equals(OpenNCPErrorCode.ERROR_EP_NOT_FOUND.getCode())
                             || errorCode.equals(OpenNCPErrorCode.ERROR_PS_NOT_FOUND.getCode())
-                                || errorCode.equals(OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE.getCode())) {
-                            msg.append(errorCode).append(" ").append(codeContext).append(" ").append(value);
-                            hasError = true;
+                            || errorCode.equals(OpenNCPErrorCode.ERROR_EP_REGISTRY_NOT_ACCESSIBLE.getCode())) {
+                        msg.append(errorCode).append(" ").append(codeContext).append(" ").append(value);
+                        hasError = true;
                     }
 
                     // Avoid the transformation errors to abort process - this way they are only logged in the upper instructions
@@ -304,7 +248,7 @@ public class XcaGateway {
                     }
 
                     final OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.getErrorCode(errorCode);
-                    if(openncpErrorCode == null){
+                    if (openncpErrorCode == null) {
                         LOGGER.warn("No EHDSI error code found in the XCA response for : " + errorCode);
                     }
 

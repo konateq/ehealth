@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocu
 
 import javax.xml.soap.SOAPHeader;
 
-public interface XCAService {
+public interface XcaServiceServerSide {
 
     /**
      * @param request

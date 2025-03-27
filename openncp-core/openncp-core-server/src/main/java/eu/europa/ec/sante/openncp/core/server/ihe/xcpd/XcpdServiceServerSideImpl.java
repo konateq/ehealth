@@ -45,7 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class XCPDServiceImpl implements XCPDService {
+public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
 
     private static final DatatypeFactory DATATYPE_FACTORY;
     private static final String INSTANCE = "INSTANCE";
@@ -58,13 +58,13 @@ public class XCPDServiceImpl implements XCPDService {
         }
     }
 
-    private final Logger logger = LoggerFactory.getLogger(XCPDServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(XcpdServiceServerSideImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory objectFactory = new ObjectFactory();
     private final PatientSearchInterface patientSearchService;
     private final SAML2Validator saml2Validator;
 
-    public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final SAML2Validator saml2Validator) {
+    public XcpdServiceServerSideImpl(final PatientSearchInterface patientSearchService, final SAML2Validator saml2Validator) {
         this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
         this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
     }
