@@ -304,7 +304,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
         // Set detectedIssueEvent/code
         mfmimt700711UV01Reason.getDetectedIssueEvent().setCode(objectFactory.createCD());
-        mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCode("ActAdministrativeDetectedIssueCode");
+        mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCode("_ActAdministrativeDetectedIssueManagementCode");
         mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCodeSystem("2.16.840.1.113883.5.4");
 
         if (xcpdErrorCode == XCPDErrorCode.DemographicsQueryNotAllowed) {
