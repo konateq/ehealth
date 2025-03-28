@@ -4,11 +4,6 @@ import eu.europa.ec.sante.openncp.common.audit.AuditServiceFactory;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
-import eu.europa.ec.sante.openncp.core.common.ihe.handler.DummyMustUnderstandHandler;
-import org.apache.axis2.client.Stub;
-import org.apache.axis2.description.HandlerDescription;
-import org.apache.axis2.engine.Phase;
-import org.apache.axis2.phaseresolver.PhaseException;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
@@ -29,22 +24,22 @@ public class EventLogClientUtil {
     private EventLogClientUtil() {
     }
 
-    public static void createDummyMustUnderstandHandler(final Stub stub) {
-
-        final var description = new HandlerDescription("DummyMustUnderstandHandler");
-        description.setHandler(new DummyMustUnderstandHandler());
-        final var axisConfiguration = stub._getServiceClient().getServiceContext().getConfigurationContext()
-                .getAxisConfiguration();
-        final List<Phase> phasesList = axisConfiguration.getInFlowPhases();
-        final var myPhase = new Phase("MyPhase");
-        try {
-            myPhase.addHandler(description);
-        } catch (final PhaseException ex) {
-            throw new RuntimeException(ex);
-        }
-        phasesList.add(0, myPhase);
-        axisConfiguration.setInFaultPhases(phasesList);
-    }
+//    public static void createDummyMustUnderstandHandler(final Stub stub) {
+//
+//        final var description = new HandlerDescription("DummyMustUnderstandHandler");
+//        description.setHandler(new DummyMustUnderstandHandler());
+//        final var axisConfiguration = stub._getServiceClient().getServiceContext().getConfigurationContext()
+//                .getAxisConfiguration();
+//        final List<Phase> phasesList = axisConfiguration.getInFlowPhases();
+//        final var myPhase = new Phase("MyPhase");
+//        try {
+//            myPhase.addHandler(description);
+//        } catch (final PhaseException ex) {
+//            throw new RuntimeException(ex);
+//        }
+//        phasesList.add(0, myPhase);
+//        axisConfiguration.setInFaultPhases(phasesList);
+//    }
 
     /**
      * Returns the local private IP of the machine executing the method.

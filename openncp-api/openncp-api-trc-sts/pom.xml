@@ -22,12 +22,6 @@
             <groupId>eu.europa.ec.sante</groupId>
             <artifactId>openncp-core-trc-sts</artifactId>
             <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.axis2</groupId>
-                    <artifactId>axis2-kernel</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>

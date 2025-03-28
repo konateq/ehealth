@@ -54,7 +54,7 @@
   </binding>
   <service name="XDR_Service">
     <port name="DocumentRecipient_Port_Soap12" binding="ihe:DocumentRecipient_Binding">
-      <soap12:address location="http://localhost:8080/axis2/services/DocumentRecipient_Soap12"/>
+        <soap12:address location="http://localhost:8080/openncp-ws-server/services/XDR_Service"/>
     </port>
   </service>
 </definitions>

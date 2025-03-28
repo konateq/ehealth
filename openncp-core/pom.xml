@@ -20,18 +20,4 @@
         <module>openncp-core-trc-sts</module>
         <module>openncp-core-client-connector</module>
     </modules>
-
-    <properties>
-        <axis2.version>1.8.2</axis2.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.axis2</groupId>
-                <artifactId>axis2-kernel</artifactId>
-                <version>${axis2.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>

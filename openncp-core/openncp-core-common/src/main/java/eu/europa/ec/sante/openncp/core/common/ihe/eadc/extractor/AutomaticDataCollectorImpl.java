@@ -2,7 +2,6 @@ package eu.europa.ec.sante.openncp.core.common.ihe.eadc.extractor;
 
 import com.ibatis.common.jdbc.ScriptRunner;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcFactory;
-import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.db.EadcDbConnect;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -25,23 +24,24 @@ import java.util.TreeMap;
  * This directory must be placed within the current working directory.
  */
 public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
+    private static String defaultDsPath = null;
 
     // constant for the cda-namespace
     public static final String CDA_NAMESPACE = "urn:hl7-org:v3";
 
     // Path to the factory.xslt
-    private static final String PATH_XSLT_FACTORY = new File(EadcUtil.getDefaultDsPath()).getAbsolutePath() + File.separator
+    private static final String PATH_XSLT_FACTORY = new File(AutomaticDataCollectorImpl.getDefaultDsPath()).getAbsolutePath() + File.separator
             + "EADC_resources" + File.separator + "xslt" + File.separator + "factory.xslt";
     // Path to the config.xml
-    private static final String PATH_XML_CONFIG = new File(EadcUtil.getDefaultDsPath()).getAbsolutePath() + File.separator
+    private static final String PATH_XML_CONFIG = new File(AutomaticDataCollectorImpl.getDefaultDsPath()).getAbsolutePath() + File.separator
             + "EADC_resources" + File.separator + "config" + File.separator + "config.xml";
     private static final String SERVER_EHEALTH_MODE = "server.ehealth.mode";
     public static final int ERROR_DESC_MAX_SIZE = 2000;
     private static final String PRODUCTION = "PRODUCTION";
     private static final String INSERT_THE_FOLLOWING_SQL_QUERIES = "Insert the following sql-queries:\n'{}'";
     private static AutomaticDataCollectorImpl INSTANCE = null;
-    private final Logger logger = LoggerFactory.getLogger(AutomaticDataCollectorImpl.class);
-    private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
+    private static final Logger logger = LoggerFactory.getLogger(AutomaticDataCollectorImpl.class);
+    private static final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     // Map with one intermediateTransformer per CDA-classCode
     private final TreeMap<String, EasyXsltTransformer> intermediateTransformerList;
     // DOM structure for caching the factory.xslt
@@ -62,10 +62,11 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
             this.factoryXslt = XmlFileReader.getInstance().readXmlDocumentFromFile(AutomaticDataCollectorImpl.PATH_XSLT_FACTORY);
             this.configXml = XmlFileReader.getInstance().readXmlDocumentFromFile(AutomaticDataCollectorImpl.PATH_XML_CONFIG);
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException("Exception while creating an Instance of AutomaticDataCollector: " + e.getMessage(), e);
         }
     }
+
 
     /**
      * Initializer of class AutomaticDataCollectorImpl.
@@ -87,10 +88,10 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
      * @param dataSourceName The dataSourceName of the Database
      * @throws Exception
      */
-    public void processTransaction(String dataSourceName, Document transaction) throws Exception {
+    public void processTransaction(final String dataSourceName, final Document transaction) throws Exception {
 
         logger.debug("Processing a Transaction Object as Document");
-        String sqlInsertStatementList = this.extractDataAndCreateAccordingSqlInserts(transaction);
+        final String sqlInsertStatementList = this.extractDataAndCreateAccordingSqlInserts(transaction);
         if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && loggerClinical.isDebugEnabled()) {
             loggerClinical.debug(INSERT_THE_FOLLOWING_SQL_QUERIES, sqlInsertStatementList);
         }
@@ -98,23 +99,23 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
     }
 
     @Override
-    public void processTransactionFailure(String dataSourceName, Document transaction, String errorDescription) throws Exception {
+    public void processTransactionFailure(final String dataSourceName, final Document transaction, final String errorDescription) throws Exception {
 
         logger.debug("Processing a Transaction Failure Object as Document");
-        String sqlInsertStatementList = this.extractDataAndCreateAccordingSqlInserts(transaction);
+        final String sqlInsertStatementList = this.extractDataAndCreateAccordingSqlInserts(transaction);
         if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && loggerClinical.isDebugEnabled()) {
             loggerClinical.debug(INSERT_THE_FOLLOWING_SQL_QUERIES, sqlInsertStatementList);
         }
         this.runSqlScript(dataSourceName, sqlInsertStatementList);
 
-        String sqlInsertStatementError = this.createErrorSqlInserts(sqlInsertStatementList, errorDescription);
+        final String sqlInsertStatementError = this.createErrorSqlInserts(sqlInsertStatementList, errorDescription);
         if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && loggerClinical.isDebugEnabled()) {
             loggerClinical.debug(INSERT_THE_FOLLOWING_SQL_QUERIES, sqlInsertStatementError);
         }
         this.runSqlScript(dataSourceName, sqlInsertStatementError);
     }
 
-    private String extractForeignKey(String sqlInsertStatementList) {
+    private String extractForeignKey(final String sqlInsertStatementList) {
         return StringUtils.substringBetween(sqlInsertStatementList, "VALUES('", "'");
     }
 
@@ -125,8 +126,8 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
      * @param errorDescription
      * @return An sql-insert-statements
      */
-    private String createErrorSqlInserts(String sql, String errorDescription) {
-        String foreignKey = extractForeignKey(sql);
+    private String createErrorSqlInserts(final String sql, String errorDescription) {
+        final String foreignKey = extractForeignKey(sql);
         errorDescription = errorDescription.substring(0, Math.min(errorDescription.length(), ERROR_DESC_MAX_SIZE));
         return "INSERT INTO eTransactionError(Transaction_FK, ErrorDescription) VALUES " +
                 "('" + foreignKey + "', " +
@@ -142,17 +143,17 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
      * @return A list of sql-insert-statements
      * @throws Exception
      */
-    private String extractDataAndCreateAccordingSqlInserts(Document transaction) throws Exception {
+    private String extractDataAndCreateAccordingSqlInserts(final Document transaction) throws Exception {
 
         if (logger.isDebugEnabled()) {
             logger.debug("--> method extractDataAndCreateAccordingSqlInserts({})", transaction);
         }
-        String processedDocumentCode;
-        String processedDocumentCodeSystem;
-        String processedDocumentCodeAndCodeSystemCombination;
+        final String processedDocumentCode;
+        final String processedDocumentCodeSystem;
+        final String processedDocumentCodeAndCodeSystemCombination;
 
-        NodeList clinicalDocumentNodeList = transaction.getElementsByTagNameNS(CDA_NAMESPACE, "ClinicalDocument");
-        int numberOfCdaDocuments = clinicalDocumentNodeList.getLength();
+        final NodeList clinicalDocumentNodeList = transaction.getElementsByTagNameNS(CDA_NAMESPACE, "ClinicalDocument");
+        final int numberOfCdaDocuments = clinicalDocumentNodeList.getLength();
         // Test, if the currently processed comes without a CDA-document
         if (numberOfCdaDocuments < 1) {
             processedDocumentCode = "N/A";
@@ -164,14 +165,14 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
                 logger.error("Multiple CDA Documents were found within the Transaction");
                 throw new Exception("Multiple CDA Documents were found within the Transaction");
             }
-            Node clinicalDocumentNode = clinicalDocumentNodeList.item(0);
+            final Node clinicalDocumentNode = clinicalDocumentNodeList.item(0);
             if (clinicalDocumentNode.getNodeType() != Element.ELEMENT_NODE) {
                 logger.error("The ClinicalDocument Node being found was not of type org.w3c.dom.Element");
                 throw new Exception("The ClinicalDocument Node being found was not of type org.w3c.dom.Element");
             }
-            Element clinicalDocumentElement = (Element) clinicalDocumentNode;
-            NodeList codeNodeList = clinicalDocumentElement.getElementsByTagNameNS(CDA_NAMESPACE, "code");
-            Node codeNode = codeNodeList.item(0);
+            final Element clinicalDocumentElement = (Element) clinicalDocumentNode;
+            final NodeList codeNodeList = clinicalDocumentElement.getElementsByTagNameNS(CDA_NAMESPACE, "code");
+            final Node codeNode = codeNodeList.item(0);
             if (codeNode.getParentNode() != clinicalDocumentElement) {
                 logger.error("The first codeNode found was not a child of ClinicalDocument");
                 throw new Exception("The first codeNode found was not a child of ClinicalDocument");
@@ -181,7 +182,7 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
                 throw new Exception("The code node being found was not of type org.w3c.dom.Element");
             }
 
-            Element codeElement = (Element) codeNode;
+            final Element codeElement = (Element) codeNode;
             // Extracting the document's code
             processedDocumentCode = codeElement.getAttribute("code");
             if (processedDocumentCode == null) {
@@ -208,7 +209,7 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
         // Guarantee, that the cachedIntermediaTransformerList is being initialized only once.
         // And ensure, that a cachedIntermediaTransformer is only created/added once to the cachedIntermediaTransformerList
         EasyXsltTransformer currentTransformer = this.intermediateTransformerList.get(processedDocumentCodeAndCodeSystemCombination);
-        Document result;
+        final Document result;
         if (currentTransformer == null) {
             try {
                 synchronized (this.intermediateTransformerList) {
@@ -227,7 +228,7 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
                         this.intermediateTransformerList.put(processedDocumentCodeAndCodeSystemCombination, currentTransformer);
                     }
                 }
-            } catch (Exception exception) {
+            } catch (final Exception exception) {
                 throw new Exception("Unable to initialize the customized XSLT for processedDocumentCode:" + processedDocumentCode
                         + " and processedDocumentCodeSystem:" + processedDocumentCodeSystem, exception);
             }
@@ -236,7 +237,7 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
         // Perform the data-extraction
         try {
             result = currentTransformer.transform(transaction);
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throw new Exception("Error when transforming a document", exception);
         }
         // As the XSLT returns plain text, the content is found within the result's root-node which is a text-node.
@@ -251,22 +252,22 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
      *                       to a database-specification in a datasource xml-file.
      * @throws Exception
      */
-    private void runSqlScript(String dataSourceName, String sqlScript) throws Exception {
+    private void runSqlScript(final String dataSourceName, final String sqlScript) throws Exception {
 
-        StopWatch watch = new StopWatch();
+        final StopWatch watch = new StopWatch();
         watch.start();
         EadcDbConnect sqlConnection = null;
 
-        try (StringReader stringReader = new StringReader(sqlScript)) {
+        try (final StringReader stringReader = new StringReader(sqlScript)) {
 
             sqlConnection = EadcFactory.INSTANCE.createEadcDbConnect(dataSourceName);
-            ScriptRunner objScriptRunner = new ScriptRunner(sqlConnection.getConnection(), false, true);
+            final ScriptRunner objScriptRunner = new ScriptRunner(sqlConnection.getConnection(), false, true);
             objScriptRunner.setLogWriter(null);
             objScriptRunner.setErrorLogWriter(null);
             objScriptRunner.runScript(stringReader);
 
 
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             throw new Exception("The following error occurred during an SQL operation:", exception);
         } finally {
             if (sqlConnection != null) {
@@ -277,5 +278,27 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
                 logger.debug("[EADC] SQL script executed in: '{}ms'", watch.getTime());
             }
         }
+    }
+
+    private static String getDefaultDsPath() {
+
+        if (defaultDsPath == null) {
+            defaultDsPath = getApplicationRootPath();
+        }
+        return defaultDsPath;
+    }
+
+    private static String getApplicationRootPath() {
+
+        String path = System.getenv("EPSOS_PROPS_PATH");
+
+        if (path == null) {
+            path = System.getProperty("EPSOS_PROPS_PATH");
+            if (path == null) {
+                logger.error("EPSOS_PROPS_PATH not found!");
+                return null;
+            }
+        }
+        return path;
     }
 }

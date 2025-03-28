@@ -1,3 +1,4 @@
+
 === Release 8.0.1
 
 We reintroduced the `ServiceLoader` mechanism as a fallback for bean loading and provided *default implementations* for all services ensuring that the server will start even if the national implementation does not provide its own service implementations.
@@ -22,7 +23,7 @@ There are several ways to do this:
 ----
 import eu.europa.ec.sante.openncp.core.server.ihe.ServicesConfiguration;
 
-@EnableAutoConfiguration(exclude = { ServicesConfiguration.class }
+@EnableAutoConfiguration(exclude = { ServicesConfiguration.class })
 ----
 +
 2. Add `@Primary` to your service beans +

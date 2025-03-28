@@ -48,10 +48,6 @@
     <!--</logger>-->
     <!-- End Spring Web Service Logging-->
 
-    <logger name="org.apache.axis2" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
     <logger name="org.hibernate.orm.deprecation" level="ERROR" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>

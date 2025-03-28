@@ -40,7 +40,6 @@ import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ep.EPExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.orcd.OrCDExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ps.PSExtrinsicObjectBuilder;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -911,8 +910,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                     } else {
                         /* Validate CDA eHDSI Pivot if no error during the transformation */
                         if (OpenNCPValidation.isValidationEnable()) {
-                            OpenNCPValidation.validateCdaDocument(XMLUtils.toOM(doc.getDocumentElement()).toString(), NcpSide.NCP_A,
-                                    epsosDoc.getClassCode(), true);
+                            OpenNCPValidation.validateCdaDocument(XMLUtil.documentToString(doc), NcpSide.NCP_A, epsosDoc.getClassCode(), true);
                         }
                     }
                 }

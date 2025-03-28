@@ -10,6 +10,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
 import eu.europa.ec.sante.openncp.core.client.ihe.IhePortTypeFactory;
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryRequestCreator;
@@ -27,7 +28,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util
 import eu.europa.ec.sante.openncp.core.common.tsam.error.TMError;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xca.RespondingGatewayPortType;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
-import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -175,7 +175,7 @@ public class XcaGateway {
                     //  Sets the response document to a translated version.
                     final var tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(pivotDocument), targetLanguage, NcpSide.NCP_B);
                     final var domDocument = tmResponseStructure.getResponseCDA();
-                    final byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
+                    final byte[] translatedCDA = XMLUtil.documentToByteArray(Base64Util.decode(domDocument));
                     queryResponse.getDocumentResponses().get(0).setDocument(translatedCDA);
                 }
 

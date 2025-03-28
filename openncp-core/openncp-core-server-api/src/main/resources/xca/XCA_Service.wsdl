@@ -69,7 +69,7 @@
   </binding>
   <service name="XCA_Service">
     <port name="RespondingGateway_Port_Soap12" binding="ihe:RespondingGateway_Binding_Soap12">
-      <soap12:address location="http://localhost:8080/axis2/services/RespondingGateway_Soap12"/>
+      <soap12:address location="http://localhost:8080/openncp-ws-server/services/XCA_Service"/>
     </port>
   </service>
 </definitions>

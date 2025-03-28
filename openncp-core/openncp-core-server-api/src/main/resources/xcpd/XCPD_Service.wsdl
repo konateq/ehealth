@@ -43,7 +43,7 @@
   </wsdl:binding>
   <wsdl:service name="XCPD_Service">
     <wsdl:port name="RespondingGateway_Port_Soap12" binding="tns:RespondingGateway_Binding_Soap12">
-      <soap12:address location="http://localhost:8080/axis2/services/RespondingGateway_Soap12"/>
+      <soap12:address location="http://localhost:8080/openncp-ws-server/services/XCPD_Service"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

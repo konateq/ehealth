@@ -28,17 +28,6 @@
     </listener>
     ${enable.monitoring.stop}
 
-    <servlet>
-        <servlet-name>AxisServlet</servlet-name>
-        <servlet-class>org.apache.axis2.transport.http.AxisServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>AxisServlet</servlet-name>
-        <url-pattern>/services/*</url-pattern>
-    </servlet-mapping>
-
     <context-param>
         <param-name>quartz:shutdown-on-unload</param-name>
         <param-value>false</param-value>
