@@ -92,150 +92,154 @@ public class TsamSyncManager {
         Optional<ValueSetCatalogModel> opt = ctsClient.fetchCatalogue();
         if (opt.isEmpty()) {
             logger.info("Nothing to synchronize");
-        } else {
-            ValueSetCatalogModel catalogue = opt.get();
-            logger.info("Catalogue '{}' retrieved from the server", catalogue.getName());
-
-            if (databaseProperties.isBackup()) {
-                logger.info("Starting database backup process");
-                String date = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
-                date = StringUtils.replace(date, ":", "-");
-                databaseTool.backup("backup_" + date + ".sql");
-                logger.info("Database backup operation completed");
-            } else {
-                logger.warn("Database backup is disabled (Property 'tsam-sync.database.backup' is set to 'false')");
-            }
-
-            // Cleaning current LTR Database.
-            logger.info("Cleaning current LTR Database");
-
-            logger.info("Cleaning Mappings...");
-            mappingRepository.deleteAllInBatch();
-            stopWatch.stop();
-            logger.info("Cleaned Mapppings done! ({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            logger.info("Cleaning ValueSetsVersions...");
-            valueSetVersionRepository.deleteAllInBatch();
-            stopWatch.stop();
-            logger.info("Cleaned ValueSetsVersions done! ({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            logger.info("Cleaning ValueSets...");
-            valueSetRepository.deleteAllInBatch();
-            stopWatch.stop();
-            logger.info("Cleaned ValueSets done! ({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            logger.info("Cleaning Designations...");
-            designationRepository.deleteAllInBatch();
-            stopWatch.stop();
-            logger.info("Cleaned Designations done! ({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            if("postgresql".equals(activeProfile)) {
-                logger.info("Cleaning Concepts (Postgres)...");
-                conceptRepository.truncateTable();
-            } else {
-                logger.info("Cleaning Concepts...");
-                conceptRepository.deleteAllInBatch();
-            }
-            stopWatch.stop();
-            logger.info("Cleaning Concepts done!({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            logger.info("Cleaning CodeSystemVersions...");
-            codeSystemVersionRepository.deleteAllInBatch();
-            stopWatch.stop();
-            logger.info("Cleaning CodeSystemVersions done! ({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            logger.info("Cleaning CodeSystems...");
-            codeSystemRepository.deleteAllInBatch();
-            stopWatch.stop();
-            logger.info("Cleaning CodeSystems done! ({} ms)", stopWatch.getTotalTimeMillis());
-            stopWatch.start();
-
-            logger.info("Starting value sets synchronization");
-            int index = 1;
-
-            Property property =  new Property(AVAILABLE_TRANSLATION_LANGUAGES_PROPERTY_KEY, "");
-            List<String> languagesAvailable = new ArrayList<>();
-
-            logger.info("Catalogue value set versions : {}", catalogue.getValueSetVersions().size());
-
-            for (ValueSetVersionModel valueSetVersionModel : catalogue.getValueSetVersions()) {
-
-                logger.info("Value set versions : id {} - {}/{}",
-                        valueSetVersionModel.getValueSet().getId(),
-                        valueSetVersionModel.getValueSet().getName(), valueSetVersionModel.getValueSet().getDescription());
-
-                ValueSetVersion valueSetVersion = valueSetVersionRepository.save(
-                        Objects.requireNonNull(valueSetVersionConverter.convert(valueSetVersionModel)));
-                boolean hasNext = false;
-                int page = 0;
-                int total = 0;
-                int numberOfTotalMappings = 0;
-
-                logger.info("{}/{}: '{}' starting...", index,
-                        catalogue.getValueSetVersions().size(), valueSetVersionModel.getValueSet().getName());
-
-                //if(!StringUtils.equals(valueSetVersionModel.getValueSet().getName(), "eHDSIDoseForm")) {
-                //    continue;
-                //}
-
-                while (hasNext || page == 0) {
-                    List<Concept> concepts = ctsClient.fetchConcepts(valueSetVersionModel.getValueSet().getId(),
-                                    valueSetVersionModel.getVersionId(), page++, getPageSize())
-                            .stream()
-                            .map(conceptConverter::convert)
-                            .collect(Collectors.toList());
-
-                    int base = ((page - 1) * getPageSize());
-                    logger.info("   fetch concepts from {} to {}...", base, (base + concepts.size()));
-
-                    for (Concept concept : concepts) {
-                        concept.addValueSetVersion(valueSetVersion);
-
-                        numberOfTotalMappings += concept.getMappings().size();
-
-                        if(extraVerboseLogging) {
-                            logger.info("       concept {} - {} -> {} mappings found",
-                                    concept.getCode(), concept.getDefinition(), concept.getMappings().size());
-
-                            for (Mapping mapping : concept.getMappings()) {
-                                logger.info("           mapping source {}:{} - target {}:{} - status {}",
-                                        mapping.getSource().getCode(), mapping.getSource().getDefinition(),
-                                        mapping.getTarget().getCode(), mapping.getTarget().getDefinition(),
-                                        mapping.getStatus());
-                            }
-                        }
-
-                        for(Designation designation : concept.getDesignations()) {
-                            if(!languagesAvailable.contains(designation.getLanguageCode())){
-                                languagesAvailable.add(designation.getLanguageCode());
-                            }
-                        }
-                    }
-                    conceptRepository.saveAll(concepts);
-                    if(languagesAvailable != null){
-                        property.setValue(String.join(",", languagesAvailable));
-                        if(StringUtils.isNotBlank(property.getValue()) && property.getValue().charAt(0) == ',') {
-                            property.setValue(property.getValue().substring(1));
-                        }
-                        propertyService.save(property);
-                    }
-
-                    total += concepts.size();
-                    hasNext = concepts.size() == pageSize;
-                }
-                logger.info("{}/{}: '{}' completed ({} concepts with '{}' mappings)", index++, catalogue.getValueSetVersions().size(),
-                        valueSetVersionModel.getValueSet().getName(), total, numberOfTotalMappings);
-            }
-
-            stopWatch.stop();
-            logger.info("Catalogue '{}' synchronized successfully ({} ms)", catalogue.getName(), stopWatch.getTotalTimeMillis());
+            return;
         }
+
+        ValueSetCatalogModel catalogue = opt.get();
+        logger.info("Catalogue '{}' retrieved from the server", catalogue.getName());
+
+        if (databaseProperties.isBackup()) {
+            logger.info("Starting database backup process");
+            String date = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT);
+            date = StringUtils.replace(date, ":", "-");
+            databaseTool.backup("backup_" + date + ".sql");
+            logger.info("Database backup operation completed");
+        } else {
+            logger.warn("Database backup is disabled (Property 'tsam-sync.database.backup' is set to 'false')");
+        }
+
+        // Cleaning current LTR Database.
+        logger.info("Cleaning current LTR Database");
+        cleaningLTRDb(stopWatch);
+
+        logger.info("Starting value sets synchronization");
+        int index = 1;
+
+        Property property =  new Property(AVAILABLE_TRANSLATION_LANGUAGES_PROPERTY_KEY, "");
+        List<String> languagesAvailable = new ArrayList<>();
+
+        logger.info("Catalogue value set versions : {}", catalogue.getValueSetVersions().size());
+
+        for (ValueSetVersionModel valueSetVersionModel : catalogue.getValueSetVersions()) {
+
+            logger.info("Value set versions : id {} - {}/{}",
+                    valueSetVersionModel.getValueSet().getId(),
+                    valueSetVersionModel.getValueSet().getName(), valueSetVersionModel.getValueSet().getDescription());
+
+            ValueSetVersion valueSetVersion = valueSetVersionRepository.save(
+                    Objects.requireNonNull(valueSetVersionConverter.convert(valueSetVersionModel)));
+            boolean hasNext = false;
+            int page = 0;
+            int total = 0;
+            int numberOfTotalMappings = 0;
+
+            logger.info("{}/{}: '{}' starting...", index,
+                    catalogue.getValueSetVersions().size(), valueSetVersionModel.getValueSet().getName());
+
+            //if(!StringUtils.equals(valueSetVersionModel.getValueSet().getName(), "eHDSIDoseForm")) {
+            //    continue;
+            //}
+
+            while (hasNext || page == 0) {
+                List<Concept> concepts = ctsClient.fetchConcepts(valueSetVersionModel.getValueSet().getId(),
+                                valueSetVersionModel.getVersionId(), page++, getPageSize())
+                        .stream()
+                        .map(conceptConverter::convert)
+                        .collect(Collectors.toList());
+
+                int base = ((page - 1) * getPageSize());
+                logger.info("   fetch concepts from {} to {}...", base, (base + concepts.size()));
+
+                for (Concept concept : concepts) {
+                    concept.addValueSetVersion(valueSetVersion);
+
+                    numberOfTotalMappings += concept.getMappings().size();
+
+                    if(extraVerboseLogging) {
+                        logger.info("       concept {} - {} -> {} mappings found",
+                                concept.getCode(), concept.getDefinition(), concept.getMappings().size());
+
+                        for (Mapping mapping : concept.getMappings()) {
+                            logger.info("           mapping source {}:{} - target {}:{} - status {}",
+                                    mapping.getSource().getCode(), mapping.getSource().getDefinition(),
+                                    mapping.getTarget().getCode(), mapping.getTarget().getDefinition(),
+                                    mapping.getStatus());
+                        }
+                    }
+
+                    for(Designation designation : concept.getDesignations()) {
+                        if(!languagesAvailable.contains(designation.getLanguageCode())){
+                            languagesAvailable.add(designation.getLanguageCode());
+                        }
+                    }
+                }
+                conceptRepository.saveAll(concepts);
+                if(languagesAvailable != null){
+                    property.setValue(String.join(",", languagesAvailable));
+                    if(StringUtils.isNotBlank(property.getValue()) && property.getValue().charAt(0) == ',') {
+                        property.setValue(property.getValue().substring(1));
+                    }
+                    propertyService.save(property);
+                }
+
+                total += concepts.size();
+                hasNext = concepts.size() == pageSize;
+            }
+            logger.info("{}/{}: '{}' completed ({} concepts with '{}' mappings)", index++, catalogue.getValueSetVersions().size(),
+                    valueSetVersionModel.getValueSet().getName(), total, numberOfTotalMappings);
+        }
+
+        stopWatch.stop();
+        logger.info("Catalogue '{}' synchronized successfully ({} ms)", catalogue.getName(), stopWatch.getTotalTimeMillis());
+    }
+
+    private void cleaningLTRDb(StopWatch stopWatch) {
+        logger.info("Cleaning Mappings...");
+        mappingRepository.deleteAllInBatch();
+        stopWatch.stop();
+        logger.info("Cleaned Mapppings done! ({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
+
+        logger.info("Cleaning ValueSetsVersions...");
+        valueSetVersionRepository.deleteAllInBatch();
+        stopWatch.stop();
+        logger.info("Cleaned ValueSetsVersions done! ({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
+
+        logger.info("Cleaning ValueSets...");
+        valueSetRepository.deleteAllInBatch();
+        stopWatch.stop();
+        logger.info("Cleaned ValueSets done! ({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
+
+        logger.info("Cleaning Designations...");
+        designationRepository.deleteAllInBatch();
+        stopWatch.stop();
+        logger.info("Cleaned Designations done! ({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
+
+        if("postgresql".equals(activeProfile)) {
+            logger.info("Cleaning Concepts (Postgres)...");
+            conceptRepository.truncateTable();
+        } else {
+            logger.info("Cleaning Concepts...");
+            conceptRepository.deleteAllInBatch();
+        }
+        stopWatch.stop();
+        logger.info("Cleaning Concepts done!({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
+
+        logger.info("Cleaning CodeSystemVersions...");
+        codeSystemVersionRepository.deleteAllInBatch();
+        stopWatch.stop();
+        logger.info("Cleaning CodeSystemVersions done! ({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
+
+        logger.info("Cleaning CodeSystems...");
+        codeSystemRepository.deleteAllInBatch();
+        stopWatch.stop();
+        logger.info("Cleaning CodeSystems done! ({} ms)", stopWatch.getLastTaskTimeMillis());
+        stopWatch.start();
     }
 
     public Integer getPageSize(){
