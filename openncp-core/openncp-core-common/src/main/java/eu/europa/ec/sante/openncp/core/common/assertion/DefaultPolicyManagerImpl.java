@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.assertion;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
