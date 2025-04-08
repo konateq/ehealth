@@ -34,9 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /*
  *  Client Service class providing access to the MyHealth@EU workflows (Patient Summary, ePrescription, OrCD etc.).
@@ -63,6 +61,8 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     public LoggingFeature loggingFeature() {
         final LoggingFeature loggingFeature = new LoggingFeature();
         loggingFeature.setPrettyLogging(true);
+        loggingFeature.addSensitiveElementNames(new HashSet<>(Arrays.asList("password", "administrativeGender", "birthDate", "city", "country", "familyName", "givenName", "postalCode", "streetAddress", "patientId", "nextOfKinId", "AttributeStatement", "creationDate", "person", "description", "base64Binary")));
+        loggingFeature.addSensitiveProtocolHeaderNames(new HashSet<>(Arrays.asList("Server", "Accept", "Date")));
         loggingFeature.setVerbose(true);
         return loggingFeature;
     }

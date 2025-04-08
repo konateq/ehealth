@@ -21,6 +21,8 @@ import org.springframework.context.annotation.Configuration;
 import javax.jws.WebService;
 import javax.xml.ws.Endpoint;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -32,6 +34,8 @@ public class WebServiceConfig {
     public LoggingFeature loggingFeature() {
         final LoggingFeature loggingFeature = new LoggingFeature();
         loggingFeature.setPrettyLogging(true);
+        loggingFeature.addSensitiveElementNames(new HashSet<>(Arrays.asList("password", "administrativeGender", "birthDate", "city", "country", "familyName", "givenName", "postalCode", "streetAddress", "patientId", "nextOfKinId", "AttributeStatement", "creationDate", "person", "description", "base64Binary")));
+        loggingFeature.addSensitiveProtocolHeaderNames(new HashSet<>(Arrays.asList("Server", "Accept", "host", "Date")));
         loggingFeature.setVerbose(true);
         return loggingFeature;
     }
@@ -67,7 +71,6 @@ public class WebServiceConfig {
         endpoint.getProperties().put(SecurityConstants.SIGNATURE_CRYPTO, signatureCrypto);
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
-        endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
         endpoint.getInInterceptors().add(assertionValidationInterceptor);
 
