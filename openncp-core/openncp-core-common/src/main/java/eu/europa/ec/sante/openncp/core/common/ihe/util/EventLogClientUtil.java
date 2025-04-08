@@ -20,6 +20,7 @@ import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URI;
@@ -92,8 +93,7 @@ public class EventLogClientUtil {
 
         // Set Active Participant Identification: Service Consumer NCP
         eventLog.setSC_UserID(HttpUtil.getSubjectDN(false));
-        eventLog.setSP_UserID(HttpUtil.getServerCertificate(endpointReference));
-
+        eventLog.setSP_UserID(HttpUtil.getCommonNameFromServerCertificate(endpointReference));
         // Set Audit Source
         eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 

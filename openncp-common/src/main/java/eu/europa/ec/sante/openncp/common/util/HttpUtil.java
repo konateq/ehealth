@@ -9,6 +9,8 @@ import org.cryptacular.util.CertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import javax.net.ssl.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -22,6 +24,7 @@ import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.*;
+import java.util.Base64;
 
 public class HttpUtil {
 
@@ -176,38 +179,32 @@ public class HttpUtil {
         return null;
     }
 
-    public static String getServerCertificate(final String endpoint) {
-
-        LOGGER.debug("Trying to find certificate from : '{}'", endpoint);
-        String result = WARNING_NO_CERTIFICATE_FOUND;
-        HttpsURLConnection urlConnection = null;
-
+    public static String getCommonNameFromServerCertificate(String httpsUrl) {
+        HttpsURLConnection conn = null;
         try {
-            if (endpoint.startsWith("https")) {
-                final var sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                final URL url;
-                url = new URL(endpoint);
-                urlConnection = (HttpsURLConnection) url.openConnection();
-                urlConnection.setHostnameVerifier((hostname, session) -> session.isValid() && !hostname.isEmpty());
-                urlConnection.setSSLSocketFactory(sslSocketFactory);
-                urlConnection.connect();
-                final Certificate[] certs = urlConnection.getServerCertificates();
+            final URL url = new URL(httpsUrl);
+            conn = (HttpsURLConnection) url.openConnection();
+            conn.connect();
+            final Certificate[] certs = conn.getServerCertificates();
 
-                // Get the first certificate
-                if (certs != null && certs.length > 0) {
-                    final X509Certificate cert = (X509Certificate) certs[0];
-                    result = getCommonName(cert);
+            if (certs.length > 0 && certs[0] instanceof X509Certificate) {
+                final X509Certificate cert = (X509Certificate) certs[0];
+
+                final String subjectDN = cert.getSubjectX500Principal().getName();
+
+                final LdapName ldapName = new LdapName(subjectDN);
+                for (Rdn rdn : ldapName.getRdns()) {
+                    if (rdn.getType().equalsIgnoreCase("CN")) {
+                        return rdn.getValue().toString();
+                    }
                 }
             }
-        } catch (final IOException e) {
-            LOGGER.error(String.format("Error fetching the server certificate at [%s] with exception message [%s]", endpoint, e.getMessage()), e);
+        } catch (IOException | javax.naming.InvalidNameException e) {
+            LOGGER.error("Error when trying to get common name from server certificate at URL [{}]", httpsUrl, e);
         } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
+            conn.disconnect();
         }
-        LOGGER.debug("Server Certificate: '{}'", result);
-        return result;
+        return WARNING_NO_CERTIFICATE_FOUND;
     }
 
     public static String getSubjectDN(final CertificatesDataHolder certificatesDataHolder, final boolean isProvider) {
@@ -268,18 +265,6 @@ public class HttpUtil {
 
     private static String getCommonName(final java.security.cert.X509Certificate cert) {
         return CertUtil.subjectCN(cert);
-    }
-
-
-    public CustomProxySelector setCustomProxyServerForURLConnection() {
-
-        final CustomProxySelector customProxySelector;
-        if (isBehindProxy()) {
-            final var proxyCredentials = getProxyCredentials();
-            customProxySelector = new CustomProxySelector(ProxySelector.getDefault(), proxyCredentials);
-            return customProxySelector;
-        }
-        return null;
     }
 }
 
