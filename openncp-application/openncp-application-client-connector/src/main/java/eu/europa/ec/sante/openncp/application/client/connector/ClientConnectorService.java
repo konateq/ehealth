@@ -132,5 +132,5 @@ public interface ClientConnectorService {
      * @return ResponseEntity with the results
      * @throws ClientConnectorException
      */
-    public ResponseEntity<String> queryBundleFhirById(Map<AssertionType, Assertion> assertions, String countryCode, String id) throws ClientConnectorException;
+    ResponseEntity<String> queryBundleFhirById(Map<AssertionType, Assertion> assertions, String countryCode, String id) throws ClientConnectorException;
 }

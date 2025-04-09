@@ -1,23 +1,17 @@
 package eu.europa.ec.sante.openncp.common.security.key;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 
 public final class DefaultKeyStoreManager implements KeyStoreManager {
 
@@ -36,16 +30,63 @@ public final class DefaultKeyStoreManager implements KeyStoreManager {
                                   final String truststorePassword, final String privateKeyAlias, final String privateKeyPassword) {
 
         // Constants Initialization
-        KEYSTORE_LOCATION = Validate.notBlank(keyStoreLocation);
-        TRUSTSTORE_LOCATION = Validate.notBlank(truststoreLocation);
-        KEYSTORE_PASSWORD = Validate.notBlank(keystorePassword);
-        TRUSTSTORE_PASSWORD = Validate.notBlank(truststorePassword);
-        PRIVATEKEY_ALIAS = Validate.notBlank(privateKeyAlias);
-        PRIVATEKEY_PASSWORD = Validate.notBlank(privateKeyPassword);
+        this.KEYSTORE_LOCATION = Validate.notBlank(keyStoreLocation);
+        this.TRUSTSTORE_LOCATION = Validate.notBlank(truststoreLocation);
+        this.KEYSTORE_PASSWORD = Validate.notBlank(keystorePassword);
+        this.TRUSTSTORE_PASSWORD = Validate.notBlank(truststorePassword);
+        this.PRIVATEKEY_ALIAS = Validate.notBlank(privateKeyAlias);
+        this.PRIVATEKEY_PASSWORD = Validate.notBlank(privateKeyPassword);
 
-        keyStore = getKeyStore();
-        trustStore = getTrustStore();
+        this.keyStore = this.getKeyStore();
+        this.trustStore = this.getTrustStore();
     }
+
+    public static DefaultKeyStoreManager forConsumer(final CertificatesDataHolder certificatesDataHolder) {
+        Validate.notNull(certificatesDataHolder, "certificatesDataHolder must not be null");
+
+        final CertificatesDataHolder.CertificateData serviceConsumerData = certificatesDataHolder.getServiceConsumerData().orElseThrow(() -> new RuntimeException("serviceConsumerData must not be null"));
+        final CertificatesDataHolder.CertificateData truststoreData = certificatesDataHolder.getTrustoreData();
+
+        return new DefaultKeyStoreManager(
+                serviceConsumerData.getKeystorePath(),
+                serviceConsumerData.getKeystorePassword(),
+                truststoreData.getKeystorePath(),
+                truststoreData.getKeystorePassword(),
+                serviceConsumerData.getPrivateKeyAlias().orElse(null),
+                serviceConsumerData.getPrivateKeyPassword().orElse(null));
+    }
+
+    public static DefaultKeyStoreManager forProvider(final CertificatesDataHolder certificatesDataHolder) {
+        Validate.notNull(certificatesDataHolder, "certificatesDataHolder must not be null");
+
+        final CertificatesDataHolder.CertificateData serviceProviderData = certificatesDataHolder.getServiceProviderData().orElseThrow(() -> new RuntimeException("serviceProviderData must not be null"));
+        final CertificatesDataHolder.CertificateData truststoreData = certificatesDataHolder.getTrustoreData();
+
+        return new DefaultKeyStoreManager(
+                serviceProviderData.getKeystorePath(),
+                serviceProviderData.getKeystorePassword(),
+                truststoreData.getKeystorePath(),
+                truststoreData.getKeystorePassword(),
+                serviceProviderData.getPrivateKeyAlias().orElseThrow(() -> new RuntimeException("private key alias must not be empty")),
+                serviceProviderData.getPrivateKeyPassword().orElseThrow(() -> new RuntimeException("private key password must not be empty")));
+    }
+
+    public static DefaultKeyStoreManager forSignature(final CertificatesDataHolder certificatesDataHolder) {
+        Validate.notNull(certificatesDataHolder, "certificatesDataHolder must not be null");
+
+        final CertificatesDataHolder.CertificateData signatureData = certificatesDataHolder.getSignatureData().orElseThrow(() -> new RuntimeException("signatureData must not be null"));
+        final CertificatesDataHolder.CertificateData truststoreData = certificatesDataHolder.getTrustoreData();
+
+        return new DefaultKeyStoreManager(
+                signatureData.getKeystorePath(),
+                signatureData.getKeystorePassword(),
+                truststoreData.getKeystorePath(),
+                truststoreData.getKeystorePassword(),
+                signatureData.getPrivateKeyAlias().orElseThrow(() -> new RuntimeException("private key alias must not be empty")),
+                signatureData.getPrivateKeyPassword().orElseThrow(() -> new RuntimeException("private key password must not be empty")));
+    }
+
+
 
     @Override
     public KeyPair getPrivateKey(final String alias, final char[] password) throws SMgrException {
@@ -53,10 +94,10 @@ public final class DefaultKeyStoreManager implements KeyStoreManager {
         try {
 
             // Get private key
-            final Key key = keyStore.getKey(alias, password);
+            final Key key = this.keyStore.getKey(alias, password);
             if (key instanceof PrivateKey) {
                 // Get certificate of public key
-                final Certificate cert = keyStore.getCertificate(alias);
+                final Certificate cert = this.keyStore.getCertificate(alias);
 
                 // Get public key
                 final PublicKey publicKey = cert.getPublicKey();
@@ -81,12 +122,12 @@ public final class DefaultKeyStoreManager implements KeyStoreManager {
     public KeyStore getKeyStore() {
 
         try {
-            keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            this.keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
-            try (final InputStream keystoreStream = new FileInputStream(KEYSTORE_LOCATION)) {
-                keyStore.load(keystoreStream, KEYSTORE_PASSWORD.toCharArray());
+            try (final InputStream keystoreStream = new FileInputStream(this.KEYSTORE_LOCATION)) {
+                this.keyStore.load(keystoreStream, this.KEYSTORE_PASSWORD.toCharArray());
 
-                return keyStore;
+                return this.keyStore;
             }
         } catch (final IOException | CertificateException | NoSuchAlgorithmException | KeyStoreException ex) {
             LOGGER.error(null, ex);
@@ -98,7 +139,7 @@ public final class DefaultKeyStoreManager implements KeyStoreManager {
     public Certificate getCertificate(final String alias) throws SMgrException {
 
         try {
-            return keyStore.getCertificate(alias);
+            return this.keyStore.getCertificate(alias);
         } catch (final KeyStoreException ex) {
             LOGGER.error(null, ex);
             throw new SMgrException("Certificate with alias: " + alias + " not found in keystore", ex);
@@ -109,10 +150,10 @@ public final class DefaultKeyStoreManager implements KeyStoreManager {
     public KeyStore getTrustStore() {
 
         try {
-            trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            try (final InputStream keystoreStream = new FileInputStream(TRUSTSTORE_LOCATION)) {
-                trustStore.load(keystoreStream, TRUSTSTORE_PASSWORD.toCharArray());
-                return trustStore;
+            this.trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            try (final InputStream keystoreStream = new FileInputStream(this.TRUSTSTORE_LOCATION)) {
+                this.trustStore.load(keystoreStream, this.TRUSTSTORE_PASSWORD.toCharArray());
+                return this.trustStore;
             }
         } catch (final IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException ex) {
             LOGGER.error(null, ex);
@@ -122,11 +163,11 @@ public final class DefaultKeyStoreManager implements KeyStoreManager {
 
     @Override
     public KeyPair getDefaultPrivateKey() throws SMgrException {
-        return getPrivateKey(PRIVATEKEY_ALIAS, PRIVATEKEY_PASSWORD.toCharArray());
+        return this.getPrivateKey(this.PRIVATEKEY_ALIAS, this.PRIVATEKEY_PASSWORD.toCharArray());
     }
 
     @Override
     public Certificate getDefaultCertificate() throws SMgrException {
-        return getCertificate(PRIVATEKEY_ALIAS);
+        return this.getCertificate(this.PRIVATEKEY_ALIAS);
     }
 }

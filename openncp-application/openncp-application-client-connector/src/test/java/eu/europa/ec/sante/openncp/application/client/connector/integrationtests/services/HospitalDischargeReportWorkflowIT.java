@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
+import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
@@ -38,7 +39,7 @@ public class HospitalDischargeReportWorkflowIT extends BaseIntegrationTest {
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     @Test
-    public void postHospitalDischargeReport() throws IOException, MarshallingException {
+    public void postHospitalDischargeReport() throws IOException, MarshallingException, ClientConnectorException {
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
         patientId.setExtension("89121210976");

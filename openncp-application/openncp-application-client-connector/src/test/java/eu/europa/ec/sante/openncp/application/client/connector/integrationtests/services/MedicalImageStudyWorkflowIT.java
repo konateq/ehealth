@@ -3,6 +3,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
@@ -43,7 +44,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
     private KeyStoreManager keyStoreManager;
 
     @Test
-    public void findDocumentReferences_no_searchParams() throws MalformedURLException, MarshallingException {
+    public void findDocumentReferences_no_searchParams() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
@@ -65,7 +66,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void findDocumentReferences_with_searchParams() throws MalformedURLException, MarshallingException {
+    public void findDocumentReferences_with_searchParams() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
@@ -95,7 +96,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void findDocumentReferenceById() throws MalformedURLException, MarshallingException {
+    public void findDocumentReferenceById() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
@@ -123,7 +124,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
      * instance (orthanc) since it contains the correct UIDs to make this test work.
      */
     @Test
-    public void getMedicalImage_wadors_only_study() throws MalformedURLException, MarshallingException {
+    public void getMedicalImage_wadors_only_study() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
@@ -152,7 +153,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
      * instance (orthanc) since it contains the correct UIDs to make this test work.
      */
     @Test
-    public void getMedicalImage_wadors_study_and_series() throws MalformedURLException, MarshallingException {
+    public void getMedicalImage_wadors_study_and_series() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
@@ -182,7 +183,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
      * instance (orthanc) since it contains the correct UIDs to make this test work.
      */
     @Test
-    public void getMedicalImage_wadors_study_series_and_instance() throws MalformedURLException, MarshallingException {
+    public void getMedicalImage_wadors_study_series_and_instance() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
@@ -208,7 +209,7 @@ public class MedicalImageStudyWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void fullWorkflow() throws JsonProcessingException, MalformedURLException, MarshallingException {
+    public void fullWorkflow() throws JsonProcessingException, MalformedURLException, MarshallingException, ClientConnectorException {
         final ObjectFactory objectFactory = new ObjectFactory();
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");

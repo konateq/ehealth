@@ -21,10 +21,8 @@ public class NCPTrustedServiceListAuditMessageBuilder extends AbstractAuditMessa
         addEventIdentification(message, eventLog.getEventType(),
                  eventLog.getEI_EventDateTime(),
                 eventLog.getEI_EventOutcomeIndicator());
-        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
-                AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
-        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
-                AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
+        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
+        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
         addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
                 "NSL", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "Trusted Service List");
         return message;

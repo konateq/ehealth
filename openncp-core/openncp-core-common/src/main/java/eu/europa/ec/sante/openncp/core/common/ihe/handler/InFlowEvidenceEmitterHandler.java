@@ -9,7 +9,6 @@ import org.apache.axiom.soap.SOAPBody;
 import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axiom.soap.SOAPHeaderBlock;
 import org.apache.axis2.context.*;
-import org.apache.axis2.description.AxisEndpoint;
 import org.apache.axis2.description.AxisService;
 import org.apache.axis2.description.AxisServiceGroup;
 import org.apache.axis2.handlers.AbstractHandler;
@@ -18,9 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * InFlowEvidenceEmitterHandler - Generates all NRRs
@@ -48,71 +48,49 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
         try {
             /* Canonicalization of the full SOAP message */
             final Document canonicalDocument = evidenceEmitterHandlerUtils.canonicalizeAxiomSoapEnvelope(msgContext.getEnvelope());
-            final String eventType;
-            final String title;
-            final String msgUUID;
             final AxisService axisService = msgContext.getServiceContext().getAxisService();
             final boolean isClientSide = axisService.isClientSide();
             logger.debug("[NRR] AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
-            //if (isClientSide) {
 
             logger.info("[NRR] Evidence Emitter - Response");
             //  Evidence Emitter CP doesn't mandate the generation of evidences in the response.
             // NCP-B receives from NCP-A, e.g.: NRR title = "NCPB_XCPD_RES" eventType = ihe event
 
-//                eventType = this.evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
-//                title = "NCPB_" + this.evidenceEmitterHandlerUtils.getTransactionNameFromMessage(soapBody);
-//                //msgUUID = null; It stays as null because it's fetched from soap msg
-//                logger.debug("eventType: '{}'", eventType);
-//                logger.debug("title: '{}'", title);
-//
-//                EvidenceUtils.createEvidenceREMNRR(envCanonicalized,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                            tr.com.srdc.epsos.util.Constants.SP_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.SP_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.SP_PRIVATEKEY_ALIAS,
-//                            tr.com.srdc.epsos.util.Constants.SC_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.SC_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.SC_PRIVATEKEY_ALIAS,
-//                            eventType,
-//                            new DateTime(),
-//                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                            title);
-            //} else {
-                /* NCP-B receives from Portal, e.g.:
-                    NRR
-                    title = "PORTAL_PD_REQ_RECEIVED"
-                    eventType = "PORTAL_PD_REQ"
-                    msguuid = IdA ID + datetime
-                NCP-A receives from NCP-B, e.g.:
-                    NRR
-                    title = "NCPA_XCPD_REQ"
-                    eventType = ihe event
-                */
-                eventType = evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
-                title = evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
-                msgUUID = evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
-                logger.debug("eventType: '{}' - title: '{}'", eventType, title);
+            /* NCP-B receives from Portal, e.g.:
+                NRR
+                title = "PORTAL_PD_REQ_RECEIVED"
+                eventType = "PORTAL_PD_REQ"
+                msguuid = IdA ID + datetime
+            NCP-A receives from NCP-B, e.g.:
+                NRR
+                title = "NCPA_XCPD_REQ"
+                eventType = ihe event
+            */
+            final String eventType = evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
+            final String title = evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
+            final String msgUUID = evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
+            logger.debug("eventType: '{}' - title: '{}'", eventType, title);
 
-                if (msgUUID != null) {
-                    logger.info("[NRR] Evidence Emitter - Portal NCP-B");
-                    // this is a Portal-NCPB interaction: msgUUID comes from IdA or TRCA or is random
-                    EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
-                            Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-                            title, msgUUID);
-                } else {
-                    logger.info("[NRR] Evidence Emitter - NCP A/B");
-                    // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the SOAP header
-                    EvidenceUtils.createEvidenceREMNRR(canonicalDocument, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS,
-                            Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS, eventType,
-                            new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), title);
-                }
-           // }
+            final X509Certificate issuerCert = EvidenceUtils.getCertificate(Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+            final X509Certificate senderCert = EvidenceUtils.getCertificate(Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS);
+            final X509Certificate recipientCert = EvidenceUtils.getCertificate(Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS);
+
+            final PrivateKey key = EvidenceUtils.getSigningKey(Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+
+
+            if (isClientSide) {
+                logger.info("[NRR] Evidence Emitter - Portal NCP-B");
+                // this is a Portal-NCPB interaction: msgUUID comes from IdA or TRCA or is random
+                EvidenceUtils.createEvidenceREMNRR(canonicalDocument, issuerCert, issuerCert, recipientCert, key, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+                        title, msgUUID);
+            } else {
+                logger.info("[NRR] Evidence Emitter - NCP A/B");
+                // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the SOAP header
+                EvidenceUtils.createEvidenceREMNRR(canonicalDocument, issuerCert, senderCert, recipientCert, key, eventType,
+                        new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), title);
+            }
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
@@ -168,7 +146,7 @@ public class InFlowEvidenceEmitterHandler extends AbstractHandler {
                     loggerClinical.debug("AxisService CustomSchemaNamePrefix: '{}'", axisService.getCustomSchemaNamePrefix());
                     loggerClinical.debug("AxisService CustomSchemaNameSuffix: '{}'", axisService.getCustomSchemaNameSuffix());
                     loggerClinical.debug("AxisService endpointName: '{}'", axisService.getEndpointName());
-                    final Map<String, AxisEndpoint> axisEndpoints = axisService.getEndpoints();
+//                    final Map<String, AxisEndpoint> axisEndpoints = axisService.getEndpoints();
 //                    for (final String key : axisEndpoints.keySet()) {
 //                        final AxisEndpoint axisEndpoint = axisEndpoints.get(key);
 //                        loggerClinical.debug("AxisEndpoint calculatedEndpointURL: '{}'", axisEndpoint.calculateEndpointURL());
