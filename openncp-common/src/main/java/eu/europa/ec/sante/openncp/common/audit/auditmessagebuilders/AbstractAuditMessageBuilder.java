@@ -63,10 +63,8 @@ public abstract class AbstractAuditMessageBuilder {
 
     protected AuditMessage createAuditTrailForHCPAssurance(final EventLog eventLog) {
 
-        AuditMessage message = null;
-        try {
             final ObjectFactory of = new ObjectFactory();
-            message = of.createAuditMessage();
+            AuditMessage message = of.createAuditMessage();
             addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
                     eventLog.getEI_EventActionCode(), eventLog.getEI_EventDateTime(),
                     eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
@@ -85,9 +83,6 @@ public abstract class AbstractAuditMessageBuilder {
             }
             addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
                     Short.valueOf("3"), "9", "errormsg","");
-        } catch (final Exception e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
         return message;
     }
 

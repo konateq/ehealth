@@ -179,13 +179,11 @@ public class HttpUtil {
     public static String getServerCertificate(final String endpoint) {
 
         LOGGER.debug("Trying to find certificate from : '{}'", endpoint);
-        var result = "";
+        String result = WARNING_NO_CERTIFICATE_FOUND;
         HttpsURLConnection urlConnection = null;
 
         try {
-            if (!endpoint.startsWith("https")) {
-                result = WARNING_NO_CERTIFICATE_FOUND;
-            } else {
+            if (endpoint.startsWith("https")) {
                 final var sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 final URL url;
                 url = new URL(endpoint);
@@ -199,12 +197,10 @@ public class HttpUtil {
                 if (certs != null && certs.length > 0) {
                     final X509Certificate cert = (X509Certificate) certs[0];
                     result = getCommonName(cert);
-                } else {
-                    result = WARNING_NO_CERTIFICATE_FOUND;
                 }
             }
         } catch (final IOException e) {
-            LOGGER.error("IOException: '{}'", e.getMessage(), e);
+            LOGGER.error(String.format("Error fetching the server certificate at [%s] with exception message [%s]", endpoint, e.getMessage()), e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -212,7 +208,6 @@ public class HttpUtil {
         }
         LOGGER.debug("Server Certificate: '{}'", result);
         return result;
-
     }
 
     public static String getSubjectDN(final CertificatesDataHolder certificatesDataHolder, final boolean isProvider) {

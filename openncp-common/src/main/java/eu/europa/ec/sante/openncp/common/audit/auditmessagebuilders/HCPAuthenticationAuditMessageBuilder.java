@@ -14,32 +14,25 @@ public class HCPAuthenticationAuditMessageBuilder extends AbstractAuditMessageBu
 
     @Override
     public AuditMessage build(final EventLog eventLog) {
-        AuditMessage message = null;
-        try {
-            final ObjectFactory of = new ObjectFactory();
-            message = of.createAuditMessage();
-            // Audit Source
-            addAuditSource(message, eventLog.getAS_AuditSourceId());
-            // Event Identification
-            addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(),
-                    eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
-            // Point Of Care
-            addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
-            // Human Requester
-            addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
-                    true, eventLog.getSourceip());
-            addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
-                    AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
-            addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
-                    AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
-        } catch (final Exception e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
-        if (message != null) {
-            // Event Target
-            addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "IdA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "HCP Identity Assertion");
-        }
+        final ObjectFactory of = new ObjectFactory();
+        AuditMessage message = of.createAuditMessage();
+        // Audit Source
+        addAuditSource(message, eventLog.getAS_AuditSourceId());
+        // Event Identification
+        addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(),
+                eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
+        // Point Of Care
+        addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
+        // Human Requester
+        addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
+                true, eventLog.getSourceip());
+        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
+                AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
+        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
+                AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
+        // Event Target
+        addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
+                "IdA", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "HCP Identity Assertion");
         return message;
     }
 }
