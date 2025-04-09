@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.assertion.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
+import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
@@ -38,11 +39,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.namespace.QName;
-import java.io.File;
-import java.io.FileInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.time.LocalDate;
@@ -332,29 +330,15 @@ public class AssertionUtils {
                 .build();
 
         final KeyStoreManager keyManager = DefaultKeyStoreManager.forSignature(certificatesDataHolder);
-        final X509Certificate signatureCertificate;
-        PrivateKey privateKey = null;
+        final X509Certificate signatureCertificate = (X509Certificate) keyManager.getDefaultCertificate();
 
-        if (keyAlias == null) {
-            signatureCertificate = (X509Certificate) keyManager.getDefaultCertificate();
-        } else {
-            final var keyStore = KeyStore.getInstance("JKS");
-            final var file = new File(certificatesDataHolder.getSignatureData()
-                    .map(CertificatesDataHolder.CertificateData::getKeystorePath)
-                    .orElseThrow());
-            keyStore.load(new FileInputStream(file), certificatesDataHolder.getSignatureData()
-                    .map(CertificatesDataHolder.CertificateData::getKeystorePassword)
-                    .orElseThrow()
-                    .toCharArray());
-            privateKey = (PrivateKey) keyStore.getKey(
-                    certificatesDataHolder.getSignatureData()
-                            .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyAlias)
-                            .orElseThrow()
-                    , certificatesDataHolder.getSignatureData()
-                            .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyPassword)
-                            .orElseThrow().toCharArray());
-            signatureCertificate = (X509Certificate) keyManager.getCertificate(keyAlias);
-        }
+        final PrivateKey privateKey = (PrivateKey) keyManager.getKeyStore().getKey(
+                certificatesDataHolder.getSignatureData()
+                        .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyAlias)
+                        .orElseThrow()
+                , certificatesDataHolder.getSignatureData()
+                        .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyPassword)
+                        .orElseThrow().toCharArray());
 
         LOGGER.info("Keystore & Signature Certificate loaded: '{}'", signatureCertificate.getSerialNumber());
 
