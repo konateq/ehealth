@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.common.audit.AuditServiceFactory;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.handler.DummyMustUnderstandHandler;
@@ -128,7 +129,7 @@ public class EventLogClientUtil {
 
         for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+                if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                     eventLog.setHR_AlternativeUserID(EventLogUtil.getAttributeValue(attribute));
                 } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xacml:2.0:subject:role")) {
                     eventLog.setHR_RoleID(EventLogUtil.getAttributeValue(attribute));
@@ -148,7 +149,7 @@ public class EventLogClientUtil {
 
         for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+                if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                     eventLog.setPT_ParticipantObjectIDs(List.of(EventLogUtil.getAttributeValue(attribute)));
                     break;
                 }
