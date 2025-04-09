@@ -141,7 +141,7 @@ public class RespondingGateway_ServiceStub extends Stub {
         _serviceClient.getOptions().setSoapVersionURI(SOAP12Constants.SOAP_ENVELOPE_NAMESPACE_URI);
 
         registerOutEvidenceEmitterHandler();
-        registerInEvidenceEmitterHandler();
+        //registerInEvidenceEmitterHandler();
 
         // Enabling Axis2 - SSL 2 ways communication (not active by default).
         try {
