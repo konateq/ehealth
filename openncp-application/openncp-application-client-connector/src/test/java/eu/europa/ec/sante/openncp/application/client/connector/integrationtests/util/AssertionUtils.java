@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
+import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -104,8 +105,8 @@ public class AssertionUtils {
     }
 
     public static Assertion createPharmacistAssertion(final KeyStoreManager keyStoreManager,
-                                                         final String fullName,
-                                                         final String email) {
+                                                      final String fullName,
+                                                      final String email) {
         final List<String> permissions = new ArrayList<>();
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-004");
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-006");
@@ -319,20 +320,20 @@ public class AssertionUtils {
 
         LOGGER.info("method signSAMLAssertion('{}')", keyAlias);
 
-        final String signatureKeystorePath = Constants.NCP_SIG_KEYSTORE_PATH;
-        final String signatureKeystorePassword = Constants.NCP_SIG_KEYSTORE_PASSWORD;
-        final String truststorePath = Constants.TRUSTSTORE_PATH;
-        final String truststorePassword = Constants.TRUSTSTORE_PASSWORD;
-        final String signatureKeyAlias = Constants.NCP_SIG_PRIVATEKEY_ALIAS;
-        final String signatureKeyPassword = Constants.NCP_SIG_PRIVATEKEY_PASSWORD;
+        final CertificatesDataHolder certificatesDataHolder = CertificatesDataHolder.builder()
+                .trustoreData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.TRUSTSTORE_PATH)
+                        .keystorePassword(Constants.TRUSTSTORE_PASSWORD)
+                        .build())
+                .signatureData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.NCP_SIG_KEYSTORE_PATH)
+                        .keystorePassword(Constants.NCP_SIG_KEYSTORE_PASSWORD)
+                        .privateKeyAlias(Constants.NCP_SIG_PRIVATEKEY_ALIAS)
+                        .privateKeyPassword(Constants.NCP_SIG_PRIVATEKEY_PASSWORD)
+                        .build())
+                .build();
 
-        final KeyStoreManager keyManager = new DefaultKeyStoreManager(signatureKeystorePath,
-                signatureKeystorePassword,
-                truststorePath,
-                truststorePassword,
-                signatureKeyAlias,
-                signatureKeyPassword);
-
+        final KeyStoreManager keyManager = DefaultKeyStoreManager.forSignature(certificatesDataHolder);
         final X509Certificate signatureCertificate;
         PrivateKey privateKey = null;
 
@@ -340,9 +341,20 @@ public class AssertionUtils {
             signatureCertificate = (X509Certificate) keyManager.getDefaultCertificate();
         } else {
             final var keyStore = KeyStore.getInstance("JKS");
-            final var file = new File(signatureKeystorePath);
-            keyStore.load(new FileInputStream(file), signatureKeystorePassword.toCharArray());
-            privateKey = (PrivateKey) keyStore.getKey(signatureKeyAlias, signatureKeyPassword.toCharArray());
+            final var file = new File(certificatesDataHolder.getSignatureData()
+                    .map(CertificatesDataHolder.CertificateData::getKeystorePath)
+                    .orElseThrow());
+            keyStore.load(new FileInputStream(file), certificatesDataHolder.getSignatureData()
+                    .map(CertificatesDataHolder.CertificateData::getKeystorePassword)
+                    .orElseThrow()
+                    .toCharArray());
+            privateKey = (PrivateKey) keyStore.getKey(
+                    certificatesDataHolder.getSignatureData()
+                            .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyAlias)
+                            .orElseThrow()
+                    , certificatesDataHolder.getSignatureData()
+                            .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyPassword)
+                            .orElseThrow().toCharArray());
             signatureCertificate = (X509Certificate) keyManager.getCertificate(keyAlias);
         }
 
