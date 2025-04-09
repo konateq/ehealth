@@ -4,7 +4,9 @@ import eu.europa.ec.sante.openncp.application.client.connector.assertion.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
+import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
+import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -37,11 +39,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.namespace.QName;
-import java.io.File;
-import java.io.FileInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.time.LocalDate;
@@ -317,13 +316,29 @@ public class AssertionUtils {
 
     private static void signSAMLAssertion(final KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject) throws Exception {
 
-        LOGGER.info("method signSAMLAssertion('{}')", Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+        final CertificatesDataHolder certificatesDataHolder = CertificatesDataHolder.builder()
+                .trustoreData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.TRUSTSTORE_PATH)
+                        .keystorePassword(Constants.TRUSTSTORE_PASSWORD)
+                        .build())
+                .signatureData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.NCP_SIG_KEYSTORE_PATH)
+                        .keystorePassword(Constants.NCP_SIG_KEYSTORE_PASSWORD)
+                        .privateKeyAlias(Constants.NCP_SIG_PRIVATEKEY_ALIAS)
+                        .privateKeyPassword(Constants.NCP_SIG_PRIVATEKEY_PASSWORD)
+                        .build())
+                .build();
 
-        final var keyStore = KeyStore.getInstance("JKS");
-        final var file = new File(Constants.NCP_SIG_KEYSTORE_PATH);
-        keyStore.load(new FileInputStream(file), Constants.NCP_SIG_KEYSTORE_PASSWORD.toCharArray());
-        final PrivateKey privateKey = (PrivateKey) keyStore.getKey(Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_PRIVATEKEY_PASSWORD.toCharArray());
-        final X509Certificate signatureCertificate = (X509Certificate) keyStoreManager.getCertificate(Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+        final KeyStoreManager keyManager = DefaultKeyStoreManager.forSignature(certificatesDataHolder);
+        final X509Certificate signatureCertificate = (X509Certificate) keyManager.getDefaultCertificate();
+
+        final PrivateKey privateKey = (PrivateKey) keyManager.getKeyStore().getKey(
+                certificatesDataHolder.getSignatureData()
+                        .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyAlias)
+                        .orElseThrow()
+                , certificatesDataHolder.getSignatureData()
+                        .flatMap(CertificatesDataHolder.CertificateData::getPrivateKeyPassword)
+                        .orElseThrow().toCharArray());
 
         LOGGER.info("Keystore & Signature Certificate loaded: '{}'", signatureCertificate.getSerialNumber());
 
