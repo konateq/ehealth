@@ -2,8 +2,11 @@ package eu.europa.ec.sante.openncp.core.common.ihe.handler;
 
 
 import eu.europa.ec.sante.openncp.common.audit.EventOutcomeIndicator;
+import eu.europa.ec.sante.openncp.common.audit.EventType;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
+import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import org.apache.axiom.soap.SOAPBody;
 import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axis2.context.MessageContext;
@@ -13,6 +16,9 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
 
 /**
@@ -32,77 +38,6 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
         LOGGER.info("OutFlow Evidence Emitter handler is executing");
         final EvidenceEmitterHandlerUtils evidenceEmitterHandlerUtils = new EvidenceEmitterHandlerUtils();
 
-        /* I'll leave this here as it might be useful in the future */
-
-//        SOAPHeader soapHeader = msgcontext.getEnvelope().getHeader();
-//        if (soapHeader != null) {
-//            Iterator<?> blocks = soapHeader.examineAllHeaderBlocks();
-//            LOGGER.debug("Iterating over soap headers");
-//            while (blocks.hasNext()) {
-//                LOGGER.debug("Processing header");
-//                SOAPHeaderBlock block = (SOAPHeaderBlock)blocks.next();
-//                LOGGER.debug(block.toString());
-//                block.setProcessed();
-//            }
-//        }
-
-//        LOGGER.debug("LOGGING TEST VALUES");
-//        LOGGER.debug("MessageContext properties: " + msgcontext.getProperties());
-//        LOGGER.debug("MessageContext messageID: " + msgcontext.getMessageID());
-//
-//        SessionContext sessionCtx = msgcontext.getSessionContext();
-//        if (sessionCtx != null) {
-//            LOGGER.debug("SessionContext CookieID: " + sessionCtx.getCookieID());
-//        } else {
-//            LOGGER.debug("SessionContext is null!");
-//        }
-
-//        OperationContext operationCtx = msgcontext.getOperationContext();
-//        if (operationCtx != null) {
-//            LOGGER.debug("OperationContext operationName: " + operationCtx.getOperationName());
-//            LOGGER.debug("OperationContext serviceGroupName: " + operationCtx.getServiceGroupName());
-//            LOGGER.debug("OperationContext serviceName; " + operationCtx.getServiceName());
-//            LOGGER.debug("OperationContext isComplete: " + operationCtx.isComplete());
-//        } else {
-//            LOGGER.debug("OperationContext is null!");
-//        }
-
-//        ServiceGroupContext serviceGroupCtx = msgcontext.getServiceGroupContext();
-//        if (serviceGroupCtx != null) {
-//            LOGGER.debug("ServiceGroupContext ID: " + serviceGroupCtx.getId());
-//            AxisServiceGroup axisServiceGroup = serviceGroupCtx.getDescription();
-//            Iterator<AxisService> itAxisService = axisServiceGroup.getServices();
-//            while (itAxisService.hasNext()) {
-//                AxisService axisService = itAxisService.next();
-//                LOGGER.debug("AxisService BindingName: " + axisService.getBindingName());
-//                LOGGER.debug("AxisService CustomSchemaNamePrefix: " + axisService.getCustomSchemaNamePrefix());
-//                LOGGER.debug("AxisService CustomSchemaNameSuffix: " + axisService.getCustomSchemaNameSuffix());
-//                LOGGER.debug("AxisService endpointName: " + axisService.getEndpointName());
-//                Map<String,AxisEndpoint> axisEndpoints = axisService.getEndpoints();
-//                for (String key : axisEndpoints.keySet()) {
-//                    AxisEndpoint axisEndpoint = axisEndpoints.get(key);
-//                    LOGGER.debug("AxisEndpoint calculatedEndpointURL: " + axisEndpoint.calculateEndpointURL());
-//                    LOGGER.debug("AxisEndpoint alias: " + axisEndpoint.getAlias());
-//                    LOGGER.debug("AxisEndpoint endpointURL: " + axisEndpoint.getEndpointURL());
-//                    LOGGER.debug("AxisEndpoint active: " + axisEndpoint.isActive());
-//                }
-//                LOGGER.debug("AxisService EPRs: " + Arrays.toString((String[]) axisService.getEPRs()));
-//                LOGGER.debug("AxisService name: " + axisService.getName());
-//                LOGGER.debug("AxisService isClientSide: " + axisService.isClientSide());
-//            }
-//        } else {
-//            LOGGER.debug("ServiceGroupContext is null!");
-//        }
-
-//        ConfigurationContext configCtx = msgcontext.getRootContext();
-//        if (configCtx != null) {
-//            LOGGER.debug("ConfigurationContext contextRoot: " + configCtx.getContextRoot());
-//            LOGGER.debug("ConfigurationContext serviceGroupContextIDs: " + Arrays.toString((String[])configCtx.getServiceGroupContextIDs()));
-//            LOGGER.debug("ConfigurationContext servicePath: " + configCtx.getServicePath());
-//        } else {
-//            LOGGER.debug("ConfigurationContext is null!");
-//        }
-
         try {
             /* Canonicalize the full SOAP message */
             final Document envCanonicalized = evidenceEmitterHandlerUtils.canonicalizeAxiomSoapEnvelope(msgcontext.getEnvelope());
@@ -120,6 +55,14 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
             boolean isClientSide = axisService.isClientSide();
             LOGGER.debug("AxisService name: '{}' - isClientSide: '{}'", axisService.getName(), isClientSide);
 
+            final X509Certificate issuerCert = EvidenceUtils.getCertificate(Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+            final X509Certificate recipientCert = EvidenceUtils.getCertificate(Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS);
+            final X509Certificate senderCert = EvidenceUtils.getCertificate(Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS);
+
+            final PrivateKey key = EvidenceUtils.getSigningKey(Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+
             if (isClientSide) {
                 LOGGER.info("[NRO] Evidence Emitter - NCP-B");
                 /* NCP-B sends to NCP-A, e.g.:
@@ -131,10 +74,15 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
                 LOGGER.debug("Title: '{}' - eventType: '{}'", title, eventType);
 
                 /* Portal sends request to NCP-B*/
-                EvidenceUtils.createEvidenceREMNRO(envCanonicalized, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD,
-                        Constants.SC_PRIVATEKEY_ALIAS, eventType, new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+                EvidenceUtils.createEvidenceREMNRO(
+                        envCanonicalized,
+                        issuerCert,
+                        issuerCert,
+                        senderCert,
+                        key,
+                        eventType,
+                        new DateTime(),
+                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
                         "NCPB_" + title, msgUUID);
             } else {
                 LOGGER.info("[NRO] Evidence Emitter - NCP-A");
@@ -148,51 +96,18 @@ public class OutFlowEvidenceEmitterHandler extends AbstractHandler {
                     eventType = "NCPB_PD_RES"
                     msguuid = random
                 */
-                /* Joao: as per the CP, evidence generation on the way back is optional,
-                so I leave it commented. If in the future it's decided that is mandatory,
-                just uncomment.
-                */
-//                eventType = this.evidenceEmitterHandlerUtils.getEventTypeFromMessage(soapBody);
-//                title = this.evidenceEmitterHandlerUtils.getServerSideTitle(soapBody);
-//                msgUUID = this.evidenceEmitterHandlerUtils.getMsgUUID(soapHeader, soapBody);
-//                logger.debug("eventType: " + eventType);
-//                logger.debug("title: " + title);
-//                logger.debug("msgUUID: " + msgUUID);
-//
-//                if (msgUUID != null) {
-//                    // this is a Portal-NCPB interaction: msgUUID comes from IdA or is random
-//                    EvidenceUtils.createEvidenceREMNRO(envCanonicalized,
-//                                Constants.NCP_SIG_KEYSTORE_PATH,
-//                                Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                                Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                                Constants.SC_KEYSTORE_PATH,
-//                                Constants.SC_KEYSTORE_PASSWORD,
-//                                Constants.SC_PRIVATEKEY_ALIAS,
-//                                Constants.NCP_SIG_KEYSTORE_PATH,
-//                                Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                                Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                                eventType,
-//                                new DateTime(),
-//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                                title,
-//                                msgUUID);
-//                } else {
-//                    // this isn't a Portal-NCPB interaction (it's NCPB-NCPA), so msgUUID is retrieved from the soap header
-//                    EvidenceUtils.createEvidenceREMNRO(envCanonicalized,
-//                                Constants.NCP_SIG_KEYSTORE_PATH,
-//                                Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                                Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                                Constants.SP_KEYSTORE_PATH,
-//                                Constants.SP_KEYSTORE_PASSWORD,
-//                                Constants.SP_PRIVATEKEY_ALIAS,
-//                                Constants.SC_KEYSTORE_PATH,
-//                                Constants.SC_KEYSTORE_PASSWORD,
-//                                Constants.SC_PRIVATEKEY_ALIAS,
-//                                eventType,
-//                                new DateTime(),
-//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                                title);
-//                }
+
+                EvidenceUtils.createEvidenceREMNRO(
+                        envCanonicalized,
+                        issuerCert,
+                        senderCert,
+                        issuerCert,
+                        key,
+                        eventType,
+                        new DateTime(),
+                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
+                        title,
+                        msgUUID);
             }
         } catch (final Exception e) {
             throw new RuntimeException(e);

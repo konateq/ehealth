@@ -22,10 +22,8 @@ public class CommunicationFailureAuditMessageBuilder extends AbstractAuditMessag
                 eventLog.getEI_EventOutcomeIndicator());
         addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                 true, eventLog.getSourceip());
-        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
-                AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
-        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
-                AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
+        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
+        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
         for (final String ptParticipantObjectID : eventLog.getPT_ParticipantObjectIDs()) {
             addParticipantObject(message, ptParticipantObjectID, Short.valueOf("1"), Short.valueOf("1"),
                     "Patient", "2", AuditConstant.RFC3881, "Patient Number",

@@ -40,11 +40,11 @@ public class IdentificationServiceAuditMessageBuilder extends AbstractAuditMessa
         addHumanRequestor(message, eventLog.getHR_UserID(), eventLog.getHR_AlternativeUserID(), eventLog.getHR_RoleID(),
                 true, eventLog.getSourceip());
         addPointOfCare(message, eventLog.getPC_UserID(), eventLog.getSourceip());
-        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
+        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
                 AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
-        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER, AuditConstant.CODE_SYSTEM_EHDSI,
+        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
                 AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
-        addService(message, eventLog.getSP_UserID(), false, "MasterPatientIndex", AuditConstant.CODE_SYSTEM_EHDSI,
+        addService(message, eventLog.getSP_UserID(), false, "MasterPatientIndex",
                 "Master Patient Index", eventLog.getTargetip());
         addAuditSource(message, eventLog.getAS_AuditSourceId());
         for (final String psParticipantObjectID : eventLog.getPS_ParticipantObjectIDs()) {

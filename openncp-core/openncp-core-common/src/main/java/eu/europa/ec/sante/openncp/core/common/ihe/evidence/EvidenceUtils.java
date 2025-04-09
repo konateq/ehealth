@@ -60,15 +60,10 @@ public class EvidenceUtils {
 
     /**
      * @param incomingMsg
-     * @param issuerKeyStorePath
-     * @param issuerKeyPassword
-     * @param issuerCertAlias
-     * @param senderKeyStorePath
-     * @param senderKeyPassword
-     * @param senderCertAlias
-     * @param recipientKeyStorePath
-     * @param recipientKeyPassword
-     * @param recipientCertAlias
+     * @param issuerCert
+     * @param senderCert
+     * @param recipientCert
+     * @param key
      * @param eventType
      * @param submissionTime
      * @param status
@@ -85,11 +80,15 @@ public class EvidenceUtils {
      * @throws CertificateException
      * @throws UnrecoverableKeyException
      */
-    public static void createEvidenceREMNRR(final Document incomingMsg, final String issuerKeyStorePath, final String issuerKeyPassword,
-                                            final String issuerCertAlias, final String senderKeyStorePath, final String senderKeyPassword,
-                                            final String senderCertAlias, final String recipientKeyStorePath, final String recipientKeyPassword,
-                                            final String recipientCertAlias, final String eventType, final DateTime submissionTime,
-                                            final String status, final String title)
+    public static void createEvidenceREMNRR(final Document incomingMsg,
+                                            final X509Certificate issuerCert,
+                                            final X509Certificate senderCert,
+                                            final X509Certificate recipientCert,
+                                            final PrivateKey key,
+                                            final String eventType,
+                                            final DateTime submissionTime,
+                                            final String status,
+                                            final String title)
             throws IOException, URISyntaxException, TOElementException, EnforcePolicyException, ObligationDischargeException,
             TransformerException, SyntaxException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
             UnrecoverableKeyException {
@@ -106,22 +105,15 @@ public class EvidenceUtils {
             messageIdentifier = UUID.randomUUID().toString();
         }
         LOGGER.info("[Evidence Emitter] Creation of REMNRR for message type: '{}' with ID: '{}'", messageType, messageIdentifier);
-        createEvidenceREMNRR(incomingMsg, issuerKeyStorePath, issuerKeyPassword, issuerCertAlias, senderKeyStorePath,
-                senderKeyPassword, senderCertAlias, recipientKeyStorePath, recipientKeyPassword, recipientCertAlias,
-                eventType, submissionTime, status, title, messageIdentifier);
+        createEvidenceREMNRR(incomingMsg, issuerCert, senderCert, recipientCert, key, eventType, submissionTime, status, title, messageIdentifier);
+
     }
 
     /**
-     * @param incomingMsg
-     * @param issuerKeyStorePath
-     * @param issuerKeyPassword
-     * @param issuerCertAlias
-     * @param senderKeyStorePath
-     * @param senderKeyPassword
-     * @param senderCertAlias
-     * @param recipientKeyStorePath
-     * @param recipientKeyPassword
-     * @param recipientCertAlias
+     * @param incomingSoap
+     * @param issuerCert
+     * @param senderCert
+     * @param recipientCert
      * @param eventType
      * @param submissionTime
      * @param status
@@ -139,23 +131,25 @@ public class EvidenceUtils {
      * @throws CertificateException
      * @throws UnrecoverableKeyException
      */
-    public static void createEvidenceREMNRR(final Document incomingMsg, final String issuerKeyStorePath, final String issuerKeyPassword,
-                                            final String issuerCertAlias, final String senderKeyStorePath, final String senderKeyPassword,
-                                            final String senderCertAlias, final String recipientKeyStorePath, final String recipientKeyPassword,
-                                            final String recipientCertAlias, final String eventType, final DateTime submissionTime,
-                                            final String status, String title, final String msguuid)
+    public static void createEvidenceREMNRR(final Document incomingSoap,
+                                            final X509Certificate issuerCert,
+                                            final X509Certificate senderCert,
+                                            final X509Certificate recipientCert,
+                                            final PrivateKey key,
+                                            final String eventType,
+                                            final DateTime submissionTime,
+                                            final String status,
+                                            String title,
+                                            final String msguuid)
             throws IOException, URISyntaxException, TOElementException, EnforcePolicyException,
             ObligationDischargeException, TransformerException, SyntaxException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
 
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
-            LOGGER_CLINICAL.debug("[Evidences] createEvidenceREMNRR()\nIncoming message:\n'{}'\n Issuer Info: '{}'-'{}'-'{}', " +
-                            "Sender Info: '{}'-'{}'-'{}', Recipient Info: '{}'-'{}'-'{}'\nEvent Info: '{}'-'{}'-'{}'-'{}'-'{}'",
-                    XMLUtil.documentToString(incomingMsg), issuerKeyStorePath, StringUtils.isNotBlank(issuerKeyPassword) ? HIDDEN_CREDS : "N/A",
-                    issuerCertAlias, senderKeyStorePath, StringUtils.isNotBlank(senderKeyPassword) ? HIDDEN_CREDS : "N/A",
-                    senderCertAlias, recipientKeyStorePath, StringUtils.isNotBlank(recipientKeyPassword) ? HIDDEN_CREDS : "N/A",
-                    recipientCertAlias, eventType, submissionTime, status, title, msguuid);
+            LOGGER_CLINICAL.debug("[Evidences] createEvidenceREMNRR()\nIncoming message:\n'{}'\n Issuer Info: '{}', " +
+                            "Sender Info: '{}', Recipient Info: '{}'\nEvent Info: '{}'-'{}'-'{}'-'{}'-'{}'",
+                    XMLUtil.documentToString(incomingSoap), issuerCert.toString(), senderCert.toString(), recipientCert.toString(), eventType, submissionTime, status, title, msguuid);
         }
         String messageStatus = "failure";
         if (StringUtils.equals("0", status)) {
@@ -174,70 +168,28 @@ public class EvidenceUtils {
         MessageType messageType;
 
         try {
-            final MessageInspector messageInspector = new MessageInspector(incomingMsg);
+            final MessageInspector messageInspector = new MessageInspector(incomingSoap);
             messageType = messageInspector.getMessageType();
         } catch (final Exception e) {
             LOGGER.warn("[REM-NRR] Message Type Unknown: '{}'", e.getMessage(), e);
-            messageType = new UnknownMessageType(incomingMsg);
+            messageType = new UnknownMessageType(incomingSoap);
         }
-        /*
-         * Now create the XACML request
-         */
-        final LinkedList<XACMLAttributes> actionList = new LinkedList<>();
-        final XACMLAttributes action = new XACMLAttributes();
-        action.setDataType(new URI(DATATYPE_STRING));
-        action.setIdentifier(new URI("urn:eSENS:outcome"));
-        actionList.add(action);
-        action.setValue(messageStatus);
 
-        final LinkedList<XACMLAttributes> environmentList = new LinkedList<>();
-        final XACMLAttributes environment = new XACMLAttributes();
-        environment.setDataType(new URI(DATATYPE_DATETIME));
-        environment.setIdentifier(new URI("urn:esens:2014:event"));
-        environment.setValue(new DateTime().toString());
-        environmentList.add(environment);
+        final List<ObligationHandler> handlers = getObligationHandlers(
+                incomingSoap,
+                issuerCert,
+                senderCert,
+                recipientCert,
+                key,
+                eventType,
+                submissionTime,
+                msguuid,
+                messageStatus,
+                messageType,
+                simplePDP);
 
-        final XACMLRequestCreator requestCreator = new XACMLRequestCreator(messageType, null, null,
-                actionList, environmentList);
-
-        final Element request = requestCreator.getRequest();
-
-        // just some printouts
-        Utilities.serialize(request);
-
-        final EnforcePolicy enforcePolicy = new EnforcePolicy(simplePDP);
-        enforcePolicy.decide(request);
-
-        Utilities.serialize(enforcePolicy.getResponseAsDocument().getDocumentElement());
-
-        final List<ESensObligation> obligations = enforcePolicy.getObligationList();
-
-        final Context context = new Context();
-        context.setIncomingMsg(incomingMsg);
-
-        /* Loading the different certificates */
-        final X509Certificate issuerCert = getCertificate(issuerKeyStorePath, issuerKeyPassword, issuerCertAlias);
-        final X509Certificate senderCert = getCertificate(senderKeyStorePath, senderKeyPassword, senderCertAlias);
-        final X509Certificate recipientCert = getCertificate(recipientKeyStorePath, recipientKeyPassword, recipientCertAlias);
-        context.setIssuerCertificate(issuerCert);
-        context.setSenderCertificate(senderCert);
-        context.setRecipientCertificate(recipientCert);
-
-        /* Signing key is the issuer key */
-        final PrivateKey key = getSigningKey(issuerKeyStorePath, issuerKeyPassword, issuerCertAlias);
-        context.setSigningKey(key);
-        context.setSubmissionTime(submissionTime);
-        context.setEvent(eventType);
-        context.setMessageUUID(msguuid);
-        context.setAuthenticationMethod("http://uri.etsi.org/REM/AuthMethod#Strong");
-        context.setRequest(request);
-        context.setEnforcer(enforcePolicy);
-
-        final ObligationHandlerFactory handlerFactory = ObligationHandlerFactory.getInstance();
-        final List<ObligationHandler> handlers = handlerFactory.createHandler(messageType, obligations, context);
 
         for (final ObligationHandler oh : handlers) {
-
             oh.discharge();
             Utilities.serialize(oh.getMessage().getDocumentElement());
             final String oblString = XMLUtil.documentToString(oh.getMessage());
@@ -252,26 +204,26 @@ public class EvidenceUtils {
 
     /**
      * @param incomingSoap
-     * @param issuerKeyStorePath
-     * @param issuerKeyPassword
-     * @param issuerCertAlias
-     * @param senderKeyStorePath
-     * @param senderKeyPassword
-     * @param senderCertAlias
-     * @param recipientKeyStorePath
-     * @param recipientKeyPassword
-     * @param recipientCertAlias
+     * @param issuerCert
+     * @param senderCert,
+     * @param recipientCert
+     * @param key
      * @param eventType
      * @param submissionTime
      * @param status
      * @param title
      * @throws Exception
      */
-    public static void createEvidenceREMNRO(final Document incomingSoap, final String issuerKeyStorePath, final String issuerKeyPassword,
-                                            final String issuerCertAlias, final String senderKeyStorePath, final String senderKeyPassword,
-                                            final String senderCertAlias, final String recipientKeyStorePath, final String recipientKeyPassword,
-                                            final String recipientCertAlias, final String eventType, final DateTime submissionTime, final String status,
-                                            final String title) throws Exception {
+    public static void createEvidenceREMNRO(
+            final Document incomingSoap,
+            final X509Certificate issuerCert,
+            final X509Certificate senderCert,
+            final X509Certificate recipientCert,
+            final PrivateKey key,
+            final String eventType,
+            final DateTime submissionTime,
+            final String status,
+            final String title) throws Exception {
 
         String msguuid;
         try {
@@ -282,23 +234,24 @@ public class EvidenceUtils {
             LOGGER.error("Exception: '{}'", e.getMessage(), e);
             msguuid = UUID.randomUUID().toString();
         }
-        createEvidenceREMNRO(incomingSoap, issuerKeyStorePath, issuerKeyPassword,
-                issuerCertAlias, senderKeyStorePath, senderKeyPassword,
-                senderCertAlias, recipientKeyStorePath, recipientKeyPassword,
-                recipientCertAlias, eventType, submissionTime, status, title, msguuid);
+        createEvidenceREMNRO(
+                incomingSoap,
+                issuerCert,
+                senderCert,
+                recipientCert,
+                key,
+                eventType,
+                submissionTime,
+                status,
+                title,
+                msguuid);
     }
 
     /**
      * @param incomingSoap
-     * @param issuerKeyStorePath
-     * @param issuerKeyPassword
-     * @param issuerCertAlias
-     * @param senderKeyStorePath
-     * @param senderKeyPassword
-     * @param senderCertAlias
-     * @param recipientKeyStorePath
-     * @param recipientKeyPassword
-     * @param recipientCertAlias
+     * @param issuerCert
+     * @param senderCert
+     * @param recipientCert
      * @param eventType
      * @param submissionTime
      * @param status
@@ -306,19 +259,21 @@ public class EvidenceUtils {
      * @param msguuid
      * @throws Exception
      */
-    public static void createEvidenceREMNRO(final Document incomingSoap, final String issuerKeyStorePath, final String issuerKeyPassword,
-                                            final String issuerCertAlias, final String senderKeyStorePath, final String senderKeyPassword,
-                                            final String senderCertAlias, final String recipientKeyStorePath, final String recipientKeyPassword,
-                                            final String recipientCertAlias, final String eventType, final DateTime submissionTime,
-                                            final String status, String title, final String msguuid) throws Exception {
+    public static void createEvidenceREMNRO(final Document incomingSoap,
+                                            final X509Certificate issuerCert,
+                                            final X509Certificate senderCert,
+                                            final X509Certificate recipientCert,
+                                            final PrivateKey key,
+                                            final String eventType,
+                                            final DateTime submissionTime,
+                                            final String status,
+                                            String title,
+                                            final String msguuid) throws Exception {
 
         if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && LOGGER_CLINICAL.isDebugEnabled()) {
             LOGGER_CLINICAL.debug("[Evidences] createEvidenceREMNRO()\nIncoming message:\n'{}'\n Issuer Info: '{}'-'{}'-'{}', " +
                             "Sender Info: '{}'-'{}'-'{}', Recipient Info: '{}'-'{}'-'{}'\nEvent Info: '{}'-'{}'-'{}'-'{}'-'{}'",
-                    XMLUtil.documentToString(incomingSoap), issuerKeyStorePath, StringUtils.isNotBlank(issuerKeyPassword) ? HIDDEN_CREDS : "N/A",
-                    issuerCertAlias, senderKeyStorePath, StringUtils.isNotBlank(senderKeyPassword) ? HIDDEN_CREDS : "N/A",
-                    senderCertAlias, recipientKeyStorePath, StringUtils.isNotBlank(recipientKeyPassword) ? HIDDEN_CREDS : "N/A",
-                    recipientCertAlias, eventType, submissionTime, status, title, msguuid);
+                    XMLUtil.documentToString(incomingSoap), issuerCert.toString(), senderCert.toString(), recipientCert.toString(), eventType, submissionTime, status, title, msguuid);
         }
         String messageStatus = "failure";
         if (StringUtils.equals("0", status)) {
@@ -352,7 +307,35 @@ public class EvidenceUtils {
         //TODO: 2021-04-21  Review the following method and if any validation is expected based on the message type.
         checkCorrectnessOfIHEXCA(messageType);
 
+        final List<ObligationHandler> handlers = getObligationHandlers(
+                incomingSoap,
+                issuerCert,
+                senderCert,
+                recipientCert,
+                key,
+                eventType,
+                submissionTime,
+                msguuid,
+                messageStatus,
+                messageType,
+                simplePDP);
 
+        // Here I discharge manually. This behavior is to let free an implementation
+        for (final ObligationHandler handler : handlers) {
+
+            handler.discharge();
+            Utilities.serialize(handler.getMessage().getDocumentElement());
+            final String oblString = XMLUtil.documentToString(handler.getMessage());
+            if (StringUtils.isBlank(title)) {
+                title = getPath() + "nro" + File.separator + getDocumentTitle(msguuid, handler.toString(), "NRO") + ".xml";
+            } else {
+                title = getPath() + "nro" + File.separator + getDocumentTitle(msguuid, title, "NRO") + ".xml";
+            }
+            FileUtil.constructNewFile(title, oblString.getBytes());
+        }
+    }
+
+    private static List<ObligationHandler> getObligationHandlers(final Document incomingSoap, final X509Certificate issuerCert, final X509Certificate senderCert, final X509Certificate recipientCert, final PrivateKey key, String eventType, DateTime submissionTime, String msguuid, String messageStatus, MessageType messageType, PDP simplePDP) throws URISyntaxException, TOElementException, TransformerException, EnforcePolicyException, KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, ObligationDischargeException {
         /*
          * Now create the XACML request
          */
@@ -389,15 +372,12 @@ public class EvidenceUtils {
         context.setIncomingMsg(incomingSoap);
 
         /* Loading the different certificates */
-        final X509Certificate issuerCert = getCertificate(issuerKeyStorePath, issuerKeyPassword, issuerCertAlias);
-        final X509Certificate senderCert = getCertificate(senderKeyStorePath, senderKeyPassword, senderCertAlias);
-        final X509Certificate recipientCert = getCertificate(recipientKeyStorePath, recipientKeyPassword, recipientCertAlias);
+
         context.setIssuerCertificate(issuerCert);
         context.setSenderCertificate(senderCert);
         context.setRecipientCertificate(recipientCert);
 
         /* Signing key is the issuer key */
-        final PrivateKey key = getSigningKey(issuerKeyStorePath, issuerKeyPassword, issuerCertAlias);
         context.setSigningKey(key);
         context.setSubmissionTime(submissionTime);
         context.setEvent(eventType);
@@ -407,20 +387,7 @@ public class EvidenceUtils {
         context.setEnforcer(enforcePolicy);
         final ObligationHandlerFactory handlerFactory = ObligationHandlerFactory.getInstance();
         final List<ObligationHandler> handlers = handlerFactory.createHandler(messageType, obligations, context);
-
-        // Here I discharge manually. This behavior is to let free an implementation
-        for (final ObligationHandler handler : handlers) {
-
-            handler.discharge();
-            Utilities.serialize(handler.getMessage().getDocumentElement());
-            final String oblString = XMLUtil.documentToString(handler.getMessage());
-            if (StringUtils.isBlank(title)) {
-                title = getPath() + "nro" + File.separator + getDocumentTitle(msguuid, handler.toString(), "NRO") + ".xml";
-            } else {
-                title = getPath() + "nro" + File.separator + getDocumentTitle(msguuid, title, "NRO") + ".xml";
-            }
-            FileUtil.constructNewFile(title, oblString.getBytes());
-        }
+        return handlers;
     }
 
     /**
@@ -483,7 +450,7 @@ public class EvidenceUtils {
      * @throws NoSuchAlgorithmException
      * @throws CertificateException
      */
-    private static X509Certificate getCertificate(final String keyStorePath, final String keyPassword, final String certAlias)
+    public static X509Certificate getCertificate(final String keyStorePath, final String keyPassword, final String certAlias)
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
 
         LOGGER.debug("X509Certificate getCertificate('{}', '{}', '{}')", keyStorePath, StringUtils.isNotBlank(keyPassword) ? HIDDEN_CREDS : "N/A", certAlias);
@@ -504,12 +471,12 @@ public class EvidenceUtils {
      * @throws CertificateException
      * @throws UnrecoverableKeyException
      */
-    private static PrivateKey getSigningKey(final String keyStorePath, final String keyPassword, final String certAlias)
+    public static PrivateKey getSigningKey(final String keyStorePath, final String keyPassword, final String certAlias)
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
 
         LOGGER.debug("PrivateKey getSigningKey('{}', '{}', '{}')", keyStorePath, StringUtils.isNotBlank(keyPassword) ? HIDDEN_CREDS : "N/A", certAlias);
         final KeyStore ks = KeyStore.getInstance("JKS");
-        final InputStream keyStream = new FileInputStream(new File(keyStorePath));
+        final InputStream keyStream = new FileInputStream(keyStorePath);
         ks.load(keyStream, keyPassword == null ? null : keyPassword.toCharArray());
         return (PrivateKey) ks.getKey(certAlias, keyPassword == null ? null : keyPassword.toCharArray());
     }
