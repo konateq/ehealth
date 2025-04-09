@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
+import com.mysql.cj.xdevapi.Client;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
@@ -161,9 +162,13 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         classCode.setSchema("2.16.840.1.113883.6.1");
         classCode.setValue(Constants.PS_TITLE);
 
-        assertThatExceptionOfType(SOAPFaultException.class)
+        assertThatExceptionOfType(ClientConnectorException.class)
                 .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", differentPatientId, List.of(classCode), null))
-                .withMessageContaining("The request is not containing a proper PS identifier.");
+                .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_PS_NOT_FOUND);
+                    assertThat(!clientConnectorException.getNiErrorMessage().isPresent());
+                })
+                .withMessageContaining(OpenNCPErrorCode.ERROR_PS_NOT_FOUND.getDescription());
     }
 
     @Test
@@ -188,21 +193,13 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         classCode.setSchema("2.16.840.1.113883.6.1");
         classCode.setValue(Constants.PS_TITLE);
 
-        assertThatExceptionOfType(SOAPFaultException.class)
+        assertThatExceptionOfType(ClientConnectorException.class)
                 .isThrownBy(() -> clientConnectorService.retrieveDocument(assertions, "BE", documentId, "1.3.6.1.4.1.48336", classCode, null))
-                .extracting(SOAPFaultException::getFault)
-                .satisfies(fault -> {
-                    assertThat(fault.getFaultCode()).contains("Receiver");
-                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getDescription());
-
-                    final List<QName> subCodes = StreamSupport.stream(
-                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
-                    ).collect(Collectors.toList());
-                    assertThat(subCodes)
-                            .hasSize(1)
-                            .extracting(QName::getLocalPart)
-                            .containsExactly(OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getCode());
-                });
+                .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING);
+                    assertThat(clientConnectorException.getNiErrorMessage().get()).isEqualTo("[National Infrastructure Mock] Error Retrieving Document");
+                        })
+                .withMessageContaining(OpenNCPErrorCode.ERROR_GENERIC_DOCUMENT_MISSING.getDescription());
     }
 
     @Test
@@ -223,21 +220,13 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         classCode.setSchema("2.16.840.1.113883.6.1");
         classCode.setValue(Constants.PS_TITLE);
 
-        assertThatExceptionOfType(SOAPFaultException.class)
+        assertThatExceptionOfType(ClientConnectorException.class)
                 .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
-                .extracting(SOAPFaultException::getFault)
-                .satisfies(fault -> {
-                    assertThat(fault.getFaultCode()).contains("Receiver");
-                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
-
-                    final List<QName> subCodes = StreamSupport.stream(
-                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
-                    ).collect(Collectors.toList());
-                    assertThat(subCodes)
-                            .hasSize(1)
-                            .extracting(QName::getLocalPart)
-                            .containsExactly(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getCode());
-                });
+                .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS);
+                    assertThat(!clientConnectorException.getNiErrorMessage().isPresent());
+                })
+                .withMessageContaining(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
     }
 
     @Test
@@ -255,20 +244,12 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         assertions.put(AssertionType.HCP, clinicalAssertion);
 
-        assertThatExceptionOfType(SOAPFaultException.class)
+        assertThatExceptionOfType(ClientConnectorException.class)
                 .isThrownBy(() -> clientConnectorService.queryPatient(assertions, "BE", patientDemographics))
-                .extracting(SOAPFaultException::getFault)
-                .satisfies(fault -> {
-                    assertThat(fault.getFaultCode()).contains("Receiver");
-                    assertThat(fault.getFaultString()).contains(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getDescription());
-
-                    final List<QName> subCodes = StreamSupport.stream(
-                            ((Iterable<QName>) fault::getFaultSubcodes).spliterator(), false
-                    ).collect(Collectors.toList());
-                    assertThat(subCodes)
-                            .hasSize(1)
-                            .extracting(QName::getLocalPart)
-                            .containsExactly(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getCode());
-                });
+                .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_PI_NO_MATCH);
+                    assertThat(!clientConnectorException.getNiErrorMessage().isPresent());
+                })
+                .withMessageContaining(OpenNCPErrorCode.ERROR_PI_NO_MATCH.getDescription());
     }
 }

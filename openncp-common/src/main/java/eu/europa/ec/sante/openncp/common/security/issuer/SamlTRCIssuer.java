@@ -8,6 +8,7 @@ import javax.xml.namespace.QName;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.TwoFactorAuthentication;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
@@ -162,7 +163,7 @@ public class SamlTRCIssuer {
         auditDataMap.put("humanRequestorNameID", humanRequestorNameID);
 
         final var subjectIdAttr = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+                AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         final String humanRequesterAlternativeUserID = ((XSString) subjectIdAttr.getAttributeValues().get(0)).getValue();
         auditDataMap.put("humanRequestorSubjectID", humanRequesterAlternativeUserID);
 
@@ -213,8 +214,7 @@ public class SamlTRCIssuer {
         final Attribute attrPID = AssertionUtil.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
         attrPID.setFriendlyName("XSPA Subject");
 
-        // TODO: Is there a constant for that urn??
-        attrPID.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+        attrPID.setName(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         attrPID.setNameFormat(Attribute.URI_REFERENCE);
 
         //Create and add the Attribute Value
@@ -227,12 +227,11 @@ public class SamlTRCIssuer {
         //Creating the Attribute that holds the Purpose of Use
         Attribute attrPoU = AssertionUtil.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
         attrPoU.setFriendlyName("XSPA Purpose Of Use");
-        // TODO: Is there a constant for that urn??
-        attrPoU.setName("urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
+        attrPoU.setName(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
         attrPoU.setNameFormat(Attribute.URI_REFERENCE);
         if (purposeOfUse == null) {
             attrPoU = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                    "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
+                    AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE);
             if (attrPoU == null) {
                 throw new SMgrException("Purpose of Use not found in the assertion and is not passed as a parameter");
             }
@@ -284,7 +283,7 @@ public class SamlTRCIssuer {
         }
 
         final var pointOfCareIdAttr = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xspa:1.0:subject:organization-id");
+                AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID);
         if (pointOfCareIdAttr != null) {
             final String pocId = ((XSString) pointOfCareIdAttr.getAttributeValues().get(0)).getValue();
             auditDataMap.put("pointOfCareID", pocId);

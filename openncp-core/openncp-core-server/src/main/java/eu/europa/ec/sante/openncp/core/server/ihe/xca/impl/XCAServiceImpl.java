@@ -80,6 +80,8 @@ import javax.activation.DataHandler;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -432,26 +434,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
 
-        // Evidence for call to NI for XCA List
-        try {
-            //  e-Sens: we MUST generate NRO when NCPA sends to NI. This was throwing errors because we were not
-            //  passing an XML document. We're passing data like:"SearchCriteria: {patientId = 12445ASD}".
-            //  So we provided an XML representation of such data.
-            final Assertion assertionTRC = SoapElementHelper.getTRCAssertion(requestData.getShElement());
-            final String messageUUID = UUIDHelper.encodeAsURN(assertionTRC.getID()) + "_" + assertionTRC.getIssueInstant();
-
-            EvidenceUtils.createEvidenceREMNRO(DocumentFactory.createSearchCriteria().addPatientId(requestData.getFullPatientId()).asXml(),
-                    Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                    Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.XCA_SERVICE_LIST.getEventTypeCode().getCsdCode(), new DateTime(),
-                    EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_LIST_REQ", messageUUID);
-        } catch (final Exception e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC,
-                    OpenNCPErrorCode.ERROR_SEC_GENERIC.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-
         for (final ClassCode classCodeValue : classCodeValues) {
             try {
                 policyAssertionManager.xcaPermissionvalidator(requestData.getHcpAssertionDetails().getAssertion(), classCodeValue);
@@ -766,23 +748,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
                 break processLabel;
             }
 
-            // Evidence for call to NI for XCA Retrieve
-            /* Joao: we MUST generate NRO when NCPA sends to NI.This was throwing errors because we were not passing an XML document.
-                We're passing data like:
-                "SearchCriteria: {patientId = 12445ASD}"
-                So we provided an XML representation of such data */
-            try {
-                EvidenceUtils.createEvidenceREMNRO(DocumentFactory.createSearchCriteria().addPatientId(fullPatientId).asXml(),
-                        Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                        EventType.XCA_SERVICE_RETRIEVE_NCP_A.getEventTypeCode().getCsdCode(), new DateTime(),
-                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_RETRIEVE_REQ",
-                        SoapElementHelper.getTRCAssertion(soapHeaderElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-            } catch (final Exception e) {
-                logger.error("createEvidenceREMNRO: '{}'", ExceptionUtils.getStackTrace(e), e);
-            }
 
             //TODO: EHNCP-1271 - Shall we indicate a specific ERROR Code???
             final EPSOSDocument epsosDoc;

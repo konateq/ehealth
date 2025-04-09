@@ -654,24 +654,6 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                     loggerClinical.info("Patient Identifier:\n'{}'", stringBuilderNRO);
                 }
 
-                // Joao: we have an adhoc XML document, so we can generate this evidence correctly
-                try {
-                    final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    //factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-                    factory.setXIncludeAware(false);
-                    factory.setNamespaceAware(true);
-                    final DocumentBuilder builder = factory.newDocumentBuilder();
-                    final Document doc = builder.parse(new InputSource(new StringReader(stringBuilderNRO.toString())));
-                    EvidenceUtils.createEvidenceREMNRO(doc, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                            Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getEventTypeCode().getCsdCode(),
-                            new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCPD_REQ",
-                            SoapElementHelper.getHCPAssertion(shElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                } catch (final Exception e) {
-                    logger.error(ExceptionUtils.getStackTrace(e));
-                }
-
                 // call to NI
                 final List<PatientDemographics> demographicsList = patientSearchService.getPatientDemographics(patientIdList);
 

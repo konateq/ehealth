@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
-import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
 import eu.europa.ec.sante.openncp.core.client.api.PatientId;
@@ -78,7 +78,7 @@ public class AssertionUtils {
 
         return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
-                "eHDSI EU Testing MedCare Center", permissions, null);
+                "eHDSI EU Testing MedCare Center", permissions, null, "1234567890");
     }
 
     public static Assertion createMedicalDoctorAssertion(final KeyStoreManager keyStoreManager,
@@ -101,7 +101,7 @@ public class AssertionUtils {
 
         return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
-                "eHDSI EU Testing MedCare Center", permissions, null);
+                "eHDSI EU Testing MedCare Center", permissions, null, "1234567890");
     }
 
     public static Assertion createPharmacistAssertion(final KeyStoreManager keyStoreManager,
@@ -122,13 +122,13 @@ public class AssertionUtils {
 
         return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Pharmacy", "TREATMENT",
-                "eHDSI EU Testing MedCare Center", permissions, null);
+                "eHDSI EU Testing MedCare Center", permissions, null, "1234567890");
     }
 
     private static Assertion createHCPAssertion(final KeyStoreManager keyStoreManager, final String fullName, final String email, final String countryCode,
                                                 final String countryName, final String homeCommId, final AssertionUtils.Concept role, final String organization,
                                                 final String organizationId, final String facilityType, final String purposeOfUse,
-                                                final String locality, final List<String> permissions, final String onBehalfId) {
+                                                final String locality, final List<String> permissions, final String onBehalfId, final String nationalProviderId) {
 
         Assertion assertion = null;
         try {
@@ -166,7 +166,7 @@ public class AssertionUtils {
 
             final AudienceRestriction audienceRestriction = create(AudienceRestriction.class, AudienceRestriction.DEFAULT_ELEMENT_NAME);
             final Audience audience = create(Audience.class, Audience.DEFAULT_ELEMENT_NAME);
-            audience.setAudienceURI("urn:ehdsi:assertions.audience:x-border");
+            audience.setAudienceURI(AssertionConstants.URN_EHDSI_AUDIENCE_X_BORDER);
             audienceRestriction.getAudiences().add(audience);
             conditions.getAudienceRestrictions().add(audienceRestriction);
 
@@ -195,39 +195,39 @@ public class AssertionUtils {
             final AttributeStatement attrStmt = create(AttributeStatement.class, AttributeStatement.DEFAULT_ELEMENT_NAME);
 
             // Set HC Identifier
-            final var attrHCID = createAttribute(builderFactory, "HCI Identifier", "urn:ihe:iti:xca:2010:homeCommunityId", "urn:oid:" + homeCommId,
-                    "");
+            final var attrHCID = createAttribute(builderFactory, "HCI Identifier", AssertionConstants.URN_IHE_ITI_XCA_HOME_COMMUNITY_ID, "urn:oid:" + homeCommId,
+                    XSString.TYPE_NAME);
             attrStmt.getAttributes().add(attrHCID);
 
             // Set NP Identifier
-            final var attrNPID = createAttribute(builderFactory, "NPI Identifier", "urn:oasis:names:tc:xspa:1.0:subject:npi", countryName, "");
+            final var attrNPID = createAttribute(builderFactory, "NPI Identifier", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_NPI, nationalProviderId, XSString.TYPE_NAME);
             attrStmt.getAttributes().add(attrNPID);
 
             // XSPA Subject
-            final var attrPID = createAttribute(builderFactory, "XSPA Subject", "urn:oasis:names:tc:xspa:1.0:subject:subject-id", fullName, "");
+            final var attrPID = createAttribute(builderFactory, "XSPA Subject", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID, fullName, XSString.TYPE_NAME);
             attrStmt.getAttributes().add(attrPID);
 
             // XSPA Role
-            final var structuralRole = createAttributeXSPARole(builderFactory, "XSPA Role", "urn:oasis:names:tc:xacml:2.0:subject:role", role);
+            final var structuralRole = createAttributeXSPARole(builderFactory, "XSPA Role", AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE, role);
             attrStmt.getAttributes().add(structuralRole);
 
             // XSPA Organization - Optional Field (eHDSI SAML Profile 2.2.0)
             if (StringUtils.isNotBlank(organization)) {
-                final var attrPID3 = createAttribute(builderFactory, "XSPA Organization", "urn:oasis:names:tc:xspa:1.0:subject:organization",
-                        organization, "");
+                final var attrPID3 = createAttribute(builderFactory, "XSPA Organization", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION,
+                        organization, XSString.TYPE_NAME);
                 attrStmt.getAttributes().add(attrPID3);
             }
 
             // XSPA Organization ID - Optional Field (eHDSI SAML Profile 2.2.0)
             if (StringUtils.isNotBlank(organizationId)) {
-                final var attrPID4 = createAttribute(builderFactory, "XSPA Organization ID", "urn:oasis:names:tc:xspa:1.0:subject:organization-id",
-                        organizationId, "");
+                final var attrPID4 = createAttribute(builderFactory, "XSPA Organization ID", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID,
+                        organizationId, XSString.TYPE_NAME);
                 attrStmt.getAttributes().add(attrPID4);
             }
-            // // On behalf of
+            // On behalf of
             if (StringUtils.isNotBlank(onBehalfId)) {
                 final var attrPID41 = createAttribute(builderFactory, "OnBehalfOf", "urn:epsos:names:wp3.4:subject:on-behalf-of", onBehalfId,
-                        role.getDisplayName());
+                        XSURI.TYPE_NAME);
                 attrStmt.getAttributes().add(attrPID41);
                 attrStmt.getAttributes().add(attrPID41);
             }
@@ -235,26 +235,26 @@ public class AssertionUtils {
             // eHealth DSI Healthcare Facility Type
             // var attrPID5 = createAttribute(builderFactory, "eHealth DSI Healthcare Facility Type",
             final var attrPID5 = createAttribute(builderFactory, "eHealth DSI Healthcare Facility Type",
-                    "urn:ehdsi:names:subject:healthcare-facility-type", facilityType, "");
+                    "urn:ehdsi:names:subject:healthcare-facility-type", facilityType, XSString.TYPE_NAME);
             attrStmt.getAttributes().add(attrPID5);
 
             // XSPA Purpose of Use
-            final var attrPID6 = createAttributePurposeOfUse(builderFactory, "XSPA Purpose Of Use", "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse", purposeOfUse);
+            final var attrPID6 = createAttributePurposeOfUse(builderFactory, "XSPA Purpose Of Use", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_PURPOSEOFUSE, purposeOfUse);
             attrStmt.getAttributes().add(attrPID6);
 
             // XSPA Locality
-            final var attrPID7 = createAttribute(builderFactory, "XSPA Locality", "urn:oasis:names:tc:xspa:1.0:environment:locality", locality, "");
+            final var attrPID7 = createAttribute(builderFactory, "XSPA Locality", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_ENVIRONMENT_LOCALITY, locality, XSString.TYPE_NAME);
             attrStmt.getAttributes().add(attrPID7);
 
             // HL7 Permissions
-            final var attrPID8 = createAttribute("Hl7 Permissions", "urn:oasis:names:tc:xspa:1.0:subject:hl7:permission");
+            final var attrPID8 = createAttribute("Hl7 Permissions", AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_HL7_PERMISSION);
             for (final Object permission : permissions) {
                 AddAttributeValue(builderFactory, attrPID8, permission.toString());
             }
             attrStmt.getAttributes().add(attrPID8);
 
             assertion.getStatements().add(attrStmt);
-            signSAMLAssertion(keyStoreManager, assertion, "gazelle.ncp-signature.openncp.dg-sante.eu");
+            signSAMLAssertion(keyStoreManager, assertion);
             LOGGER.info("AssertionId: '{}'", assertion.getID());
 
             final var marshaller = new AssertionMarshaller();
@@ -316,9 +316,7 @@ public class AssertionUtils {
         return (T) (XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(qname)).buildObject(qname);
     }
 
-    private static void signSAMLAssertion(final KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject, final String keyAlias) throws Exception {
-
-        LOGGER.info("method signSAMLAssertion('{}')", keyAlias);
+    private static void signSAMLAssertion(final KeyStoreManager keyStoreManager, final SignableSAMLObject signableSAMLObject) throws Exception {
 
         final CertificatesDataHolder certificatesDataHolder = CertificatesDataHolder.builder()
                 .trustoreData(CertificatesDataHolder.CertificateData.builder()
@@ -416,7 +414,7 @@ public class AssertionUtils {
     }
 
     private static Attribute createAttribute(final XMLObjectBuilderFactory builderFactory, final String FriendlyName, final String oasisName,
-                                             final String value, final String namespace) {
+                                             final String value, final QName qName) {
 
         final Attribute attrPID = create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
         attrPID.setFriendlyName(FriendlyName);
@@ -426,19 +424,11 @@ public class AssertionUtils {
 
         final XMLObjectBuilder stringBuilder;
 
-        if (StringUtils.isBlank(namespace)) {
-            final XSString attrValPID;
-            stringBuilder = builderFactory.getBuilder(XSString.TYPE_NAME);
-            attrValPID = (XSString) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-            attrValPID.setValue(value);
-            attrPID.getAttributeValues().add(attrValPID);
-        } else {
-            final XSURI attrValPID;
-            stringBuilder = builderFactory.getBuilder(XSURI.TYPE_NAME);
-            attrValPID = (XSURI) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSURI.TYPE_NAME);
-            attrValPID.setValue(value);
-            attrPID.getAttributeValues().add(attrValPID);
-        }
+        final XSString attrValPID;
+        stringBuilder = builderFactory.getBuilder(qName);
+        attrValPID = (XSString) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, qName);
+        attrValPID.setValue(value);
+        attrPID.getAttributeValues().add(attrValPID);
 
         return attrPID;
     }
