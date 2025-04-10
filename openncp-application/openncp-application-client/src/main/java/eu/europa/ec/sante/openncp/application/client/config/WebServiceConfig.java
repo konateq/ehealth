@@ -59,7 +59,7 @@ public class WebServiceConfig {
     public Endpoint endpoint(final Bus bus,
                              final ClientServicePortType clientConnectorServicePortType,
                              final LoggingFeature loggingFeature,
-                             final HcpAssertionValidationInterceptor hcpAssertionValidationInterceptor,
+                             final AssertionValidationInterceptor assertionValidationInterceptor,
                              final Merlin signatureCrypto) {
         final EndpointImpl endpoint = new EndpointImpl(bus, clientConnectorServicePortType);
         endpoint.getFeatures().add(loggingFeature);
@@ -70,7 +70,8 @@ public class WebServiceConfig {
         endpoint.getInInterceptors().add(new InboundSecurityInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
-        endpoint.getInInterceptors().add(hcpAssertionValidationInterceptor);
+        endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
+        endpoint.getInInterceptors().add(assertionValidationInterceptor);
         endpoint.getOutFaultInterceptors().add(new MyHealthEuSoapFaultInterceptor());
         endpoint.publish("/" + clientConnectorServicePortType.getClass().getAnnotation(WebService.class).serviceName());
 

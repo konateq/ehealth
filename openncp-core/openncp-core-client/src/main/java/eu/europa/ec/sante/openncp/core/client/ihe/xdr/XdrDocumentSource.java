@@ -3,10 +3,10 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xdr;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryError;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryErrorList;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryResponseType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -41,7 +41,7 @@ public final class XdrDocumentSource {
      * @param countryCode - Country code of the requesting country in ISO format.
      */
     public XdrResponse discard(final XdrRequest request, final String countryCode,
-                                      final Map<AssertionType, Assertion> assertionMap) throws XDRException {
+                                      final Map<AssertionType, Assertion> assertionMap) throws OpenNCPException {
 
         return provideAndRegisterDocSet(request, countryCode, assertionMap, ClassCode.EDD_CLASSCODE);
     }
@@ -53,7 +53,7 @@ public final class XdrDocumentSource {
      * @param countryCode - Country code of the requesting country in ISO format.
      */
     public XdrResponse initialize(final XdrRequest request, final String countryCode,
-                                         final Map<AssertionType, Assertion> assertionMap) throws XDRException {
+                                         final Map<AssertionType, Assertion> assertionMap) throws OpenNCPException {
 
         return provideAndRegisterDocSet(request, countryCode, assertionMap, ClassCode.ED_CLASSCODE);
     }
@@ -66,7 +66,7 @@ public final class XdrDocumentSource {
      */
     public XdrResponse provideAndRegisterDocSet(final XdrRequest request, final String countryCode,
                                                 final Map<AssertionType, Assertion> assertionMap, final ClassCode docClassCode)
-            throws XDRException {
+            throws OpenNCPException {
 
         final RegistryResponseType response;
 
@@ -77,7 +77,7 @@ public final class XdrDocumentSource {
                 processRegistryErrors(registryErrorList);
             }
         } catch (final RemoteException e) {
-            throw new XDRException(getErrorCode(docClassCode), e);
+            throw new OpenNCPException(getErrorCode(docClassCode), e);
         }
         return XdrResponseDts.newInstance(response);
     }
@@ -87,7 +87,7 @@ public final class XdrDocumentSource {
      *
      * @param registryErrorList the Registry Error List to be processed.
      */
-    private void processRegistryErrors(final RegistryErrorList registryErrorList) throws XDRException {
+    private void processRegistryErrors(final RegistryErrorList registryErrorList) throws OpenNCPException {
 
         if (registryErrorList == null) {
             return;
@@ -120,7 +120,7 @@ public final class XdrDocumentSource {
             }
 
             if (hasError) {
-                    throw new XDRException(openncpErrorCode, codeContext, location);
+                    throw new OpenNCPException(openncpErrorCode, codeContext, location);
             }
         }
     }

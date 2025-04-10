@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
-    <EventIdentification EventActionCode="R" EventDateTime="2025-02-06T12:12:51.390+01:00" EventOutcomeIndicator="0">
-        <EventID csd-code="110112" codeSystemName="DCM" displayName="epsosCommunicationFailure" originalText="Query"/>
-        <EventTypeCode csd-code="EHDSI-CF" codeSystemName="IHE Transactions" displayName="CommunicationFailure" originalText="epsosCommunicationFailure"/>
+    <EventIdentification EventActionCode="E" EventDateTime="2025-02-06T12:12:51.390+01:00" EventOutcomeIndicator="0">
+        <EventID csd-code="110100" codeSystemName="DCM" originalText="Application Activity"/>
+        <EventTypeCode csd-code="EHDSI-CF" codeSystemName="eHDSI Transactions" originalText="Communication Failure"/>
     </EventIdentification>
     <ActiveParticipant UserID="HR User ID" AlternativeUserID="HR Alternative User ID" UserIsRequestor="true" NetworkAccessPointID="127.0.0.1" NetworkAccessPointTypeCode="2">
         <RoleIDCode csd-code="110153" codeSystemName="DCM" originalText="Source Role ID"/>

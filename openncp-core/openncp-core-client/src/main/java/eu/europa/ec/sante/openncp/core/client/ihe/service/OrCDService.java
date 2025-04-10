@@ -33,7 +33,7 @@ public class OrCDService {
                               final String countryCode,
                               final List<GenericDocumentCode> documentCodes,
                               final FilterParams filterParams,
-                              final Map<AssertionType, Assertion> assertionMap) throws XCAException {
+                              final Map<AssertionType, Assertion> assertionMap) throws OpenNCPException {
 
         return xcaGateway.crossGatewayQuery(pid, countryCode, documentCodes, filterParams, assertionMap,
                 RegisteredService.ORCD_SERVICE.getServiceName());
@@ -44,7 +44,7 @@ public class OrCDService {
                                                                  final String countryCode,
                                                                  final String targetLanguage,
                                                                  final Map<AssertionType, Assertion> assertionMap)
-            throws XCAException {
+            throws OpenNCPException {
         return xcaGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.ORCD_SERVICE.getServiceName());
     }
 }

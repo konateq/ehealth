@@ -1,10 +1,7 @@
 package eu.europa.ec.sante.openncp.common.security.issuer;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
@@ -13,28 +10,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.XSString;
 import org.opensaml.saml.common.SAMLVersion;
-import org.opensaml.saml.saml2.core.Advice;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.AssertionIDRef;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.Audience;
-import org.opensaml.saml.saml2.core.AudienceRestriction;
-import org.opensaml.saml.saml2.core.AuthnContext;
-import org.opensaml.saml.saml2.core.AuthnContextClassRef;
-import org.opensaml.saml.saml2.core.AuthnStatement;
-import org.opensaml.saml.saml2.core.Conditions;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import javax.xml.namespace.QName;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class SamlNextOfKinIssuer {
@@ -47,7 +38,7 @@ public class SamlNextOfKinIssuer {
      * @param keyStoreManager
      */
     public SamlNextOfKinIssuer(final KeyStoreManager keyStoreManager) {
-        this.keyStoreManager = Validate.notNull(keyStoreManager);
+        this.keyStoreManager = Validate.notNull(keyStoreManager, "keyStoreManager must not be null");
     }
 
     //    /**
@@ -62,7 +53,7 @@ public class SamlNextOfKinIssuer {
     //        return (T) XMLObjectProviderRegistrySupport.getBuilderFactory().getBuilder(qname).buildObject(qname);
     //    }
 
-    public Assertion issueNextOfKinToken(final Assertion hcpIdentityAssertion, final String doctorId, final String idaReference,
+    public Assertion issueNextOfKinToken(final Assertion hcpIdentityAssertion, final String patientId, final String purposeOfUse, final String idaReference,
                                          final List<Attribute> attrValuePair) throws SMgrException {
 
         // Initializing the Map
@@ -111,11 +102,11 @@ public class SamlNextOfKinIssuer {
         issuer.setNameQualifier("urn:ehdsi:assertions:nok");
         assertion.setIssuer(issuer);
 
-        final NameID nameid = AssertionUtil.create(NameID.class, NameID.DEFAULT_ELEMENT_NAME);
-        nameid.setFormat(NameID.UNSPECIFIED);
-        nameid.setValue(doctorId);
-
-        assertion.getSubject().setNameID(nameid);
+        //  Set the TRC Assertion Subject element to the same value as the HCP one.
+        final NameID nameID = AssertionUtil.create(NameID.class, NameID.DEFAULT_ELEMENT_NAME);
+        nameID.setFormat(hcpIdentityAssertion.getSubject().getNameID().getFormat());
+        nameID.setValue(hcpIdentityAssertion.getSubject().getNameID().getValue());
+        assertion.getSubject().setNameID(nameID);
 
         final String spProvidedID = hcpIdentityAssertion.getSubject().getNameID().getSPProvidedID();
         final String humanRequestorNameID = StringUtils.isNotBlank(spProvidedID) ? spProvidedID
@@ -125,7 +116,7 @@ public class SamlNextOfKinIssuer {
         auditDataMap.put("humanRequestorNameID", humanRequestorNameID);
 
         final var subjectIdAttr = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+                AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         final String humanRequesterAlternativeUserID = ((XSString) subjectIdAttr.getAttributeValues().get(0)).getValue();
         auditDataMap.put("humanRequestorSubjectID", humanRequesterAlternativeUserID);
 
@@ -140,7 +131,7 @@ public class SamlNextOfKinIssuer {
 
         final AudienceRestriction audienceRestriction = AssertionUtil.create(AudienceRestriction.class, AudienceRestriction.DEFAULT_ELEMENT_NAME);
         final Audience audience = AssertionUtil.create(Audience.class, Audience.DEFAULT_ELEMENT_NAME);
-        audience.setAudienceURI("urn:ehdsi:assertions.audience:x-border");
+        audience.setAudienceURI(AssertionConstants.URN_EHDSI_AUDIENCE_X_BORDER);
         audienceRestriction.getAudiences().add(audience);
         conditions.getAudienceRestrictions().add(audienceRestriction);
 
@@ -168,41 +159,46 @@ public class SamlNextOfKinIssuer {
         ac.setAuthnContextClassRef(authnContextClassRef);
         authStmt.setAuthnContext(ac);
 
-        // Create the Saml Attribute Statement
+        // Create the SAML Attribute Statement
         final AttributeStatement attrStmt = AssertionUtil.create(AttributeStatement.class, AttributeStatement.DEFAULT_ELEMENT_NAME);
         assertion.getStatements().add(attrStmt);
 
         //Creating the Attribute that holds the Patient ID
-        //        Attribute attrPID = create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
-        //        attrPID.setFriendlyName("XSPA Subject");
-        //        attrPID.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
-        //        attrPID.setNameFormat(Attribute.URI_REFERENCE);
+        final Attribute attrPID = AssertionUtil.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
+        attrPID.setFriendlyName("XSPA Subject");
+        attrPID.setName(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
+        attrPID.setNameFormat(Attribute.URI_REFERENCE);
+        final XMLObjectBuilder stringBuilder = builderFactory.getBuilder(XSString.TYPE_NAME);
+        final XSString attrValPID = (XSString) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
+        attrValPID.setValue(patientId);
+        attrPID.getAttributeValues().add(attrValPID);
+        attrStmt.getAttributes().add(attrPID);
+        //Creating the Attribute that holds the Purpose of Use
+        Attribute attrPoU = AssertionUtil.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
+        attrPoU.setFriendlyName("XSPA Purpose Of Use");
+        // TODO: Is there a constant for that urn??
+        attrPoU.setName("urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
+        attrPoU.setNameFormat(Attribute.URI_REFERENCE);
 
-        //Create and add the Attribute Value
-        // var stringBuilder = builderFactory.getBuilder(XSString.TYPE_NAME);
-        //        XSString attrValPID = (XSString) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-        //        attrValPID.setValue(patientID);
-        //        attrPID.getAttributeValues().add(attrValPID);
-        //        attrStmt.getAttributes().add(attrPID);
-
-        // Set Next of Kin attributes:
-        //        Attribute attributeNextOfKinId = create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
-        //        attributeNextOfKinId.setFriendlyName("XSPA Purpose Of Use");
-        //
-        //        attributeNextOfKinId.setName("urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
-        //        attributeNextOfKinId.setNameFormat(Attribute.URI_REFERENCE);
-        //        if (nextOfKinId == null) {
-        //            attributeNextOfKinId = SamlIssuerHelper.createAttribute(nextOfKinId, "Purpose Of Use", Attribute.NAME_FORMAT_ATTRIB_NAME,
-        //                    "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
-        //            if (attributeNextOfKinId == null) {
-        //                throw new SMgrException("Purpose of use not found in the assertion and is not passed as a parameter");
-        //            }
-        //        } else {
-        //            XSString attrValNextOfKinId = (XSString) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-        //            attrValNextOfKinId.setValue(nextOfKinId);
-        //            attributeNextOfKinId.getAttributeValues().add(attrValNextOfKinId);
-        //        }
-        // attrStmt.getAttributes().add(attributeNextOfKinId);
+        if (purposeOfUse == null) {
+            attrPoU = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
+                    "urn:oasis:names:tc:xspa:1.0:subject:purposeofuse");
+            if (attrPoU == null) {
+                throw new SMgrException("Purpose of Use not found in the assertion and is not passed as a parameter");
+            }
+        } else {
+            final XMLObjectBuilder<XSAny> xsAnyBuilder = (XMLObjectBuilder<XSAny>) builderFactory.getBuilder(XSAny.TYPE_NAME);
+            final XSAny pou = xsAnyBuilder.buildObject("urn:hl7-org:v3", "PurposeOfUse", "");
+            pou.getUnknownAttributes().put(new QName("code"), purposeOfUse);
+            pou.getUnknownAttributes().put(new QName("codeSystem"), "3bc18518-d305-46c2-a8d6-94bd59856e9e");
+            pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI PurposeOfUse");
+            pou.getUnknownAttributes().put(new QName("displayName"), purposeOfUse);
+            //pou.setTextContent(purposeOfUse);
+            final XSAny pouAttributeValue = xsAnyBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
+            pouAttributeValue.getUnknownXMLObjects().add(pou);
+            attrPoU.getAttributeValues().add(pouAttributeValue);
+        }
+        attrStmt.getAttributes().add(attrPoU);
         for (final Attribute attribute : attrValuePair) {
             attrStmt.getAttributes().add(attribute);
         }
@@ -220,7 +216,7 @@ public class SamlNextOfKinIssuer {
         }
 
         final var pointOfCareIdAttr = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xspa:1.0:subject:organization-id");
+                AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID);
         if (pointOfCareIdAttr != null) {
             final String pocId = ((XSString) pointOfCareIdAttr.getAttributeValues().get(0)).getValue();
             auditDataMap.put("pointOfCareID", pocId);

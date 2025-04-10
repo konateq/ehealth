@@ -25,8 +25,8 @@ public class DispensationDiscardServiceAuditMessageBuilderTest extends XMLTestCa
         {
 
             final EventLog eventLog = new EventLog();
-            eventLog.setEventType(EventType.DISPENSATION_SERVICE_DISCARD);
-            eventLog.setNcpSide(NcpSide.NCP_B);
+            eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
+            eventLog.setNcpSide(NcpSide.NCP_A);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
             eventLog.setEI_EventActionCode(EventActionCode.QUERY);
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);

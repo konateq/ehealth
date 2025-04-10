@@ -5,8 +5,12 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
+import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
+import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
+import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
@@ -19,6 +23,9 @@ import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
+import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceInterface;
+import org.apache.axiom.soap.SOAPHeader;
+import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +50,7 @@ import java.io.StringReader;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
@@ -61,12 +69,14 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
     private final Logger logger = LoggerFactory.getLogger(XcpdServiceServerSideImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory objectFactory = new ObjectFactory();
-    private final PatientSearchInterface patientSearchService;
-    private final SAML2Validator saml2Validator;
+    private final AssertionValidator assertionValidator;
+    private final PolicyAssertionManager policyAssertionManager;
+    private final NationalConnectorFactory nationalConnectorFactory;
 
-    public XcpdServiceServerSideImpl(final PatientSearchInterface patientSearchService, final SAML2Validator saml2Validator) {
-        this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
-        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
+    public XcpdServiceServerSideImpl(final NationalConnectorFactory nationalConnectorFactory, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager) {
+        this.nationalConnectorFactory = Validate.notNull(nationalConnectorFactory, "nationalConnectorFactory must not be null");
+        this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
 
     private String getParticipantObjectID(final II id) {
@@ -128,8 +138,9 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
 
     @Override
     public PRPAIN201306UV02 queryPatient(final PRPAIN201305UV02 request, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
+        final PatientSearchInterface patientSearchService = nationalConnectorFactory.createPatientSearchInstance();
         final var response = objectFactory.createPRPAIN201306UV02();
-        pRPAIN201306UV02Builder(request, response, soapHeader, eventLog);
+        pRPAIN201306UV02Builder(patientSearchService, request, response, soapHeader, eventLog);
         return response;
     }
 
@@ -295,7 +306,7 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
 
         // Set detectedIssueEvent/code
         mfmimt700711UV01Reason.getDetectedIssueEvent().setCode(objectFactory.createCD());
-        mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCode("ActAdministrativeDetectedIssueCode");
+        mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCode("_ActAdministrativeDetectedIssueManagementCode");
         mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCodeSystem("2.16.840.1.113883.5.4");
 
         if (xcpdErrorCode == XCPDErrorCode.DemographicsQueryNotAllowed) {
@@ -501,7 +512,7 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
         return patientDemographics;
     }
 
-    private void pRPAIN201306UV02Builder(final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
+    private void pRPAIN201306UV02Builder(final PatientSearchInterface patientSearchService, final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
                                          final EventLog eventLog) throws Exception {
 
         final String sigCountryCode;
@@ -582,7 +593,25 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
         patientSearchService.setSOAPHeader(soapHeader);
 
         try {
-            sigCountryCode = saml2Validator.validateHCPHeader(soapHeader);
+            final List<AssertionDetails> assertions = AssertionUtil.toAssertions(soapHeader);
+            final List<AssertionValidationResult> assertionValidationResults = assertionValidator.validate(assertions);
+            final List<String> failedValidationMessages = assertionValidationResults.stream()
+                    .flatMap((AssertionValidationResult assertionValidationResult) -> assertionValidationResult.getFailedValidationMessages().stream())
+                    .collect(Collectors.toList());
+            if (!failedValidationMessages.isEmpty()) {
+                throw new InsufficientRightsException(String.format("Assertion validation error: [%s]", String.join("\n", failedValidationMessages)));
+            }
+
+            final AssertionDetails hcpAssertionDetails = assertionValidationResults.stream()
+                    .map(AssertionValidationResult::getAssertionDetails)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP)
+                    .findFirst()
+                    .orElseThrow(() -> new InsufficientRightsException("No valid HCP assertion found"));
+
+            policyAssertionManager.xcpdPermissionValidator(hcpAssertionDetails.getAssertion());
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
 
             final String senderHomeCommID = inputMessage.getSender().getDevice().getId().get(0).getRoot();
             final String receiverHomeCommID = inputMessage.getReceiver().get(0).getDevice().getId().get(0).getRoot();
@@ -638,45 +667,9 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
                     loggerClinical.info("Patient Identifier:\n'{}'", stringBuilderNRO);
                 }
 
-                // Joao: we have an adhoc XML document, so we can generate this evidence correctly
-                try {
-                    final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    //factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-                    factory.setXIncludeAware(false);
-                    factory.setNamespaceAware(true);
-                    final DocumentBuilder builder = factory.newDocumentBuilder();
-                    final Document doc = builder.parse(new InputSource(new StringReader(stringBuilderNRO.toString())));
-                    EvidenceUtils.createEvidenceREMNRO(doc, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                            Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode(),
-                            new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCPD_REQ",
-                            SoapElementHelper.getHCPAssertion(soapHeader).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                } catch (final Exception e) {
-                    logger.error(ExceptionUtils.getStackTrace(e));
-                }
-
                 // call to NI
                 final List<PatientDemographics> demographicsList = patientSearchService.getPatientDemographics(patientIdList);
 
-                // Joao: the NRR is being generated based on the request data, not on the response. This NRR is optional as per the CP, so it's left commented
-//                try {
-//                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-//                    factory.setNamespaceAware(true);
-//                    DocumentBuilder builder = factory.newDocumentBuilder();
-//                    Document doc = builder.parse(new InputSource(new StringReader(sb.toString())));
-//                    EvidenceUtils.createEvidenceREMNRR(doc,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                            tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                            IHEEventType.epsosIdentificationServiceFindIdentityByTraits.getCode(),
-//                            new DateTime(),
-//                            EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                            "NI_XCPD_RES",
-//                            Helper.getHCPAssertion(shElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-//                } catch (Exception e) {
-//                    logger.error(ExceptionUtils.getStackTrace(e));
-//                }
                 if (demographicsList.isEmpty()) {
                     // Preparing answer not available error
 
@@ -715,7 +708,7 @@ public class XcpdServiceServerSideImpl implements XcpdServiceServerSide {
                      *  (both the root and extension) to PDP, if required by PDP procedures.
                      */
                     for (var i = 0; i < demographicsList.size(); i++) {
-                        if (!saml2Validator.isConsentGiven(demographicsList.get(i).getIdList().get(0).getExtension(), countryCode)) {
+                        if (!policyAssertionManager.isConsentGiven(demographicsList.get(i).getIdList().get(0).getExtension(), countryCode)) {
                             // This patient data cannot be sent to Country B
                             demographicsList.remove(i);
                             i--;

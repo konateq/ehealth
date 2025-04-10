@@ -7,20 +7,22 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
+import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
@@ -36,6 +38,7 @@ import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.*;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xca.DocumentSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
 import eu.europa.ec.sante.openncp.core.server.ihe.IheErrorCode;
+import eu.europa.ec.sante.openncp.core.server.ihe.NationalConnectorFactory;
 import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ep.EPExtrinsicObjectBuilder;
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.orcd.OrCDExtrinsicObjectBuilder;
@@ -59,8 +62,11 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.soap.SOAPHeader;
 import java.io.StringWriter;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 
@@ -68,7 +74,6 @@ import static eu.europa.ec.sante.openncp.common.ClassCode.*;
 public class XcaServiceServerSideImpl implements XcaServiceServerSide {
 
     private static final DatatypeFactory DATATYPE_FACTORY;
-    private static final String NO_EVENT_IDENTIFICATION_INFORMATION_FOUND = "No event identification information found!";
 
     static {
         try {
@@ -81,9 +86,10 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     private final Logger logger = LoggerFactory.getLogger(XcaServiceServerSideImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory objectFactory = new ObjectFactory();
-    private final DocumentSearchInterface documentSearchService;
-    private final SAML2Validator saml2Validator;
+    private final AssertionValidator assertionValidator;
+    private final PolicyAssertionManager policyAssertionManager;
     private final CDATransformationService cdaTransformationService;
+    private final NationalConnectorFactory nationalConnectorFactory;
 
     /**
      * Public Constructor for IHE XCA Profile implementation, the default constructor will handle the loading of
@@ -91,10 +97,11 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
      *
      * @see ServiceLoader
      */
-    public XcaServiceServerSideImpl(final DocumentSearchInterface documentSearchService, final SAML2Validator saml2Validator, final CDATransformationService cdaTransformationService) {
-        this.documentSearchService = Validate.notNull(documentSearchService, "documentSearchService must not be null");
-        this.saml2Validator = Validate.notNull(saml2Validator, "saml2Validator must not be null");
+    public XcaServiceServerSideImpl(final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService, final NationalConnectorFactory nationalConnectorFactory) {
+        this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
+        this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "cdaTransformationService must not be null");
+        this.nationalConnectorFactory = Validate.notNull(nationalConnectorFactory, "nationalConnectorFactory must not be null");
     }
 
     /**
@@ -102,9 +109,9 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
      */
     @Override
     public AdhocQueryResponse queryDocument(final AdhocQueryRequest adhocQueryRequest, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-
+        final DocumentSearchInterface documentSearchService = nationalConnectorFactory.createDocumentSearchInstance();
         try {
-            return adhocQueryResponseBuilder(adhocQueryRequest, soapHeader, eventLog);
+            return adhocQueryResponseBuilder(documentSearchService, adhocQueryRequest, soapHeader, eventLog);
         } catch (final UnsupportedOperationException uoe) {
             return handleUnsupportedOperationException(adhocQueryRequest, uoe);
         }
@@ -117,8 +124,8 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     @Override
     public RetrieveDocumentSetResponse retrieveDocument(final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
             throws Exception {
-
-        return retrieveDocumentSetBuilder(request, soapHeader, eventLog);
+        final DocumentSearchInterface documentSearchService = nationalConnectorFactory.createDocumentSearchInstance();
+        return retrieveDocumentSetBuilder(documentSearchService, request, soapHeader, eventLog);
     }
 
     public static List<ClassCode> getClassCodesOrCD() {
@@ -133,13 +140,12 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     private void prepareEventLogForQuery(final EventLog eventLog, final AdhocQueryRequest request, final AdhocQueryResponse response, final Element sh, final ClassCode classCode) {
 
         logger.info("method prepareEventLogForQuery(Request: '{}', ClassCode: '{}')", request.getId(), classCode);
+        eventLog.setEventType(EventType.XCA_SERVICE_LIST);
         if (classCode == null) {
             // In case the document is not found, audit log cannot be properly filled, as we don't know the event type
             // Log this under Order Service
-            eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
             eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
         } else {
-            eventLog.setEventType(EventType.determineEventTypeForXCAQuery(List.of(classCode)));
             eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCAQuery(List.of(classCode)));
         }
         eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
@@ -208,15 +214,8 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                                             final boolean documentReturned, final RegistryErrorList registryErrorList, final Element sh, final ClassCode classCode) {
 
         logger.info("method prepareEventLogForRetrieve({})", classCode);
-        if (classCode == null) {
-            // In case the document is not found, audit log cannot be properly filled, as we don't know the event type
-            // Log this under Order Service
-            eventLog.setEventType(EventType.ORDER_SERVICE_RETRIEVE);
-            eventLog.setEI_TransactionName(TransactionName.ORDER_SERVICE_RETRIEVE);
-        } else {
-            eventLog.setEventType(EventType.determineEventTypeForXCARetrieve(classCode));
-            eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCARetrieve(classCode));
-        }
+        eventLog.setEventType(EventType.XCA_SERVICE_RETRIEVE_NCP_A);
+        eventLog.setEI_TransactionName(classCode != null ? TransactionName.determineTransactionNameForXCARetrieve(classCode) : TransactionName.ORDER_SERVICE_RETRIEVE);
         eventLog.setEI_EventActionCode(EventActionCode.READ);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.getEventTargetParticipantObjectIds().add(request.getDocumentRequests().get(0).getDocumentUniqueId());
@@ -340,10 +339,10 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     /**
      * Main part of the XCA query operation implementation, builds a AdhocQueryResponse based on the request and SOAP data
      */
-    private AdhocQueryResponse adhocQueryResponseBuilder(final AdhocQueryRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
+    private AdhocQueryResponse adhocQueryResponseBuilder(final DocumentSearchInterface documentSearchService, final AdhocQueryRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
             throws Exception {
 
-        // Extract all necessary data in an data object
+        // Extract all necessary data in a data object
 
         // with this data object, do validation checks
         // List<ValidationResults> validationResults = validationRules.map(validationRule -> validationRule.doCheck(dataObject)).collect(Collectors.toList())
@@ -362,7 +361,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         // Create Registry Object List
         adhocQueryResponse.setRegistryObjectList(objectFactory.createRegistryObjectList());
 
-        final RequestData requestData = extractAndValidateRequestData(soapHeader, classCodeValues, registryErrorList);
+        final RequestData requestData = extractAndValidateRequestData(documentSearchService, soapHeader, classCodeValues, registryErrorList);
         if (requestData.isEmpty()) {
             return adhocQueryResponse;
         }
@@ -413,7 +412,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         logger.info("The client country code to be used by the PDP: '{}'", countryCode);
 
         // Then, it is the Policy Decision Point (PDP) that decides according to the consent of the patient
-        if (!saml2Validator.isConsentGiven(requestData.getFullPatientId(), countryCode)) {
+        if (!policyAssertionManager.isConsentGiven(requestData.getFullPatientId(), countryCode)) {
             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_NO_CONSENT,
                     OpenNCPErrorCode.ERROR_PS_NO_CONSENT.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
@@ -424,31 +423,12 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                     RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         }
 
-        // Evidence for call to NI for XCA List
-        try {
-            //  e-Sens: we MUST generate NRO when NCPA sends to NI. This was throwing errors because we were not
-            //  passing an XML document. We're passing data like:"SearchCriteria: {patientId = 12445ASD}".
-            //  So we provided an XML representation of such data.
-            final Assertion assertionTRC = SoapElementHelper.getTRCAssertion(requestData.getShElement());
-            final String messageUUID = UUIDHelper.encodeAsURN(assertionTRC.getID()) + "_" + assertionTRC.getIssueInstant();
-
-            EvidenceUtils.createEvidenceREMNRO(DocumentFactory.createSearchCriteria().addPatientId(requestData.getFullPatientId()).asXml(),
-                    Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                    Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                    Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.PATIENT_SERVICE_LIST.getIheCode(), new DateTime(),
-                    EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_LIST_REQ", messageUUID);
-        } catch (final Exception e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC,
-                    OpenNCPErrorCode.ERROR_SEC_GENERIC.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        }
-
         for (final ClassCode classCodeValue : classCodeValues) {
-
             try {
+                policyAssertionManager.xcaPermissionvalidator(requestData.getHcpAssertionDetails().getAssertion(), classCodeValue);
                 switch (classCodeValue) {
                     case EP_CLASSCODE:
+
                         final List<DocumentAssociation<EPDocumentMetaData>> prescriptions = documentSearchService.getEPDocumentList(
                                 DocumentFactory.createSearchCriteria().addPatientId(requestData.getFullPatientId()));
 
@@ -535,7 +515,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                             searchCriteria.add(SearchCriteria.Criteria.CREATED_AFTER, filterParams.getCreatedAfter().toString());
                         }
 
-                        final List<OrCDDocumentMetaData> orCDDocumentMetaDataList = getOrCDDocumentMetaDataList(classCodeValue, searchCriteria);
+                        final List<OrCDDocumentMetaData> orCDDocumentMetaDataList = getOrCDDocumentMetaDataList(documentSearchService, classCodeValue, searchCriteria);
 
                         if (orCDDocumentMetaDataList == null) {
                             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_ORCD_GENERIC,
@@ -594,7 +574,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         return SoapElementHelper.getDocumentEntryPatientIdFromTRCAssertion(shElement);
     }
 
-    private List<OrCDDocumentMetaData> getOrCDDocumentMetaDataList(final ClassCode classCode, final SearchCriteria searchCriteria)
+    private List<OrCDDocumentMetaData> getOrCDDocumentMetaDataList(final DocumentSearchInterface documentSearchService, final ClassCode classCode, final SearchCriteria searchCriteria)
             throws NIException, InsufficientRightsException {
 
         List<OrCDDocumentMetaData> orCDDocumentMetaDataList = new ArrayList<>();
@@ -682,7 +662,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         return returnDoc;
     }
 
-    private RetrieveDocumentSetResponse retrieveDocumentSetBuilder(final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
+    private RetrieveDocumentSetResponse retrieveDocumentSetBuilder(final DocumentSearchInterface documentSearchService, final RetrieveDocumentSetRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
             throws Exception {
 
         final RegistryErrorList registryErrorList = objectFactory.createRegistryErrorList();
@@ -702,6 +682,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
 
             documentSearchService.setSOAPHeader(soapHeader);
 
+            final AssertionDetails hcpAssertionDetails = validateAssertionsAndGetHCPAssertion(soapHeaderElement);
             final String documentId = request.getDocumentRequests().get(0).getDocumentUniqueId();
             final String fullPatientId = extractFullPatientId(soapHeader);
             final String repositoryId = getRepositoryUniqueId(request);
@@ -724,7 +705,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                 logger.info("Could not get client country code from the service consumer certificate. " +
                         "The reason can be that the call was not via HTTPS. " +
                         "Will check the country code from the signature certificate now.");
-                countryCode = saml2Validator.getCountryCodeFromHCPAssertion(soapHeader);
+                countryCode = hcpAssertionDetails.getCountryCode().orElse(null);
                 if (countryCode != null) {
                     logger.info("Found the client country code via the signature certificate.");
                 } else {
@@ -738,29 +719,11 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
             logger.info("The client country code to be used by the PDP '{}' ", countryCode);
 
             // Then, it is the Policy Decision Point (PDP) that decides according to the consent of the patient
-            if (!saml2Validator.isConsentGiven(fullPatientId, countryCode)) {
+            if (!policyAssertionManager.isConsentGiven(fullPatientId, countryCode)) {
                 failure = true;
                 RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_NO_CONSENT,
                         OpenNCPErrorCode.ERROR_PS_NO_CONSENT.getDescription(), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 break processLabel;
-            }
-
-            // Evidence for call to NI for XCA Retrieve
-            /* Joao: we MUST generate NRO when NCPA sends to NI.This was throwing errors because we were not passing an XML document.
-                We're passing data like:
-                "SearchCriteria: {patientId = 12445ASD}"
-                So we provided an XML representation of such data */
-            try {
-                EvidenceUtils.createEvidenceREMNRO(DocumentFactory.createSearchCriteria().addPatientId(fullPatientId).asXml(),
-                        Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                        Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                        EventType.PATIENT_SERVICE_RETRIEVE.getIheCode(), new DateTime(),
-                        EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCA_RETRIEVE_REQ",
-                        SoapElementHelper.getTRCAssertion(soapHeader).getID() + "__" + DateUtil.getCurrentTimeGMT());
-            } catch (final Exception e) {
-                logger.error("createEvidenceREMNRO: '{}'", ExceptionUtils.getStackTrace(e), e);
             }
 
             //TODO: EHNCP-1271 - Shall we indicate a specific ERROR Code???
@@ -831,26 +794,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
             //            }
 
             classCodeValue = epsosDoc.getClassCode();
-
-            try {
-                saml2Validator.validateXCAHeader(soapHeader, classCodeValue);
-            } catch (final InvalidFieldException e) {
-                logger.error(e.getMessage(), e);
-                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_INCORRECT_FORMATTING, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-            } catch (final MissingFieldException e) {
-                logger.error(e.getMessage(), e);
-                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_MISSING_REQUIRED_FIELDS, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-            } catch (final OpenNCPErrorCodeException e) {
-                logger.error("OpenncpErrorCodeException: '{}'", e.getMessage(), e);
-                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getErrorCode(), e.getMessage(),
-                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-                break processLabel;
-            } catch (final SMgrException e) {
-                logger.error("SMgrException: '{}'", e.getMessage(), e);
-                RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC, e.getMessage(),
-                        RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-                break processLabel;
-            }
+            policyAssertionManager.xcaPermissionvalidator(hcpAssertionDetails.getAssertion(), classCodeValue);
 
             logger.info("XCA Retrieve Request is valid.");
             documentResponse.setHomeCommunityId(request.getDocumentRequests().get(0).getHomeCommunityId());
@@ -866,8 +810,8 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                 if (doc != null) {
                     logger.info("[National Infrastructure] CDA Document:\n'{}'", epsosDoc.getClassCode().getCode());
                     /* Validate CDA eHDSI Friendly */
-                    if (OpenNCPValidation.isValidationEnable()) {
-                        OpenNCPValidation.validateCdaDocument(XMLUtil.documentToString(epsosDoc.getDocument()), NcpSide.NCP_A,
+                    if (GazelleValidation.isValidationEnable()) {
+                        GazelleValidation.validateCdaDocument(XMLUtil.documentToString(epsosDoc.getDocument()), NcpSide.NCP_A,
                                 epsosDoc.getClassCode(), false);
                     }
                     // Transcode to eHDSI Pivot
@@ -909,8 +853,8 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                         }
                     } else {
                         /* Validate CDA eHDSI Pivot if no error during the transformation */
-                        if (OpenNCPValidation.isValidationEnable()) {
-                            OpenNCPValidation.validateCdaDocument(XMLUtil.documentToString(doc), NcpSide.NCP_A, epsosDoc.getClassCode(), true);
+                        if (GazelleValidation.isValidationEnable()) {
+                            GazelleValidation.validateCdaDocument(XMLUtil.documentToString(doc), NcpSide.NCP_A, epsosDoc.getClassCode(), true);
                         }
                     }
                 }
@@ -986,6 +930,22 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         return documentSetResponse;
     }
 
+    private AssertionDetails validateAssertionsAndGetHCPAssertion(final Element soapHeaderElement) throws InsufficientRightsException {
+        final List<AssertionDetails> assertions = AssertionUtil.toAssertions(soapHeaderElement);
+        final AssertionDetails hcpAssertionDetails = assertions.stream()
+                .filter(assertionDetails -> assertionDetails.getAssertionType() == AssertionType.HCP)
+                .findFirst()
+                .orElseThrow(() -> new InsufficientRightsException("No valid HCP assertion found"));
+        final List<AssertionValidationResult> assertionValidationResults = assertionValidator.validate(assertions);
+        final List<String> failedValidationMessages = assertionValidationResults.stream()
+                .flatMap((AssertionValidationResult assertionValidationResult) -> assertionValidationResult.getFailedValidationMessages().stream())
+                .collect(Collectors.toList());
+        if (!failedValidationMessages.isEmpty()) {
+            throw new InsufficientRightsException(String.format("Assertion validation error: [%s]", String.join("\n", failedValidationMessages)));
+        }
+        return hcpAssertionDetails;
+    }
+
     /**
      * This method will check if the Registry error list only contains Warnings.
      *
@@ -1048,14 +1008,14 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     }
 
 
-    private RequestData extractAndValidateRequestData(final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) throws Exception {
+    private RequestData extractAndValidateRequestData(final DocumentSearchInterface documentSearchService, final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) throws Exception {
         final Element shElement = null;
         String sigCountryCode = null;
+        AssertionDetails hcpAssertionDetails = null;
         try {
-//            shElement = XMLUtils.toDOM(soapHeader);
             documentSearchService.setSOAPHeader(soapHeader);
-//            sigCountryCode = saml2Validator.validateXCAHeader(shElement, getFirstClassCode(classCodeValues));
-            sigCountryCode = saml2Validator.validateXCAHeader(soapHeader, getFirstClassCode(classCodeValues));
+            hcpAssertionDetails = validateAssertionsAndGetHCPAssertion(soapHeader);
+            sigCountryCode = hcpAssertionDetails.getCountryCode().orElse(null);
         } catch (final InsufficientRightsException ire) {
             logger.error(ire.getMessage(), ire);
             RegistryErrorUtils.addErrorMessage(registryErrorList, ire.getErrorCode(), ire.getMessage(), ire, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
@@ -1093,18 +1053,20 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         }
 
         final String fullPatientId = extractFullPatientId(soapHeader);
-        return new RequestData(sigCountryCode, soapHeader, fullPatientId);
+        return new RequestData(sigCountryCode, soapHeader, fullPatientId, hcpAssertionDetails);
     }
 
     private static class RequestData {
-        public final String sigCountryCode;
-        public final Element shElement;
-        public final String fullPatientId;
+        private final String sigCountryCode;
+        private final Element shElement;
+        private final String fullPatientId;
+        private final AssertionDetails hcpAssertionDetails;
 
-        public RequestData(final String sigCountryCode, final Element shElement, final String fullPatientId) {
+        public RequestData(final String sigCountryCode, final Element shElement, final String fullPatientId, final AssertionDetails hcpAssertionDetails) {
             this.sigCountryCode = sigCountryCode;
             this.shElement = shElement;
             this.fullPatientId = fullPatientId;
+            this.hcpAssertionDetails = hcpAssertionDetails;
         }
 
         public String getSigCountryCode() {
@@ -1119,15 +1081,18 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
             return fullPatientId;
         }
 
+        public AssertionDetails getHcpAssertionDetails() {
+            return hcpAssertionDetails;
+        }
+
         public boolean isEmpty() {
             return StringUtils.isBlank(sigCountryCode)
                     && shElement == null
                     && StringUtils.isBlank(fullPatientId);
-
         }
 
         public static RequestData empty() {
-            return new RequestData(null, null, null);
+            return new RequestData(null, null, null, null);
         }
     }
 }

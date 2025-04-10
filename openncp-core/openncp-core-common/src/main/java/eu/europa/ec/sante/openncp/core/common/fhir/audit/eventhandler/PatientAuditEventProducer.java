@@ -2,12 +2,8 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import eu.europa.ec.sante.openncp.common.context.LogContext;
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
-import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
-import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;

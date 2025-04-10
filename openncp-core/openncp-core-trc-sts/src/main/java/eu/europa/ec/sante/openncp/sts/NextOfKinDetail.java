@@ -1,13 +1,13 @@
 package eu.europa.ec.sante.openncp.sts;
 
-import java.util.Date;
-import java.util.List;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class NextOfKinDetail {
+import java.util.Date;
 
-    private List<String> livingSubjectIds;
+public class NextOfKinDetail {
+    private String patientId;
+
+    private String livingSubjectId;
 
     private String firstName;
 
@@ -28,19 +28,27 @@ public class NextOfKinDetail {
     public NextOfKinDetail() {
     }
 
-    public List<String> getLivingSubjectIds() {
-        return livingSubjectIds;
+    public String getPatientId() {
+        return patientId;
     }
 
-    public void setLivingSubjectIds(List<String> livingSubjectIds) {
-        this.livingSubjectIds = livingSubjectIds;
+    public void setPatientId(String patientId) {
+        this.patientId = patientId;
+    }
+
+    public String getLivingSubjectId() {
+        return livingSubjectId;
+    }
+
+    public void setLivingSubjectId(final String livingSubjectId) {
+        this.livingSubjectId = livingSubjectId;
     }
 
     public String getFirstName() {
         return firstName;
     }
 
-    public void setFirstName(String firstName) {
+    public void setFirstName(final String firstName) {
         this.firstName = firstName;
     }
 
@@ -48,7 +56,7 @@ public class NextOfKinDetail {
         return familyName;
     }
 
-    public void setFamilyName(String familyName) {
+    public void setFamilyName(final String familyName) {
         this.familyName = familyName;
     }
 
@@ -56,7 +64,7 @@ public class NextOfKinDetail {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(final String gender) {
         this.gender = gender;
     }
 
@@ -64,7 +72,7 @@ public class NextOfKinDetail {
         return birthDate;
     }
 
-    public void setBirthDate(Date birthDate) {
+    public void setBirthDate(final Date birthDate) {
         this.birthDate = birthDate;
     }
 
@@ -72,7 +80,7 @@ public class NextOfKinDetail {
         return addressStreet;
     }
 
-    public void setAddressStreet(String addressStreet) {
+    public void setAddressStreet(final String addressStreet) {
         this.addressStreet = addressStreet;
     }
 
@@ -80,7 +88,7 @@ public class NextOfKinDetail {
         return addressCity;
     }
 
-    public void setAddressCity(String addressCity) {
+    public void setAddressCity(final String addressCity) {
         this.addressCity = addressCity;
     }
 
@@ -88,7 +96,7 @@ public class NextOfKinDetail {
         return addressPostalCode;
     }
 
-    public void setAddressPostalCode(String addressPostalCode) {
+    public void setAddressPostalCode(final String addressPostalCode) {
         this.addressPostalCode = addressPostalCode;
     }
 
@@ -96,14 +104,14 @@ public class NextOfKinDetail {
         return addressCountry;
     }
 
-    public void setAddressCountry(String addressCountry) {
+    public void setAddressCountry(final String addressCountry) {
         this.addressCountry = addressCountry;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("livingSubjectIds", livingSubjectIds)
+                .append("livingSubjectId", livingSubjectId)
                 .append("firstName", firstName)
                 .append("FamilyName", familyName)
                 .append("gender", gender)

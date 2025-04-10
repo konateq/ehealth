@@ -22,6 +22,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscovere
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocumentSetResponse;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -67,7 +68,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public String submitDocument(final SubmitDocumentOperation submitDocumentOperation) {
-        Validate.notNull(submitDocumentOperation);
+        Validate.notNull(submitDocumentOperation, "SubmitDocumentOperation cannot be null");
 
         final String methodName = "submitDocument";
         LoggingSlf4j.start(logger, methodName);
@@ -81,7 +82,7 @@ public class ClientServiceImpl implements ClientService {
             final GenericDocumentCode classCode = submitDocument.getClassCode();
             final Map<AssertionType, Assertion> assertionMap = submitDocumentOperation.getSamlDetails().getAssertionMap();
             if (!classCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
-                throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + classCode.getSchema());
+                throw new RuntimeException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + classCode.getSchema());
             }
             final String classCodeNode = classCode.getNodeRepresentation();
             final String nodeRepresentation = submitDocument.getFormatCode().getNodeRepresentation();
@@ -102,12 +103,12 @@ public class ClientServiceImpl implements ClientService {
                     response = dispensationService.discard(submitDocument, patientDemographics, countryCode, assertionMap);
                     break;
                 default:
-                    throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_EXCEPTION + classCodeNode);
+                    throw new RuntimeException(UNSUPPORTED_CLASS_CODE_EXCEPTION + classCodeNode);
             }
             submitDocumentResponse.setResponseStatus(response.getResponseStatus());
-        } catch (final XDRException | ParseException | RuntimeException ex) {
+        } catch (final OpenNCPException | ParseException | RuntimeException ex) {
             LoggingSlf4j.error(logger, methodName, ex);
-            throw new ClientConnectorException(ex);
+            throw new RuntimeException(ex);
         }
         LoggingSlf4j.end(logger, methodName);
         return submitDocumentResponse.getResponseStatus();
@@ -145,23 +146,23 @@ public class ClientServiceImpl implements ClientService {
                                 assertionMap);
                         break;
                     default:
-                        throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_EXCEPTION + Arrays.toString(documentCodes.toArray()));
+                        throw new RuntimeException(UNSUPPORTED_CLASS_CODE_EXCEPTION + Arrays.toString(documentCodes.toArray()));
                 }
             } else {
                 if (!documentCodes.contains(ClassCode.EP_CLASSCODE.getCode()) && !documentCodes.contains(ClassCode.PS_CLASSCODE.getCode())) {
                     response = orCDService.list(PatientIdDts.toDataModel(patientId), countryCode, GenericDocumentCodeDts.newInstance(documentCodes),
                             FilterParamsDts.newInstance(filterParams), assertionMap);
                 } else {
-                    throw new ClientConnectorException("Invalid combination of document codes provided: only OrCD document codes can be combined.");
+                    throw new RuntimeException("Invalid combination of document codes provided: only OrCD document codes can be combined.");
                 }
             }
 
             if (response.getDocumentAssociations() != null && !response.getDocumentAssociations().isEmpty()) {
                 queryDocumentsResponse.getReturn().addAll(DocumentDts.newInstance(response.getDocumentAssociations()));
             }
-        } catch (final XCAException | RuntimeException ex) {
+        } catch (final OpenNCPException | RuntimeException ex) {
             LoggingSlf4j.error(logger, methodName, ex);
-            throw new ClientConnectorException(ex);
+            throw new RuntimeException(ex);
         }
         LoggingSlf4j.end(logger, methodName);
         return queryDocumentsResponse.getReturn();
@@ -185,7 +186,7 @@ public class ClientServiceImpl implements ClientService {
                     genericDocumentCode);
             final Map<AssertionType, Assertion> assertionMap = retrieveDocumentOperation.getSamlDetails().getAssertionMap();
             if (!documentCode.getSchema().equals(IheConstants.CLASSCODE_SCHEME)) {
-                throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + documentCode.getSchema());
+                throw new RuntimeException(UNSUPPORTED_CLASS_CODE_SCHEME_EXCEPTION + documentCode.getSchema());
             }
 
             final var xdsDocument = XdsDocumentDts.newInstance(documentId);
@@ -208,13 +209,13 @@ public class ClientServiceImpl implements ClientService {
                     documentResponse = orCDService.retrieve(xdsDocument, homeCommunityId, countryCode, targetLanguage, assertionMap);
                     break;
                 default:
-                    throw new ClientConnectorException(UNSUPPORTED_CLASS_CODE_EXCEPTION + documentCode.getValue());
+                    throw new RuntimeException(UNSUPPORTED_CLASS_CODE_EXCEPTION + documentCode.getValue());
             }
 
             retrieveDocumentResponse = RetrieveDocumentResponseDts.newInstance(documentResponse);
-        } catch (final XCAException | RuntimeException ex) {
+        } catch (final OpenNCPException | RuntimeException ex) {
             LoggingSlf4j.error(logger, methodName, ex);
-            throw new ClientConnectorException(ex);
+            throw new RuntimeException(ex);
         }
         return retrieveDocumentResponse.getReturn();
     }
@@ -234,9 +235,9 @@ public class ClientServiceImpl implements ClientService {
 
             final List<PatientDemographics> returnedPatientDemographics = PatientDemographicsDts.fromDataModel(patientDemographicsList);
             queryPatientResponse.getReturn().addAll(returnedPatientDemographics);
-        } catch (final NoPatientIdDiscoveredException | ParseException | RuntimeException ex) {
+        } catch (final OpenNCPException | ParseException | RuntimeException ex) {
             LoggingSlf4j.error(logger, methodName, ex);
-            throw new ClientConnectorException(ex);
+            throw new RuntimeException(ex);
         }
         LoggingSlf4j.end(logger, methodName);
         return queryPatientResponse.getReturn();

@@ -5,7 +5,7 @@ import eu.europa.ec.sante.openncp.common.audit.utils.SecurityMgr;
 import eu.europa.ec.sante.openncp.common.audit.utils.Utils;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import net.RFC3881.dicom.AuditMessage;
 import net.RFC3881.dicom.ParticipantObjectDetail;
 import net.RFC3881.dicom.ParticipantObjectIDTypeCode;
@@ -33,7 +33,7 @@ public enum AuditTrailUtils {
     INSTANCE;
     private static final JAXBContext jaxbContext;
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditTrailUtils.class);
-    private static final String EVENT_TYPE_CODE_N_A = "EventTypeCode(N/A)";
+    private static final String EVENT_TYPE_CODE_N_A = "EventTypeCodeType(N/A)";
 
     static {
         try {
@@ -90,7 +90,7 @@ public enum AuditTrailUtils {
         if (!validated) {
             LOGGER.debug("'{}' Message not validated", auditmessage.getEventIdentification() != null ?
                     auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A);
-            //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)");
+            //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)");
             if (!forceWrite) {
                 auditMessage = "";
             }
@@ -100,18 +100,18 @@ public enum AuditTrailUtils {
             if (validated) {
                 LOGGER.debug("'{}' Audit Message validated", auditmessage.getEventIdentification() != null ?
                         auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A);
-                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)");
+                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)");
             } else {
                 LOGGER.debug("'{}' Audit Message not validated", auditmessage.getEventIdentification() != null ?
                         auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A);
-                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)");
+                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)");
             }
 
             if (forceWrite && !validated) {
                 LOGGER.debug("'{}' AuditManager is force to send the message. So trying ...",
                         auditmessage.getEventIdentification() != null ?
                                 auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A);
-                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)");
+                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)");
             }
 
             try {
@@ -119,7 +119,7 @@ public enum AuditTrailUtils {
                 LOGGER.debug("'{}' XML stuff: Create Dom From String",
                         auditmessage.getEventIdentification() != null ?
                                 auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A);
-                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)");
+                //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)");
                 Document doc = Utils.createDomFromString(auditMessage);
                 if (sign) {
 
@@ -127,14 +127,14 @@ public enum AuditTrailUtils {
                     LOGGER.debug("'{}' Audit Message signed",
                             auditmessage.getEventIdentification() != null ?
                                     auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A);
-                    //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)");
+                    //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)");
                 }
             } catch (Exception e) {
                 auditMessage = "";
                 LOGGER.error("'{}' Error signing doc: '{}'",
                         auditmessage.getEventIdentification() != null ?
                                 auditmessage.getEventIdentification().getEventID().getCsdCode() : EVENT_TYPE_CODE_N_A,
-                        //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCode(N/A)",
+                        //auditmessage.getEventIdentification().getEventID().getCode() : "EventTypeCodeType(N/A)",
                         e.getMessage(), e);
             }
         }
@@ -196,7 +196,7 @@ public enum AuditTrailUtils {
 
         // Check if the Audit Message return with a null value shall be considered as fatal?
         // Invoke audit message validation services
-        if (OpenNCPValidation.isValidationEnable()) {
+        if (GazelleValidation.isValidationEnable()) {
             if (message == null) {
                 LOGGER.error("Validation of the Audit Message cannot proceed on a Null value!!!");
             } else {
@@ -324,10 +324,10 @@ public enum AuditTrailUtils {
             // Infer model according to NCP Side and EventCode
             NcpSide ncpSide = eventLog.getNcpSide();
 
-            if (StringUtils.equals(eventLog.getEventType().getCode(), "EHDSI-CF")) {
+            if (StringUtils.equals(eventLog.getEventType().getEventTypeCode().getCsdCode(), "EHDSI-CF")) {
                 throw new UnsupportedOperationException("EventCode not supported.");
             }
-            OpenNCPValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getCode(), ncpSide);
+            GazelleValidation.validateAuditMessage(convertAuditObjectToXML(auditMessage), eventLog.getEventType().getEventTypeCode().getCsdCode(), ncpSide);
         } catch (JAXBException e) {
             LOGGER.error("JAXBException: {}", e.getMessage(), e);
         } catch (Exception e) {

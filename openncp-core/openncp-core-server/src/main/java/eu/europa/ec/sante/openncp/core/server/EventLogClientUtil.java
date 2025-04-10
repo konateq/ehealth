@@ -11,6 +11,7 @@ import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URI;
@@ -81,8 +82,7 @@ public class EventLogClientUtil {
 //
 //        // Set Active Participant Identification: Service Consumer NCP
 //        eventLog.setSC_UserID(HttpUtil.getSubjectDN(false));
-//        eventLog.setSP_UserID(HttpUtil.getServerCertificate(endpointReference));
-//
+//        eventLog.setSP_UserID(HttpUtil.getCommonNameFromServerCertificate(endpointReference));//
 //        // Set Audit Source
 //        eventLog.setAS_AuditSourceId(Constants.COUNTRY_PRINCIPAL_SUBDIVISION);
 //
@@ -117,7 +117,7 @@ public class EventLogClientUtil {
 
         for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+                if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                     eventLog.setHR_AlternativeUserID(EventLogUtil.getAttributeValue(attribute));
                 } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xacml:2.0:subject:role")) {
                     eventLog.setHR_RoleID(EventLogUtil.getAttributeValue(attribute));
@@ -137,7 +137,7 @@ public class EventLogClientUtil {
 
         for (final AttributeStatement attributeStatement : idAssertion.getAttributeStatements()) {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
-                if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+                if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                     eventLog.setPT_ParticipantObjectIDs(List.of(EventLogUtil.getAttributeValue(attribute)));
                     break;
                 }

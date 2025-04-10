@@ -6,10 +6,11 @@ import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.client.ihe.IhePortTypeFactory;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
@@ -18,7 +19,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.DocumentTransformationException;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.Base64Util;
@@ -69,7 +70,7 @@ public class XdrGateway {
      */
     public RegistryResponseType provideAndRegisterDocumentSet(final XdrRequest request, final String countryCode,
                                                               final Map<AssertionType, Assertion> assertionMap, final ClassCode docClassCode)
-            throws RemoteException, XDRException {
+            throws RemoteException, OpenNCPException {
 
         logger.info("[XDSb Repository] XDR Request: '{}', '{}', '{}'", assertionMap.get(AssertionType.HCP).getID(), countryCode, docClassCode);
         final RegistryResponseType response;
@@ -125,8 +126,8 @@ public class XdrGateway {
         final byte[] cdaBytes = request.getCda().getBytes(StandardCharsets.UTF_8);
         try {
             /* Validate CDA epSOS Friendly */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCdaDocument(request.getCda(), NcpSide.NCP_B, docClassCode, false);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCdaDocument(request.getCda(), NcpSide.NCP_B, docClassCode, false);
             }
             if (!docClassCode.equals(ClassCode.EDD_CLASSCODE)) {
                 final TMResponseStructure tmResponseStructure = cdaTransformationService.transcode(DomUtils.byteToDocument(cdaBytes), NcpSide.NCP_B);
@@ -138,8 +139,8 @@ public class XdrGateway {
                 xdrDocument.setValue(cdaBytes);
             }
             /* Validate CDA epSOS Pivot */
-            if (OpenNCPValidation.isValidationEnable()) {
-                OpenNCPValidation.validateCdaDocument(new String(xdrDocument.getValue(), StandardCharsets.UTF_8), NcpSide.NCP_B, docClassCode, true);
+            if (GazelleValidation.isValidationEnable()) {
+                GazelleValidation.validateCdaDocument(new String(xdrDocument.getValue(), StandardCharsets.UTF_8), NcpSide.NCP_B, docClassCode, true);
             }
         } catch (final DocumentTransformationException ex) {
             logger.error(ex.getLocalizedMessage(), ex);
@@ -486,7 +487,7 @@ public class XdrGateway {
             if (attr.getName().equals("urn:oasis:names:tc:xspa:1.0:subject:organization")) {
                 organization = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
-            if (StringUtils.equals(attr.getName(), "urn:oasis:names:tc:xspa:1.0:subject:organization-id")) {
+            if (StringUtils.equals(attr.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID)) {
                 organizationId = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
         }
@@ -528,10 +529,10 @@ public class XdrGateway {
         attrs = attrStatements.get(0).getAttributes();
 
         for (final Attribute attr : attrs) {
-            if (attr.getName().equals("urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+            if (attr.getName().equals(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                 authorIdentifier = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
-            if (StringUtils.equals(attr.getName(), "urn:oasis:names:tc:xspa:1.0:subject:organization-id")) {
+            if (StringUtils.equals(attr.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID)) {
                 assigningAuthorityId = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
         }

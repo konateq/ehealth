@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -16,13 +17,13 @@ import java.util.stream.Collectors;
  */
 @Domain
 public interface SamlDetails {
-    default Optional<AssertionDetails> getHcpAssertion() {
-        return getAssertion(AssertionType.HCP);
+    default Optional<AssertionDetails> getHcpAssertionDetails() {
+        return getAssertionDetails(AssertionType.HCP);
     }
 
     List<AssertionDetails> getAssertions();
 
-    default Optional<AssertionDetails> getAssertion(final AssertionType assertionType) {
+    default Optional<AssertionDetails> getAssertionDetails(final AssertionType assertionType) {
         Validate.notNull(assertionType, "assertionType must not be null");
 
         return getAssertions().stream()

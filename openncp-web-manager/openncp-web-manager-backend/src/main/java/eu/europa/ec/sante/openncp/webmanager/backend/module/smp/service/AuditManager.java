@@ -7,7 +7,6 @@ import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
 import eu.europa.ec.sante.openncp.common.property.PropertyService;
 import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.common.util.ImmutableCertificateData;
 import eu.europa.ec.sante.openncp.common.util.ImmutableCertificatesDataHolder;
 import eu.europa.ec.sante.openncp.webmanager.backend.module.smp.util.DateTimeUtil;
 import org.apache.commons.lang3.Validate;
@@ -58,7 +57,7 @@ public class AuditManager {
         final EventLog eventLog = createDynamicDiscoveryEventLog(TransactionName.SMP_QUERY, objectID, errorMessagePartObjectId,
                 errorMessagePartObjectDetail, smpServerUri);
         eventLog.setEventType(EventType.SMP_QUERY);
-        eventLog.setNcpSide(NcpSide.NCP_A);
+        eventLog.setNcpSide(NcpSide.NCP_B);
         auditService.write(eventLog, "13", "2");
     }
 
@@ -113,17 +112,21 @@ public class AuditManager {
     private EventLog createDynamicDiscoveryEventLog(final TransactionName transactionName, final String objectID,
                                                     final String errorMessagePartObjectId, final byte[] errorMessagePartObjectDetail,
                                                     final String smpServerUri) {
-        final ImmutableCertificateData providerCertificateData = ImmutableCertificateData.builder()
-                .path(propertyService.getPropertyValueMandatory(Constant.SP_KEYSTORE_PATH.getKey()))
-                .password(propertyService.getPropertyValueMandatory(Constant.SP_KEYSTORE_PASSWORD.getKey()))
-                .alias(propertyService.getPropertyValueMandatory(Constant.SP_PRIVATEKEY_ALIAS.getKey()))
+        final CertificatesDataHolder.CertificateData providerCertificateData = CertificatesDataHolder.CertificateData.builder()
+                .keystorePath(propertyService.getPropertyValueMandatory(Constant.SP_KEYSTORE_PATH.getKey()))
+                .keystorePassword(propertyService.getPropertyValueMandatory(Constant.SP_KEYSTORE_PASSWORD.getKey()))
+                .privateKeyAlias(propertyService.getPropertyValueMandatory(Constant.SP_PRIVATEKEY_ALIAS.getKey()))
                 .build();
-        final ImmutableCertificateData consumerCertificateData = ImmutableCertificateData.builder()
-                .path(propertyService.getPropertyValueMandatory(Constant.SC_KEYSTORE_PATH.getKey()))
-                .password(propertyService.getPropertyValueMandatory(Constant.SC_KEYSTORE_PASSWORD.getKey()))
-                .alias(propertyService.getPropertyValueMandatory(Constant.SC_PRIVATEKEY_ALIAS.getKey()))
+        final CertificatesDataHolder.CertificateData consumerCertificateData = CertificatesDataHolder.CertificateData.builder()
+                .keystorePath(propertyService.getPropertyValueMandatory(Constant.SC_KEYSTORE_PATH.getKey()))
+                .keystorePassword(propertyService.getPropertyValueMandatory(Constant.SC_KEYSTORE_PASSWORD.getKey()))
+                .privateKeyAlias(propertyService.getPropertyValueMandatory(Constant.SC_PRIVATEKEY_ALIAS.getKey()))
                 .build();
         final CertificatesDataHolder certificatesDataHolder = ImmutableCertificatesDataHolder.builder()
+                .trustoreData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(propertyService.getPropertyValueMandatory(Constant.TRUSTSTORE_PATH.getKey()))
+                        .keystorePassword(propertyService.getPropertyValueMandatory(Constant.TRUSTSTORE_PASSWORD.getKey()))
+                        .build())
                 .serviceProviderData(providerCertificateData)
                 .serviceConsumerData(consumerCertificateData)
                 .build();

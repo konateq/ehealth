@@ -7,8 +7,8 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocumentSetResponse;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class OrderService {
     }
 
     public QueryResponse list(final PatientId pid, final String countryCode, final GenericDocumentCode documentCode,
-                              final Map<AssertionType, Assertion> assertionMap) throws XCAException {
+                              final Map<AssertionType, Assertion> assertionMap) throws OpenNCPException {
 
         return xcaGateway.crossGatewayQuery(pid, countryCode, List.of(documentCode), null, assertionMap,
                 RegisteredService.ORDER_SERVICE.getServiceName());
@@ -37,7 +37,7 @@ public class OrderService {
                                                                  final String countryCode,
                                                                  final String targetLanguage,
                                                                  final Map<AssertionType, Assertion> assertionMap)
-            throws XCAException {
+            throws OpenNCPException {
         return xcaGateway.crossGatewayRetrieve(document, homeCommunityId, countryCode, targetLanguage, assertionMap, RegisteredService.ORDER_SERVICE.getServiceName());
     }
 }

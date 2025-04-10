@@ -83,11 +83,11 @@ public class PatientServiceTest {
 //     * {@link PatientService#retrieve(XDSDocument, String, String, String, Map)}
 //     */
 //    @Test
-//    public void testRetrieve2() throws XCAException {
+//    public void testRetrieve2() throws OpenNCPException {
 //        // Arrange
 //        when(xcaInitGateway.crossGatewayRetrieve(Mockito.<XDSDocument>any(), Mockito.<String>any(), Mockito.<String>any(),
 //                Mockito.<String>any(), Mockito.<Map<AssertionType, Assertion>>any(), Mockito.<String>any()))
-//                .thenThrow(new XCAException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred", "Context"));
+//                .thenThrow(new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, "An error occurred", "Context"));
 //
 //        GenericDocumentCode classCode = new GenericDocumentCode();
 //        classCode.setSchema("Schema");
@@ -124,7 +124,7 @@ public class PatientServiceTest {
 //        document.setSubstitution("Substitution");
 //
 //        // Act and Assert
-//        assertThrows(XCAException.class, () -> patientService.retrieve(document, "42", "GB", "en", new HashMap<>()));
+//        assertThrows(OpenNCPException.class, () -> patientService.retrieve(document, "42", "GB", "en", new HashMap<>()));
 //        verify(xcaInitGateway).crossGatewayRetrieve(isA(XDSDocument.class), eq("42"), eq("GB"), eq("en"), isA(Map.class),
 //                eq("PatientService"));
 //    }
