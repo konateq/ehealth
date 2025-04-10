@@ -1,14 +1,4 @@
-package eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml;
-
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Map;
-import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
+package eu.europa.ec.sante.openncp.common.security;
 
 import eu.europa.ec.sante.openncp.common.util.PrettyPrinter;
 import net.shibboleth.utilities.java.support.security.SecureRandomIdentifierGenerationStrategy;
@@ -20,6 +10,8 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilder;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.core.xml.io.Unmarshaller;
+import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.saml.saml2.core.*;

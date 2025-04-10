@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.QueryResponse;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCAException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocumentSetResponse;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;

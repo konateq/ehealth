@@ -7,20 +7,22 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
+import eu.europa.ec.sante.openncp.common.util.XMLUtil;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.ihe.IHEEventType;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
-import eu.europa.ec.sante.openncp.core.common.ihe.XDRServiceInterface;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.IheConstants;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.DiscardDispenseDetails;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.DocumentFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.EPSOSDocument;
@@ -57,7 +59,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class XdrServiceServerSideImpl implements XdrServiceServerSide {
@@ -239,7 +245,7 @@ public class XdrServiceServerSideImpl implements XdrServiceServerSide {
         //  Validate assertions according de Medication Discard Dispense rule:
         String sealCountryCode = null;
         try {
-            final AssertionDetails hcpAssertion = validateAssertionsAndGetHCPAssertion(soapHeaderElement);
+            final AssertionDetails hcpAssertion = validateAssertionsAndGetHCPAssertion(soapHeader);
             policyAssertionManager.xdrPermissionValidatorSubmitDocument(hcpAssertion.getAssertion());
             sealCountryCode = hcpAssertion.getCountryCode().orElse(null);
         } catch (final OpenNCPErrorCodeException e) {
@@ -377,7 +383,7 @@ public class XdrServiceServerSideImpl implements XdrServiceServerSide {
      * @return
      * @throws Exception
      */
-    public RegistryResponseType saveDispensation(final DocumentSubmitInterface documentSubmitService, final ProvideAndRegisterDocumentSetRequest request, final SOAPHeader soapHeader,
+    public RegistryResponseType saveDispensation(final DocumentSubmitInterface documentSubmitInterface, final ProvideAndRegisterDocumentSetRequest request, final SOAPHeader soapHeader,
                                                  final EventLog eventLog) throws Exception {
         logger.info("Processing Dispense Medication");
         final RegistryResponseType response = new RegistryResponseType();
@@ -386,17 +392,10 @@ public class XdrServiceServerSideImpl implements XdrServiceServerSide {
         documentSubmitInterface.setSOAPHeader(soapHeader);
 
         final RegistryErrorList registryErrorList = objectFactory.createRegistryErrorList();
-        try {
-            shElement = XMLUtils.toDOM(soapHeader);
-        } catch (final Exception e) {
-            logger.error(e.getMessage());
-            throw e;
-        }
-        documentSubmitService.setSOAPHeader(shElement);
+        documentSubmitInterface.setSOAPHeader(soapHeader);
 
-        final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
         try {
-            final AssertionDetails hcpAssertion = validateAssertionsAndGetHCPAssertion(shElement);
+            final AssertionDetails hcpAssertion = validateAssertionsAndGetHCPAssertion(soapHeader);
             policyAssertionManager.xdrPermissionValidatorSubmitDocument(hcpAssertion.getAssertion());
             sealCountryCode = hcpAssertion.getCountryCode().orElse(null);
         } catch (final OpenNCPErrorCodeException e) {
@@ -478,24 +477,7 @@ public class XdrServiceServerSideImpl implements XdrServiceServerSide {
 
                     // Call to National Connector
                     final String documentId = getDocumentId(epsosDocument.getDocument());
-                    documentSubmitService.submitDispensation(epsosDocument);
-
-                    // Evidence for response from NI for XDR submit (dispensation)
-                    /* Joao: the NRR is being generated based on the request message (submitted document). The interface for document submission does not return
-                    any response for the submit service. This NRR is optional as per the CP. Left commented for now. */
-//                    try {
-//                        EvidenceUtils.createEvidenceREMNRR(epsosDocument.toString(),
-//                                tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PATH,
-//                                tr.com.srdc.epsos.util.Constants.NCP_SIG_KEYSTORE_PASSWORD,
-//                                tr.com.srdc.epsos.util.Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-//                                IHEEventType.epsosDispensationServiceInitialize.getCode(),
-//                                new DateTime(),
-//                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(),
-//                                "NI_XDR_DISP_RES",
-//                                Helper.getDocumentEntryPatientIdFromTRCAssertion(shElement) + "__" + DateUtil.getCurrentTimeGMT());
-//                    } catch (Exception e) {
-//                        logger.error(ExceptionUtils.getStackTrace(e));
-//                    }
+                    documentSubmitInterface.submitDispensation(epsosDocument);
                 } catch (final NIException e) {
                     logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
                     registryErrorList.getRegistryErrors().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));

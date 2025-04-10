@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.server.nc.mock.util;
 
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML;
+import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.core.xml.io.MarshallingException;

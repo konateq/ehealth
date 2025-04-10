@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.common.audit.AuditServiceFactory;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
@@ -11,7 +12,6 @@ import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.URI;
@@ -119,14 +119,14 @@ public class EventLogClientUtil {
             for (final Attribute attribute : attributeStatement.getAttributes()) {
                 if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                     eventLog.setHR_AlternativeUserID(EventLogUtil.getAttributeValue(attribute));
-                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xacml:2.0:subject:role")) {
+                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XACML_2_0_SUBJECT_ROLE)) {
                     eventLog.setHR_RoleID(EventLogUtil.getAttributeValue(attribute));
-                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:ehdsi:names:subject:healthcare-facility-type")) {
+                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_EHDSI_NAMES_SUBJECT_HEALTHCARE_FACILITY_TYPE)) {
                     eventLog.setPC_RoleID(EventLogUtil.getAttributeValue(attribute));
-                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:subject:organization")) {
+                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION)) {
                     eventLog.setPC_UserID(EventLogUtil.getAttributeValue(attribute));
                     isOrganizationProvided = true;
-                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), "urn:oasis:names:tc:xspa:1.0:environment:locality") && !isOrganizationProvided) {
+                } else if (StringUtils.equalsIgnoreCase(attribute.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_ENVIRONMENT_LOCALITY) && !isOrganizationProvided) {
                     eventLog.setPC_UserID(EventLogUtil.getAttributeValue(attribute));
                 }
             }

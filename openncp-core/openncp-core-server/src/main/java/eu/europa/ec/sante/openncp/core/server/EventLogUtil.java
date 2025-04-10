@@ -130,12 +130,12 @@ public class EventLogUtil {
         }
         LOGGER.info("EventLogUtil: '{}'", classCode);
         if (StringUtils.equals(classCode, ClassCode.ED_CLASSCODE.getCode())) {
-            eventLog.setEventType(EventType.DISPENSATION_SERVICE_INITIALIZE);
+            eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
             eventLog.setEI_EventActionCode(EventActionCode.READ);
 
         } else if (StringUtils.equals(classCode, ClassCode.EDD_CLASSCODE.getCode())) {
-            eventLog.setEventType(EventType.DISPENSATION_SERVICE_DISCARD);
+            eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
             eventLog.setEI_EventActionCode(EventActionCode.READ);
             eventLog.getEventTargetParticipantObjectIds().add(discardId);

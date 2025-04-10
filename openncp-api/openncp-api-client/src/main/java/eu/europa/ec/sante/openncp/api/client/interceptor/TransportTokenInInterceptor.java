@@ -1,13 +1,13 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import java.util.Collection;
-
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.ws.policy.AssertionInfo;
 import org.apache.cxf.ws.policy.AssertionInfoMap;
 import org.apache.wss4j.policy.SP12Constants;
+
+import java.util.Collection;
 
 public class TransportTokenInInterceptor extends AbstractPhaseInterceptor<Message> {
 

@@ -1,7 +1,5 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import eu.europa.ec.sante.openncp.api.client.AssertionContext;
-import eu.europa.ec.sante.openncp.api.client.AssertionContextProvider;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
@@ -9,6 +7,7 @@ import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.SecurityContext;
 import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;
+import eu.europa.ec.sante.openncp.core.common.interceptors.AssertionsInInterceptor;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;

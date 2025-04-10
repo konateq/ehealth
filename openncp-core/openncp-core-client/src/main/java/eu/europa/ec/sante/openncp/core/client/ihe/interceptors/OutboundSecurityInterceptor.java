@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.interceptors;
 
-import eu.europa.ec.sante.openncp.core.common.AssertionDetails;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
 import eu.europa.ec.sante.openncp.core.common.SecurityContext;
 import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;

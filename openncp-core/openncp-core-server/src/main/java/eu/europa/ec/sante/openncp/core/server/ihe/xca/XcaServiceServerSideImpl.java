@@ -7,25 +7,21 @@ import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
-import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
-import eu.europa.ec.sante.openncp.common.validation.OpenNCPValidation;
+import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
+import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
+import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xdr.XDRConstants;
-import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InsufficientRightsException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.InvalidFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.MissingFieldException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.exceptions.OpenNCPErrorCodeException;
-import eu.europa.ec.sante.openncp.core.common.ihe.assertionvalidator.saml.SAML2Validator;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.*;
-import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
@@ -45,10 +41,7 @@ import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.orc
 import eu.europa.ec.sante.openncp.core.server.ihe.xca.extrinsicobjectbuilder.ps.PSExtrinsicObjectBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
-import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -62,8 +55,6 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.soap.SOAPHeader;
 import java.io.StringWriter;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -682,7 +673,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
 
             documentSearchService.setSOAPHeader(soapHeader);
 
-            final AssertionDetails hcpAssertionDetails = validateAssertionsAndGetHCPAssertion(soapHeaderElement);
+            final AssertionDetails hcpAssertionDetails = validateAssertionsAndGetHCPAssertion(soapHeader);
             final String documentId = request.getDocumentRequests().get(0).getDocumentUniqueId();
             final String fullPatientId = extractFullPatientId(soapHeader);
             final String repositoryId = getRepositoryUniqueId(request);
@@ -1020,18 +1011,6 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
             logger.error(ire.getMessage(), ire);
             RegistryErrorUtils.addErrorMessage(registryErrorList, ire.getErrorCode(), ire.getMessage(), ire, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
             return RequestData.empty();
-        } catch (final SMgrException e) {
-            logger.error(e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_SEC_GENERIC, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final InvalidFieldException e) {
-            logger.error(e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_INCORRECT_FORMATTING, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final MissingFieldException e) {
-            logger.error(e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_PS_MISSING_REQUIRED_FIELDS, e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
-        } catch (final OpenNCPErrorCodeException e) {
-            logger.error(e.getMessage(), e);
-            RegistryErrorUtils.addErrorMessage(registryErrorList, e.getErrorCode(), e.getMessage(), e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
         } catch (final Exception e) {
             OpenNCPErrorCode code = OpenNCPErrorCode.ERROR_GENERIC;
             switch (getFirstClassCode(classCodeValues)) {

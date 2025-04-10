@@ -1,11 +1,11 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.XCPDErrorCode;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -2,10 +2,10 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xcpd;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
-import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xcpd.XCPDConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.*;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.text.SimpleDateFormat;

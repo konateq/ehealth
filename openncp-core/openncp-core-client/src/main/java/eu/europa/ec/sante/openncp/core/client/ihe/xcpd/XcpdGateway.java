@@ -8,7 +8,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.ihe.IhePortTypeFactory;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientDemographics;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.NoPatientIdDiscoveredException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.PRPAIN201306UV02;
@@ -50,18 +50,18 @@ public class XcpdGateway {
      * @param assertionMap        HCP identity assertion.
      * @param countryCode         country code - ISO 3166-1 alpha-2
      * @return a List of matching Patient Demographics, each representing a patient person.
-     * @throws NoPatientIdDiscoveredException contains the error message
+     * @throws OpenNCPException contains the error message
      */
     public List<PatientDemographics> patientDiscovery(final PatientDemographics patientDemographics,
                                                       final Map<AssertionType, Assertion> assertionMap,
-                                                      final String countryCode) throws NoPatientIdDiscoveredException {
+                                                      final String countryCode) throws OpenNCPException {
 
 
         String endpointUrl = null;
         try {
             endpointUrl = discoveryService.getEndpointUrl(countryCode.toLowerCase(Locale.ENGLISH), RegisteredService.PATIENT_IDENTIFICATION_SERVICE);
         } catch (final ConfigurationManagerException e) {
-            throw new NoPatientIdDiscoveredException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
+            throw new OpenNCPException(OpenNCPErrorCode.ERROR_PI_NO_MATCH, e);
         }
         final RespondingGatewayPortType xcpdPortType = ihePortTypeFactory.createXCPDPort(configurationManager, endpointUrl);
 
