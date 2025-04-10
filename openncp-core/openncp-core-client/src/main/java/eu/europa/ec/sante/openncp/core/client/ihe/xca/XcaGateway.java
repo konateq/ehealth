@@ -90,25 +90,20 @@ public class XcaGateway {
         }
         QueryResponse result = null;
 
-        try {
+        /* queryRequest */
+        final AdhocQueryRequest queryRequest = AdhocQueryRequestCreator.createAdhocQueryRequest(pid.getExtension(), pid.getRoot(), documentCodes, filterParams);
+        final RespondingGatewayPortType xcaPortType = getEndPointAndCreatePortType(countryCode, service);
 
-            /* queryRequest */
-            final AdhocQueryRequest queryRequest = AdhocQueryRequestCreator.createAdhocQueryRequest(pid.getExtension(), pid.getRoot(), documentCodes, filterParams);
-            final RespondingGatewayPortType xcaPortType = getEndPointAndCreatePortType(countryCode, service);
+        /* queryResponse */
+        final List<ClassCode> documentClassCodes = new ArrayList<>();
+        for (final GenericDocumentCode genericDocumentCode : documentCodes) {
+            documentClassCodes.add(ClassCode.getByCode(genericDocumentCode.getValue()));
+        }
+        final AdhocQueryResponse queryResponse = xcaPortType.respondingGatewayCrossGatewayQuery(queryRequest);
+        processRegistryErrors(queryResponse.getRegistryErrorList());
 
-            /* queryResponse */
-            final List<ClassCode> documentClassCodes = new ArrayList<>();
-            for (final GenericDocumentCode genericDocumentCode : documentCodes) {
-                documentClassCodes.add(ClassCode.getByCode(genericDocumentCode.getValue()));
-            }
-            final AdhocQueryResponse queryResponse = xcaPortType.respondingGatewayCrossGatewayQuery(queryRequest);
-            processRegistryErrors(queryResponse.getRegistryErrorList());
-
-            if (queryResponse.getRegistryObjectList() != null) {
-                result = AdhocQueryResponseConverter.convertAdhocQueryResponse(queryResponse);
-            }
-        } catch (final RuntimeException ex) {
-            throw new RuntimeException(ex);
+        if (queryResponse.getRegistryObjectList() != null) {
+            result = AdhocQueryResponseConverter.convertAdhocQueryResponse(queryResponse);
         }
 
         return result;

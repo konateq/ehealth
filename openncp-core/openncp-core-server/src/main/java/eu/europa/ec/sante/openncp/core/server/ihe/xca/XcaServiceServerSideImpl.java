@@ -15,6 +15,7 @@ import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
@@ -100,9 +101,9 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
      */
     @Override
     public AdhocQueryResponse queryDocument(final AdhocQueryRequest adhocQueryRequest, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-        final DocumentSearchInterface documentSearchService = nationalConnectorFactory.createDocumentSearchInstance();
+        final DocumentSearchInterface documentSearchInterface = nationalConnectorFactory.createDocumentSearchInstance();
         try {
-            return adhocQueryResponseBuilder(documentSearchService, adhocQueryRequest, soapHeader, eventLog);
+            return adhocQueryResponseBuilder(documentSearchInterface, adhocQueryRequest, soapHeader, eventLog);
         } catch (final UnsupportedOperationException uoe) {
             return handleUnsupportedOperationException(adhocQueryRequest, uoe);
         }
@@ -330,8 +331,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     /**
      * Main part of the XCA query operation implementation, builds a AdhocQueryResponse based on the request and SOAP data
      */
-    private AdhocQueryResponse adhocQueryResponseBuilder(final DocumentSearchInterface documentSearchService, final AdhocQueryRequest request, final SOAPHeader soapHeader, final EventLog eventLog)
-            throws Exception {
+    private AdhocQueryResponse adhocQueryResponseBuilder(final DocumentSearchInterface documentSearchInterface, final AdhocQueryRequest request, final SOAPHeader soapHeader, final EventLog eventLog) {
 
         // Extract all necessary data in a data object
 
@@ -352,7 +352,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
         // Create Registry Object List
         adhocQueryResponse.setRegistryObjectList(objectFactory.createRegistryObjectList());
 
-        final RequestData requestData = extractAndValidateRequestData(documentSearchService, soapHeader, classCodeValues, registryErrorList);
+        final RequestData requestData = extractAndValidateRequestData(documentSearchInterface, soapHeader, classCodeValues, registryErrorList);
         if (requestData.isEmpty()) {
             return adhocQueryResponse;
         }
@@ -420,7 +420,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                 switch (classCodeValue) {
                     case EP_CLASSCODE:
 
-                        final List<DocumentAssociation<EPDocumentMetaData>> prescriptions = documentSearchService.getEPDocumentList(
+                        final List<DocumentAssociation<EPDocumentMetaData>> prescriptions = documentSearchInterface.getEPDocumentList(
                                 DocumentFactory.createSearchCriteria().addPatientId(requestData.getFullPatientId()));
 
                         if (prescriptions == null) {
@@ -458,7 +458,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                         }
                         break;
                     case PS_CLASSCODE:
-                        final DocumentAssociation<PSDocumentMetaData> psDoc = documentSearchService.getPSDocumentList(
+                        final DocumentAssociation<PSDocumentMetaData> psDoc = documentSearchInterface.getPSDocumentList(
                                 DocumentFactory.createSearchCriteria().addPatientId(requestData.getFullPatientId()));
 
                         if (psDoc == null || (psDoc.getPDFDocumentMetaData() == null && psDoc.getXMLDocumentMetaData() == null)) {
@@ -506,7 +506,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
                             searchCriteria.add(SearchCriteria.Criteria.CREATED_AFTER, filterParams.getCreatedAfter().toString());
                         }
 
-                        final List<OrCDDocumentMetaData> orCDDocumentMetaDataList = getOrCDDocumentMetaDataList(documentSearchService, classCodeValue, searchCriteria);
+                        final List<OrCDDocumentMetaData> orCDDocumentMetaDataList = getOrCDDocumentMetaDataList(documentSearchInterface, classCodeValue, searchCriteria);
 
                         if (orCDDocumentMetaDataList == null) {
                             RegistryErrorUtils.addErrorMessage(registryErrorList, OpenNCPErrorCode.ERROR_ORCD_GENERIC,
@@ -538,6 +538,17 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
             } catch (final NIException e) {
                 final var codeContext = e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage();
                 RegistryErrorUtils.addErrorMessage(registryErrorList, e.getOpenncpErrorCode(), codeContext,
+                        e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                responseStatus = AdhocQueryResponseStatus.FAILURE;
+            } catch (final OpenNCPErrorCodeException e) {
+                final var codeContext = e.getErrorCode().getDescription();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, e.getErrorCode(), codeContext,
+                        e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                responseStatus = AdhocQueryResponseStatus.FAILURE;
+            } catch (final Throwable e) {
+                final OpenNCPErrorCode openNCPErrorCode = OpenNCPErrorCode.ERROR_GENERIC;
+                final var codeContext = openNCPErrorCode.getDescription();
+                RegistryErrorUtils.addErrorMessage(registryErrorList, openNCPErrorCode, codeContext,
                         e, RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                 responseStatus = AdhocQueryResponseStatus.FAILURE;
             } finally {
@@ -999,7 +1010,7 @@ public class XcaServiceServerSideImpl implements XcaServiceServerSide {
     }
 
 
-    private RequestData extractAndValidateRequestData(final DocumentSearchInterface documentSearchService, final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) throws Exception {
+    private RequestData extractAndValidateRequestData(final DocumentSearchInterface documentSearchService, final SOAPHeader soapHeader, final List<ClassCode> classCodeValues, final RegistryErrorList registryErrorList) {
         final Element shElement = null;
         String sigCountryCode = null;
         AssertionDetails hcpAssertionDetails = null;

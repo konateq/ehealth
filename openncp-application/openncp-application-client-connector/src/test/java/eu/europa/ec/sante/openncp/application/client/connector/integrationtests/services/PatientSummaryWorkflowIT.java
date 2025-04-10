@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
-import com.mysql.cj.xdevapi.Client;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
@@ -18,14 +17,10 @@ import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.xml.namespace.QName;
-import javax.xml.ws.soap.SOAPFaultException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -203,7 +198,7 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
-    void bugtrigger_EHEALTH_10546() throws MalformedURLException, MarshallingException {
+    void bugtrigger_EHEALTH_10546_XCA_returns_results_instead_of_failure() throws MalformedURLException, MarshallingException {
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         final Assertion clinicalAssertion = AssertionUtils.createPharmacistAssertion(keyStoreManager, "Marie Curie", "marie@ehdsi.eu");
 
@@ -223,8 +218,9 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
         assertThatExceptionOfType(ClientConnectorException.class)
                 .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
                 .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode()).isPresent();
                     assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS);
-                    assertThat(!clientConnectorException.getNiErrorMessage().isPresent());
+                    assertThat(clientConnectorException.getNiErrorMessage()).isEmpty();
                 })
                 .withMessageContaining(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
     }

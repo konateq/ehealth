@@ -19,7 +19,7 @@ public class RegistryErrorUtils {
         registryErrorList.getRegistryErrors().add(createErrorMessage(errorCode.getCode(), codeContext, null, severity));
     }
 
-    public static void addErrorMessage(final RegistryErrorList registryErrorList, final ErrorCode errorCode, final String codeContext, final Exception e, final RegistryErrorSeverity severity) {
+    public static void addErrorMessage(final RegistryErrorList registryErrorList, final ErrorCode errorCode, final String codeContext, final Throwable e, final RegistryErrorSeverity severity) {
         registryErrorList.getRegistryErrors().add(createErrorMessage(errorCode.getCode(), codeContext, Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(e)).orElse(e).getStackTrace())
                 .findFirst()
                 .map(StackTraceElement::toString)
