@@ -230,6 +230,33 @@ public class PatientSummaryWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
+    void bugtrigger_EHEALTH_13404() throws MalformedURLException, MarshallingException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        final Assertion clinicalAssertion = AssertionUtils.createPharmacistAssertionWithoutPermissions(keyStoreManager, "Marie Curie", "marie@ehdsi.eu");
+
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("2-1234-W8");
+
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+        final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
+        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
+
+        final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
+        classCode.setNodeRepresentation(ClassCode.PS_CLASSCODE.getCode());
+        classCode.setSchema("2.16.840.1.113883.6.1");
+        classCode.setValue(Constants.PS_TITLE);
+
+        assertThatExceptionOfType(ClientConnectorException.class)
+                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
+                .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS);
+                    assertThat(!clientConnectorException.getNiErrorMessage().isPresent());
+                })
+                .withMessageContaining(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
+    }
+
+    @Test
     void bugtrigger_EHEALTH_13227_missing_fault_code() throws MalformedURLException, MarshallingException {
 
         final ObjectFactory objectFactory = new ObjectFactory();
