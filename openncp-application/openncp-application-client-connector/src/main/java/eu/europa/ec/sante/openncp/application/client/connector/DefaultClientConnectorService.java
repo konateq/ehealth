@@ -6,8 +6,10 @@ import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlA
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.context.ServerContext;
+import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
@@ -29,6 +31,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.ws.BindingProvider;
+import javax.xml.ws.soap.SOAPFaultException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,8 +49,6 @@ public class DefaultClientConnectorService implements ClientConnectorService {
     private final Logger logger = LoggerFactory.getLogger(DefaultClientConnectorService.class);
 
     private final ConfigurationManager configurationManager;
-    // URL of the targeted NCP-B - ClientService.wsdl
-    private final String endpointReference;
 
 
     private final RestApiClientService restApiClientService;
@@ -77,10 +78,11 @@ public class DefaultClientConnectorService implements ClientConnectorService {
                                          final RestApiClientService restApiClientService,
                                          final JwtTokenGenerator jwtTokenGenerator,
                                          ServerContext serverContext) {
-        this.configurationManager = Validate.notNull(configurationManager);
-        this.endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
-        this.restApiClientService = Validate.notNull(restApiClientService);
-        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator);
+        this.configurationManager = Validate.notNull(configurationManager, "configurationManager must not be null");
+        // URL of the targeted NCP-B - ClientService.wsdl
+        final String endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
+        this.restApiClientService = Validate.notNull(restApiClientService, "restApiClientService must not be null");
+        this.jwtTokenGenerator = Validate.notNull(jwtTokenGenerator, "jwtTokenGenerator must not be null");
 
         final ClientService ss = new ClientService();
         clientConnectorService = new ClientConnectorServicePortTypeWrapper(ss.getClientServicePort());
@@ -109,79 +111,79 @@ public class DefaultClientConnectorService implements ClientConnectorService {
 
     private SSLSocketFactory getSSLSocketFactory() {
         // Load the Keystore
-        KeyStore keyStore = null;
+        KeyStore keyStore;
         try {
             keyStore = KeyStore.getInstance("JKS");
         } catch (final KeyStoreException e) {
-            throw new ClientConnectorException("Error creating the keystore instance", e);
+            throw new RuntimeException("Error creating the keystore instance", e);
         }
-        InputStream keystoreStream = null;
+        InputStream keystoreStream;
         try {
             keystoreStream = new FileInputStream(configurationManager.getProperty("SC_KEYSTORE_PATH"));
         } catch (final FileNotFoundException e) {
-            throw new ClientConnectorException("Could not find the keystore", e);
+            throw new RuntimeException("Could not find the keystore", e);
         }
         try {
             keyStore.load(keystoreStream, configurationManager.getProperty(DCCS_SC_KEYSTORE_PASSWORD).toCharArray());
         } catch (final IOException | NoSuchAlgorithmException | CertificateException e) {
-            throw new ClientConnectorException("Error loading the keystore", e);
+            throw new RuntimeException("Error loading the keystore", e);
         }
 
         // Add Keystore to KeyManager
-        KeyManagerFactory keyManagerFactory = null;
+        KeyManagerFactory keyManagerFactory;
         try {
             keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         } catch (final NoSuchAlgorithmException e) {
-            throw new ClientConnectorException("Could not create the key manager factory", e);
+            throw new RuntimeException("Could not create the key manager factory", e);
         }
         try {
             keyManagerFactory.init(keyStore, configurationManager.getProperty(DCCS_SC_KEYSTORE_PASSWORD).toCharArray());
         } catch (final KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
-            throw new ClientConnectorException("Could not initialize the keystore", e);
+            throw new RuntimeException("Could not initialize the keystore", e);
         }
 
         final TrustManagerFactory trustManagerFactory;
         try {
             trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
         } catch (final NoSuchAlgorithmException e) {
-            throw new ClientConnectorException("Could not create the trust manager factory", e);
+            throw new RuntimeException("Could not create the trust manager factory", e);
         }
 
         KeyStore trustStore = null;
         try {
             trustStore = KeyStore.getInstance("JKS");
         } catch (final KeyStoreException e) {
-            throw new ClientConnectorException("Error creating the truststore instance", e);
+            throw new RuntimeException("Error creating the truststore instance", e);
         }
         final InputStream trustStoreStream;
         try {
             trustStoreStream = new FileInputStream(configurationManager.getProperty("TRUSTSTORE_PATH"));
         } catch (final FileNotFoundException e) {
-            throw new ClientConnectorException("Could not find the truststore", e);
+            throw new RuntimeException("Could not find the truststore", e);
         }
         try {
             trustStore.load(trustStoreStream, configurationManager.getProperty("TRUSTSTORE_PASSWORD").toCharArray());
         } catch (final IOException | NoSuchAlgorithmException | CertificateException e) {
-            throw new ClientConnectorException("Error loading the truststore", e);
+            throw new RuntimeException("Error loading the truststore", e);
         }
 
         try {
             trustManagerFactory.init(trustStore);
         } catch (final KeyStoreException e) {
-            throw new ClientConnectorException("Could not initialize the truststore", e);
+            throw new RuntimeException("Could not initialize the truststore", e);
         }
 
         // Create SSLContext with KeyManager and TrustManager
-        SSLContext context = null;
+        SSLContext context;
         try {
             context = SSLContext.getInstance("TLS");
         } catch (final NoSuchAlgorithmException e) {
-            throw new ClientConnectorException("Could not get the ssl context instance", e);
+            throw new RuntimeException("Could not get the ssl context instance", e);
         }
         try {
             context.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new SecureRandom());
         } catch (final KeyManagementException e) {
-            throw new ClientConnectorException("Could not initialize the SSL context", e);
+            throw new RuntimeException("Could not initialize the SSL context", e);
         }
         return context.getSocketFactory();
     }
@@ -203,18 +205,21 @@ public class DefaultClientConnectorService implements ClientConnectorService {
             throws ClientConnectorException {
 
         logger.info("[National Connector] queryDocuments(countryCode:'{}')", countryCode);
+        try {
+            final var queryDocumentRequest = objectFactory.createQueryDocumentRequest();
+            classCodes.forEach(genericDocumentCode -> queryDocumentRequest.getClassCode().add(genericDocumentCode));
+            queryDocumentRequest.setPatientId(patientId);
+            queryDocumentRequest.setCountryCode(countryCode);
+            queryDocumentRequest.setFilterParams(filterParams);
 
-        final var queryDocumentRequest = objectFactory.createQueryDocumentRequest();
-        classCodes.forEach(genericDocumentCode -> queryDocumentRequest.getClassCode().add(genericDocumentCode));
-        queryDocumentRequest.setPatientId(patientId);
-        queryDocumentRequest.setCountryCode(countryCode);
-        queryDocumentRequest.setFilterParams(filterParams);
+            clientConnectorService.setAssertions(assertions);
 
-        clientConnectorService.setAssertions(assertions);
-
-        final List<EpsosDocument> epsosDocuments = clientConnectorService.getClientConnectorServicePortType().queryDocuments(queryDocumentRequest);
-        logger.info("epsosDocuments : {}", epsosDocuments);
-        return epsosDocuments;
+            final List<EpsosDocument> epsosDocuments = clientConnectorService.getClientConnectorServicePortType().queryDocuments(queryDocumentRequest);
+            logger.info("epsosDocuments : {}", epsosDocuments);
+            return epsosDocuments;
+        } catch (Exception e) {
+            throw createClientConnectorException(e);
+        }
     }
 
     /**
@@ -229,14 +234,17 @@ public class DefaultClientConnectorService implements ClientConnectorService {
                                                   final PatientDemographics patientDemographics) throws ClientConnectorException {
 
         logger.info("[National Connector] queryPatient(countryCode:'{}')", countryCode);
+        try {
+            final var queryPatientRequest = objectFactory.createQueryPatientRequest();
+            queryPatientRequest.setPatientDemographics(patientDemographics);
+            queryPatientRequest.setCountryCode(countryCode);
 
-        final var queryPatientRequest = objectFactory.createQueryPatientRequest();
-        queryPatientRequest.setPatientDemographics(patientDemographics);
-        queryPatientRequest.setCountryCode(countryCode);
+            clientConnectorService.setAssertions(assertions);
 
-        clientConnectorService.setAssertions(assertions);
-
-        return clientConnectorService.getClientConnectorServicePortType().queryPatient(queryPatientRequest);
+            return clientConnectorService.getClientConnectorServicePortType().queryPatient(queryPatientRequest);
+        } catch (Throwable e) {
+            throw createClientConnectorException(e);
+        }
     }
 
     /**
@@ -246,7 +254,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param name       - Token sent for testing.
      * @return Hello message concatenated with the token passed as parameter.
      */
-    public String sayHello(final Map<AssertionType, Assertion> assertions, final String name) throws ClientConnectorException {
+    public String sayHello(final Map<AssertionType, Assertion> assertions, final String name) {
 
         logger.info("[National Connector] sayHello(name:'{}')", name);
 
@@ -258,12 +266,16 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param countryCode  - ISO Country code of the patient country of origin.
      * @param searchParams - Search parameters to uniquely define the patient.
      * @return List of PatientMyHealthEu resources
-     * @throws ClientConnectorException
+     * @throws ClientConnectorException - Checked exception that passes the exception thrown by OpenNCP
      */
     @Override
     public ResponseEntity<String> queryPatientFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
-        final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, searchParams, "Patient");
+        try {
+            final String jwtToken = jwtTokenGenerator.generate(assertions);
+            return restApiClientService.search(countryCode, jwtToken, searchParams, "Patient");
+        } catch (final Exception e) {
+            throw new ClientConnectorException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -271,12 +283,16 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param countryCode  - ISO Country code of the patient country of origin.
      * @param searchParams - Search parameters to match the DocumentReferences.
      * @return List of DocumentReference Resources
-     * @throws ClientConnectorException
+     * @throws ClientConnectorException - Checked exception that passes the exception thrown by OpenNCP
      */
     @Override
     public ResponseEntity<String> queryDocumentReferenceFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
-        final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
+        try {
+            final String jwtToken = jwtTokenGenerator.generate(assertions);
+            return restApiClientService.search(countryCode, jwtToken, searchParams, "DocumentReference");
+        } catch (final Exception e) {
+            throw new ClientConnectorException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -284,12 +300,16 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param countryCode  - ISO Country code of the patient country of origin.
      * @param searchParams - Search parameters to identify the Bundle.
      * @return List of Bundle resources
-     * @throws ClientConnectorException
+     * @throws ClientConnectorException - Checked exception that passes the exception thrown by OpenNCP
      */
     @Override
     public ResponseEntity<String> queryBundleFhir(final Map<AssertionType, Assertion> assertions, final String countryCode, final Map<String, String> searchParams) throws ClientConnectorException {
-        final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, searchParams, "Bundle");
+        try {
+            final String jwtToken = jwtTokenGenerator.generate(assertions);
+            return restApiClientService.search(countryCode, jwtToken, searchParams, "Bundle");
+        } catch (final Exception e) {
+            throw new ClientConnectorException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -297,12 +317,16 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @param countryCode - ISO Country code of the patient country of origin.
      * @param id          - Identifier of the bundle
      * @return List of Bundle resources
-     * @throws ClientConnectorException
+     * @throws ClientConnectorException - Checked exception that passes the exception thrown by OpenNCP
      */
     @Override
     public ResponseEntity<String> queryBundleFhirById(final Map<AssertionType, Assertion> assertions, final String countryCode, final String id) throws ClientConnectorException {
-        final String jwtToken = jwtTokenGenerator.generate(assertions);
-        return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" + id);
+        try {
+            final String jwtToken = jwtTokenGenerator.generate(assertions);
+            return restApiClientService.search(countryCode, jwtToken, new HashMap<>(), "Bundle/" + id);
+        } catch (final Exception e) {
+            throw new ClientConnectorException(e.getMessage(), e);
+        }
     }
 
 
@@ -318,21 +342,24 @@ public class DefaultClientConnectorService implements ClientConnectorService {
      * @return Clinical Document and metadata returned by the Country of Origin.
      */
     public EpsosDocument retrieveDocument(final Map<AssertionType, Assertion> assertions, final String countryCode, final DocumentId documentId,
-                                          final String homeCommunityId, final GenericDocumentCode classCode, final String targetLanguage)
-            throws ClientConnectorException {
+                                          final String homeCommunityId, final GenericDocumentCode classCode, final String targetLanguage) throws ClientConnectorException {
 
         logger.info("[National Connector] retrieveDocument(countryCode:'{}', homeCommunityId:'{}', targetLanguage:'{}')", countryCode,
                 homeCommunityId, targetLanguage);
-        final var retrieveDocumentRequest = objectFactory.createRetrieveDocumentRequest();
-        retrieveDocumentRequest.setDocumentId(documentId);
-        retrieveDocumentRequest.setClassCode(classCode);
-        retrieveDocumentRequest.setCountryCode(countryCode);
-        retrieveDocumentRequest.setHomeCommunityId(homeCommunityId);
-        retrieveDocumentRequest.setTargetLanguage(targetLanguage);
+        try {
+            final var retrieveDocumentRequest = objectFactory.createRetrieveDocumentRequest();
+            retrieveDocumentRequest.setDocumentId(documentId);
+            retrieveDocumentRequest.setClassCode(classCode);
+            retrieveDocumentRequest.setCountryCode(countryCode);
+            retrieveDocumentRequest.setHomeCommunityId(homeCommunityId);
+            retrieveDocumentRequest.setTargetLanguage(targetLanguage);
 
-        clientConnectorService.setAssertions(assertions);
+            clientConnectorService.setAssertions(assertions);
 
-        return clientConnectorService.getClientConnectorServicePortType().retrieveDocument(retrieveDocumentRequest);
+            return clientConnectorService.getClientConnectorServicePortType().retrieveDocument(retrieveDocumentRequest);
+        } catch (Exception e) {
+            throw createClientConnectorException(e);
+        }
     }
 
     /**
@@ -348,15 +375,42 @@ public class DefaultClientConnectorService implements ClientConnectorService {
                                                  final PatientDemographics patientDemographics) throws ClientConnectorException {
 
         logger.info("[National Connector] submitDocument(countryCode:'{}')", countryCode);
-        final var submitDocumentRequest = objectFactory.createSubmitDocumentRequest();
-        submitDocumentRequest.setDocument(document);
-        submitDocumentRequest.setCountryCode(countryCode);
-        submitDocumentRequest.setPatientDemographics(patientDemographics);
+        try {
+            final var submitDocumentRequest = objectFactory.createSubmitDocumentRequest();
+            submitDocumentRequest.setDocument(document);
+            submitDocumentRequest.setCountryCode(countryCode);
+            submitDocumentRequest.setPatientDemographics(patientDemographics);
 
-        clientConnectorService.setAssertions(assertions);
+            clientConnectorService.setAssertions(assertions);
 
-        final SubmitDocumentResponse submitDocumentResponse = objectFactory.createSubmitDocumentResponse();
-        submitDocumentResponse.setResponseStatus(clientConnectorService.getClientConnectorServicePortType().submitDocument(submitDocumentRequest));
-        return submitDocumentResponse;
+            final SubmitDocumentResponse submitDocumentResponse = objectFactory.createSubmitDocumentResponse();
+            submitDocumentResponse.setResponseStatus(clientConnectorService.getClientConnectorServicePortType().submitDocument(submitDocumentRequest));
+            return submitDocumentResponse;
+        } catch (Exception e) {
+            throw createClientConnectorException(e);
+        }
+    }
+
+    private ClientConnectorException createClientConnectorException(Throwable e) {
+        if (e instanceof SOAPFaultException) {
+            final SOAPFaultException soapFaultException = (SOAPFaultException) e;
+            final String niExceptionMessage = extractNiExceptionMessage(soapFaultException.getMessage());
+            final String soapFaultSubCode = soapFaultException.getFault().getFaultSubcodes().next().getLocalPart();
+            final OpenNCPErrorCode openNCPErrorCode = OpenNCPErrorCode.getErrorCode(soapFaultSubCode);
+            return (openNCPErrorCode != null) ? new ClientConnectorException(openNCPErrorCode, soapFaultException.getMessage(), niExceptionMessage, e) :
+                    new ClientConnectorException(soapFaultException.getMessage(), soapFaultException);
+        } else {
+            return new ClientConnectorException(e.getMessage(), e);
+        }
+    }
+
+    public String extractNiExceptionMessage(final String soapFaultExceptionMessage) {
+        String[] split = soapFaultExceptionMessage.split("\\^");
+        if (split.length > 1) {
+            return Optional.of(String.join(StringUtils.SPACE, Arrays.asList(split).subList(1, split.length)))
+                    .filter(joinedMessage -> !joinedMessage.isBlank())
+                    .orElse(null);
+        }
+        return null;
     }
 }

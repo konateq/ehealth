@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.assertion;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.MissingFieldException;
 import org.apache.commons.lang3.StringUtils;
