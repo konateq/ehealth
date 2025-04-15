@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.fhir.security.Jwt
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.SamlAssertionInterceptor;
 import eu.europa.ec.sante.openncp.application.client.connector.interceptor.TransportTokenInInterceptor;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.client.api.*;
 import org.apache.commons.lang3.Validate;
@@ -43,6 +44,7 @@ import java.util.*;
 public class DefaultClientConnectorService implements ClientConnectorService {
 
     private final Logger logger = LoggerFactory.getLogger(DefaultClientConnectorService.class);
+
     private final ConfigurationManager configurationManager;
     // URL of the targeted NCP-B - ClientService.wsdl
     private final String endpointReference;
@@ -58,18 +60,23 @@ public class DefaultClientConnectorService implements ClientConnectorService {
 
     private final ClientConnectorServicePortTypeWrapper clientConnectorService;
 
-    public LoggingFeature loggingFeature() {
+    public LoggingFeature loggingFeature(ServerContext serverContext) {
         final LoggingFeature loggingFeature = new LoggingFeature();
         loggingFeature.setPrettyLogging(true);
-        loggingFeature.addSensitiveElementNames(new HashSet<>(Arrays.asList("password", "administrativeGender", "birthDate", "city", "country", "familyName", "givenName", "postalCode", "streetAddress", "patientId", "nextOfKinId", "AttributeStatement", "creationDate", "person", "description", "base64Binary")));
-        loggingFeature.addSensitiveProtocolHeaderNames(new HashSet<>(Arrays.asList("Server", "Accept", "Date")));
-        loggingFeature.setVerbose(true);
+        if (serverContext.isProduction()) {
+            loggingFeature.addSensitiveElementNames(new HashSet<>(Arrays.asList("password", "administrativeGender", "birthDate", "city", "country", "familyName", "givenName", "postalCode", "streetAddress", "patientId", "nextOfKinId", "AttributeStatement", "creationDate", "person", "description", "base64Binary")));
+            loggingFeature.addSensitiveProtocolHeaderNames(new HashSet<>(Arrays.asList("Server", "Accept", "host", "Date")));
+            loggingFeature.setVerbose(false);
+        } else {
+            loggingFeature.setVerbose(true);
+        }
         return loggingFeature;
     }
 
     public DefaultClientConnectorService(final ConfigurationManager configurationManager,
                                          final RestApiClientService restApiClientService,
-                                         final JwtTokenGenerator jwtTokenGenerator) {
+                                         final JwtTokenGenerator jwtTokenGenerator,
+                                         ServerContext serverContext) {
         this.configurationManager = Validate.notNull(configurationManager);
         this.endpointReference = Validate.notBlank(configurationManager.getProperty("PORTAL_CLIENT_CONNECTOR_URL"));
         this.restApiClientService = Validate.notNull(restApiClientService);
@@ -80,7 +87,7 @@ public class DefaultClientConnectorService implements ClientConnectorService {
         clientConnectorService.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointReference);
 
         final Client client = ClientProxy.getClient(clientConnectorService.getClientConnectorServicePortType());
-        client.getBus().getFeatures().add(loggingFeature());
+        client.getBus().getFeatures().add(loggingFeature(serverContext));
         client.getBus().getFeatures().add(new WSAddressingFeature());
 
         client.getOutInterceptors().add(new SamlAssertionInterceptor());
