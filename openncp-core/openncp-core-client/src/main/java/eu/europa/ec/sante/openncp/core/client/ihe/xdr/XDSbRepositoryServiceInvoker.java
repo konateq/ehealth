@@ -5,6 +5,7 @@ import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
@@ -497,7 +498,7 @@ public class XDSbRepositoryServiceInvoker {
             if (attr.getName().equals("urn:oasis:names:tc:xspa:1.0:subject:organization")) {
                 organization = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
-            if (StringUtils.equals(attr.getName(), "urn:oasis:names:tc:xspa:1.0:subject:organization-id")) {
+            if (StringUtils.equals(attr.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID)) {
                 organizationId = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
         }
@@ -539,10 +540,10 @@ public class XDSbRepositoryServiceInvoker {
         attrs = attrStatements.get(0).getAttributes();
 
         for (final Attribute attr : attrs) {
-            if (attr.getName().equals("urn:oasis:names:tc:xspa:1.0:subject:subject-id")) {
+            if (attr.getName().equals(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID)) {
                 authorIdentifier = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
-            if (StringUtils.equals(attr.getName(), "urn:oasis:names:tc:xspa:1.0:subject:organization-id")) {
+            if (StringUtils.equals(attr.getName(), AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID)) {
                 assigningAuthorityId = Objects.requireNonNull(attr.getAttributeValues().get(0).getDOM()).getTextContent();
             }
         }

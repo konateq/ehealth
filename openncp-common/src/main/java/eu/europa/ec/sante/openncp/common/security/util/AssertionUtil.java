@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.common.security.util;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.opensaml.core.xml.XMLObjectBuilder;
@@ -127,7 +128,7 @@ public class AssertionUtil {
      */
     public static NameID getXspaSubjectFromAttributes(final List<AttributeStatement> stmts) {
 
-        final var xspaSubjectAttribute = AssertionUtil.findStringInAttributeStatement(stmts, "urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+        final var xspaSubjectAttribute = AssertionUtil.findStringInAttributeStatement(stmts, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         final NameID nameID = create(NameID.class, NameID.DEFAULT_ELEMENT_NAME);
         nameID.setFormat(NameID.UNSPECIFIED);
         nameID.setValue(((XSString) xspaSubjectAttribute.getAttributeValues().get(0)).getValue());

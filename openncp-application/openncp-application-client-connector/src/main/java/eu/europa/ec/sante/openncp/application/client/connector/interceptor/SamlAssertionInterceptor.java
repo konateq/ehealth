@@ -42,7 +42,7 @@ public class SamlAssertionInterceptor extends AbstractSoapInterceptor {
     }
 
     @Override
-    public void handleMessage(final SoapMessage message) throws Fault {
+    public void handleMessage(final SoapMessage message) {
         try {
 
             final SecurityBuilder securityBuilder = new SecurityBuilder();
@@ -64,7 +64,7 @@ public class SamlAssertionInterceptor extends AbstractSoapInterceptor {
             header.setMustUnderstand(false);
             message.getHeaders().add(header);
         } catch (final Exception e) {
-            throw new ClientConnectorException("Error adding the assertions to the security header", e);
+            throw new RuntimeException("Error adding the assertions to the security header", e);
         }
     }
 }
