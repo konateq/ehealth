@@ -8,6 +8,8 @@ public class AuditConstant {
     public static final String SERVICE_PROVIDER_DISPLAY_NAME = "eHealth DSI Service Provider";
     public static final String CODE_SYSTEM_EHDSI = "eHealth DSI";
     public static final String CODE_SYSTEM_EHDSI_SECURITY = "eHealth DSI Security";
+    public static final String EVENT_ID_IHE_TRANSACTIONS_CODE_SYSTEM = "IHE Transactions";
+    public static final String EVENT_ID_EHDSI_TRANSACTIONS_CODE_SYSTEM = "eHDSI Transaction";
     public static final String SOURCE_ROLE_ID = "Source Role ID";
     public static final String DESTINATION_ROLE_ID = "Destination Role ID";
     public static final String ACTION_DISCARD = "Discard";
