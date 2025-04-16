@@ -74,7 +74,7 @@ public class AssertionUtils {
         conceptRole.setCodeSystemName("ISCO");
         conceptRole.setDisplayName("Medical Doctors");
 
-        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "1.3.6.1.4.1.48336", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
                 "eHDSI EU Testing MedCare Center", permissions, null, "1234567890");
     }
@@ -97,7 +97,7 @@ public class AssertionUtils {
         conceptRole.setCodeSystemName("ISCO");
         conceptRole.setDisplayName("Medical Doctors");
 
-        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "1.3.6.1.4.1.48336", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Resident Physician", "TREATMENT",
                 "eHDSI EU Testing MedCare Center", permissions, null, "1234567890");
     }
@@ -111,6 +111,8 @@ public class AssertionUtils {
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PRD-010");
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-032");
         permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-033");
+        permissions.add("urn:oasis:names:tc:xspa:1.0:subject:hl7:permission:PPD-046");
+
 
         final AssertionUtils.Concept conceptRole = new AssertionUtils.Concept();
         conceptRole.setCode("2262");
@@ -118,7 +120,7 @@ public class AssertionUtils {
         conceptRole.setCodeSystemName("ISCO");
         conceptRole.setDisplayName("Pharmacists");
 
-        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "homecommid", conceptRole,
+        return createHCPAssertion(keyStoreManager, fullName, email, "BE", "Belgium", "1.3.6.1.4.1.48336", conceptRole,
                 "eHealth OpenNCP EU Portal", "urn:hl7ii:1.2.3.4:ABCD", "Pharmacy", "TREATMENT",
                 "eHDSI EU Testing MedCare Center", permissions, null, "1234567890");
     }

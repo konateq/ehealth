@@ -103,8 +103,7 @@ public class ClientServiceImpl implements ClientService {
                     throw new RuntimeException(UNSUPPORTED_CLASS_CODE_EXCEPTION + classCodeNode);
             }
             submitDocumentResponse.setResponseStatus(response.getResponseStatus());
-        } catch (final OpenNCPException | ParseException | RuntimeException ex) {
-            LoggingSlf4j.error(logger, methodName, ex);
+        } catch (final OpenNCPException | ParseException | RuntimeException ex) {LoggingSlf4j.error(logger, methodName, ex);
             throw new RuntimeException(ex);
         }
         LoggingSlf4j.end(logger, methodName);

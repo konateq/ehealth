@@ -261,7 +261,7 @@ public class XdrGateway {
      */
     private ExtrinsicObjectType makeExtrinsicObject(final XdrRequest request, final String uuid, final ClassCode docClassCode, final String language, final Boolean isPDF) {
 
-        if (Boolean.TRUE.equals(isPDF)) {
+        if (isPDF) {
             // A.R. isPDF unfinished...
             logger.warn("PDF document will be processed, but this is not fully supported by current implementation");
         }
