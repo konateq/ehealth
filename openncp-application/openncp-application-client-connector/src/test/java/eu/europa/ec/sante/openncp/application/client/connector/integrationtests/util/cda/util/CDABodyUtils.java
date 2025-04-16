@@ -1,7 +1,9 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.util;
 
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem;
-import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.Identifier;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.Namespaces;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.Templates;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -63,7 +65,7 @@ public class CDABodyUtils {
     }
 
     private static void addText(Element section, org.jdom2.Document ePDocument) {
-        CDAUtil.copyAllNodesAndAttributesFirstOccurrence(ePDocument, section, "text");
+        CDAUtils.copyAllNodesAndAttributesFirstOccurrence(ePDocument, section, "text");
     }
 
     private static void addEntry(Namespace hl7Namespace, Element section, DispenseRequest dispenseRequest, org.jdom2.Document ePDocument) {
@@ -77,12 +79,12 @@ public class CDABodyUtils {
         Element supply = new Element("supply", hl7Namespace);
         supply.setAttribute("classCode", "SPLY");
         supply.setAttribute("moodCode", "EVN");
-        CDAUtil.addTemplateId(hl7Namespace, supply, Templates.EHDSI_SUPPLY);
-        CDAUtil.addTemplateId(hl7Namespace, supply, Templates.IHE_SUPPLY_ENTRY);
-        CDAUtil.addTemplateId(hl7Namespace, supply, Templates.CCD_SUPPLY_ACTIVITY);
+        CDAUtils.addTemplateId(hl7Namespace, supply, Templates.EHDSI_SUPPLY);
+        CDAUtils.addTemplateId(hl7Namespace, supply, Templates.IHE_SUPPLY_ENTRY);
+        CDAUtils.addTemplateId(hl7Namespace, supply, Templates.CCD_SUPPLY_ACTIVITY);
         //TODO create real identifier
         Identifier identifier = new Identifier("root", "extension");
-        CDAUtil.addId(hl7Namespace, identifier, supply);
+        CDAUtils.addId(hl7Namespace, identifier, supply);
         addQuantity(hl7Namespace, supply, dispenseRequest.getNumberOfPackage());
         addProduct(hl7Namespace, supply, dispenseRequest, ePDocument);
         addPerformer(hl7Namespace, supply, getPharmacistInformation());
@@ -104,7 +106,7 @@ public class CDABodyUtils {
     private static void addProduct(Namespace hl7Namespace, Element supply, DispenseRequest dispenseRequest, org.jdom2.Document ePDocument) {
         var product = new Element("product", hl7Namespace);
         supply.addContent(product);
-        CDAUtil.copyAllNodesAndAttributes(ePDocument, dispenseRequest, product, "manufacturedProduct");
+        CDAUtils.copyAllNodesAndAttributes(ePDocument, dispenseRequest, product, "manufacturedProduct");
     }
 
     private static void addPerformer(Namespace hl7Namespace, Element supply, PharmacistInformation pharmacistInformation) {
@@ -120,11 +122,11 @@ public class CDABodyUtils {
 
     private static void addAssignedEntity(Namespace hl7Namespace, Element performer, PharmacistInformation pharmacistInformation) {
         var assignedEntity = new Element("assignedEntity", hl7Namespace);
-        CDAUtil.addId(hl7Namespace, pharmacistInformation.getIdentifier(), assignedEntity);
-        CDAUtil.addAddress(hl7Namespace, pharmacistInformation.getAddress(), assignedEntity);
-        CDAUtil.addTelecom(hl7Namespace, pharmacistInformation.getTelecom(), assignedEntity);
-        CDAUtil.addAssignedPerson(hl7Namespace, pharmacistInformation.getAssignedPerson(), assignedEntity);
-        CDAUtil.addRepresentedOrganization(hl7Namespace, pharmacistInformation.getRepresentedOrganization(), assignedEntity);
+        CDAUtils.addId(hl7Namespace, pharmacistInformation.getIdentifier(), assignedEntity);
+        CDAUtils.addAddress(hl7Namespace, pharmacistInformation.getAddress(), assignedEntity);
+        CDAUtils.addTelecom(hl7Namespace, pharmacistInformation.getTelecom(), assignedEntity);
+        CDAUtils.addAssignedPerson(hl7Namespace, pharmacistInformation.getAssignedPerson(), assignedEntity);
+        CDAUtils.addRepresentedOrganization(hl7Namespace, pharmacistInformation.getRepresentedOrganization(), assignedEntity);
         performer.addContent(assignedEntity);
     }
 
@@ -134,7 +136,7 @@ public class CDABodyUtils {
         participant.setAttribute("contextControlCode", "OP");
         var participantRole = new Element("participantRole", hl7Namespace);
         participantRole.setAttribute("classCode", "LIC");
-        CDAUtil.addId(hl7Namespace, new Identifier("entryOid", null), participantRole);
+        CDAUtils.addId(hl7Namespace, new Identifier("entryOid", null), participantRole);
         addScopingEntity(hl7Namespace, participantRole);
         participant.addContent(participantRole);
         supply.addContent(participant);
@@ -143,7 +145,7 @@ public class CDABodyUtils {
     private static void addScopingEntity(Namespace hl7Namespace, Element participantRole) {
         var scopingEntity = new Element("scopingEntity", hl7Namespace);
         scopingEntity.setAttribute("classCode", "ORG");
-        CDAUtil.addId(hl7Namespace, new Identifier("entryOid", null), scopingEntity);
+        CDAUtils.addId(hl7Namespace, new Identifier("entryOid", null), scopingEntity);
         participantRole.addContent(scopingEntity);
     }
 
@@ -165,7 +167,7 @@ public class CDABodyUtils {
         }
         substanceAdministration.addContent(id);
         var consumable = new Element("consumable", hl7Namespace);
-        CDAUtil.copyAllNodesAndAttributes(ePDocument, null, consumable, "manufacturedProduct");
+        CDAUtils.copyAllNodesAndAttributes(ePDocument, null, consumable, "manufacturedProduct");
         substanceAdministration.addContent(consumable);
         entryRelationship.addContent(substanceAdministration);
         supply.addContent(entryRelationship);

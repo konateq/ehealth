@@ -3,6 +3,8 @@ package eu.europa.ec.sante.openncp.application.client.connector.integrationtests
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.DispenseRequest;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.PackageSize;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.util.CDAUtils;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
@@ -15,8 +17,17 @@ import org.junit.jupiter.api.Test;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -40,8 +51,11 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
+
     @Test
-    void testHappyFlowEp() throws MalformedURLException, MarshallingException {
+    void testHappyFlowEp() throws IOException, MarshallingException, ParserConfigurationException, SAXException {
+
+
         final PatientId patientId = createPatientId("1-1234-W8");
 
         final PatientDemographics patientDemographics = objectFactory.createPatientDemographics();
@@ -66,13 +80,24 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
 
         final EpsosDocument xcaRetrieve = clientConnectorService.retrieveDocument(buildAssertionMapForPharmacist(patientId), "BE", documentId, "1.3.6.1.4.1.48336", classCode, null);
         assertThat(xcaRetrieve).isNotNull();
-//        final byte[] base64Binary = xcaRetrieve.getBase64Binary();
-//        final String cda = new String(base64Binary, StandardCharsets.UTF_8);
-//        System.out.println(cda);
+        final byte[] base64Binary = xcaRetrieve.getBase64Binary();
+        final String cda = new String(base64Binary, StandardCharsets.UTF_8);
+        final Document epDocument = createDocumentFromString(cda);
 
         var edUid = generateIdentifierExtension();
         var edOid = configurationManager.getProperty("PORTAL_DISPENSATION_OID");
-        byte[] fileContent = CDAUtils.generateDispensationDocument(dispenseRequest, xcaRetrieve.getBase64Binary(), edUid);
+
+        final DispenseRequest dispenseRequest = new DispenseRequest();
+        dispenseRequest.setCountryCode("BE");
+        dispenseRequest.setSubstitution(true);
+        dispenseRequest.setPrescriptionId("3000.1");
+        final PackageSize packageSize = new PackageSize();
+        packageSize.setQuantity("5");
+        dispenseRequest.setPackageSize(packageSize);
+        dispenseRequest.setNumberOfPackage(5);
+        dispenseRequest.setProductName("Lantus SoloStar");
+
+        byte[] fileContent = CDAUtils.generateDispensationDocument(dispenseRequest, epDocument, edUid);
 
         final EpsosDocument dispensationDocument = buildDispensationDocument("My Testing Portal", edOid, edUid, fileContent);
 
@@ -82,6 +107,15 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
 
 
 
+    }
+
+    private Document createDocumentFromString(String input) throws ParserConfigurationException, IOException, SAXException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        DocumentBuilder builder = dbf.newDocumentBuilder();
+        InputSource is = new InputSource();
+        is.setCharacterStream(new StringReader(input));
+        return builder.parse(is);
     }
 
     @Test

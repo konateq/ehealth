@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.util;
 
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.AuthorInformation;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.CustodianInformation;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.LegalAuthenticatorInformation;
@@ -95,8 +96,8 @@ public class CDAHeaderUtils {
     private static void addFunctionCode(Namespace hl7Namespace, Element rootElement) {
         var functionCode = new Element("functionCode", hl7Namespace);
         functionCode.setAttribute("code", "2262");
-        functionCode.setAttribute("codeSystem", CodeSystem.ISCO.getOid());
-        functionCode.setAttribute("codeSystemName", CodeSystem.ISCO.getName());
+        functionCode.setAttribute("codeSystem", eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem.ISCO.getOid());
+        functionCode.setAttribute("codeSystemName", eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem.ISCO.getName());
         functionCode.setAttribute("displayName", "Pharmacists");
         rootElement.addContent(functionCode);
     }

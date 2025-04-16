@@ -1,9 +1,21 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.util;
 
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.Namespaces;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.Templates;
+import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.*;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.jdom2.Namespace;
+import org.jdom2.filter.ElementFilter;
+import org.jdom2.filter.Filters;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+import org.jdom2.xpath.XPathExpression;
+import org.jdom2.xpath.XPathFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +27,7 @@ public class CDAUtils {
     private static final Namespace HL7_PHARMACY_NAMESPACE = Namespace.getNamespace(Namespaces.HL7_PHARMACY.getPrefix(), Namespaces.HL7_PHARMACY.getUri());
     private static final Namespace XSI_NAMESPACE = Namespace.getNamespace(Namespaces.XSI.getPrefix(), Namespaces.XSI.getUri());
 
-    private static final Logger logger = LoggerFactory.getLogger(CDAUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(CDAUtils.class);
 
     private static final String PHARMACIST_OID;
     private static final String CUSTODIAN_OID;
@@ -47,7 +59,7 @@ public class CDAUtils {
 
     }
 
-    private CDAUtil() {
+    private CDAUtils() {
     }
 
     public static byte[] generateDispensationDocument(DispenseRequest dispenseRequest,
@@ -89,13 +101,13 @@ public class CDAUtils {
     }
 
     private static void addRealmCode(Element rootElement, String countryCode) {
-        Element realmCode = new Element("realmCode", CDAUtil.HL7_NAMESPACE);
+        Element realmCode = new Element("realmCode", CDAUtils.HL7_NAMESPACE);
         realmCode.setAttribute("code", countryCode);
         rootElement.addContent(realmCode);
     }
 
     private static void addTypeId(Element rootElement) {
-        Element typeId = new Element("typeId", CDAUtil.HL7_NAMESPACE);
+        Element typeId = new Element("typeId", CDAUtils.HL7_NAMESPACE);
         typeId.setAttribute("extension", "POCD_HD000040");
         typeId.setAttribute("root", "2.16.840.1.113883.1.3");
         rootElement.addContent(typeId);
@@ -108,7 +120,7 @@ public class CDAUtils {
     }
 
     private static void addCode(Element rootElement) {
-        Element code = new Element("code", CDAUtil.HL7_NAMESPACE);
+        Element code = new Element("code", CDAUtils.HL7_NAMESPACE);
         code.setAttribute("code", "60593-1");
         code.setAttribute("codeSystem", CodeSystem.LOINC.getOid());
         code.setAttribute("codeSystemName", CodeSystem.LOINC.getName());
@@ -117,7 +129,7 @@ public class CDAUtils {
     }
 
     private static void addTitle(Element rootElement) {
-        Element title = new Element("title", CDAUtil.HL7_NAMESPACE);
+        Element title = new Element("title", CDAUtils.HL7_NAMESPACE);
         title.addContent("Medication dispensed");
         rootElement.addContent(title);
     }
@@ -158,13 +170,13 @@ public class CDAUtils {
     }
 
     private static void addEffectiveTime(Element rootElement) {
-        Element effectiveTime = new Element("effectiveTime", CDAUtil.HL7_NAMESPACE);
+        Element effectiveTime = new Element("effectiveTime", CDAUtils.HL7_NAMESPACE);
         effectiveTime.setAttribute("value", HL7Util.formatDateHL7(new Date()));
         rootElement.addContent(effectiveTime);
     }
 
     private static void addConfidentialityCode(Element rootElement) {
-        Element confidentialityCode = new Element("confidentialityCode", CDAUtil.HL7_NAMESPACE);
+        Element confidentialityCode = new Element("confidentialityCode", CDAUtils.HL7_NAMESPACE);
         confidentialityCode.setAttribute("code", "N");
         confidentialityCode.setAttribute("codeSystem", "2.16.840.1.113883.5.25");
         confidentialityCode.setAttribute("codeSystemName", "Confidentiality");
@@ -174,7 +186,7 @@ public class CDAUtils {
     }
 
     private static void addLanguageCode(Element rootElement) {
-        Element languageCode = new Element("languageCode", CDAUtil.HL7_NAMESPACE);
+        Element languageCode = new Element("languageCode", CDAUtils.HL7_NAMESPACE);
         languageCode.setAttribute("code", LANGUAGE_CODE);
         rootElement.addContent(languageCode);
     }
@@ -259,8 +271,8 @@ public class CDAUtils {
         var name = new Element("name", hl7Namespace);
         name.addContent(representedOrganization.getName());
         representedOrganizationElement.addContent(name);
-        CDAUtil.addTelecom(hl7Namespace, representedOrganization.getTelecom(), representedOrganizationElement);
-        CDAUtil.addAddress(hl7Namespace, representedOrganization.getAddr(), representedOrganizationElement);
+        CDAUtils.addTelecom(hl7Namespace, representedOrganization.getTelecom(), representedOrganizationElement);
+        CDAUtils.addAddress(hl7Namespace, representedOrganization.getAddr(), representedOrganizationElement);
         assignedAuthor.addContent(representedOrganizationElement);
     }
 
