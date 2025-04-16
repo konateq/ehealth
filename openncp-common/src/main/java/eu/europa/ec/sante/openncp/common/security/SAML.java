@@ -99,11 +99,34 @@ public class SAML {
      * Helper method to read an XML object from a DOM element.
      */
     public static XMLObject fromElement(final Element element) throws UnmarshallingException {
-        final Unmarshaller unmarshaller = UNMARSHALLER_FACTORY.getUnmarshaller(element);
-        if (unmarshaller == null) {
-            throw new UnmarshallingException(String.format("Unable to get the unmarshaller for element [%s]", element));
+        // Clone the hcpAss element into a new namespace-aware DOM document
+        // This is really needed because else we get the error:
+        // NOT_FOUND_ERR: An attempt is made to reference a node in a context where it does not exist.
+        // This is because with a normal unmarshall, the id's of the assertion are linked
+        // to a different owner document creating the error in com.sun.org.apache.xerces.internal.dom.ElementImpl.setIdAttributeNode
+        //  if (at.getOwnerElement() != this) {
+        //      String msg = DOMMessageFormatter.formatMessage(
+        //                      DOMMessageFormatter.DOM_DOMAIN, "NOT_FOUND_ERR", null);
+        //      throw new DOMException(DOMException.NOT_FOUND_ERR, msg);
+        //  }
+        final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true); // critical!
+        final DocumentBuilder db;
+        try {
+            db = dbf.newDocumentBuilder();
+        } catch (final ParserConfigurationException e) {
+            throw new RuntimeException(e);
         }
-        return unmarshaller.unmarshall(element);
+        final Document newDoc = db.newDocument();
+        final Element importedElement = (Element) newDoc.importNode(element, true);
+        newDoc.appendChild(importedElement);
+
+        final Unmarshaller unmarshaller = XMLObjectProviderRegistrySupport.getUnmarshallerFactory().getUnmarshaller(element);
+        if (unmarshaller == null) {
+            throw new IllegalStateException("No unmarshaller found for element: " + importedElement.getNodeName());
+        }
+
+        return unmarshaller.unmarshall(importedElement);
     }
 
     public static Assertion assertionFromElement(final Element element) throws UnmarshallingException {
@@ -144,7 +167,8 @@ public class SAML {
     /**
      * Helper method to pretty-print any XML object to a file.
      */
-    public void printToFile(final XMLObject object, final String filename) throws IOException, MarshallingException, TransformerException {
+    public void printToFile(final XMLObject object, final String filename) throws
+            IOException, MarshallingException, TransformerException {
 
         final Document document = asDOMDocument(object);
 

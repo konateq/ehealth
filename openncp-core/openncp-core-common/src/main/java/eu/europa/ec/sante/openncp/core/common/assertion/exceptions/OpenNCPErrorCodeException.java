@@ -8,7 +8,7 @@ public abstract class OpenNCPErrorCodeException extends Exception {
     public OpenNCPErrorCodeException() {
     }
 
-    public OpenNCPErrorCodeException(Throwable cause) {
+    public OpenNCPErrorCodeException(final Throwable cause) {
         super(cause);
     }
 

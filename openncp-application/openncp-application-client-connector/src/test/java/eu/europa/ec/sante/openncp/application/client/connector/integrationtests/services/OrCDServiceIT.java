@@ -10,7 +10,10 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
-import eu.europa.ec.sante.openncp.core.client.api.*;
+import eu.europa.ec.sante.openncp.core.client.api.EpsosDocument;
+import eu.europa.ec.sante.openncp.core.client.api.GenericDocumentCode;
+import eu.europa.ec.sante.openncp.core.client.api.ObjectFactory;
+import eu.europa.ec.sante.openncp.core.client.api.PatientId;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.opensaml.core.xml.io.MarshallingException;
@@ -24,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 
 public class OrCDServiceIT  extends BaseIntegrationTest {
 
@@ -97,5 +99,6 @@ public class OrCDServiceIT  extends BaseIntegrationTest {
 
         final EpsosDocument document = clientConnectorService.retrieveDocument(assertions, "BE", documentId, "1.3.6.1.4.1.48336", classCode, null);
         assertThat(document).isNotNull();
+        assertThat(document.getBase64Binary()).isNotNull();
     }
 }

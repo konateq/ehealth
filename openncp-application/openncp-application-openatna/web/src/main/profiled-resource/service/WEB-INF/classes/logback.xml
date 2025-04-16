@@ -67,10 +67,6 @@
         <appender-ref ref="FILE"/>
     </logger>
 
-    <logger name="org.jboss.axis" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
-
     <logger name="org.jboss.management" level="INFO" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>

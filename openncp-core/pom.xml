@@ -12,26 +12,12 @@
 
     <modules>
         <module>openncp-core-common</module>
-        <module>openncp-core-client</module>
-        <module>openncp-core-server</module>
         <module>openncp-core-server-api</module>
         <module>openncp-core-server-mock</module>
-        <module>openncp-core-trc-sts</module>
+        <module>openncp-core-server</module>
         <module>openncp-core-client-api</module>
+        <module>openncp-core-client</module>
+        <module>openncp-core-trc-sts</module>
         <module>openncp-core-client-connector</module>
     </modules>
-
-    <properties>
-        <axis2.version>1.8.2</axis2.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.axis2</groupId>
-                <artifactId>axis2-kernel</artifactId>
-                <version>${axis2.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>

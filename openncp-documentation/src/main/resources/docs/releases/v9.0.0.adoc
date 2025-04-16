@@ -1,0 +1,57 @@
+=== Release 9.0.0
+
+==== Overview of changes
+
+TODO add more here
+
+==== Breaking changes
+
+- Removal of Apache Axis 2 in favor of Apache CXF
+
+===== Removal of Axis 2
+
+Apache CXF has several benefits over Apache Axis 2:
+
+. *Active Development:* +
+CXF is actively maintained and aligned with modern Java versions and specifications.
+Axis2 has seen very little activity in recent years.
+
+. *Spring Integration:* +
+CXF integrates better with Spring and Spring Boot, making it easier to wire services and clients.
+
+. *JAX-WS & JAX-RS Support:* +
+CXF supports both SOAP (JAX-WS) and REST (JAX-RS)
+
+. *Better Tooling & Community:* +
+CXF has broader support in modern IDEs and build tools like Maven.
+
+. *Security & WS- Support:* +
+CXF has better support for WS-Security, WS-Policy, WS-ReliableMessaging, etc.
+
+An overview of the IHE services can be found at: +
+`<ncp-a host and base path>/services/`
+a live example can be found, when using our docker compose file, at `http://localhost:8090/openncp-ws-server/services`
+
+====== Available SOAP Services
+
+[cols="3,3,2",options="header"]
+|===
+| Endpoint Address
+| WSDL
+| Target Namespace
+
+| http://localhost:8090/openncp-ws-server/services/XDR_Service
+| {urn:ihe:iti:xds-b:2007}XDR_Service
+| urn:ihe:iti:xds-b:2007
+
+| http://localhost:8090/openncp-ws-server/services/XCPD_Service
+| {urn:ihe:iti:xcpd:2009}XCPD_Service
+| urn:ihe:iti:xcpd:2009
+
+| http://localhost:8090/openncp-ws-server/services/XCA_Service
+| {urn:ihe:iti:xds-b:2007}XCA_Service
+| urn:ihe:iti:xds-b:2007
+|===
+
+
+

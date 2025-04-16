@@ -9,7 +9,7 @@ import eu.europa.ec.sante.openncp.core.client.api.ReasonOfHospitalisation;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.OrCDDocumentMetaData;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocument;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xds.XDSDocumentAssociation;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RetrieveDocumentSetResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,7 +172,7 @@ public class DocumentDts {
      * @param documentResponse the document to be converted.
      * @return the result of the conversion, as a Document.
      */
-    public static EpsosDocument newInstance(final RetrieveDocumentSetResponseType.DocumentResponse documentResponse) {
+    public static EpsosDocument newInstance(final RetrieveDocumentSetResponse.DocumentResponse documentResponse) {
 
         if (documentResponse == null) {
             return null;

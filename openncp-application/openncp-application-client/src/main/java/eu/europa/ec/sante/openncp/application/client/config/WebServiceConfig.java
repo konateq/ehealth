@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.api.client.interceptor.*;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
+import eu.europa.ec.sante.openncp.core.common.interceptors.AssertionsInInterceptor;
 import org.apache.cxf.Bus;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.jaxws.EndpointImpl;
@@ -66,6 +67,7 @@ public class WebServiceConfig {
 
         endpoint.getProperties().put(SecurityConstants.SIGNATURE_CRYPTO, signatureCrypto);
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
+        endpoint.getInInterceptors().add(new InboundSecurityInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());

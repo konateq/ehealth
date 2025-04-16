@@ -1,12 +1,13 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import eu.europa.ec.sante.openncp.api.client.RequestContext;
-import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
+import eu.europa.ec.sante.openncp.core.common.SecurityContext;
+import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;
+import eu.europa.ec.sante.openncp.core.common.interceptors.AssertionsInInterceptor;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
@@ -31,8 +32,8 @@ public class AssertionReportingInterceptor extends AbstractPhaseInterceptor<Mess
         }
 
         LOGGER.info("Reporting assertions");
-        final RequestContext requestContext = RequestContextProvider.getRequestContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
-        final SamlDetails samlDetails = requestContext.getSamlDetails();
+        final SecurityContext securityContext = SecurityContextProvider.getSecurityContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
+        final SamlDetails samlDetails = securityContext.getSamlDetails().orElseThrow(() -> new RuntimeException("SamlDetails is null"));
 
         samlDetails.getAssertionDetails(AssertionType.HCP)
                 .map(AssertionDetails::getAssertion)

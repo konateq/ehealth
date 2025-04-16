@@ -3,10 +3,10 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xdr;
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryError;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryErrorList;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xds.RegistryResponseType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -28,10 +28,10 @@ public final class XdrDocumentSource {
 
     private static final String ERROR_SEVERITY_ERROR = "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error";
 
-    final XDSbRepositoryServiceInvoker xDSbRepositoryServiceInvoker;
+    final XdrGateway xdrGateway;
 
-    public XdrDocumentSource(final XDSbRepositoryServiceInvoker xDSbRepositoryServiceInvoker) {
-        this.xDSbRepositoryServiceInvoker = Validate.notNull(xDSbRepositoryServiceInvoker, "XDSbRepositoryServiceInvoker cannot be null");
+    public XdrDocumentSource(final XdrGateway xdrGateway) {
+        this.xdrGateway = Validate.notNull(xdrGateway, "XDSbRepositoryServiceInvoker cannot be null");
     }
 
     /**
@@ -71,7 +71,7 @@ public final class XdrDocumentSource {
         final RegistryResponseType response;
 
         try {
-            response = xDSbRepositoryServiceInvoker.provideAndRegisterDocumentSet(request, countryCode, assertionMap, docClassCode);
+            response = xdrGateway.provideAndRegisterDocumentSet(request, countryCode, assertionMap, docClassCode);
             if (response.getRegistryErrorList() != null) {
                 final var registryErrorList = response.getRegistryErrorList();
                 processRegistryErrors(registryErrorList);
@@ -93,7 +93,7 @@ public final class XdrDocumentSource {
             return;
         }
 
-        final List<RegistryError> errorList = registryErrorList.getRegistryError();
+        final List<RegistryError> errorList = registryErrorList.getRegistryErrors();
         if (errorList == null) {
             return;
         }

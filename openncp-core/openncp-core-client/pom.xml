@@ -9,16 +9,17 @@
     <artifactId>openncp-core-client</artifactId>
     <name>openncp-core-client</name>
 
-    <properties>
-        <axis2.version>1.8.2</axis2.version>
-    </properties>
-
 
     <dependencies>
         <!-- OpenNCP dependencies -->
         <dependency>
             <groupId>eu.europa.ec.sante</groupId>
             <artifactId>openncp-core-client-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.europa.ec.sante</groupId>
+            <artifactId>openncp-core-server-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -45,58 +46,6 @@
             <artifactId>quartz</artifactId>
             <scope>compile</scope>
         </dependency>
-        <!-- Axis 2 dependencies -->
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-kernel</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-transport-http</artifactId>
-            <version>${axis2.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpcore</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpclient</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-transport-local</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>addressing</artifactId>
-            <version>${axis2.version}</version>
-            <classifier>classpath-module</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-xmlbeans</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-xmlbeans-codegen</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-adb</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-jaxws</artifactId>
-            <version>${axis2.version}</version>
-        </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
@@ -108,24 +57,4 @@
             <artifactId>mockito-core</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-            <resource>
-                <directory>${project.build.directory}/generated-sources/resources</directory>
-            </resource>
-        </resources>
-        <plugins>
-            <!-- spring-boot-maven-plugin -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
-            </plugin>
-        </plugins>
-    </build>
 </project>

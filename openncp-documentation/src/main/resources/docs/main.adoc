@@ -27,4 +27,5 @@ include::exceptions/exceptionhandling.adoc[]
 include::releases/v8.0.0.adoc[]
 include::releases/v8.0.1.adoc[]
 include::releases/v8.0.2.adoc[]
+include::releases/v9.0.0.adoc[]
 

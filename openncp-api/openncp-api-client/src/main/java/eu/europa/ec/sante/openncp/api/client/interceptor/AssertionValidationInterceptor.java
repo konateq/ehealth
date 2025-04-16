@@ -1,9 +1,9 @@
 package eu.europa.ec.sante.openncp.api.client.interceptor;
 
-import eu.europa.ec.sante.openncp.api.client.RequestContext;
-import eu.europa.ec.sante.openncp.api.client.RequestContextProvider;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
+import eu.europa.ec.sante.openncp.core.common.SecurityContext;
+import eu.europa.ec.sante.openncp.core.common.SecurityContextProvider;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidationResult;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import org.apache.commons.lang3.StringUtils;
@@ -44,8 +44,8 @@ public class AssertionValidationInterceptor extends AbstractPhaseInterceptor<Mes
             return;
         }
 
-        final RequestContext requestContext = RequestContextProvider.getRequestContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
-        final SamlDetails samlDetails = requestContext.getSamlDetails();
+        final SecurityContext securityContext = SecurityContextProvider.getSecurityContext().orElseThrow(() -> new RuntimeException("AssertionContext is null"));
+        final SamlDetails samlDetails = securityContext.getSamlDetails().orElseThrow(() -> new RuntimeException("SamlDetails is null"));
         samlDetails.getAssertionDetails(AssertionType.HCP).orElseThrow(() -> new AuthenticationException("No HCP assertion found"));
 
         final List<AssertionValidationResult> validationResults = assertionValidator.validate(samlDetails.getAssertions());

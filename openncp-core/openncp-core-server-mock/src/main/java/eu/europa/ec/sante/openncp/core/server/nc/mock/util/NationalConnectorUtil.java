@@ -1,9 +1,8 @@
 package eu.europa.ec.sante.openncp.core.server.nc.mock.util;
 
+import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.opensaml.core.xml.XMLObject;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -33,30 +32,30 @@ public class NationalConnectorUtil {
     private NationalConnectorUtil() {
     }
 
-    private static Assertion getAssertionFromSOAPHeader(Element soapHeader, String type) {
+    private static Assertion getAssertionFromSOAPHeader(final Element soapHeader, final String type) {
 
-        NodeList securityList = soapHeader.getElementsByTagNameNS(
+        final NodeList securityList = soapHeader.getElementsByTagNameNS(
                 "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security");
         if (securityList != null && securityList.getLength() > 0) {
 
-            Element security = (Element) securityList.item(0);
-            NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
+            final Element security = (Element) securityList.item(0);
+            final NodeList assertionList = security.getElementsByTagNameNS(SAMLConstants.SAML20_NS, "Assertion");
 
             if (assertionList.getLength() > 0) {
                 for (int i = 0; i < assertionList.getLength(); i++) {
                     try {
-                        Element assertionElement = (Element) assertionList.item(i);
+                        final Element assertionElement = (Element) assertionList.item(i);
                         // Validate Assertion according to SAML XSD
-                        SAMLSchemaBuilder schemaBuilder = new SAMLSchemaBuilder(SAMLSchemaBuilder.SAML1Version.SAML_11);
-                        Validator validator = schemaBuilder.getSAMLSchema().newValidator();
+                        final SAMLSchemaBuilder schemaBuilder = new SAMLSchemaBuilder(SAMLSchemaBuilder.SAML1Version.SAML_11);
+                        final Validator validator = schemaBuilder.getSAMLSchema().newValidator();
                         validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
                         validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
                         validator.validate(new DOMSource(assertionElement));
-                        Assertion assertion = (Assertion) fromElement(assertionElement);
+                        final Assertion assertion = (Assertion) SAML.fromElement(assertionElement);
                         if (StringUtils.equals(type, assertion.getIssuer().getNameQualifier())) {
                             return assertion;
                         }
-                    } catch (SAXException | IOException | UnmarshallingException e) {
+                    } catch (final SAXException | IOException | UnmarshallingException e) {
                         return null;
                     }
                 }
@@ -65,22 +64,15 @@ public class NationalConnectorUtil {
         return null;
     }
 
-    /**
-     * Helper method to read an XML object from a DOM element.
-     */
-    public static XMLObject fromElement(Element element) throws UnmarshallingException {
-        return XMLObjectProviderRegistrySupport.getUnmarshallerFactory().getUnmarshaller(element).unmarshall(element);
-    }
-
-    public static String getDocumentAsXml(Document document, boolean header) {
+    public static String getDocumentAsXml(final Document document, final boolean header) {
 
         var response = "";
         try {
-            DOMSource domSource = new DOMSource(document);
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            final DOMSource domSource = new DOMSource(document);
+            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
             transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            Transformer transformer = transformerFactory.newTransformer();
-            String omit;
+            final Transformer transformer = transformerFactory.newTransformer();
+            final String omit;
             if (header) {
                 omit = "no";
             } else {
@@ -91,11 +83,11 @@ public class NationalConnectorUtil {
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            var stringWriter = new java.io.StringWriter();
-            StreamResult sr = new StreamResult(stringWriter);
+            final var stringWriter = new java.io.StringWriter();
+            final StreamResult sr = new StreamResult(stringWriter);
             transformer.transform(domSource, sr);
             response = stringWriter.toString();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(ExceptionUtils.getStackTrace(e));
         }
         return response;
@@ -107,7 +99,7 @@ public class NationalConnectorUtil {
      * @param soapHeader - SOAP Header message received by National Connector
      * @return HCP Assertion passed to National Connector.
      */
-    public static Assertion getHCPAssertionFromSOAPHeader(Element soapHeader) {
+    public static Assertion getHCPAssertionFromSOAPHeader(final Element soapHeader) {
         return getAssertionFromSOAPHeader(soapHeader, "urn:ehdsi:assertions:hcp");
     }
 
@@ -117,7 +109,7 @@ public class NationalConnectorUtil {
      * @param soapHeader - SOAP Header message received by National Connector
      * @return Next of Kin Assertion passed to National Connector.
      */
-    public static Assertion getNoKAssertionFromSOAPHeader(Element soapHeader) {
+    public static Assertion getNoKAssertionFromSOAPHeader(final Element soapHeader) {
         return getAssertionFromSOAPHeader(soapHeader, "urn:ehdsi:assertions:nok");
     }
 
@@ -127,18 +119,18 @@ public class NationalConnectorUtil {
      * @param soapHeader - SOAP Header message received by National Connector
      * @return TRC Assertion passed to National Connector.
      */
-    public static Assertion getTRCAssertionFromSOAPHeader(Element soapHeader) {
+    public static Assertion getTRCAssertionFromSOAPHeader(final Element soapHeader) {
         return getAssertionFromSOAPHeader(soapHeader, "urn:ehdsi:assertions:trc");
     }
 
-    public static void logAssertionAsXml(Assertion assertion) {
+    public static void logAssertionAsXml(final Assertion assertion) {
 
         try {
-            var marshaller = new AssertionMarshaller();
-            Element element = marshaller.marshall(assertion);
-            Document document = element.getOwnerDocument();
+            final var marshaller = new AssertionMarshaller();
+            final Element element = marshaller.marshall(assertion);
+            final Document document = element.getOwnerDocument();
             LOGGER.info("Assertion: '{}'\n'{}'", assertion.getID(), getDocumentAsXml(document, false));
-        } catch (MarshallingException e) {
+        } catch (final MarshallingException e) {
             LOGGER.error(e.getMessage());
         }
     }

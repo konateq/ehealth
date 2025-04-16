@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.dcm4che3.data.Tag.ReferencedSOPSequence;
-
 @Component
 public class DicomExtractor {
 

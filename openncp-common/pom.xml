@@ -65,10 +65,10 @@
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
         </dependency>
-        <!-- Jakarta dependencies -->
+        <!-- JAvax dependencies -->
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>javax.xml.crypto</groupId>
@@ -227,12 +227,6 @@
         <dependency>
             <groupId>xmlunit</groupId>
             <artifactId>xmlunit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-kernel</artifactId>
-            <version>${axis2.version}</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

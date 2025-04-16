@@ -31,7 +31,7 @@ public class SearchCriteriaImpl implements SearchCriteria {
     public SearchCriteria addPatientId(String patientId) {
         patientId = StringEscapeUtils.unescapeXml(patientId);
         this.add(Criteria.PATIENT_ID, patientId);
-        String[] result = StringUtils.split(patientId, "^&");
+        final String[] result = StringUtils.split(patientId, "^&");
         if (result.length > 1) {
             this.patientId.setRoot(result[1]);
         }
@@ -39,14 +39,14 @@ public class SearchCriteriaImpl implements SearchCriteria {
         return this;
     }
 
-    public SearchCriteria add(Criteria c, String value) {
+    public SearchCriteria add(final Criteria c, final String value) {
         if (c != null && value != null) {
             criteriaMap.put(c, value);
         }
         return this;
     }
 
-    public String getCriteriaValue(Criteria c) {
+    public String getCriteriaValue(final Criteria c) {
         return criteriaMap.get(c);
     }
 
@@ -61,14 +61,14 @@ public class SearchCriteriaImpl implements SearchCriteria {
     public Document asXml() {
 
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setXIncludeAware(false);
             //factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             factory.setNamespaceAware(true);
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            StringBuilder stringBuilder = new StringBuilder();
+            final DocumentBuilder builder = factory.newDocumentBuilder();
+            final StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("<SearchCriteria>");
-            for (Map.Entry<Criteria, String> entry : criteriaMap.entrySet()) {
+            for (final Map.Entry<Criteria, String> entry : criteriaMap.entrySet()) {
                 stringBuilder.append("<");
                 stringBuilder.append(entry.getKey().value);
                 stringBuilder.append(">");
@@ -79,7 +79,7 @@ public class SearchCriteriaImpl implements SearchCriteria {
             }
             stringBuilder.append("</SearchCriteria>");
             return builder.parse(new InputSource(new StringReader(stringBuilder.toString())));
-        } catch (SAXException | IOException | ParserConfigurationException ex) {
+        } catch (final SAXException | IOException | ParserConfigurationException ex) {
             logger.error("XML Transformation Exception: '{}'", ex.getMessage(), ex);
         }
         return null;
@@ -87,8 +87,8 @@ public class SearchCriteriaImpl implements SearchCriteria {
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (Map.Entry<Criteria, String> entry : criteriaMap.entrySet()) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (final Map.Entry<Criteria, String> entry : criteriaMap.entrySet()) {
             if (stringBuilder.length() == 0) {
                 stringBuilder.append("SearchCriteria {");
             } else {

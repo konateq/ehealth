@@ -37,7 +37,7 @@ public interface SearchCriteria {
 
 		public final String value;
 
-		Criteria(String value) {
+		Criteria(final String value) {
 			this.value = value;
 		}
 	}

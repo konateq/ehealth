@@ -5,7 +5,7 @@ import eu.europa.ec.sante.openncp.api.common.handler.ResourceHandler;
 import eu.europa.ec.sante.openncp.api.server.dicom.DicomExtractor;
 import eu.europa.ec.sante.openncp.api.server.dicom.DicomStudy;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.DispatchContext;
-import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.ApplicationMediaType;
+import eu.europa.ec.sante.openncp.core.server.api.ihe.generated.xcpd.ApplicationMediaType;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Attachment;
