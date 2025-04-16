@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.util;
 
-import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.enums.CodeSystem;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.AuthorInformation;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.CustodianInformation;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.cda.model.LegalAuthenticatorInformation;
@@ -9,8 +8,6 @@ import org.jdom2.Namespace;
 import org.jdom2.filter.ElementFilter;
 
 import java.util.Date;
-
-import static org.hl7.fhir.r4.model.ResourceType.CodeSystem;
 
 public class CDAHeaderUtils {
 

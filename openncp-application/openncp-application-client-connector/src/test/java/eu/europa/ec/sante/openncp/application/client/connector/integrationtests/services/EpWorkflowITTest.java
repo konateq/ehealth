@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
+import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
 import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.util.AssertionUtils;
@@ -9,6 +10,7 @@ import eu.europa.ec.sante.openncp.application.client.connector.integrationtests.
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.core.client.api.*;
@@ -32,6 +34,7 @@ import java.security.SecureRandom;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class EpWorkflowITTest extends BaseIntegrationTest {
 
@@ -47,14 +50,10 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
     @Autowired
     private AssertionService assertionService;
 
-    //private final DispensationDocCreation dispensationDocCreation = new DispensationDocCreation();
-
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-
     @Test
-    void testHappyFlowEp() throws IOException, MarshallingException, ParserConfigurationException, SAXException {
-
+    void testHappyFlow() throws ClientConnectorException, IOException, MarshallingException, ParserConfigurationException, SAXException {
 
         final PatientId patientId = createPatientId("1-1234-W8");
 
@@ -97,16 +96,40 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
         dispenseRequest.setNumberOfPackage(5);
         dispenseRequest.setProductName("Lantus SoloStar");
 
-        byte[] fileContent = CDAUtils.generateDispensationDocument(dispenseRequest, epDocument, edUid);
+        final byte[] fileContent = CDAUtils.generateDispensationDocument(dispenseRequest, epDocument, edUid);
 
         final EpsosDocument dispensationDocument = buildDispensationDocument("My Testing Portal", edOid, edUid, fileContent);
 
-        SubmitDocumentResponse submitDocumentResponse = clientConnectorService.submitDocument(buildAssertionMapForPharmacist(patientId), "BE", dispensationDocument, objectFactory.createPatientDemographics());
+        final SubmitDocumentResponse submitDocumentResponse = clientConnectorService.submitDocument(buildAssertionMapForPharmacist(patientId), "BE", dispensationDocument, xcpdResponse.get(0));
         assertThat(submitDocumentResponse).isNotNull();
-        assertThat(submitDocumentResponse.getResponseStatus()).isEqualTo("200");
+        assertThat(submitDocumentResponse.getResponseStatus()).isEqualTo("urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Success");
+    }
 
+    @Test
+    void testQueryPrescriptionsWithWrongProfile() throws MalformedURLException, MarshallingException, ClientConnectorException {
+        final Map<AssertionType, Assertion> assertions = new HashMap<>();
+        final Assertion clinicalAssertion = AssertionUtils.createMedicalDoctorAssertion(keyStoreManager, "Gregory House", "gregory@ehdsi.eu");
 
+        final PatientId patientId = objectFactory.createPatientId();
+        patientId.setRoot("1.3.6.1.4.1.48336");
+        patientId.setExtension("1-1234-W8");
 
+        assertions.put(AssertionType.HCP, clinicalAssertion);
+        final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
+        assertions.put(AssertionType.TRC, treatmentConfirmationAssertion);
+
+        final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
+        classCode.setNodeRepresentation(ClassCode.EP_CLASSCODE.getCode());
+        classCode.setSchema("2.16.840.1.113883.6.1");
+        classCode.setValue(Constants.EP_TITLE);
+
+        assertThatExceptionOfType(ClientConnectorException.class)
+                .isThrownBy(() -> clientConnectorService.queryDocuments(assertions, "BE", patientId, List.of(classCode), null))
+                .satisfies(clientConnectorException -> {
+                    assertThat(clientConnectorException.getOpenNCPErrorCode().get()).isEqualTo(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS);
+                    assertThat(!clientConnectorException.getNiErrorMessage().isPresent());
+                })
+                .withMessageContaining(OpenNCPErrorCode.ERROR_INSUFFICIENT_RIGHTS.getDescription());
     }
 
     private Document createDocumentFromString(String input) throws ParserConfigurationException, IOException, SAXException {
@@ -116,25 +139,6 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
         InputSource is = new InputSource();
         is.setCharacterStream(new StringReader(input));
         return builder.parse(is);
-    }
-
-    @Test
-    void testQueryDocumentsWithWrongRole()throws MalformedURLException, MarshallingException {
-        final PatientId patientId= createPatientId("1-1234-W8");
-
-        final PatientDemographics patientDemographics= objectFactory.createPatientDemographics();
-        patientDemographics.getPatientId().add(patientId);
-
-        final List<PatientDemographics> xcpdResponse=clientConnectorService.queryPatient(buildAssertionMapForPhysician(patientId), "BE", patientDemographics);
-        assertThat(xcpdResponse).isNotNull().hasSize(1);
-
-        final GenericDocumentCode classCode = objectFactory.createGenericDocumentCode();
-        classCode.setNodeRepresentation(ClassCode.EP_CLASSCODE.getCode());
-        classCode.setSchema("2.16.840.1.113883.6.1");
-        classCode.setValue(Constants.EP_TITLE);
-
-        final List<EpsosDocument> xcaListResponse = clientConnectorService.queryDocuments(buildAssertionMapForPhysician(patientId), "BE", patientId, List.of(classCode), null);
-        assertThat(xcaListResponse).isNotNull().hasSize(0);
     }
 
     private PatientId createPatientId(String patientId) {
@@ -147,7 +151,7 @@ public class EpWorkflowITTest extends BaseIntegrationTest {
     }
 
     private Map<AssertionType, Assertion> buildAssertionMapForPharmacist(final PatientId patientId) throws MalformedURLException, MarshallingException {
-        final Assertion clinicalAssertion = AssertionUtils.createClinicalAssertionPharmacist(keyStoreManager, "Doctor House", "John House", "house@ehdsi.eu");
+        final Assertion clinicalAssertion = AssertionUtils.createPharmacistAssertion(keyStoreManager, "Doctor House", "house@ehdsi.eu");
         final Assertion treatmentConfirmationAssertion = AssertionUtils.createTRCAssertion(assertionService, configurationManager, clinicalAssertion, patientId, "TREATMENT");
         final Map<AssertionType, Assertion> assertions = new HashMap<>();
         assertions.put(AssertionType.HCP, clinicalAssertion);
