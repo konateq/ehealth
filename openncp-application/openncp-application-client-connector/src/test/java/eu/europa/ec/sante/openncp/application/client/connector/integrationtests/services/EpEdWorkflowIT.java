@@ -36,7 +36,7 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-public class EpWorkflowITTest extends BaseIntegrationTest {
+public class EpEdWorkflowIT extends BaseIntegrationTest {
 
     @Autowired
     private ClientConnectorService clientConnectorService;

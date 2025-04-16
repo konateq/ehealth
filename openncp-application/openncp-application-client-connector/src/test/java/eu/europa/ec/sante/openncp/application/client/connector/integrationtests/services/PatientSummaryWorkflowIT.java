@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
-import com.mysql.cj.xdevapi.Client;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorException;
 import eu.europa.ec.sante.openncp.application.client.connector.ClientConnectorService;
 import eu.europa.ec.sante.openncp.application.client.connector.assertion.AssertionService;
@@ -18,14 +17,10 @@ import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.xml.namespace.QName;
-import javax.xml.ws.soap.SOAPFaultException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
