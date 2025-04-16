@@ -3,7 +3,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import eu.europa.ec.sante.openncp.common.util.FileSystemUtils;
-import eu.europa.ec.sante.openncp.core.common.ServerContext;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.r4.model.AuditEvent;

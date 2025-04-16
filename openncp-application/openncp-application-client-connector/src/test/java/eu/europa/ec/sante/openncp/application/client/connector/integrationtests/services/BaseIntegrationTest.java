@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.application.client.connector.integrationtests.services;
 
-import eu.europa.ec.sante.openncp.application.client.connector.SpringConfiguration;
+import eu.europa.ec.sante.openncp.application.client.connector.config.SpringConfiguration;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerImpl;
 import eu.europa.ec.sante.openncp.common.property.PropertyService;

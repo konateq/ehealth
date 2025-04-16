@@ -3,7 +3,8 @@ public enum NcpSide {
 
     NCP_A("NCP-A"),
     NCP_B("NCP-B"),
-    OFFICER("OFFICER");
+    OFFICER("OFFICER"),
+    CLIENT_CONNECTOR("CLIENT_CONNECTOR");
 
     private String name;
 

@@ -4,6 +4,7 @@ import eu.europa.ec.sante.openncp.api.client.interceptor.*;
 import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.client.api.ClientServicePortType;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import org.apache.cxf.Bus;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.jaxws.EndpointImpl;
@@ -21,18 +22,26 @@ import org.springframework.context.annotation.Configuration;
 import javax.jws.WebService;
 import javax.xml.ws.Endpoint;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.UUID;
 
 @Configuration
 public class WebServiceConfig {
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebServiceConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(WebServiceConfig.class);
 
     @Bean
-    public LoggingFeature loggingFeature() {
+    public LoggingFeature loggingFeature(ServerContext serverContext) {
         final LoggingFeature loggingFeature = new LoggingFeature();
         loggingFeature.setPrettyLogging(true);
-        loggingFeature.setVerbose(true);
+        if (serverContext.isProduction()) {
+            loggingFeature.addSensitiveElementNames(new HashSet<>(Arrays.asList("password", "administrativeGender", "birthDate", "city", "country", "familyName", "givenName", "postalCode", "streetAddress", "patientId", "nextOfKinId", "AttributeStatement", "creationDate", "person", "description", "base64Binary")));
+            loggingFeature.addSensitiveProtocolHeaderNames(new HashSet<>(Arrays.asList("Server", "Accept", "host", "Date")));
+            loggingFeature.setVerbose(false);
+        } else {
+            loggingFeature.setVerbose(true);
+        }
         return loggingFeature;
     }
 
@@ -67,7 +76,6 @@ public class WebServiceConfig {
         endpoint.getProperties().put(SecurityConstants.SIGNATURE_CRYPTO, signatureCrypto);
         endpoint.getInInterceptors().add(new AssertionsInInterceptor());
         endpoint.getInInterceptors().add(new TransportTokenInInterceptor());
-        endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
         endpoint.getInInterceptors().add(new AssertionReportingInterceptor());
         endpoint.getInInterceptors().add(assertionValidationInterceptor);
 

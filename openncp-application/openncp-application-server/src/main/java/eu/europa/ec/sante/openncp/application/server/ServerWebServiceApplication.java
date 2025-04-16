@@ -2,8 +2,8 @@ package eu.europa.ec.sante.openncp.application.server;
 
 import eu.europa.ec.sante.openncp.common.NcpSide;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
-import eu.europa.ec.sante.openncp.core.common.ImmutableServerContext;
-import eu.europa.ec.sante.openncp.core.common.ServerContext;
+import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,8 @@ public class ServerWebServiceApplication extends SpringBootServletInitializer {
     @Bean
     @Primary
     public ServerContext serverContext() {
-        return ImmutableServerContext.of(NcpSide.NCP_A);
+        return ServerContext.of(NcpSide.NCP_A,
+                ServerMode.fromValue(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE)));
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerWebServiceApplication.class);
