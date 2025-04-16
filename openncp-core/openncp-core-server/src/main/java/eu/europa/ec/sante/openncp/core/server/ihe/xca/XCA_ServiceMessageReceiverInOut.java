@@ -9,6 +9,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -94,7 +95,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         Date endTime = new Date();
 
         // Out Envelop
-        SOAPEnvelope envelope = null;
+        SOAPEnvelope envelope;
 
         final RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = null;
         ServiceType serviceType = null;
@@ -113,8 +114,6 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                 //eadcFailure(msgContext, err, ServiceType.DOCUMENT_LIST_RESPONSE);
                 eadcError = err;
-                serviceType = ServiceType.DOCUMENT_LIST_RESPONSE;
-
                 throw new AxisFault(err);
             }
 
@@ -262,14 +261,17 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
             //eadcFailure(msgContext, e.getMessage(), ServiceType.DOCUMENT_LIST_RESPONSE);
             eadcError = e.getMessage();
-            serviceType = ServiceType.DOCUMENT_LIST_RESPONSE;
 
-            throw AxisFault.makeFault(e);
+            final AxisFault axisFault = AxisFault.makeFault(e);
+            if (e instanceof OpenNCPErrorCodeException) {
+                axisFault.setFaultSubCodes(axisFault.getFaultSubCodes() != null ? axisFault.getFaultSubCodes() : new ArrayList<>());
+                axisFault.getFaultSubCodes().add(new QName(((OpenNCPErrorCodeException) e).getErrorCode().getCode()));
+            }
+            throw axisFault;
         } finally {
             if(!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, clinicalDocument, startTime, endTime,
                         Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND, serviceType, eadcError);
-                eadcError = "";
             }
         }
     }
@@ -291,35 +293,6 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
             });
         }
         return list;
-    }
-
-    private OMElement toOM(final AdhocQueryRequest param, final boolean optimizeContent) throws AxisFault {
-
-        try {
-
-            final Marshaller marshaller = wsContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-
-            final OMFactory factory = OMAbstractFactory.getOMFactory();
-
-            final JaxbRIDataSource source = new JaxbRIDataSource(AdhocQueryRequest.class,
-                    param, marshaller, "urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", "AdhocQueryRequest");
-            final OMNamespace namespace = factory.createOMNamespace("urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0", null);
-
-            return factory.createOMElement(source, "AdhocQueryRequest", namespace);
-
-        } catch (final JAXBException bex) {
-            throw AxisFault.makeFault(bex);
-        }
-    }
-
-    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final AdhocQueryRequest param,
-                                    final boolean optimizeContent) throws AxisFault {
-
-        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
-        envelope.getBody().addChild(toOM(param, optimizeContent));
-
-        return envelope;
     }
 
     private OMElement toOM(final AdhocQueryResponse param, final boolean optimizeContent) throws AxisFault {
@@ -350,33 +323,6 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         return envelope;
     }
 
-    private OMElement toOM(final RetrieveDocumentSetRequestType param, final boolean optimizeContent) throws AxisFault {
-
-        try {
-
-            final Marshaller marshaller = wsContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-            final OMFactory factory = OMAbstractFactory.getOMFactory();
-
-            final JaxbRIDataSource source = new JaxbRIDataSource(RetrieveDocumentSetRequestType.class, param,
-                    marshaller, "urn:ihe:iti:xds-b:2007", "RetrieveDocumentSetRequest");
-            final OMNamespace namespace = factory.createOMNamespace("urn:ihe:iti:xds-b:2007", null);
-
-            return factory.createOMElement(source, "RetrieveDocumentSetRequest", namespace);
-
-        } catch (final JAXBException bex) {
-            throw AxisFault.makeFault(bex);
-        }
-    }
-
-    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final RetrieveDocumentSetRequestType param, final boolean optimizeContent) throws AxisFault {
-
-        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
-        envelope.getBody().addChild(toOM(param, optimizeContent));
-
-        return envelope;
-    }
-
     private OMElement toOM(final RetrieveDocumentSetResponseType param, final boolean optimizeContent) throws AxisFault {
 
         try {
@@ -395,14 +341,6 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         } catch (final JAXBException bex) {
             throw AxisFault.makeFault(bex);
         }
-    }
-
-    private SOAPEnvelope toEnvelope(final SOAPFactory factory, final RetrieveDocumentSetResponseType param, final boolean optimizeContent) throws AxisFault {
-
-        final SOAPEnvelope envelope = factory.getDefaultEnvelope();
-        envelope.getBody().addChild(toOM(param, optimizeContent));
-
-        return envelope;
     }
 
     private SOAPEnvelope toEnvelope(final SOAPFactory factory, final OMElement param) {
@@ -447,19 +385,6 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
             returnMap.put(ns.getPrefix(), ns.getNamespaceURI());
         }
         return returnMap;
-    }
-
-    private AxisFault createAxisFault(final Exception e) {
-
-        final AxisFault f;
-        final Throwable cause = e.getCause();
-        if (cause != null) {
-            f = new AxisFault(e.getMessage(), cause);
-        } else {
-            f = new AxisFault(e.getMessage());
-        }
-
-        return f;
     }
 
     class JaxbRIDataSource  extends AbstractOMDataSource {

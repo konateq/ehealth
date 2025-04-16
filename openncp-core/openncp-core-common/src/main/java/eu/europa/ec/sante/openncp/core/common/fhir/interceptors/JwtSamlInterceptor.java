@@ -8,7 +8,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import eu.europa.ec.sante.openncp.common.context.LogContext;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
-import eu.europa.ec.sante.openncp.core.common.ServerContext;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.JwtToken;
 import eu.europa.ec.sante.openncp.core.common.fhir.security.TokenProvider;

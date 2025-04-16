@@ -23,7 +23,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcEntry;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtilWrapper;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.ServiceType;
-import eu.europa.ec.sante.openncp.core.common.ihe.exception.XDRException;
+import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogClientUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
@@ -182,7 +182,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
      */
     public RegistryResponseType documentRecipient_ProvideAndRegisterDocumentSetB(
             final ProvideAndRegisterDocumentSetRequestType provideAndRegisterDocumentSetRequest,
-            final Map<AssertionType, Assertion> assertionMap) throws RemoteException, XDRException {
+            final Map<AssertionType, Assertion> assertionMap) throws RemoteException, OpenNCPException {
 
         MessageContext messageContext = null;
         MessageContext returnMessageContext = null;
@@ -319,7 +319,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
                     /* if we cannot solve this issue through the Central Services, then there's nothing we can do, so we let it be thrown */
                     eadcError = "Could not find configurations in the Central Services for [" + endpoint + "], the service will fail.";
                     LOGGER.error(eadcError);
-                    throw new XDRException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, e);
+                    throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, e);
                 }
             }
             returnMessageContext = operationClient.getMessageContext(WSDLConstants.MESSAGE_LABEL_IN_VALUE);
@@ -381,11 +381,11 @@ public class DocumentRecipient_ServiceStub extends Stub {
                 } catch (final Exception e) {
                     // Class cannot be instantiated - throwing the original Axis fault
                     eadcError = e.getMessage();
-                    throw new XDRException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, e);
+                    throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, e);
                 }
             }
             eadcError = axisFault.getMessage();
-            throw new XDRException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, axisFault);
+            throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC_CONNECTION_NOT_POSSIBLE, axisFault);
         } finally {
             if (messageContext != null && messageContext.getTransportOut() != null && messageContext.getTransportOut().getSender() != null) {
                 messageContext.getTransportOut().getSender().cleanup(messageContext);
@@ -398,7 +398,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
         }
     }
 
-    private static String getSoapResponseRequestMsg(final SOAPEnvelope soapEnvelope, final String type) throws XDRException {
+    private static String getSoapResponseRequestMsg(final SOAPEnvelope soapEnvelope, final String type) throws OpenNCPException {
         final String msg;
         try {
             if (LOGGER_CLINICAL.isDebugEnabled()
@@ -409,7 +409,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
             }
             msg = XMLUtil.prettyPrint(XMLUtils.toDOM(soapEnvelope.getBody()));
         } catch (final Exception ex) {
-            throw new XDRException(OpenNCPErrorCode.ERROR_GENERIC, ex);
+            throw new OpenNCPException(OpenNCPErrorCode.ERROR_GENERIC, ex);
         }
 
         return msg;
@@ -526,8 +526,8 @@ public class DocumentRecipient_ServiceStub extends Stub {
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        EventLogUtil.prepareXDRCommonLog(eventLog, request, rel);
         eventLog.setNcpSide(NcpSide.NCP_B);
+        EventLogUtil.prepareXDRCommonLog(eventLog, request, rel);
         EventLogClientUtil.sendEventLog(eventLog);
         return eventLog;
     }

@@ -13,28 +13,25 @@ import java.util.Arrays;
 public class PivotTranslationAuditMessageBuilder extends AbstractAuditMessageBuilder implements AuditMessageBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PivotTranslationAuditMessageBuilder.class);
+
     @Override
     public AuditMessage build(final EventLog eventLog) {
-        AuditMessage message = null;
-        try {
-            final ObjectFactory of = new ObjectFactory();
-            message = of.createAuditMessage();
-            addAuditSource(message, eventLog.getAS_AuditSourceId());
-            addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(), EventActionCode.EXECUTE.getCode(), AuditConstant.EVENT_ID_EHDSI_TRANSACTIONS_CODE_SYSTEM,
-                    eventLog.getEI_EventDateTime(), eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
 
-            addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_CONSUMER, AuditConstant.CODE_SYSTEM_EHDSI,
-                    AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getTargetip());
-        } catch (final Exception e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
-        if (message != null) {
-            // Event Target
-            addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("4"), Short.valueOf("5"),
-                    "in", "eHealth DSI Translation", "Input Data");
-            addEventTarget(message, Arrays.asList(eventLog.getEventTargetAdditionalObjectId()), Short.valueOf("4"), Short.valueOf("5"),
-                    "out", "eHealth DSI Translation", "Output Data");
-        }
+        final ObjectFactory of = new ObjectFactory();
+        AuditMessage message = of.createAuditMessage();
+        addAuditSource(message, eventLog.getAS_AuditSourceId());
+        addEventIdentification(message,
+                eventLog.getEventType(),
+                eventLog.getEI_EventDateTime(),
+                eventLog.getEI_EventOutcomeIndicator());
+
+        addService(message, eventLog.getSP_UserID(), true, AuditConstant.SERVICE_PROVIDER,
+                AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
+        // Event Target
+        addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("4"), Short.valueOf("5"),
+                "in", "eHealth DSI Translation", "Input Data");
+        addEventTarget(message, Arrays.asList(eventLog.getEventTargetAdditionalObjectId()), Short.valueOf("4"), Short.valueOf("5"),
+                "out", "eHealth DSI Translation", "Output Data");
         return message;
     }
 }

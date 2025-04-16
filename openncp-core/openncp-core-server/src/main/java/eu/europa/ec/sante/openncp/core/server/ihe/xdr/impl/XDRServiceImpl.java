@@ -43,6 +43,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.transformation.util.DomUtils;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xdr.DocumentSubmitInterface;
 import eu.europa.ec.sante.openncp.core.server.ihe.AdhocQueryResponseStatus;
+import eu.europa.ec.sante.openncp.core.server.ihe.NationalConnectorFactory;
 import eu.europa.ec.sante.openncp.core.server.ihe.RegistryErrorUtils;
 import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axis2.util.XMLUtils;
@@ -50,7 +51,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -61,6 +61,8 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
@@ -85,13 +87,13 @@ public class XDRServiceImpl implements XDRServiceInterface {
     private final Logger logger = LoggerFactory.getLogger(XDRServiceImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory ofRs = new ObjectFactory();
-    private final DocumentSubmitInterface documentSubmitInterface;
+    private final NationalConnectorFactory nationalConnectorFactory;
     private final AssertionValidator assertionValidator;
     private final CDATransformationService cdaTransformationService;
     private final PolicyAssertionManager policyAssertionManager;
 
-    public XDRServiceImpl(final DocumentSubmitInterface documentSubmitInterface, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService) {
-        this.documentSubmitInterface = Validate.notNull(documentSubmitInterface, "DocumentSubmitInterface cannot be null");
+    public XDRServiceImpl(final NationalConnectorFactory nationalConnectorFactory, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager, final CDATransformationService cdaTransformationService) {
+        this.nationalConnectorFactory = Validate.notNull(nationalConnectorFactory, "nationalConnectorFactory cannot be null");
         this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator cannot be null");
         this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
@@ -110,7 +112,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
     private void prepareEventLogForDiscardMedication(final EventLog eventLog, final String discardId, final ProvideAndRegisterDocumentSetRequestType request,
                                                      final RegistryResponseType response, final Element soapHeader) {
 
-        eventLog.setEventType(EventType.DISPENSATION_SERVICE_DISCARD);
+        eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
         eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
         eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
@@ -162,8 +164,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
      */
     public void prepareEventLogForDispensationInitialize(final EventLog eventLog, final ProvideAndRegisterDocumentSetRequestType request,
                                                          final RegistryResponseType response, final Element sh) {
-
-        eventLog.setEventType(EventType.DISPENSATION_SERVICE_INITIALIZE);
+        eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
         eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
         eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
@@ -241,13 +242,13 @@ public class XDRServiceImpl implements XDRServiceInterface {
      * @return XDR Discard Medication object.
      * @throws Exception - Generic Exception in case of error, should be finalized using specific Exception.
      */
-    public RegistryResponseType discardMedicationDispensed(final ProvideAndRegisterDocumentSetRequestType request,
+    public RegistryResponseType discardMedicationDispensed(final DocumentSubmitInterface documentSubmitService, final ProvideAndRegisterDocumentSetRequestType request,
                                                            final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
 
         logger.info("Processing Discard Dispense Medication");
         final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
         final Element soapHeaderElement = XMLUtils.toDOM(soapHeader);
-        documentSubmitInterface.setSOAPHeader(soapHeaderElement);
+        documentSubmitService.setSOAPHeader(soapHeaderElement);
 
         //  Validate assertions according de Medication Discard Dispense rule:
         String sealCountryCode = null;
@@ -305,12 +306,18 @@ public class XDRServiceImpl implements XDRServiceInterface {
             documentId = getDocumentId(epsosDocument.getDocument());
             // Evidence for call to NI for XDR submit (dispensation)
             // Joao: here we have a Document, so we can generate the mandatory NRO
+
+            final X509Certificate issuerCert = EvidenceUtils.getCertificate(Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+            final X509Certificate recipientCert = EvidenceUtils.getCertificate(Constants.SC_KEYSTORE_PATH, Constants.SC_KEYSTORE_PASSWORD, Constants.SC_PRIVATEKEY_ALIAS);
+            final X509Certificate senderCert = EvidenceUtils.getCertificate(Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD, Constants.SP_PRIVATEKEY_ALIAS);
+
+            final PrivateKey key = EvidenceUtils.getSigningKey(Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
+                    Constants.NCP_SIG_PRIVATEKEY_ALIAS);
+
             try {
-                EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), Constants.NCP_SIG_KEYSTORE_PATH,
-                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                        Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                        Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-                        Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
+                EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), issuerCert,
+                        senderCert, recipientCert, key,
                         IHEEventType.DISPENSATION_SERVICE_INITIALIZE.getCode(), new DateTime(),
                         EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
                         Objects.requireNonNull(SoapElementHelper.getTRCAssertion(soapHeaderElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
@@ -351,11 +358,11 @@ public class XDRServiceImpl implements XDRServiceInterface {
             discardDetails.setHealthCareProviderFacility(SoapElementHelper.getXSPALocality(soapHeaderElement));
             discardDetails.setHealthCareProviderOrganization(SoapElementHelper.getOrganization(soapHeaderElement));
             discardDetails.setHealthCareProviderOrganizationId(SoapElementHelper.getOrganizationId(soapHeaderElement));
-            documentSubmitInterface.cancelDispensation(discardDetails, epsosDocument);
+            documentSubmitService.cancelDispensation(discardDetails, epsosDocument);
 
         } catch (final NIException e) {
             logger.error("NIException: [{}] - [{}]", e.getOpenncpErrorCode(), e.getMessage());
-            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + "^" + e.getMessage(), "", Arrays.stream(org.apache.commons.lang.exception.ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
+            registryErrorList.getRegistryError().add(createErrorMessage(e.getOpenncpErrorCode(), e.getOpenncpErrorCode().getDescription() + " (" +  documentId + ")^" + e.getMessage(), "", Arrays.stream(org.apache.commons.lang.exception.ExceptionUtils.getRootCauseStackTrace(e)).findFirst().orElse(org.apache.commons.lang.StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR));
         } catch (final Exception e) {
             logger.error("Generic Exception: '{}'", e.getMessage(), e);
             RegistryErrorUtils.addErrorMessage(
@@ -384,7 +391,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
      * @return
      * @throws Exception
      */
-    public RegistryResponseType saveDispensation(final ProvideAndRegisterDocumentSetRequestType request, final SOAPHeader soapHeader,
+    public RegistryResponseType saveDispensation(final DocumentSubmitInterface documentSubmitService, final ProvideAndRegisterDocumentSetRequestType request, final SOAPHeader soapHeader,
                                                  final EventLog eventLog) throws Exception {
 
         logger.info("Processing Dispense Medication");
@@ -398,7 +405,7 @@ public class XDRServiceImpl implements XDRServiceInterface {
             logger.error(e.getMessage());
             throw e;
         }
-        documentSubmitInterface.setSOAPHeader(shElement);
+        documentSubmitService.setSOAPHeader(shElement);
 
         final RegistryErrorList registryErrorList = ofRs.createRegistryErrorList();
         try {
@@ -488,23 +495,10 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
                 try {
                     final EPSOSDocument epsosDocument = DocumentFactory.createEPSOSDocument(fullPatientId, ClassCode.ED_CLASSCODE, domDocument);
-                    // Evidence for call to NI for XDR submit (dispensation)
-                    // Joao: here we have a Document, so we can generate the mandatory NRO
-                    try {
-                        EvidenceUtils.createEvidenceREMNRO(epsosDocument.getDocument(), Constants.NCP_SIG_KEYSTORE_PATH,
-                                Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                                Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                                Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH,
-                                Constants.NCP_SIG_KEYSTORE_PASSWORD, Constants.NCP_SIG_PRIVATEKEY_ALIAS,
-                                IHEEventType.DISPENSATION_SERVICE_INITIALIZE.getCode(), new DateTime(),
-                                EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XDR_DISP_REQ",
-                                Objects.requireNonNull(SoapElementHelper.getTRCAssertion(shElement)).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                    } catch (final Exception e) {
-                        logger.error(ExceptionUtils.getStackTrace(e));
-                    }
+
                     // Call to National Connector
                     final String documentId = getDocumentId(epsosDocument.getDocument());
-                    documentSubmitInterface.submitDispensation(epsosDocument);
+                    documentSubmitService.submitDispensation(epsosDocument);
 
                     // Evidence for response from NI for XDR submit (dispensation)
                     /* Joao: the NRR is being generated based on the request message (submitted document). The interface for document submission does not return
@@ -556,8 +550,8 @@ public class XDRServiceImpl implements XDRServiceInterface {
      */
     public RegistryResponseType saveDocument(final ProvideAndRegisterDocumentSetRequestType request, final SOAPHeader soapHeader,
                                              final EventLog eventLog) throws Exception {
-
         logger.info("[WS] XDR Service: Save Document");
+        final DocumentSubmitInterface documentSubmitService = nationalConnectorFactory.createDocumentSubmitInstance();
         // Traverse all ExtrinsicObjects
         for (int i = 0; i < request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable().size(); i++) {
 
@@ -576,11 +570,11 @@ public class XDRServiceImpl implements XDRServiceInterface {
                     // Check the right LOINC code, currently coded as in example 3.4.2 ver. 2.2 p. 82
                     if (StringUtils.equals(classification.getNodeRepresentation(), "urn:epSOS:ep:dis:2010")) {
                         //  urn:epSOS:ep:dis:2010
-                        return saveDispensation(request, soapHeader, eventLog);
+                        return saveDispensation(documentSubmitService, request, soapHeader, eventLog);
 
                     } else if (StringUtils.equals(classification.getNodeRepresentation(), "urn:eHDSI:ed:discard:2020")) {
                         //  "urn:eHDSI:ed:discard:2020"
-                        return discardMedicationDispensed(request, soapHeader, eventLog);
+                        return discardMedicationDispensed(documentSubmitService, request, soapHeader, eventLog);
                     }
                 }
             }

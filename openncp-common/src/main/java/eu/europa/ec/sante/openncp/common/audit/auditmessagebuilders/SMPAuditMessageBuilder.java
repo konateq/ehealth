@@ -13,27 +13,21 @@ public class SMPAuditMessageBuilder extends AbstractAuditMessageBuilder implemen
 
     @Override
     public AuditMessage build(final EventLog eventLog) {
-        AuditMessage message = null;
-        try {
-            final ObjectFactory of = new ObjectFactory();
-            message = of.createAuditMessage();
-            addEventIdentification(message, eventLog.getEventType(), eventLog.getEI_TransactionName(),
-                    eventLog.getEI_EventActionCode(), AuditConstant.EVENT_ID_IHE_TRANSACTIONS_CODE_SYSTEM, eventLog.getEI_EventDateTime(),
-                    eventLog.getEI_EventOutcomeIndicator(), eventLog.getNcpSide());
-            addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
-                    AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
-            addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
-                    AuditConstant.CODE_SYSTEM_EHDSI, AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
-            addAuditSource(message, eventLog.getAS_AuditSourceId());
-            addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
-                    Short.valueOf("3"), "9", "errormsg","PatientSource");
-        } catch (final Exception e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
-        if (message != null) {
-            addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
-                    "SMP", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "SignedServiceMetadata");
-        }
+        final ObjectFactory of = new ObjectFactory();
+        AuditMessage message = of.createAuditMessage();
+        addEventIdentification(message,
+                eventLog.getEventType(),
+                eventLog.getEI_EventDateTime(),
+                eventLog.getEI_EventOutcomeIndicator());
+        addService(message, eventLog.getSC_UserID(), true, AuditConstant.SERVICE_CONSUMER,
+                AuditConstant.SERVICE_CONSUMER_DISPLAY_NAME, eventLog.getSourceip());
+        addService(message, eventLog.getSP_UserID(), false, AuditConstant.SERVICE_PROVIDER,
+                AuditConstant.SERVICE_PROVIDER_DISPLAY_NAME, eventLog.getTargetip());
+        addAuditSource(message, eventLog.getAS_AuditSourceId());
+        addError(message, eventLog.getEM_ParticipantObjectID(), eventLog.getEM_ParticipantObjectDetail(), Short.valueOf("2"),
+                Short.valueOf("3"), "9", "errormsg", "PatientSource");
+        addEventTarget(message, eventLog.getEventTargetParticipantObjectIds(), Short.valueOf("2"), null,
+                "SMP", AuditConstant.CODE_SYSTEM_EHDSI_SECURITY, "SignedServiceMetadata");
         return message;
     }
 }

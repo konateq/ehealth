@@ -11,7 +11,7 @@ import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
-import eu.europa.ec.sante.openncp.core.common.ServerContext;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import org.apache.commons.lang3.Validate;

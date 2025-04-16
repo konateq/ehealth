@@ -70,14 +70,18 @@ public class AuditService implements MessageHandlerListener {
     public synchronized Boolean write(final Object eventObject, final String facility, final String severity) {
 
         logger.info("[Audit Service] Writing Audit Message");
-        final AuditMessage message = auditMessageTransformers.stream()
-                .filter(transformer -> transformer.accepts(eventObject))
-                .collect(MoreCollectors.oneOrNone(eventObject, auditMessageTransformers))
-                .map(transformer -> transformer.transform(eventObject))
-                .orElseThrow(() -> new IllegalArgumentException("No audit message transformer found for message [%s]"));
+        try {
+            final AuditMessage message = auditMessageTransformers.stream()
+                    .filter(transformer -> transformer.accepts(eventObject))
+                    .collect(MoreCollectors.oneOrNone(eventObject, auditMessageTransformers))
+                    .map(transformer -> transformer.transform(eventObject))
+                    .orElseThrow(() -> new IllegalArgumentException("No audit message transformer found for message [%s]"));
 
-        AuditTrailUtils.getInstance().sendATNASyslogMessage(auditLogSerializer, message, facility, severity);
-        return true;
+            AuditTrailUtils.getInstance().sendATNASyslogMessage(auditLogSerializer, message, facility, severity);
+            return true;
+        } catch (final Exception e) {
+            return false;
+        }
     }
 
     @Override

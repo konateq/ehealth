@@ -25,6 +25,7 @@ import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterface;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.PatientSearchInterfaceWithDemographics;
 import eu.europa.ec.sante.openncp.core.server.api.ihe.xcpd.XCPDNIException;
+import eu.europa.ec.sante.openncp.core.server.ihe.NationalConnectorFactory;
 import eu.europa.ec.sante.openncp.core.server.ihe.xcpd.XCPDServiceInterface;
 import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axis2.util.XMLUtils;
@@ -34,7 +35,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -71,12 +71,12 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     private final Logger logger = LoggerFactory.getLogger(XCPDServiceImpl.class);
     private final Logger loggerClinical = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private final ObjectFactory objectFactory = new ObjectFactory();
-    private final PatientSearchInterface patientSearchService;
     private final AssertionValidator assertionValidator;
     private final PolicyAssertionManager policyAssertionManager;
+    private final NationalConnectorFactory nationalConnectorFactory;
 
-    public XCPDServiceImpl(final PatientSearchInterface patientSearchService, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager) {
-        this.patientSearchService = Validate.notNull(patientSearchService, "patientSearchService must not be null");
+    public XCPDServiceImpl(final NationalConnectorFactory nationalConnectorFactory, final AssertionValidator assertionValidator, final PolicyAssertionManager policyAssertionManager) {
+        this.nationalConnectorFactory = Validate.notNull(nationalConnectorFactory, "nationalConnectorFactory must not be null");
         this.assertionValidator = Validate.notNull(assertionValidator, "assertionValidator must not be null");
         this.policyAssertionManager = Validate.notNull(policyAssertionManager, "policyAssertionManager must not be null");
     }
@@ -136,9 +136,9 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
     }
 
     public PRPAIN201306UV02 queryPatient(final PRPAIN201305UV02 request, final SOAPHeader soapHeader, final EventLog eventLog) throws Exception {
-
+        final PatientSearchInterface patientSearchService = nationalConnectorFactory.createPatientSearchInstance();
         final var response = objectFactory.createPRPAIN201306UV02();
-        pRPAIN201306UV02Builder(request, response, soapHeader, eventLog);
+        pRPAIN201306UV02Builder(patientSearchService, request, response, soapHeader, eventLog);
         return response;
     }
 
@@ -304,7 +304,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
 
         // Set detectedIssueEvent/code
         mfmimt700711UV01Reason.getDetectedIssueEvent().setCode(objectFactory.createCD());
-        mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCode("ActAdministrativeDetectedIssueCode");
+        mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCode("_ActAdministrativeDetectedIssueManagementCode");
         mfmimt700711UV01Reason.getDetectedIssueEvent().getCode().setCodeSystem("2.16.840.1.113883.5.4");
 
         if (xcpdErrorCode == XCPDErrorCode.DemographicsQueryNotAllowed) {
@@ -492,7 +492,7 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
         return patientDemographics;
     }
 
-    private void pRPAIN201306UV02Builder(final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
+    private void pRPAIN201306UV02Builder(final PatientSearchInterface patientSearchService, final PRPAIN201305UV02 inputMessage, final PRPAIN201306UV02 outputMessage, final SOAPHeader soapHeader,
                                          final EventLog eventLog) throws Exception {
 
         final String sigCountryCode;
@@ -652,24 +652,6 @@ public class XCPDServiceImpl implements XCPDServiceInterface {
                 stringBuilderNRO.append("</patient>");
                 if (OpenNCPConstants.NCP_SERVER_MODE != ServerMode.PRODUCTION && loggerClinical.isDebugEnabled()) {
                     loggerClinical.info("Patient Identifier:\n'{}'", stringBuilderNRO);
-                }
-
-                // Joao: we have an adhoc XML document, so we can generate this evidence correctly
-                try {
-                    final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    //factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-                    factory.setXIncludeAware(false);
-                    factory.setNamespaceAware(true);
-                    final DocumentBuilder builder = factory.newDocumentBuilder();
-                    final Document doc = builder.parse(new InputSource(new StringReader(stringBuilderNRO.toString())));
-                    EvidenceUtils.createEvidenceREMNRO(doc, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, Constants.SP_KEYSTORE_PATH, Constants.SP_KEYSTORE_PASSWORD,
-                            Constants.SP_PRIVATEKEY_ALIAS, Constants.NCP_SIG_KEYSTORE_PATH, Constants.NCP_SIG_KEYSTORE_PASSWORD,
-                            Constants.NCP_SIG_PRIVATEKEY_ALIAS, EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS.getIheCode(),
-                            new DateTime(), EventOutcomeIndicator.FULL_SUCCESS.getCode().toString(), "NI_XCPD_REQ",
-                            SoapElementHelper.getHCPAssertion(shElement).getID() + "__" + DateUtil.getCurrentTimeGMT());
-                } catch (final Exception e) {
-                    logger.error(ExceptionUtils.getStackTrace(e));
                 }
 
                 // call to NI

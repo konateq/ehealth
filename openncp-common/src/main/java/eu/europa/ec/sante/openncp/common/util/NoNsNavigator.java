@@ -8,4 +8,7 @@ public class NoNsNavigator extends DocumentNavigator {
     public String getElementNamespaceUri(Object obj) {
         return null;
     }
+
+    @Override
+    public String getAttributeNamespaceUri(Object obj) { return null; }
 }

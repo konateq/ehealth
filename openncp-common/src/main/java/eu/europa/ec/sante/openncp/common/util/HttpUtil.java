@@ -3,6 +3,7 @@ package eu.europa.ec.sante.openncp.common.util;
 import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFactory;
 import eu.europa.ec.sante.openncp.common.configuration.StandardProperties;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.SslUtil;
 import eu.europa.ec.sante.openncp.common.util.proxy.CustomProxySelector;
 import eu.europa.ec.sante.openncp.common.util.proxy.ProxyCredentials;
 import org.cryptacular.util.CertUtil;
@@ -69,9 +70,10 @@ public class HttpUtil {
 
     public static String getTlsCertificateCommonName(final String host) {
         final CertificatesDataHolder.CertificateData certificateData = ImmutableCertificateData.builder()
-                .path(Constants.SC_KEYSTORE_PATH)
-                .password(Constants.SC_KEYSTORE_PASSWORD)
-                .alias(Constants.SC_PRIVATEKEY_ALIAS)
+                .keystorePath(Constants.SC_KEYSTORE_PATH)
+                .keystorePassword(Constants.SC_KEYSTORE_PASSWORD)
+                .privateKeyAlias(Constants.SC_PRIVATEKEY_ALIAS)
+                .privateKeyPassword(Constants.SC_PRIVATEKEY_PASSWORD)
                 .build();
 
         return getTlsCertificateCommonName(certificateData, host);
@@ -123,13 +125,13 @@ public class HttpUtil {
             };
 
 
-            try (final var keystoreInputStream = getKeystoreInputStream(certificateData.getPath())) {
+            try (final var keystoreInputStream = getKeystoreInputStream(certificateData.getKeystorePath())) {
 
                 // Install the all-trusting trust manager
                 final var keyStore = KeyStore.getInstance("JKS");
-                keyStore.load(keystoreInputStream, certificateData.getPassword().toCharArray());
+                keyStore.load(keystoreInputStream, certificateData.getKeystorePassword().toCharArray());
                 final var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-                keyManagerFactory.init(keyStore, certificateData.getPassword().toCharArray());
+                keyManagerFactory.init(keyStore, certificateData.getKeystorePassword().toCharArray());
 
                 // Install the all-trusting trust manager
                 final SSLContext sslContext;
@@ -176,57 +178,62 @@ public class HttpUtil {
         return null;
     }
 
-    public static String getServerCertificate(final String endpoint) {
+    public static String getCommonNameFromServerCertificate(final String endpoint) {
 
         LOGGER.debug("Trying to find certificate from : '{}'", endpoint);
-        var result = "";
+        String result = WARNING_NO_CERTIFICATE_FOUND;
         HttpsURLConnection urlConnection = null;
 
-        try {
-            if (!endpoint.startsWith("https")) {
-                result = WARNING_NO_CERTIFICATE_FOUND;
-            } else {
-                final var sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                final URL url;
-                url = new URL(endpoint);
-                urlConnection = (HttpsURLConnection) url.openConnection();
-                urlConnection.setHostnameVerifier((hostname, session) -> session.isValid() && !hostname.isEmpty());
-                urlConnection.setSSLSocketFactory(sslSocketFactory);
-                urlConnection.connect();
-                final Certificate[] certs = urlConnection.getServerCertificates();
+        final CertificatesDataHolder certificatesDataHolder = CertificatesDataHolder.builder()
+                .trustoreData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.TRUSTSTORE_PATH)
+                        .keystorePassword(Constants.TRUSTSTORE_PASSWORD)
+                        .build())
+                .serviceConsumerData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.SC_KEYSTORE_PATH)
+                        .keystorePassword(Constants.SC_KEYSTORE_PASSWORD)
+                        .privateKeyAlias(Constants.SC_PRIVATEKEY_ALIAS)
+                        .privateKeyPassword(Constants.SC_PRIVATEKEY_PASSWORD)
+                        .build())
+                .build();
 
-                // Get the first certificate
-                if (certs != null && certs.length > 0) {
-                    final X509Certificate cert = (X509Certificate) certs[0];
-                    result = getCommonName(cert);
-                } else {
-                    result = WARNING_NO_CERTIFICATE_FOUND;
+        try {
+            if (endpoint.startsWith("https")) {
+                final var sslSocketFactory = SslUtil.getSSLSocketFactory(certificatesDataHolder);
+                final URL url = new URL(endpoint);
+                final String host = url.getHost();
+                int port = url.getPort() == -1 ? 443 : url.getPort();
+
+                try (final SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket(host, port)) {
+                    socket.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+                    socket.startHandshake();
+                    final Certificate[] certs = socket.getSession().getPeerCertificates();
+                    //Get the first certificate
+                    if (certs != null && certs.length > 0) {
+                        final X509Certificate cert = (X509Certificate) certs[0];
+                        result = getCommonName(cert);
+                    }
                 }
             }
         } catch (final IOException e) {
-            LOGGER.error("IOException: '{}'", e.getMessage(), e);
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
+            LOGGER.error(String.format("Error fetching the server certificate at [%s] with exception message [%s]", endpoint, e.getMessage()), e);
         }
         LOGGER.debug("Server Certificate: '{}'", result);
         return result;
-
     }
 
     public static String getSubjectDN(final CertificatesDataHolder certificatesDataHolder, final boolean isProvider) {
         final CertificatesDataHolder.CertificateData certificateData;
         if (isProvider) {
-            certificateData = certificatesDataHolder.getServiceProviderData();
+            certificateData = certificatesDataHolder.getServiceProviderData().orElseThrow(() -> new RuntimeException("ServiceProviderData must not be empty"));
         } else {
-            certificateData = certificatesDataHolder.getServiceConsumerData();
+            certificateData = certificatesDataHolder.getServiceConsumerData().orElseThrow(() -> new RuntimeException("ServiceConsumerData must not be empty"));
         }
 
-        try (final var inputStream = new FileInputStream(certificateData.getPath())) {
+        try (final var inputStream = new FileInputStream(certificateData.getKeystorePath())) {
             final var keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keystore.load(inputStream, certificateData.getPassword().toCharArray());
-            final Certificate cert = keystore.getCertificate(certificateData.getAlias());
+            keystore.load(inputStream, certificateData.getKeystorePassword().toCharArray());
+            final Certificate cert = keystore.getCertificate(certificateData.getPrivateKeyAlias().orElseThrow(() -> new RuntimeException("Private key alias must not be empty")));
 
             if (cert instanceof X509Certificate) {
                 final var x509Certificate = (X509Certificate) cert;
@@ -239,16 +246,22 @@ public class HttpUtil {
     }
 
     public static String getSubjectDN(final boolean isProvider) {
-        final CertificatesDataHolder certificatesDataHolder = ImmutableCertificatesDataHolder.builder()
-                .serviceProviderData(ImmutableCertificateData.builder()
-                        .path(Constants.SP_KEYSTORE_PATH)
-                        .password(Constants.SP_KEYSTORE_PASSWORD)
-                        .alias(Constants.SP_PRIVATEKEY_ALIAS)
+        final CertificatesDataHolder certificatesDataHolder = CertificatesDataHolder.builder()
+                .trustoreData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.TRUSTSTORE_PATH)
+                        .keystorePassword(Constants.TRUSTSTORE_PASSWORD)
                         .build())
-                .serviceConsumerData(ImmutableCertificateData.builder()
-                        .path(Constants.SC_KEYSTORE_PATH)
-                        .password(Constants.SC_KEYSTORE_PASSWORD)
-                        .alias(Constants.SC_PRIVATEKEY_ALIAS)
+                .serviceProviderData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.SP_KEYSTORE_PATH)
+                        .keystorePassword(Constants.SP_KEYSTORE_PASSWORD)
+                        .privateKeyAlias(Constants.SP_PRIVATEKEY_ALIAS)
+                        .privateKeyPassword(Constants.SP_PRIVATEKEY_PASSWORD)
+                        .build())
+                .serviceConsumerData(CertificatesDataHolder.CertificateData.builder()
+                        .keystorePath(Constants.SC_KEYSTORE_PATH)
+                        .keystorePassword(Constants.SC_KEYSTORE_PASSWORD)
+                        .privateKeyAlias(Constants.SC_PRIVATEKEY_ALIAS)
+                        .privateKeyPassword(Constants.SC_PRIVATEKEY_PASSWORD)
                         .build())
                 .build();
 

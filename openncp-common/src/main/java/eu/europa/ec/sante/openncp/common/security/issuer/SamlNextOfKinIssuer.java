@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.openncp.common.security.issuer;
 
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.SignatureManager;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
@@ -37,7 +38,7 @@ public class SamlNextOfKinIssuer {
      * @param keyStoreManager
      */
     public SamlNextOfKinIssuer(final KeyStoreManager keyStoreManager) {
-        this.keyStoreManager = Validate.notNull(keyStoreManager);
+        this.keyStoreManager = Validate.notNull(keyStoreManager, "keyStoreManager must not be null");
     }
 
     //    /**
@@ -115,7 +116,7 @@ public class SamlNextOfKinIssuer {
         auditDataMap.put("humanRequestorNameID", humanRequestorNameID);
 
         final var subjectIdAttr = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+                AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         final String humanRequesterAlternativeUserID = ((XSString) subjectIdAttr.getAttributeValues().get(0)).getValue();
         auditDataMap.put("humanRequestorSubjectID", humanRequesterAlternativeUserID);
 
@@ -130,7 +131,7 @@ public class SamlNextOfKinIssuer {
 
         final AudienceRestriction audienceRestriction = AssertionUtil.create(AudienceRestriction.class, AudienceRestriction.DEFAULT_ELEMENT_NAME);
         final Audience audience = AssertionUtil.create(Audience.class, Audience.DEFAULT_ELEMENT_NAME);
-        audience.setAudienceURI("urn:ehdsi:assertions.audience:x-border");
+        audience.setAudienceURI(AssertionConstants.URN_EHDSI_AUDIENCE_X_BORDER);
         audienceRestriction.getAudiences().add(audience);
         conditions.getAudienceRestrictions().add(audienceRestriction);
 
@@ -165,7 +166,7 @@ public class SamlNextOfKinIssuer {
         //Creating the Attribute that holds the Patient ID
         final Attribute attrPID = AssertionUtil.create(Attribute.class, Attribute.DEFAULT_ELEMENT_NAME);
         attrPID.setFriendlyName("XSPA Subject");
-        attrPID.setName("urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+        attrPID.setName(AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         attrPID.setNameFormat(Attribute.URI_REFERENCE);
         final XMLObjectBuilder stringBuilder = builderFactory.getBuilder(XSString.TYPE_NAME);
         final XSString attrValPID = (XSString) stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
@@ -190,7 +191,7 @@ public class SamlNextOfKinIssuer {
             final XSAny pou = xsAnyBuilder.buildObject("urn:hl7-org:v3", "PurposeOfUse", "");
             pou.getUnknownAttributes().put(new QName("code"), purposeOfUse);
             pou.getUnknownAttributes().put(new QName("codeSystem"), "3bc18518-d305-46c2-a8d6-94bd59856e9e");
-            pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI XSPA PurposeOfUse");
+            pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI PurposeOfUse");
             pou.getUnknownAttributes().put(new QName("displayName"), purposeOfUse);
             //pou.setTextContent(purposeOfUse);
             final XSAny pouAttributeValue = xsAnyBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
@@ -215,7 +216,7 @@ public class SamlNextOfKinIssuer {
         }
 
         final var pointOfCareIdAttr = AssertionUtil.findStringInAttributeStatement(hcpIdentityAssertion.getAttributeStatements(),
-                "urn:oasis:names:tc:xspa:1.0:subject:organization-id");
+                AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_ORGANIZATION_ID);
         if (pointOfCareIdAttr != null) {
             final String pocId = ((XSString) pointOfCareIdAttr.getAttributeValues().get(0)).getValue();
             auditDataMap.put("pointOfCareID", pocId);

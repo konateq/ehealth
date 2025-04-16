@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.common.security.util;
 
+import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.SAML;
 import org.opensaml.core.xml.XMLObjectBuilder;
@@ -127,7 +128,7 @@ public class AssertionUtil {
      */
     public static NameID getXspaSubjectFromAttributes(final List<AttributeStatement> stmts) {
 
-        final var xspaSubjectAttribute = AssertionUtil.findStringInAttributeStatement(stmts, "urn:oasis:names:tc:xspa:1.0:subject:subject-id");
+        final var xspaSubjectAttribute = AssertionUtil.findStringInAttributeStatement(stmts, AssertionConstants.URN_OASIS_NAMES_TC_XSPA_1_0_SUBJECT_SUBJECT_ID);
         final NameID nameID = create(NameID.class, NameID.DEFAULT_ELEMENT_NAME);
         nameID.setFormat(NameID.UNSPECIFIED);
         nameID.setValue(((XSString) xspaSubjectAttribute.getAttributeValues().get(0)).getValue());
@@ -183,7 +184,7 @@ public class AssertionUtil {
         final XSAny pou = xsAnyBuilder.buildObject("urn:hl7-org:v3", "PurposeOfUse", "");
         pou.getUnknownAttributes().put(new QName("code"), value);
         pou.getUnknownAttributes().put(new QName("codeSystem"), "3bc18518-d305-46c2-a8d6-94bd59856e9e");
-        pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI XSPA PurposeOfUse");
+        pou.getUnknownAttributes().put(new QName("codeSystemName"), "eHDSI PurposeOfUse");
         pou.getUnknownAttributes().put(new QName("displayName"), value);
 
         final XSAny pouAttributeValue = xsAnyBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);

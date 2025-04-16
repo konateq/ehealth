@@ -52,7 +52,7 @@ public class TransformationController {
     }
 
     @GetMapping(value = "/translateVS", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> retrieveValueSet(@RequestParam String oid, String targetLanguage){
+    public ResponseEntity<String> retrieveValueSet(@RequestParam String oid, @RequestParam String targetLanguage){
         var valueSet = cdaTransformationService.translateValueSet(oid, targetLanguage);
 
         //Create a FHIR context

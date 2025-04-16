@@ -9,6 +9,7 @@ import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
+import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201305UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.org.hl7.v3.PRPAIN201306UV02;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcEntry;
@@ -180,13 +181,18 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             eadcError = e.getMessage();
-            throw AxisFault.makeFault(e);
+
+            final AxisFault axisFault = AxisFault.makeFault(e);
+            if (e instanceof OpenNCPErrorCodeException) {
+                axisFault.setFaultSubCodes(axisFault.getFaultSubCodes() != null ? axisFault.getFaultSubCodes() : new ArrayList<>());
+                axisFault.getFaultSubCodes().add(new QName(((OpenNCPErrorCodeException) e).getErrorCode().getCode()));
+            }
+            throw axisFault;
         } finally {
             if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, null, startTime,
                         new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
                         ServiceType.PATIENT_IDENTIFICATION_RESPONSE, eadcError);
-                eadcError = "";
             }
         }
     }

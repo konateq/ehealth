@@ -71,7 +71,7 @@ public class LabResultReportWorkflowIT extends BaseIntegrationTest {
     }
 
     @Test
-    void queryBundle() throws MalformedURLException, MarshallingException {
+    void queryBundle() throws MalformedURLException, MarshallingException, ClientConnectorException {
         final PatientId patientId = objectFactory.createPatientId();
         patientId.setRoot("https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin");
         patientId.setExtension("89121210976");
