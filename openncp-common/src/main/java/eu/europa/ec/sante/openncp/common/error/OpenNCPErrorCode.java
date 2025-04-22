@@ -50,6 +50,7 @@ public enum OpenNCPErrorCode implements ErrorCode {
     ERROR_PS_NO_CONSENT("ERROR_PS_NO_CONSENT", "The patient has not given consent to the service."),
 
     ERROR_PS_NOT_FOUND("ERROR_PS_NOT_FOUND", "The request is not containing a proper PS identifier."),
+    ERROR_PS_INCORRECT_LANGUAGE("ERROR_PS_INCORRECT_LANGUAGE", "There is no Patient Summary translation available for the provided language."),
 
     // 06. Make ePrescription available to HP
     ERROR_EP_GENERIC("ERROR_EP_GENERIC", "ePrescription generic error"),
@@ -70,6 +71,7 @@ public enum OpenNCPErrorCode implements ErrorCode {
     ERROR_EP_LIST_REGISTRY_NOT_AVAILABLE("ERROR_EP_REGISTRY_NOT_AVAILABLE", "The national ePrescription registry service is unavailable."),
     ERROR_EP_LIST_INTERNAL_ERROR("ERROR_EP_INTERNAL_ERROR", "The application encountered an unexpected error."),
     ERROR_EP_LIST_NO_CONSENT("ERROR_EP_NO_CONSENT", "The patient has not given consent to the service."),
+    ERROR_EP_INCORRECT_LANGUAGE("ERROR_EP_INCORRECT_LANGUAGE", "There is no ePrescription translation available for the provided language."),
 
 
 

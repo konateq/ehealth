@@ -220,7 +220,7 @@ public class TsamDaoImpl implements TsamDao {
             result = getDesignation(target, "en-GB");
         } catch (final TSAMException e) {
             if (e.getReason() == TSAMError.ERROR_DESIGNATION_NOTFOUND) {
-                throw new TSAMException(TSAMError.ERROR_TARGET_CONCEPT_NOTFOUND);
+                throw new TSAMException(TSAMError.ERROR_DESIGNATION_NOTFOUND);
             } else {
                 throw e;
             }
