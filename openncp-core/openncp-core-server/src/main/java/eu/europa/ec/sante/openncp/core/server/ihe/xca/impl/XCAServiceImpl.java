@@ -869,15 +869,22 @@ public class XCAServiceImpl implements XCAServiceInterface {
                                 String openNcpErrorCodeDescription = openncpErrorCode.getDescription();
                                 final String errorCodeContext = errorCode.getAttributeValue(QName.valueOf("codeContext"));
 
-                                if (Objects.requireNonNull(classCodeValue) == EP_CLASSCODE) {
-                                    openncpErrorCode = OpenNCPErrorCode.ERROR_EP_MISSING_EXPECTED_MAPPING;
-                                } else if (classCodeValue == PS_CLASSCODE) {
-                                    openncpErrorCode = OpenNCPErrorCode.ERROR_PS_MISSING_EXPECTED_MAPPING;
+                                if (StringUtils.startsWith(errorCode.getAttributeValue(QName.valueOf("errorCode")), "4505")) {
+                                    if (Objects.requireNonNull(classCodeValue) == EP_CLASSCODE) {
+                                        openncpErrorCode = OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE;
+                                    } else if (classCodeValue == PS_CLASSCODE) {
+                                        openncpErrorCode = OpenNCPErrorCode.ERROR_PS_INCORRECT_LANGUAGE;
+                                    }
+                                } else {
+                                    if (Objects.requireNonNull(classCodeValue) == EP_CLASSCODE) {
+                                        openncpErrorCode = OpenNCPErrorCode.ERROR_EP_MISSING_EXPECTED_MAPPING;
+                                    } else if (classCodeValue == PS_CLASSCODE) {
+                                        openncpErrorCode = OpenNCPErrorCode.ERROR_PS_MISSING_EXPECTED_MAPPING;
+                                    }
                                 }
                                 if (StringUtils.isNotBlank(errorCodeContext)) {
                                     openNcpErrorCodeDescription = openncpErrorCode.getDescription() + " [" + errorCodeContext + "]";
                                 }
-
                                 RegistryErrorUtils.addErrorOMMessage(omNamespace, registryErrorList, openncpErrorCode, openNcpErrorCodeDescription,
                                         RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
                                 // If the error is FATAL flag failure has been set to true
