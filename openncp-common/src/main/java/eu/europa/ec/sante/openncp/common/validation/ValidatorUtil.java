@@ -135,21 +135,15 @@ public class ValidatorUtil {
 
     public static String obtainAuditModel(final String eventType, final NcpSide ncpSide) {
         switch (eventType) {
-            case "EHDSI-11":
+            case "ITI-55":
                 return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_PATIENT_IDENTIFICATION_SERVICE_SC;
-            case "EHDSI-21":
-            case "EHDSI-31":
-            case "EHDSI-61":
+            case "ITI-38":
                 return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_FETCH_ORDER_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_FETCH_ORDER_SERVICE_SC;
-            case "EHDSI-22":
-            case "EHDSI-32":
-            case "EHDSI-62":
+            case "ITI-39":
                 return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_FETCH_DOC_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_FETCH_DOC_SERVICE_SC;
-            case "EHDSI-41":
-            case "EHDSI-42":
-            case "EHDSI-51":
+            case "ITI-41":
                 return ncpSide.equals(NcpSide.NCP_A) ? ValidatorUtil.EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SP : ValidatorUtil.EHDSI_AUDIT_PROVIDE_DATA_SERVICE_SC;
-            case "EHDSI-91":
+            case "ITI-40":
                 return ValidatorUtil.EHDSI_AUDIT_ISSUANCE_HCP_ASSERTION;
             case "EHDSI-92":
                 return ValidatorUtil.EHDSI_AUDIT_ISSUANCE_TRC_ASSERTION;
