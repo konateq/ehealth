@@ -1,6 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
-import org.hl7.fhir.r4.model.AuditEvent;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,7 +12,7 @@ import java.util.List;
 public class FallbackAuditEventProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(FallbackAuditEventProducer.class);
 
-    public List<AuditEvent> produce(final AuditableEvent auditableEvent) {
+    public List<AuditEventData> produce(final AuditableEvent auditableEvent) {
         LOGGER.error("TODO: produce fallback audit events when the auditable event was not caught by other AuditEventProducers.");
         return Collections.emptyList();
     }

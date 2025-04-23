@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit;
 
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
+import org.immutables.value.Value;
 
 import java.time.Instant;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Optional;
 
 @Domain
 public interface AuditEventData {
+    String getAuditResourceType();
 
     MetaData getMetaData();
 
@@ -21,6 +23,8 @@ public interface AuditEventData {
     List<ParticipantData> getParticipants();
 
     List<EntityData> getEntities();
+
+    Optional<SubjectData> getSubject();
 
     @Domain
     interface MetaData {
@@ -44,6 +48,29 @@ public interface AuditEventData {
 
         Optional<String> getNetwork();
     }
+
+    @Domain
+    interface SubjectData {
+        String getId();
+
+        Optional<String> getType();
+
+        List<String> getRoleCode();
+
+        @Value.Default
+        default boolean isRequestor() {
+            return false;
+        }
+
+        static SubjectData forPatient(String reference) {
+            return ImmutableSubjectData.builder()
+                    .id(reference)
+                    .type("PAT")
+                    .addRoleCode("PAT")
+                    .build();
+        }
+    }
+
 
     @Domain
     interface EntityData {

@@ -4,6 +4,8 @@ import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.codesystems.V3RoleClass;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.springframework.stereotype.Component;
 
@@ -57,19 +59,23 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
             participantData.getNetwork().ifPresent(participantNetwork -> agent.getNetwork()
                     .setAddress(participantNetwork)
                     .setType(BalpConstants.AUDIT_EVENT_AGENT_NETWORK_TYPE_IP_ADDRESS));
-
         });
 
-//        final AuditEvent.AuditEventAgentComponent userAgent = auditEvent.addAgent();
-//        userAgent
-//                .getType()
-//                .addCoding()
-//                .setSystem("http://terminology.hl7.org/CodeSystem/v3-ParticipationType")
-//                .setCode("IRCP")
-//                .setDisplay("information recipient");
-//        userAgent.setWho(getAgentReference(requestDetails));
-//        userAgent.setRequestor(true);
-        
+        auditEventData.getSubject().ifPresent(subjectData -> {
+            final AuditEvent.AuditEventAgentComponent userAgent = auditEvent.addAgent();
+            subjectData.getType()
+                    .map(V3RoleClass::fromCode)
+                    .ifPresent(roleClass ->
+                            userAgent
+                            .getType()
+                            .addCoding()
+                            .setSystem(roleClass.getSystem())
+                            .setDisplay(roleClass.getDisplay()));
+
+            userAgent.setWho(new Reference(subjectData.getId()));
+            userAgent.setRequestor(subjectData.isRequestor());
+        });
+
         final AuditEvent.AuditEventEntityComponent entityCorrelationId = auditEvent.addEntity();
         entityCorrelationId
                 .getType()

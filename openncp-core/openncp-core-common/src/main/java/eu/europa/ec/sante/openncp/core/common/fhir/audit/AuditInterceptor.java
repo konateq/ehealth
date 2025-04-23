@@ -4,7 +4,6 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.interceptor.api.Hook;
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.interceptor.api.Pointcut;
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.api.server.ResponseDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
@@ -18,7 +17,6 @@ import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.fhir.interceptors.FhirCustomInterceptor;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.AuditEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
@@ -59,20 +57,14 @@ public class AuditInterceptor implements FhirCustomInterceptor {
                 .euRequestDetails(euRequestDetails)
                 .resource(baseResource)
                 .build();
-        final List<AuditEvent> auditEvents = auditEventProducers.stream()
+        final List<AuditEventData> auditsEventData = auditEventProducers.stream()
                 .filter(auditEventProducer -> auditEventProducer.accepts(auditableEvent))
                 .findFirst()
                 .map(auditEventProducer -> auditEventProducer.produce(auditableEvent))
                 .orElseGet(() -> fallbackAuditEventProducer.produce(auditableEvent));
 
-        auditEvents.forEach(auditEvent -> auditDispatchers.forEach(auditDispatcher -> {
-            if (LOGGER.isDebugEnabled()) {
-                final IParser jsonParser = fhirContext.newJsonParser();
-                final String auditEventAsJsonString = jsonParser.encodeResourceToString(auditEvent);
-                LOGGER.debug("Audit event dispatching using dispatcher [{}] for audit event [{}]", auditDispatcher.getClass().getSimpleName(), auditEventAsJsonString);
-            }
-
-            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent, euRequestDetails.getResourceType());
+        auditsEventData.forEach(auditEvent -> auditDispatchers.forEach(auditDispatcher -> {
+            final DispatchResult dispatchResult = auditDispatcher.dispatch(auditEvent);
             LOGGER.debug("Audit event dispatched with result [{}]", dispatchResult);
             if (dispatchResult.isSuccess()) {
                 LOGGER.info("Audit event successfully dispatched: [{}]", dispatchResult.getMessage());

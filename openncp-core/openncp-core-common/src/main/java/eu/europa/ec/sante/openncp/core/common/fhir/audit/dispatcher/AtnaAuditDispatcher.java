@@ -1,8 +1,8 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher;
 
 import ca.uhn.fhir.context.FhirContext;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
 import org.apache.commons.lang3.Validate;
-import org.hl7.fhir.r4.model.AuditEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ public class AtnaAuditDispatcher implements AuditDispatcher {
     }
 
     @Override
-    public DispatchResult dispatch(final AuditEvent auditEvent, String resourceType) {
+    public DispatchResult dispatch(final AuditEventData auditEventData) {
         final DispatchMetadata dispatchingMetadata = ImmutableDispatchMetadata.builder()
                 .dispatcherUsed(this.getClass())
                 .dispatchingDestination("Atna server url goes here")

@@ -3,9 +3,8 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.AuditEvent;
+import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +18,6 @@ import java.util.stream.Collectors;
 public class PatientAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(PatientAuditEventProducer.class);
     public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
-    private final AuditEventBuilder auditEventBuilder;
-
-    public PatientAuditEventProducer(final AuditEventBuilder auditEventBuilder) {
-        this.auditEventBuilder = Validate.notNull(auditEventBuilder, "AuditEventBuilder must not be null.");
-    }
 
     @Override
     public boolean accepts(final AuditableEvent auditableEvent) {
@@ -36,7 +30,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
     }
 
     @Override
-    public List<AuditEvent> produce(final AuditableEvent auditableEvent) {
+    public List<AuditEventData> produce(final AuditableEvent auditableEvent) {
         final List<AuditEventData> auditEventDataList;
         switch (auditableEvent.getEuRequestDetails().getRestOperationType()) {
             case SEARCH_TYPE:
@@ -54,7 +48,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
                 return Collections.emptyList();
         }
 
-        return auditEventDataList.stream().map(auditEventBuilder::build).collect(Collectors.toList());
+        return auditEventDataList;
     }
 
     private AuditEventData handleSearch(final AuditableEvent auditableEvent) {
@@ -71,6 +65,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
         final AuditEventData auditEventData;
         if (patientEntities.isEmpty()) {
             auditEventData = ImmutableAuditEventData.builder()
+                    .auditResourceType(ResourceType.Patient.name())
                     .metaData(createMetaData(auditableEvent))
                     .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
                     .profile(BalpProfileEnum.BASIC_QUERY)
@@ -79,6 +74,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
                     .build();
         } else {
             auditEventData = ImmutableAuditEventData.builder()
+                    .auditResourceType(ResourceType.Patient.name())
                     .metaData(createMetaData(auditableEvent))
                     .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
                     .profile(BalpProfileEnum.PATIENT_QUERY)
@@ -95,7 +91,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
         final List<AuditEventData.ParticipantData> participants = createParticipants();
 
         return auditableEvent.getResource().map(resource -> {
-            final String dataResourceId = auditableEvent.getEuRequestDetails().createFullyQualifiedResourceReference(resource.getIdElement());
+            final String dataResourceId = ((Resource)resource).getId();
             final Set<String> patientIds = auditableEvent.extractResourceIds(RESOURCE_IS_PATIENT);
 
             final List<AuditEventData> auditEventDataList = new ArrayList<>();
@@ -103,6 +99,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
                 // this is a basic read so create a basic read audit event
                 final AuditEventData.EntityData resourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
                 auditEventDataList.add(ImmutableAuditEventData.builder()
+                        .auditResourceType(ResourceType.Patient.name())
                         .metaData(createMetaData(auditableEvent))
                         .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
                         .profile(BalpProfileEnum.BASIC_READ)
@@ -118,6 +115,7 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
                             final AuditEventData.EntityData patientEntityData = AuditEventData.EntityData.ofPatient(patientId);
 
                             return ImmutableAuditEventData.builder()
+                                    .auditResourceType(ResourceType.Patient.name())
                                     .metaData(createMetaData(auditableEvent))
                                     .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
                                     .profile(BalpProfileEnum.PATIENT_READ)
