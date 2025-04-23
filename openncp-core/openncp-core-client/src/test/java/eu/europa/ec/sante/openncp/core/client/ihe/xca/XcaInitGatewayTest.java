@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
@@ -27,6 +28,8 @@ import static org.mockito.Mockito.*;
 public class XcaInitGatewayTest {
     @Mock
     private CDATransformationService cDATransformationService;
+    @Mock
+    private ConfigurationManager configurationManager;
 
     @InjectMocks
     private XcaInitGateway xcaInitGateway;
