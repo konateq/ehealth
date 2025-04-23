@@ -196,10 +196,16 @@ public class XcaInitGateway {
                 } else {
                     List<String> availableLanguages = new ArrayList<>(Arrays.asList(configurationManager.getProperty(Constant.AVAILABLE_TRANSLATION_LANGUAGES).split(",")));
                     if(!availableLanguages.contains(targetLanguage)) {
-                        OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE;
+                        OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_PS_INCORRECT_LANGUAGE;
+                        if(classCode == ClassCode.EP_CLASSCODE) {
+                            openncpErrorCode = OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE;
+                        } else if (classCode == ClassCode.PS_CLASSCODE) {
+                            openncpErrorCode = OpenNCPErrorCode.ERROR_PS_INCORRECT_LANGUAGE;
+                        }
                         String errorCodeContext = "XCAInitGateway()";
                         String openNcpErrorCodeDescription = openncpErrorCode.getDescription() + " [" + errorCodeContext + "]";
-                        throw new OpenNCPException(OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE, openNcpErrorCodeDescription, errorCodeContext);
+                        //throw new OpenNCPException(OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE, openNcpErrorCodeDescription, errorCodeContext);
+                        LOGGER.error("XCAInitGateway(): CDA cannot be translated: {} - {} -> {}", openncpErrorCode.getCode(), openncpErrorCode.getDescription(), targetLanguage);
                     }
 
                     //  Sets the response document to a translated version.
@@ -218,7 +224,6 @@ public class XcaInitGateway {
                     queryResponse.getRegistryResponse().setRegistryErrorList(new RegistryErrorList());
                 }
                 queryResponse.getRegistryResponse().getRegistryErrorList().getRegistryError().add(err);
-
                 LOGGER.warn("DocumentTransformationException: CDA cannot be translated: Please check the TM result");
             } catch (final Exception e) {
                 LOGGER.warn("DocumentTransformationException: CDA cannot be translated: Please check the TM result");
