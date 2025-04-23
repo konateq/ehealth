@@ -46,5 +46,4 @@ public class AbstractAuditEventProducer {
                 .correlationId(LogContext.getCorrelationId())
                 .build();
     }
-
 }

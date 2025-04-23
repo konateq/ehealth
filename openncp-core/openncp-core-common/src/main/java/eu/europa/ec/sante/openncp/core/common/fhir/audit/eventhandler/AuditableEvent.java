@@ -9,7 +9,6 @@ import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Resource;
 import org.immutables.value.Value;
 
 import java.time.Instant;
@@ -40,15 +39,8 @@ public interface AuditableEvent {
                 .map(resource -> (Bundle) resource);
     }
 
-    default Optional<String> getResourceType() {
+    default Optional<String> getResponseResourceType() {
         return getResource().map(IBase::fhirType);
-    }
-
-    default boolean resourceIsOfType(final String... types) {
-        if (types == null || types.length == 0) {
-            return false;
-        }
-        return resourceIsOfType(Arrays.asList(types));
     }
 
     default boolean resourceIsOfType(final FhirSupportedResourceType... types) {
@@ -68,10 +60,7 @@ public interface AuditableEvent {
         if (types.isEmpty()) {
             return false;
         }
-        return getResource()
-                .map(IBase::fhirType)
-                .map(type -> types.stream().anyMatch(type::equalsIgnoreCase))
-                .orElse(false);
+        return getEuRequestDetails().getResourceType() != null && types.stream().anyMatch(type -> getEuRequestDetails().getResourceType().equals(type));
     }
 
     default Set<String> extractResourceIds() {
@@ -105,8 +94,7 @@ public interface AuditableEvent {
                 return bundle.getEntry().stream()
                         .map(Bundle.BundleEntryComponent::getResource)
                         .filter(predicate)
-                        .map(Resource::getIdElement)
-                        .map(idElement -> getEuRequestDetails().createFullyQualifiedResourceReference(idElement))
+                        .map(entryResource -> entryResource.getResourceType().name() + "/" + entryResource.getId())
                         .collect(Collectors.toSet());
             } else {
                 return Set.of(getEuRequestDetails().createFullyQualifiedResourceReference(resource.getIdElement()));

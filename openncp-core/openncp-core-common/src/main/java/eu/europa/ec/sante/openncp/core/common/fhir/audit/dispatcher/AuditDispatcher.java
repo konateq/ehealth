@@ -1,7 +1,7 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.dispatcher;
 
-import org.hl7.fhir.r4.model.AuditEvent;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
 
 public interface AuditDispatcher {
-    DispatchResult dispatch(AuditEvent auditEvent, String resourceType);
+    DispatchResult dispatch(AuditEventData auditEventData);
 }
