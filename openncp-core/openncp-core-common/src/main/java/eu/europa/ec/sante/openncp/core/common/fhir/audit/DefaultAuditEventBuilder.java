@@ -70,7 +70,7 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
                             .getType()
                             .addCoding()
                             .setSystem(roleClass.getSystem())
-                            .setDisplay(roleClass.getDisplay()));
+                            .setCode(roleClass.toCode()));
 
             userAgent.setWho(new Reference(subjectData.getId()));
             userAgent.setRequestor(subjectData.isRequestor());

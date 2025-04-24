@@ -89,7 +89,7 @@ public class BundleAuditEventProducer extends AbstractAuditEventProducer impleme
                 .build());
 
         auditableEvent.getResource().ifPresent(resource -> {
-            if (resource instanceof Bundle) {
+            if (resource instanceof Bundle && ((Bundle) resource).getType() == Bundle.BundleType.SEARCHSET) {
                 final Bundle bundle = (Bundle) resource;
                 final List<ImmutableAuditEventData> auditEventData = bundle.getEntry().stream()
                         .map(Bundle.BundleEntryComponent::getResource)
