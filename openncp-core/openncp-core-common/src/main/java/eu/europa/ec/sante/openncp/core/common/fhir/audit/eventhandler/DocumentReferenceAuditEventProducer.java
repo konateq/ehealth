@@ -14,10 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 @Component
@@ -83,6 +80,7 @@ public class DocumentReferenceAuditEventProducer extends AbstractAuditEventProdu
                 .map(iBaseResource -> (Bundle) iBaseResource)
                 .ifPresent(bundle -> {
                     final AuditEventData.EntityData domainResourceEntity = Optional.ofNullable(bundle.getIdentifier())
+                            .filter(identifier -> Objects.nonNull(identifier.getSystem()) && Objects.nonNull(identifier.getValue()))
                             .map(identifier -> AuditEventData.EntityData.ofResource(
                                     bundle.getId(),
                                     ImmutableIdentifier.of(identifier.getSystem(), identifier.getValue())))
