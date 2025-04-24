@@ -2,20 +2,21 @@ package eu.europa.ec.sante.openncp.core.server.ihe.xca.impl;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.*;
+import eu.europa.ec.sante.openncp.common.audit.EventLog;
+import eu.europa.ec.sante.openncp.common.audit.EventOutcomeIndicator;
+import eu.europa.ec.sante.openncp.common.audit.EventType;
+import eu.europa.ec.sante.openncp.common.audit.TransactionName;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.exception.SMgrException;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
-import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
-import eu.europa.ec.sante.openncp.common.util.UUIDHelper;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
-import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InvalidFieldException;
@@ -38,7 +39,6 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.Extrinsic
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rim._3.SlotType1;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
-import eu.europa.ec.sante.openncp.core.common.ihe.evidence.EvidenceUtils;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.NIException;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.domain.TMResponseStructure;
 import eu.europa.ec.sante.openncp.core.common.ihe.transformation.service.CDATransformationService;
@@ -65,10 +65,7 @@ import org.apache.axiom.soap.SOAPHeader;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
-import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -80,8 +77,6 @@ import javax.activation.DataHandler;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -169,7 +164,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
         } else {
             eventLog.setEI_TransactionName(TransactionName.determineTransactionNameForXCAQuery(List.of(classCode)));
         }
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.setPS_ParticipantObjectIDs(EventLogUtil.getDocumentEntryPatientId(request));
 
@@ -237,7 +231,6 @@ public class XCAServiceImpl implements XCAServiceInterface {
         logger.info("method prepareEventLogForRetrieve({})", classCode);
         eventLog.setEventType(EventType.XCA_SERVICE_RETRIEVE_NCP_A);
         eventLog.setEI_TransactionName(classCode != null ? TransactionName.determineTransactionNameForXCARetrieve(classCode) : TransactionName.ORDER_SERVICE_RETRIEVE);
-        eventLog.setEI_EventActionCode(EventActionCode.READ);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.getEventTargetParticipantObjectIds().add(request.getDocumentRequest().get(0).getDocumentUniqueId());
 

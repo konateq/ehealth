@@ -603,14 +603,6 @@ public class EventLog {
         this.AS_AuditSourceId = AS_AuditSourceId;
     }
 
-    public String getEI_EventActionCode() {
-        return EI_EventActionCode;
-    }
-
-    public void setEI_EventActionCode(final EventActionCode EI_EventActionCode) {
-        this.EI_EventActionCode = EI_EventActionCode.getCode();
-    }
-
     public XMLGregorianCalendar getEI_EventDateTime() {
         return EI_EventDateTime;
     }

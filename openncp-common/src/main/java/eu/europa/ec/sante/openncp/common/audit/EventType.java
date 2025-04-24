@@ -1,8 +1,7 @@
 package eu.europa.ec.sante.openncp.common.audit;
 
-import net.RFC3881.dicom.AuditMessage;
-
 import eu.europa.ec.sante.openncp.common.audit.auditmessagebuilders.*;
+import net.RFC3881.dicom.AuditMessage;
 
 
 public enum EventType {
@@ -53,7 +52,7 @@ public enum EventType {
 
         IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS(EventActionCode.EXECUTE, "110112", "Query"),
         XCA_SERVICE_LIST(EventActionCode.EXECUTE, "110112", "Query"),
-        XCA_SERVICE_RETRIEVE_NCP_A(EventActionCode.CREATE, "110106", "Export"),
+        XCA_SERVICE_RETRIEVE_NCP_A(EventActionCode.READ, "110106", "Export"),
         XCA_SERVICE_RETRIEVE_NCP_B(EventActionCode.CREATE, "110107", "Import"),
         XDR_SERVICE_NCP_A(EventActionCode.CREATE, "110107", "Import"),
         XDR_SERVICE_NCP_B(EventActionCode.CREATE, "110106", "Export"),
@@ -95,7 +94,8 @@ public enum EventType {
         public enum EventActionCode {
 
             EXECUTE("E"),
-            CREATE("C");
+            CREATE("C"),
+            READ("R");
 
             private String code;
 
