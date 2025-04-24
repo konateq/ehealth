@@ -1,7 +1,9 @@
 package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
+import eu.europa.ec.sante.openncp.common.Constant;
 import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManager;
 import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
@@ -13,6 +15,7 @@ import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryRequestCre
 import eu.europa.ec.sante.openncp.core.client.ihe.datamodel.AdhocQueryResponseConverter;
 import eu.europa.ec.sante.openncp.core.client.transformation.DomUtils;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
+import eu.europa.ec.sante.openncp.core.common.ihe.RegistryErrorSeverity;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.FilterParams;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.GenericDocumentCode;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.PatientId;
@@ -22,6 +25,7 @@ import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryResponse;
+import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.ObjectFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryError;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.rs._3.RegistryErrorList;
 import eu.europa.ec.sante.openncp.core.common.ihe.exception.OpenNCPException;
@@ -33,6 +37,7 @@ import org.apache.axis2.addressing.EndpointReference;
 import org.apache.axis2.util.XMLUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,9 +65,13 @@ public class XcaInitGateway {
     private static final String ERROR_SEVERITY_ERROR = "urn:oasis:names:tc:ebxml-regrep:ErrorSeverityType:Error";
 
     private final CDATransformationService cdaTransformationService;
+    private final ConfigurationManager configurationManager;
 
-    public XcaInitGateway(final CDATransformationService cdaTransformationService) {
+    private static final ObjectFactory ofRs = new ObjectFactory();
+
+    public XcaInitGateway(final CDATransformationService cdaTransformationService, ConfigurationManager configurationManager) {
         this.cdaTransformationService = Validate.notNull(cdaTransformationService, "CDATransformationService cannot be null");
+        this.configurationManager = Validate.notNull(configurationManager, "ConfigurationManager cannot be null");
     }
 
     public QueryResponse crossGatewayQuery(final PatientId pid, final String countryCode,
@@ -185,13 +194,37 @@ public class XcaInitGateway {
                 if (service.equals(Constants.OrCDService)) {
                     queryResponse.getDocumentResponse().get(0).setDocument(pivotDocument);
                 } else {
+                    List<String> availableLanguages = new ArrayList<>(Arrays.asList(configurationManager.getProperty(Constant.AVAILABLE_TRANSLATION_LANGUAGES).split(",")));
+                    if(!availableLanguages.contains(targetLanguage)) {
+                        OpenNCPErrorCode openncpErrorCode = OpenNCPErrorCode.ERROR_PS_INCORRECT_LANGUAGE;
+                        if(classCode == ClassCode.EP_CLASSCODE) {
+                            openncpErrorCode = OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE;
+                        } else if (classCode == ClassCode.PS_CLASSCODE) {
+                            openncpErrorCode = OpenNCPErrorCode.ERROR_PS_INCORRECT_LANGUAGE;
+                        }
+                        String errorCodeContext = "XCAInitGateway()";
+                        String openNcpErrorCodeDescription = openncpErrorCode.getDescription() + " [" + errorCodeContext + "]";
+                        //throw new OpenNCPException(OpenNCPErrorCode.ERROR_EP_INCORRECT_LANGUAGE, openNcpErrorCodeDescription, errorCodeContext);
+                        LOGGER.error("XCAInitGateway(): CDA cannot be translated: {} - {} -> {}", openncpErrorCode.getCode(), openncpErrorCode.getDescription(), targetLanguage);
+                    }
+
                     //  Sets the response document to a translated version.
                     final var tmResponseStructure = cdaTransformationService.translate(DomUtils.byteToDocument(pivotDocument), targetLanguage, NcpSide.NCP_B);
                     final var domDocument = tmResponseStructure.getResponseCDA();
                     final byte[] translatedCDA = XMLUtils.toOM(Base64Util.decode(domDocument).getDocumentElement()).toString().getBytes(StandardCharsets.UTF_8);
                     queryResponse.getDocumentResponse().get(0).setDocument(translatedCDA);
                 }
-
+            } catch (final OpenNCPException oe) {
+                RegistryError err = createErrorMessage(oe.getErrorCode().getCode(), oe.getContext(),
+                        Arrays.stream(Optional.ofNullable(ExceptionUtils.getRootCause(oe)).orElse(oe).getStackTrace())
+                        .findFirst()
+                        .map(StackTraceElement::toString)
+                        .orElse(StringUtils.EMPTY), RegistryErrorSeverity.ERROR_SEVERITY_ERROR);
+                if(queryResponse.getRegistryResponse().getRegistryErrorList() == null) {
+                    queryResponse.getRegistryResponse().setRegistryErrorList(new RegistryErrorList());
+                }
+                queryResponse.getRegistryResponse().getRegistryErrorList().getRegistryError().add(err);
+                LOGGER.warn("DocumentTransformationException: CDA cannot be translated: Please check the TM result");
             } catch (final Exception e) {
                 LOGGER.warn("DocumentTransformationException: CDA cannot be translated: Please check the TM result");
             } finally {
@@ -207,6 +240,16 @@ public class XcaInitGateway {
             }
         }
         return result;
+    }
+
+    private static RegistryError createErrorMessage(String errorCode, String codeContext, String location, RegistryErrorSeverity severity) {
+
+        var registryError = ofRs.createRegistryError();
+        registryError.setErrorCode(errorCode);
+        registryError.setLocation(location);
+        registryError.setSeverity(severity.getText());
+        registryError.setCodeContext(codeContext);
+        return registryError;
     }
 
     /**
