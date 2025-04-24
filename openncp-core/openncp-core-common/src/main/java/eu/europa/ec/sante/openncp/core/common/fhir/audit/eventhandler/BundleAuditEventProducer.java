@@ -3,11 +3,11 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.BalpProfileEnum;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.ImmutableAuditEventData;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.ImmutableIdentifier;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
 import org.apache.commons.lang3.BooleanUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Component
 public class BundleAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
@@ -76,40 +75,23 @@ public class BundleAuditEventProducer extends AbstractAuditEventProducer impleme
     private List<AuditEventData> commonHandler(final AuditableEvent auditableEvent, final BalpProfileEnum operation) {
         final List<AuditEventData.ParticipantData> participants = this.createParticipants();
         final List<AuditEventData> auditEventDataList = new ArrayList<>();
-        final String bundleId = auditableEvent.getResource().map(resource -> ((Resource) resource).getId()).orElseThrow();
-        final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofResource(bundleId);
-        auditEventDataList.add(ImmutableAuditEventData.builder()
-                .auditResourceType(ResourceType.Bundle.name())
-                .metaData(this.createMetaData(auditableEvent))
-                .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
-                .profile(operation)
-                .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
-                .addAllParticipants(participants)
-                .addEntity(domainResourceEntity)
-                .build());
-
-        auditableEvent.getResource().ifPresent(resource -> {
-            if (resource instanceof Bundle && ((Bundle) resource).getType() == Bundle.BundleType.SEARCHSET) {
-                final Bundle bundle = (Bundle) resource;
-                final List<ImmutableAuditEventData> auditEventData = bundle.getEntry().stream()
-                        .map(Bundle.BundleEntryComponent::getResource)
-                        .map(entryResource -> {
-                            final String resourceId = entryResource.getId();
-                            final AuditEventData.EntityData domainResourceEntityData = AuditEventData.EntityData.ofResource(resourceId);
-                            return ImmutableAuditEventData.builder()
-                                    .auditResourceType(entryResource.getResourceType().name())
-                                    .metaData(this.createMetaData(auditableEvent))
-                                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
-                                    .profile(operation)
-                                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
-                                    .addAllParticipants(participants)
-                                    .addEntity(domainResourceEntityData)
-                                    .build();
-                        }).collect(Collectors.toList());
-
-                auditEventDataList.addAll(auditEventData);
-            }
-        });
-        return auditEventDataList;
+        auditableEvent.getResource()
+                .filter(iBaseResource -> iBaseResource instanceof Bundle)
+                .map(iBaseResource -> (Bundle) iBaseResource)
+                .ifPresent(bundle -> {
+                    final AuditEventData.EntityData domainResourceEntity = AuditEventData.EntityData.ofResource(
+                            bundle.getId(),
+                            ImmutableIdentifier.of(bundle.getIdentifier().getSystem(), bundle.getIdentifier().getValue()));
+                    auditEventDataList.add(ImmutableAuditEventData.builder()
+                            .auditResourceType(ResourceType.Bundle.name())
+                            .metaData(this.createMetaData(auditableEvent))
+                            .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
+                            .profile(operation)
+                            .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
+                            .addAllParticipants(participants)
+                            .addEntity(domainResourceEntity)
+                            .build());
+                    });
+                    return auditEventDataList;
+                }
     }
-}

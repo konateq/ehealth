@@ -1,23 +1,25 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit.eventhandler;
 
-import eu.europa.ec.sante.openncp.core.common.fhir.audit.*;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditEventData;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.BalpProfileEnum;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.ImmutableAuditEventData;
+import eu.europa.ec.sante.openncp.core.common.fhir.audit.ImmutableIdentifier;
 import eu.europa.ec.sante.openncp.core.common.fhir.context.FhirSupportedResourceType;
 import org.apache.commons.lang3.BooleanUtils;
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class PatientAuditEventProducer extends AbstractAuditEventProducer implements AuditEventProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(PatientAuditEventProducer.class);
-    public static final Predicate<IBaseResource> RESOURCE_IS_PATIENT = resource -> resource.getIdElement().getResourceType().equalsIgnoreCase(ResourceType.Patient.getPath());
 
     @Override
     public boolean accepts(final AuditableEvent auditableEvent) {
@@ -31,104 +33,55 @@ public class PatientAuditEventProducer extends AbstractAuditEventProducer implem
 
     @Override
     public List<AuditEventData> produce(final AuditableEvent auditableEvent) {
-        final List<AuditEventData> auditEventDataList;
         switch (auditableEvent.getEuRequestDetails().getRestOperationType()) {
             case SEARCH_TYPE:
             case SEARCH_SYSTEM:
             case GET_PAGE:
-                auditEventDataList = List.of(handleSearch(auditableEvent));
-                break;
+                return this.handleSearch(auditableEvent);
             case VREAD:
             case READ:
-                auditEventDataList = handleRead(auditableEvent);
-                break;
+                return this.handleRead(auditableEvent);
             default:
                 LOGGER.error("Unsupported fhir REST operation type [{}]", auditableEvent.getEuRequestDetails().getRestOperationType());
                 //TODO what to do here exactly? create a file with the error? we cannot let the audit event create exceptions that will interfere with the response.
                 return Collections.emptyList();
         }
-
-        return auditEventDataList;
     }
 
-    private AuditEventData handleSearch(final AuditableEvent auditableEvent) {
-        final List<AuditEventData.ParticipantData> participants = createParticipants();
-        final Set<String> patientIds = auditableEvent.extractResourceIds(RESOURCE_IS_PATIENT);
-        final List<AuditEventData.EntityData> patientEntities = patientIds.stream()
-                .map(patientId -> ImmutableEntityData.builder()
-                        .id(patientId)
-                        .type(ImmutableEntityType.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_1_PERSON, Optional.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_1_PERSON_DISPLAY)))
-                        .role(ImmutableEntityRole.of(BalpConstants.CS_OBJECT_ROLE_1_PATIENT, Optional.of(BalpConstants.CS_OBJECT_ROLE_1_PATIENT_DISPLAY)))
-                        .display("Patient")
-                        .build())
-                .collect(Collectors.toList());
-        final AuditEventData auditEventData;
-        if (patientEntities.isEmpty()) {
-            auditEventData = ImmutableAuditEventData.builder()
-                    .auditResourceType(ResourceType.Patient.name())
-                    .metaData(createMetaData(auditableEvent))
-                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
-                    .profile(BalpProfileEnum.BASIC_QUERY)
-                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
-                    .addAllParticipants(participants)
-                    .build();
-        } else {
-            auditEventData = ImmutableAuditEventData.builder()
-                    .auditResourceType(ResourceType.Patient.name())
-                    .metaData(createMetaData(auditableEvent))
-                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
-                    .profile(BalpProfileEnum.PATIENT_QUERY)
-                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
-                    .addAllParticipants(participants)
-                    .addAllEntities(patientEntities)
-                    .build();
-        }
-
-        return auditEventData;
+    private List<AuditEventData> handleSearch(final AuditableEvent auditableEvent) {
+        return this.handle(auditableEvent, BalpProfileEnum.BASIC_QUERY);
     }
-
     private List<AuditEventData> handleRead(final AuditableEvent auditableEvent) {
-        final List<AuditEventData.ParticipantData> participants = createParticipants();
+        return this.handle(auditableEvent, BalpProfileEnum.BASIC_READ);
+    }
 
-        return auditableEvent.getResource().map(resource -> {
-            final String dataResourceId = ((Resource)resource).getId();
-            final Set<String> patientIds = auditableEvent.extractResourceIds(RESOURCE_IS_PATIENT);
 
-            final List<AuditEventData> auditEventDataList = new ArrayList<>();
-            if (patientIds.isEmpty()) {
-                // this is a basic read so create a basic read audit event
-                final AuditEventData.EntityData resourceEntity = AuditEventData.EntityData.ofResource(dataResourceId);
-                auditEventDataList.add(ImmutableAuditEventData.builder()
-                        .auditResourceType(ResourceType.Patient.name())
-                        .metaData(createMetaData(auditableEvent))
-                        .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
-                        .profile(BalpProfileEnum.BASIC_READ)
-                        .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
-                        .addAllParticipants(participants)
-                        .addEntity(resourceEntity)
-                        .build());
-            } else {
-                // If the resource is in the Patient compartment, create one audit event for each compartment owner
-                patientIds.stream()
-                        .map(patientId -> {
-                            final AuditEventData.EntityData resourceEntityData = AuditEventData.EntityData.ofResource(dataResourceId);
-                            final AuditEventData.EntityData patientEntityData = AuditEventData.EntityData.ofPatient(patientId);
+    private List<AuditEventData> handle(final AuditableEvent auditableEvent, final BalpProfileEnum profile) {
+        final List<AuditEventData.ParticipantData> participants = this.createParticipants();
 
-                            return ImmutableAuditEventData.builder()
-                                    .auditResourceType(ResourceType.Patient.name())
-                                    .metaData(createMetaData(auditableEvent))
-                                    .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
-                                    .profile(BalpProfileEnum.PATIENT_READ)
-                                    .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
-                                    .addAllParticipants(participants)
-                                    .addEntity(resourceEntityData)
-                                    .addEntity(patientEntityData)
-                                    .build();
-
-                        })
-                        .forEach(auditEventDataList::add);
-            }
-            return auditEventDataList;
-        }).orElse(Collections.emptyList());
+        return auditableEvent.getResource()
+                .filter(iBaseResource -> iBaseResource instanceof Bundle)
+                .map(iBaseResource -> (Bundle) iBaseResource)
+                .map(bundle -> bundle.getEntry()
+                        .stream()
+                        .filter(bundleEntryComponent -> bundleEntryComponent.getResource().getResourceType() == ResourceType.Patient)
+                        .map(bundleEntryComponent -> (Patient) bundleEntryComponent.getResource())
+                        .map(patientEntity ->
+                                (AuditEventData) ImmutableAuditEventData.builder()
+                                        .auditResourceType(ResourceType.Patient.name())
+                                        .metaData(this.createMetaData(auditableEvent))
+                                        .restOperationType(auditableEvent.getEuRequestDetails().getRestOperationType())
+                                        .profile(profile)
+                                        .fhirServerBase(auditableEvent.getEuRequestDetails().getHapiRequestDetails().getFhirServerBase())
+                                        .addAllParticipants(participants)
+                                        .addEntity(AuditEventData.EntityData.ofPatient(
+                                                patientEntity.getId(),
+                                                patientEntity.getIdentifier()
+                                                        .stream()
+                                                        .map(identifier -> ImmutableIdentifier.of(identifier.getSystem(), identifier.getValue()))
+                                                        .findFirst()
+                                                        .orElseThrow(() -> new RuntimeException("No identifier found for patient"))))
+                                        .build())
+                        .collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 }
