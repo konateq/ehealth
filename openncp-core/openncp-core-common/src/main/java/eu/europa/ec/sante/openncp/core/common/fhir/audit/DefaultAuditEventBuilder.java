@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DefaultAuditEventBuilder implements AuditEventBuilder {
+
+    private static final String AUDIT_EVENT_CANONICAL_URL = "http://hl7.org/fhir/StructureDefinition/AuditEvent";
+
     @Override
     public AuditEvent build(final AuditEventData auditEventData) {
         Validate.notNull(auditEventData, "Audit event data must not be null.");
@@ -23,7 +26,7 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
 
         final AuditEvent auditEvent = new AuditEvent();
         final BalpProfileEnum eventProfile = auditEventData.getProfile();
-        auditEvent.getMeta().addProfile(eventProfile.getProfileUrl());
+        auditEvent.getMeta().addProfile(AUDIT_EVENT_CANONICAL_URL);
         auditEvent
                 .getText()
                 .setDiv(new XhtmlNode().setValue("<div>Audit Event</div>"))
@@ -77,10 +80,7 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
         });
 
         final AuditEvent.AuditEventEntityComponent entityCorrelationId = auditEvent.addEntity();
-        entityCorrelationId
-                .getType()
-                .setSystem("https://profiles.ihe.net/ITI/BALP/CodeSystem/BasicAuditEntityType")
-                .setCode("X-Correlation-ID");
+        entityCorrelationId.setName("X-Correlation-ID");
         entityCorrelationId.getWhat().getIdentifier().setValue(auditEventData.getMetaData().getCorrelationId());
 
         auditEventData.getEntities().forEach(entityData -> {
