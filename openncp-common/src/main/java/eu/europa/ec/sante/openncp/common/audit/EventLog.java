@@ -125,7 +125,6 @@ public class EventLog {
         final ConfigurationManager configurationManager = ConfigurationManagerFactory.getConfigurationManager();
         eventLog.setAS_AuditSourceId(configurationManager.getProperty("COUNTRY_PRINCIPAL_SUBDIVISION"));
         eventLog.setEI_TransactionName(EI_TransactionName);
-        eventLog.setEI_EventActionCode(EI_EventActionCode);
         eventLog.setEI_EventDateTime(EI_EventDateTime);
         eventLog.setEI_EventOutcomeIndicator(EI_EventOutcomeIndicator);
         eventLog.setSP_UserID(nullToEmptyString(SP_UserID));
@@ -217,7 +216,6 @@ public class EventLog {
         LOGGER.info("Creating EventLog for Healthcare Provider Assurance: '{}'-'{}'", EI_TransactionName, EI_EventActionCode);
         final EventLog eventLog = new EventLog();
         eventLog.setEI_TransactionName(EI_TransactionName);
-        eventLog.setEI_EventActionCode(EI_EventActionCode);
         eventLog.setEI_EventDateTime(EI_EventDateTime);
         eventLog.setEI_EventOutcomeIndicator(EI_EventOutcomeIndicator);
         eventLog.setPC_UserID(nullToEmptyString(PC_UserID));
@@ -297,7 +295,6 @@ public class EventLog {
         LOGGER.info("Creating EventLog for TRC Assertions: '{}'-'{}'", EI_TransactionName, EI_EventActionCode);
         final EventLog eventLog = new EventLog();
         eventLog.setEI_TransactionName(EI_TransactionName);
-        eventLog.setEI_EventActionCode(EI_EventActionCode);
         eventLog.setEI_EventDateTime(EI_EventDateTime);
         eventLog.setEI_EventOutcomeIndicator(EI_EventOutcomeIndicator);
         eventLog.setPC_UserID(nullToEmptyString(PC_UserID));
@@ -349,7 +346,6 @@ public class EventLog {
      *                                     processed the epsos operation
      * @param AS_AuditSourceId             the iso3166-2 code of the country responsible for
      *                                     the audit source
-     * @param NOK_ParticipantObjectIDs     List of Next of Kin Identifiers in HL7 II format
      * @param eventTargetObjectId          The string encoded UUID of the returned document
      * @param ReqM_ParticipantObjectID     String-encoded UUID of the request
      *                                     message
@@ -375,7 +371,6 @@ public class EventLog {
         LOGGER.info("Creating EventLog for NOK Assertions: '{}'-'{}'", EI_TransactionName, EI_EventActionCode);
         final EventLog eventLog = new EventLog();
         eventLog.setEI_TransactionName(EI_TransactionName);
-        eventLog.setEI_EventActionCode(EI_EventActionCode);
         eventLog.setEI_EventDateTime(EI_EventDateTime);
         eventLog.setEI_EventOutcomeIndicator(EI_EventOutcomeIndicator);
         eventLog.setPC_UserID(nullToEmptyString(PC_UserID));
@@ -462,7 +457,6 @@ public class EventLog {
         LOGGER.info("Creating EventLog for Patient ID Mapping: '{}'-'{}'", EI_TransactionName, EI_EventActionCode);
         final EventLog eventLog = new EventLog();
         eventLog.setEI_TransactionName(EI_TransactionName);
-        eventLog.setEI_EventActionCode(EI_EventActionCode);
         eventLog.setEI_EventDateTime(EI_EventDateTime);
         eventLog.setEI_EventOutcomeIndicator(EI_EventOutcomeIndicator);
         eventLog.setHR_UserID(nullToEmptyString(HR_UserID));

@@ -25,7 +25,6 @@ public class SMPAuditMessageBuilderTest extends XMLTestCase {
         eventLog.setEventType(EventType.SMP_QUERY);
         eventLog.setNcpSide(NcpSide.NCP_A);
         eventLog.setEI_TransactionName(TransactionName.SMP_QUERY);
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
         final XMLGregorianCalendar now = DateUtil.getDateAsXMLGregorian(new Date());
         eventLog.setEI_EventDateTime(now);
@@ -52,7 +51,6 @@ public class SMPAuditMessageBuilderTest extends XMLTestCase {
         eventLog.setEventType(EventType.SMP_QUERY);
         eventLog.setNcpSide(NcpSide.NCP_A);
         eventLog.setEI_TransactionName(TransactionName.SMP_QUERY);
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
         final XMLGregorianCalendar now = DateUtil.getDateAsXMLGregorian(new Date());
         eventLog.setEI_EventDateTime(now);

@@ -2,17 +2,20 @@ package eu.europa.ec.sante.openncp.core.server.ihe.xdr.impl;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.*;
+import eu.europa.ec.sante.openncp.common.audit.EventLog;
+import eu.europa.ec.sante.openncp.common.audit.EventOutcomeIndicator;
+import eu.europa.ec.sante.openncp.common.audit.EventType;
+import eu.europa.ec.sante.openncp.common.audit.TransactionName;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.configuration.util.OpenNCPConstants;
 import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
+import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.security.util.AssertionUtil;
 import eu.europa.ec.sante.openncp.common.util.DateUtil;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
-import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.core.common.assertion.PolicyAssertionManager;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.InsufficientRightsException;
 import eu.europa.ec.sante.openncp.core.common.assertion.exceptions.OpenNCPErrorCodeException;
@@ -114,7 +117,6 @@ public class XDRServiceImpl implements XDRServiceInterface {
 
         eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
         eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
-        eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
         eventLog.getEventTargetParticipantObjectIds().add(discardId);
         if (request.getSubmitObjectsRequest().getRegistryObjectList() != null) {
@@ -166,7 +168,6 @@ public class XDRServiceImpl implements XDRServiceInterface {
                                                          final RegistryResponseType response, final Element sh) {
         eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
         eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
-        eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         eventLog.setEI_EventDateTime(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
 
         if (request.getSubmitObjectsRequest().getRegistryObjectList() != null) {

@@ -28,7 +28,6 @@ public class DispensationDiscardServiceAuditMessageBuilderTest extends XMLTestCa
             eventLog.setEventType(EventType.XDR_SERVICE_NCP_A);
             eventLog.setNcpSide(NcpSide.NCP_A);
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_DISCARD);
-            eventLog.setEI_EventActionCode(EventActionCode.QUERY);
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
             final XMLGregorianCalendar now = DateUtil.getDateAsXMLGregorian(new Date());
             eventLog.setEI_EventDateTime(now);

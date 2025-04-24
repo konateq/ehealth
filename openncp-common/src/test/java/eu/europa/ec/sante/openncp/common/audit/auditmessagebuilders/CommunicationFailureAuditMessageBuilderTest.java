@@ -28,7 +28,6 @@ public class CommunicationFailureAuditMessageBuilderTest extends XMLTestCase {
             eventLog.setEventType(EventType.COMMUNICATION_FAILURE);
             eventLog.setNcpSide(NcpSide.NCP_B);
             eventLog.setEI_TransactionName(TransactionName.COMMUNICATION_FAILURE);
-            eventLog.setEI_EventActionCode(EventActionCode.QUERY);
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
             final XMLGregorianCalendar now = DateUtil.getDateAsXMLGregorian(new Date());
             eventLog.setEI_EventDateTime(now);

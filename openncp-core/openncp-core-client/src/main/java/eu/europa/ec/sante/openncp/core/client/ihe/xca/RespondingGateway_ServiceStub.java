@@ -2,7 +2,6 @@ package eu.europa.ec.sante.openncp.core.client.ihe.xca;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.EventActionCode;
 import eu.europa.ec.sante.openncp.common.audit.EventLog;
 import eu.europa.ec.sante.openncp.common.audit.EventType;
 import eu.europa.ec.sante.openncp.common.audit.TransactionName;
@@ -15,8 +14,8 @@ import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
-import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
+import eu.europa.ec.sante.openncp.core.common.ihe.constants.xca.XCAConstants;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.query._3.AdhocQueryRequest;
@@ -33,7 +32,10 @@ import eu.europa.ec.sante.openncp.core.common.ihe.util.EventLogUtil;
 import eu.europa.ec.sante.openncp.core.common.util.OidUtil;
 import org.apache.axiom.om.*;
 import org.apache.axiom.om.ds.AbstractOMDataSource;
-import org.apache.axiom.soap.*;
+import org.apache.axiom.soap.SOAP12Constants;
+import org.apache.axiom.soap.SOAPEnvelope;
+import org.apache.axiom.soap.SOAPFactory;
+import org.apache.axiom.soap.SOAPHeaderBlock;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.OperationClient;
 import org.apache.axis2.client.ServiceClient;
@@ -67,7 +69,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /*
  *  RespondingGateway_ServiceStub java implementation
@@ -1119,7 +1120,6 @@ public class RespondingGateway_ServiceStub extends Stub {
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
         final EventType eventType = EventType.XCA_SERVICE_LIST;
         final TransactionName transactionName = TransactionName.determineTransactionNameForXCAQuery(classCodes);
         EventLogUtil.prepareXCACommonLogQuery(eventLog, msgContext, request, response, eventType, transactionName);
@@ -1136,7 +1136,6 @@ public class RespondingGateway_ServiceStub extends Stub {
         final EventLog eventLog = EventLogClientUtil.prepareEventLog(msgContext, _returnEnv, address, dstHomeCommunityId);
         EventLogClientUtil.logIdAssertion(eventLog, idAssertion);
         EventLogClientUtil.logTrcAssertion(eventLog, trcAssertion);
-        eventLog.setEI_EventActionCode(EventActionCode.CREATE);
         final EventType eventType = EventType.XCA_SERVICE_RETRIEVE_NCP_B;
         final TransactionName transactionName = TransactionName.determineTransactionNameForXCARetrieve(classCode);
         EventLogUtil.prepareXCACommonLogRetrieve(eventLog, msgContext, request, response, eventType, transactionName);

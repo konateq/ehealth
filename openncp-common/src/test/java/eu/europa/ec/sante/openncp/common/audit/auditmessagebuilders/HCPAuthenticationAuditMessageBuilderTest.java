@@ -28,7 +28,6 @@ public class HCPAuthenticationAuditMessageBuilderTest extends XMLTestCase {
             eventLog.setEventType(EventType.HCP_AUTHENTICATION);
             eventLog.setNcpSide(NcpSide.NCP_A);
             eventLog.setEI_TransactionName(TransactionName.HCP_AUTHENTICATION);
-            eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
             eventLog.setEI_EventOutcomeIndicator(EventOutcomeIndicator.FULL_SUCCESS);
             final XMLGregorianCalendar now = DateUtil.getDateAsXMLGregorian(new Date());
             eventLog.setEI_EventDateTime(now);

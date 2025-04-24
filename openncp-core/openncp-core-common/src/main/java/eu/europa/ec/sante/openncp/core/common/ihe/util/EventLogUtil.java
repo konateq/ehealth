@@ -2,7 +2,10 @@ package eu.europa.ec.sante.openncp.core.common.ihe.util;
 
 import eu.europa.ec.sante.openncp.common.ClassCode;
 import eu.europa.ec.sante.openncp.common.NcpSide;
-import eu.europa.ec.sante.openncp.common.audit.*;
+import eu.europa.ec.sante.openncp.common.audit.EventLog;
+import eu.europa.ec.sante.openncp.common.audit.EventOutcomeIndicator;
+import eu.europa.ec.sante.openncp.common.audit.EventType;
+import eu.europa.ec.sante.openncp.common.audit.TransactionName;
 import eu.europa.ec.sante.openncp.common.configuration.util.http.IPUtil;
 import eu.europa.ec.sante.openncp.common.error.OpenNCPErrorCode;
 import eu.europa.ec.sante.openncp.common.util.HttpUtil;
@@ -53,7 +56,6 @@ public class EventLogUtil {
         // Set Event Identification
         eventLog.setEventType(EventType.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
         eventLog.setEI_TransactionName(TransactionName.IDENTIFICATION_SERVICE_FIND_IDENTITY_BY_TRAITS);
-        eventLog.setEI_EventActionCode(EventActionCode.EXECUTE);
 
         if (!response.getAcknowledgement().get(0).getAcknowledgementDetail().isEmpty()) {
 
@@ -336,7 +338,6 @@ public class EventLogUtil {
         }
         LOGGER.info("EventLogUtil: '{}'", classCode);
         eventLog.setEventType(eventLog.getNcpSide()==NcpSide.NCP_A ? EventType.XDR_SERVICE_NCP_A : EventType.XDR_SERVICE_NCP_B);
-        eventLog.setEI_EventActionCode(EventActionCode.READ);
         if (StringUtils.equals(classCode, ClassCode.ED_CLASSCODE.getCode())) {
             eventLog.setEI_TransactionName(TransactionName.DISPENSATION_SERVICE_INITIALIZE);
         } else if (StringUtils.equals(classCode, ClassCode.EDD_CLASSCODE.getCode())) {
