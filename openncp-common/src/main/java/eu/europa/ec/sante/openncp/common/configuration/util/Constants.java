@@ -80,6 +80,8 @@ public class Constants {
     public static String ABUSE_SCHEDULER_TIME_INTERVAL;
     public static String ABUSE_SCHEDULER_ENABLE;
 
+    public static String AVAILABLE_TRANSLATION_LANGUAGES;
+
     /**
      * Name of the System Variable containing the path to the folder containing the configuration files.
      */
@@ -140,6 +142,7 @@ public class Constants {
         ABUSE_ALL_REQUEST_REFERENCE_REQUEST_PERIOD = configurationManager.getProperty(Constant.ABUSE_ALL_REQUEST_REFERENCE_REQUEST_PERIOD);
         ABUSE_SCHEDULER_TIME_INTERVAL = configurationManager.getProperty(Constant.ABUSE_SCHEDULER_TIME_INTERVAL);
         ABUSE_SCHEDULER_ENABLE = configurationManager.getProperty(Constant.ABUSE_SCHEDULER_ENABLE);
+        AVAILABLE_TRANSLATION_LANGUAGES = configurationManager.getProperty(Constant.AVAILABLE_TRANSLATION_LANGUAGES);
     }
 
     /**
