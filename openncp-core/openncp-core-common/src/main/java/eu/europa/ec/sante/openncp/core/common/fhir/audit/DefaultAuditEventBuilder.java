@@ -1,9 +1,11 @@
 package eu.europa.ec.sante.openncp.core.common.fhir.audit;
 
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.codesystems.V3RoleClass;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
@@ -73,7 +75,7 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
                             .getType()
                             .addCoding()
                             .setSystem(roleClass.getSystem())
-                            .setDisplay(roleClass.getDisplay()));
+                            .setCode(roleClass.toCode()));
 
             userAgent.setWho(new Reference(subjectData.getId()));
             userAgent.setRequestor(subjectData.isRequestor());
@@ -85,17 +87,11 @@ public class DefaultAuditEventBuilder implements AuditEventBuilder {
 
         auditEventData.getEntities().forEach(entityData -> {
             final AuditEvent.AuditEventEntityComponent entity = auditEvent.addEntity();
-            entity.getType()
-                    .setSystem(BalpConstants.CS_AUDIT_ENTITY_TYPE)
-                    .setCode(entityData.getType().getCode())
-                    .setDisplay(entityData.getType().getDisplay().orElse(null));
-            entity.getRole()
-                    .setSystem(BalpConstants.CS_OBJECT_ROLE)
-                    .setCode(entityData.getRole().getCode())
-                    .setDisplay(entityData.getRole().getDisplay().orElse(null));
-            entity.getWhat().setReference(entityData.getId());
+            entity.getWhat().setReference(entityData.getReference().orElse(StringUtils.EMPTY));
+            entityData.getIdentifier().ifPresent(identifier -> entity.getWhat().setIdentifier(new Identifier()
+                    .setSystem(identifier.getSystem())
+                    .setValue(identifier.getValue())));
             entityData.getDisplay().ifPresent(entityDisplay -> entity.getWhat().setDisplay(entityDisplay));
-
         });
 
         return auditEvent;

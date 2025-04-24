@@ -2,6 +2,7 @@ package eu.europa.ec.sante.openncp.core.common.fhir.audit;
 
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import eu.europa.ec.sante.openncp.common.immutables.Domain;
+import org.hl7.fhir.r4.model.ResourceType;
 import org.immutables.value.Value;
 
 import java.time.Instant;
@@ -74,44 +75,38 @@ public interface AuditEventData {
 
     @Domain
     interface EntityData {
-        String getId();
+        Optional<Identifier> getIdentifier();
+
+        Optional<String> getReference();
 
         Optional<String> getDisplay();
 
-        EntityType getType();
-
-        EntityRole getRole();
-
-        static EntityData ofPatient(final String patientId) {
+        static EntityData ofPatient(final String patientReference, final Identifier patientIdentifier) {
             return ImmutableEntityData.builder()
-                    .id(patientId)
-                    .type(ImmutableEntityType.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_1_PERSON, Optional.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_1_PERSON_DISPLAY)))
-                    .role(ImmutableEntityRole.of(BalpConstants.CS_OBJECT_ROLE_1_PATIENT, Optional.of(BalpConstants.CS_OBJECT_ROLE_1_PATIENT_DISPLAY)))
-                    .display("Patient")
+                    .identifier(patientIdentifier)
+                    .reference(patientReference)
+                    .display(ResourceType.Patient.name())
                     .build();
         }
 
-        static EntityData ofResource(final String resourceId) {
+        static EntityData ofResource(final String resourceReference, final Identifier resourceIdentifier) {
             return ImmutableEntityData.builder()
-                    .id(resourceId)
-                    .type(ImmutableEntityType.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_2_SYSTEM_OBJECT, Optional.of(BalpConstants.CS_AUDIT_ENTITY_TYPE_2_SYSTEM_OBJECT_DISPLAY)))
-                    .role(ImmutableEntityRole.of(BalpConstants.CS_OBJECT_ROLE_24_QUERY, Optional.of(BalpConstants.CS_OBJECT_ROLE_24_QUERY_DISPLAY)))
+                    .identifier(resourceIdentifier)
+                    .reference(resourceReference)
                     .build();
         }
 
-
-        @Domain
-        interface EntityType {
-            String getCode();
-
-            Optional<String> getDisplay();
+        static EntityData ofResource(final String resourceReference) {
+            return ImmutableEntityData.builder()
+                    .reference(resourceReference)
+                    .build();
         }
 
         @Domain
-        interface EntityRole {
-            String getCode();
+        interface Identifier {
+            String getSystem();
 
-            Optional<String> getDisplay();
+            String getValue();
         }
     }
 }
