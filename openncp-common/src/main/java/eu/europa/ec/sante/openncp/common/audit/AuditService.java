@@ -76,7 +76,6 @@ public class AuditService implements MessageHandlerListener {
                     .collect(MoreCollectors.oneOrNone(eventObject, auditMessageTransformers))
                     .map(transformer -> transformer.transform(eventObject))
                     .orElseThrow(() -> new IllegalArgumentException("No audit message transformer found for message [%s]"));
-
             AuditTrailUtils.getInstance().sendATNASyslogMessage(auditLogSerializer, message, facility, severity);
             return true;
         } catch (final Exception e) {
