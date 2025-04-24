@@ -6,12 +6,11 @@ import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
-import eu.europa.ec.sante.openncp.common.NcpSide;
+import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import eu.europa.ec.sante.openncp.common.security.AssertionDetails;
 import eu.europa.ec.sante.openncp.common.security.AssertionType;
 import eu.europa.ec.sante.openncp.common.validation.GazelleValidation;
 import eu.europa.ec.sante.openncp.core.common.SamlDetails;
-import eu.europa.ec.sante.openncp.common.context.ServerContext;
 import eu.europa.ec.sante.openncp.core.common.assertion.validation.AssertionValidator;
 import eu.europa.ec.sante.openncp.core.common.fhir.audit.AuditSecurityInfo;
 import org.apache.commons.lang3.Validate;
@@ -50,12 +49,12 @@ public class AssertionsReportingInterceptor implements FhirCustomInterceptor {
 
         samlDetails.getAssertionDetails(AssertionType.HCP)
                 .map(AssertionDetails::getAssertion)
-                .ifPresent(assertion -> GazelleValidation.logAndValidateHCPAssertion(assertion, NcpSide.NCP_B));
+                .ifPresent(assertion -> GazelleValidation.logAndValidateHCPAssertion(assertion, serverContext.getNcpSide()));
         samlDetails.getAssertionDetails(AssertionType.TRC)
                 .map(AssertionDetails::getAssertion)
-                .ifPresent(assertion -> GazelleValidation.validateTRCAssertion(assertion, NcpSide.NCP_B));
+                .ifPresent(assertion -> GazelleValidation.validateTRCAssertion(assertion, serverContext.getNcpSide()));
         samlDetails.getAssertionDetails(AssertionType.NOK)
                 .map(AssertionDetails::getAssertion)
-                .ifPresent(assertion -> GazelleValidation.validateNoKAssertion(assertion, NcpSide.NCP_B));
+                .ifPresent(assertion -> GazelleValidation.validateNoKAssertion(assertion, serverContext.getNcpSide()));
     }
 }
