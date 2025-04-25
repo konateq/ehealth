@@ -349,7 +349,6 @@ public class EventLog {
      *                                     processed the epsos operation
      * @param AS_AuditSourceId             the iso3166-2 code of the country responsible for
      *                                     the audit source
-     * @param NOK_ParticipantObjectIDs     List of Next of Kin Identifiers in HL7 II format
      * @param eventTargetObjectId          The string encoded UUID of the returned document
      * @param ReqM_ParticipantObjectID     String-encoded UUID of the request
      *                                     message
