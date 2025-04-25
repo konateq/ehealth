@@ -152,7 +152,7 @@ public class STSService extends SecurityTokenServiceWS implements Provider<SOAPM
         } catch (final DatatypeConfigurationException ex) {
             logger.error("DatatypeConfigurationException: '{}'", ex.getMessage(), ex);
         }
-        final String trcCommonName = HttpUtil.getTlsCertificateCommonName(
+        final String trcCommonName = HttpUtil.getCommonNameFromServerCertificate(
                 configurationManager.getProperty("secman.sts.url"));
         final String sourceGateway = getClientIP();
         logger.info("STS Client IP: '{}'", sourceGateway);

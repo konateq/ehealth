@@ -142,7 +142,7 @@ public class NextOfKinService extends SecurityTokenServiceWS implements Provider
 
         final var auditService = AuditServiceFactory.getInstance();
         final XMLGregorianCalendar date = DateUtil.getDateAsXMLGregorian(new Date());
-        final String trcCommonName = HttpUtil.getTlsCertificateCommonName(
+        final String trcCommonName = HttpUtil.getCommonNameFromServerCertificate(
                 configurationManager.getProperty("secman.nextOfKin.url"));
         final String sourceGateway = getClientIP();
         logger.info("STS Client IP: '{}'", sourceGateway);
