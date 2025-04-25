@@ -143,6 +143,7 @@ services:
       CATALINA_OPTS: "
         -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties
         -Dfile.encoding=UTF-8
+        -Dserver.ehealth.mode=PRODUCTION
         -Xdebug -agentlib:jdwp=transport=dt_socket,address=0.0.0.0:5006,server=y,suspend=n"
       JAVA_OPTS: "
         -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties
@@ -179,6 +180,7 @@ services:
       CATALINA_OPTS: "
         -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties
         -Dfile.encoding=UTF-8
+        -Dserver.ehealth.mode=PRODUCTION
         -Xdebug -agentlib:jdwp=transport=dt_socket,address=0.0.0.0:5005,server=y,suspend=n"
       JAVA_OPTS: "
         -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties
