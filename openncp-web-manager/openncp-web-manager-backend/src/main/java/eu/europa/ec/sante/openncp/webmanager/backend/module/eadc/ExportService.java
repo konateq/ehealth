@@ -22,7 +22,7 @@ public class ExportService {
 
     public final ZoneId zoneId = ZoneId.systemDefault();
 
-    private final String TEMPLATE_FILE = "MyHealth@EU_KPIs-Reporting_template_V1.4.xlsx";
+    private final String TEMPLATE_FILE = "MyHealth@EU_KPIs-Reporting_template_V1.5.xlsx";
 
     private final TransactionService transactionService;
     private final List<KpiStrategy> kpiRowStrategies;

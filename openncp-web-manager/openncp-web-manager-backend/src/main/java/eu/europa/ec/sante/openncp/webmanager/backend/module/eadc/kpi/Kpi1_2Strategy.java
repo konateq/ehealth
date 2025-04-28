@@ -21,7 +21,9 @@ public class Kpi1_2Strategy implements KpiStrategy {
                     "DOCUMENT_EXCHANGED_UNKNOWN", // not used anymore but has been historically, best not to remove it yet
                     "DISPENSATION_QUERY",
                     "DISPENSATION_RESPONSE",
-                    "DISPENSATION_UNKNOWN" // not used anymore but has been historically, best not to remove it yet
+                    "DISPENSATION_UNKNOWN", // not used anymore but has been historically, best not to remove it yet
+                    "FHIR_SEARCH",
+                    "FHIR_READ"
             );
 
     @Override
