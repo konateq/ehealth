@@ -208,7 +208,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
                 if(!EadcUtilWrapper.hasTransactionErrors(envelope)) {
                     EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, eDispenseCda, startTime,
                             endTime, Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
-                            ServiceType.DISPENSATION_RESPONSE);
+                            ServiceType.DISPENSATION_RESPONSE, null);
                 } else {
                     eadcError = EadcUtilWrapper.getTransactionErrorDescription(envelope);
                 }
@@ -227,7 +227,7 @@ public class XDR_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
             if(!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, eDispenseCda, startTime, endTime,
                         Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
-                        ServiceType.DISPENSATION_RESPONSE, eadcError);
+                        ServiceType.DISPENSATION_RESPONSE, eadcError, null);
             }
         }
 

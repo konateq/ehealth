@@ -9,6 +9,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.AssertionConstants;
 import eu.europa.ec.sante.openncp.common.util.XMLUtil;
+import eu.europa.ec.sante.openncp.core.common.fhir.context.EuRequestDetails;
 import eu.europa.ec.sante.openncp.core.common.util.SoapElementHelper;
 import eu.europa.ec.sante.openncp.core.common.ihe.datamodel.xsd.ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.ObjectFactory;
@@ -61,7 +62,7 @@ public class EadcUtilWrapper {
      */
     public static void invokeEadc(final MessageContext requestMsgCtx, final MessageContext responseMsgCtx, final ServiceClient serviceClient, final Document cda,
                                   final Date startTime, final Date endTime, final String receivingIso, final EadcEntry.DsTypes dsType, final EadcUtil.Direction direction,
-                                  final ServiceType serviceType) {
+                                  final ServiceType serviceType, final EuRequestDetails euRequestDetails) {
 
         new Thread(() -> {
             final var watch = new StopWatch();
@@ -69,7 +70,7 @@ public class EadcUtilWrapper {
             try {
                 EadcUtil.invokeEadc(requestMsgCtx, responseMsgCtx, cda,
                                     buildTransactionInfo(requestMsgCtx, responseMsgCtx, serviceClient, direction, startTime, endTime, receivingIso,
-                                                         serviceType), dsType);
+                                                         serviceType, euRequestDetails), dsType);
             } catch (final Exception e) {
                 LOGGER.error("[EADC] Invocation Failed - Exception: '{}'", e.getMessage(), e);
             } finally {
@@ -97,7 +98,7 @@ public class EadcUtilWrapper {
      */
     public static void invokeEadcFailure(final MessageContext requestMsgCtx, final MessageContext responseMsgCtx, final ServiceClient serviceClient, final Document cda,
                                          final Date startTime, final Date endTime, final String receivingIso, final EadcEntry.DsTypes dsType, final EadcUtil.Direction direction,
-                                         final ServiceType serviceType, final String errorDescription) {
+                                         final ServiceType serviceType, final String errorDescription, final EuRequestDetails euRequestDetails) {
 
         new Thread(() -> {
             final var watch = new StopWatch();
@@ -105,7 +106,7 @@ public class EadcUtilWrapper {
             try {
                 EadcUtil.invokeEadcFailure(requestMsgCtx, responseMsgCtx, cda,
                         buildTransactionInfo(requestMsgCtx, responseMsgCtx, serviceClient, direction, startTime, Objects.requireNonNullElseGet(endTime, Date::new),
-                                receivingIso, serviceType), dsType, errorDescription);
+                                receivingIso, serviceType, euRequestDetails), dsType, errorDescription);
             } catch (final Exception e) {
                 LOGGER.error("[EADC Failure] Invocation Failed - Exception: '{}'", e.getMessage(), e);
             } finally {
@@ -181,7 +182,7 @@ public class EadcUtilWrapper {
      */
     private static TransactionInfo buildTransactionInfo(final MessageContext reqMsgContext, final MessageContext rspMsgContext, final ServiceClient serviceClient,
                                                         final EadcUtil.Direction direction, final Date startTime, final Date endTime, final String countryCodeA,
-                                                        final ServiceType serviceType) throws Exception {
+                                                        final ServiceType serviceType, final EuRequestDetails euRequestDetails) throws Exception {
 
         final var transactionInfo = new ObjectFactory().createComplexTypeTransactionInfo();
         transactionInfo.setAuthenticationLevel(reqMsgContext != null ? extractAuthenticationMethodFromAssertion(getAssertion(reqMsgContext)) : null);
@@ -244,6 +245,16 @@ public class EadcUtilWrapper {
         transactionInfo.setServiceType(serviceType.getDescription());
         transactionInfo.setTransactionCounter("");
         transactionInfo.setTransactionPK(UUID.randomUUID().toString());
+
+        if(euRequestDetails != null) {
+            transactionInfo.setServiceName(euRequestDetails.getResourceType());
+            int index = euRequestDetails.getHapiRequestDetails().getCompleteUrl().indexOf('?');
+            if (index != -1) {
+                transactionInfo.setReceivingHost(euRequestDetails.getHapiRequestDetails().getCompleteUrl().substring(0,index));
+            }else{
+                transactionInfo.setReceivingHost(euRequestDetails.getHapiRequestDetails().getCompleteUrl());
+            }
+        }
 
         return transactionInfo;
     }

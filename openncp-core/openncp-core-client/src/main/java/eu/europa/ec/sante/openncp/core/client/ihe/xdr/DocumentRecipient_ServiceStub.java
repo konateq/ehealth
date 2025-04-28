@@ -335,7 +335,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
             if (!EadcUtilWrapper.hasTransactionErrors(returnEnv)) {
                 EadcUtilWrapper.invokeEadc(messageContext, returnMessageContext, this._getServiceClient(), eDispenseCda,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DISPENSATION_QUERY);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DISPENSATION_QUERY, null);
             } else {
                 eadcError = EadcUtilWrapper.getTransactionErrorDescription(returnEnv);
             }
@@ -393,7 +393,7 @@ public class DocumentRecipient_ServiceStub extends Stub {
             if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(messageContext, returnMessageContext, this._getServiceClient(), eDispenseCda,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DISPENSATION_QUERY, eadcError);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DISPENSATION_QUERY, eadcError, null);
             }
         }
     }

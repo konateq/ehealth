@@ -546,7 +546,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (!EadcUtilWrapper.hasTransactionErrors(_returnEnv)) {
                 EadcUtilWrapper.invokeEadc(_messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY, null);
             } else {
                 eadcError = EadcUtilWrapper.getTransactionErrorDescription(_returnEnv);
             }
@@ -596,7 +596,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(_messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY, eadcError);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_LIST_QUERY, eadcError, null);
             }
         }
     }
@@ -898,7 +898,7 @@ public class RespondingGateway_ServiceStub extends Stub {
                 }
                 EadcUtilWrapper.invokeEadc(_messageContext, _returnMessageContext, this._getServiceClient(), cda,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY, null);
             }
 
             final String dstHomeCommunityId = OidUtil.getHomeCommunityId(countryCode.toLowerCase(Locale.ENGLISH));
@@ -946,7 +946,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(_messageContext, _returnMessageContext, this._getServiceClient(), cda,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY, eadcError);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.DOCUMENT_EXCHANGED_QUERY, eadcError, null);
             }
         }
     }

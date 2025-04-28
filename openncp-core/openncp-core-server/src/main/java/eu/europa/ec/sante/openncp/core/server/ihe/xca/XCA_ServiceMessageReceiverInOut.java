@@ -250,7 +250,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
 
                 if(!EadcUtilWrapper.hasTransactionErrors(envelope)) {
                     EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, clinicalDocument, startTime, endTime,
-                            Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND, serviceType);
+                            Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND, serviceType, null);
                 } else {
                     eadcError = EadcUtilWrapper.getTransactionErrorDescription(envelope);
                 }
@@ -271,7 +271,7 @@ public class XCA_ServiceMessageReceiverInOut extends AbstractInOutMessageReceive
         } finally {
             if(!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, clinicalDocument, startTime, endTime,
-                        Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND, serviceType, eadcError);
+                        Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND, serviceType, eadcError, null);
             }
         }
     }

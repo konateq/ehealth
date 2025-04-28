@@ -457,7 +457,7 @@ public class RespondingGateway_ServiceStub extends Stub {
              */
             EadcUtilWrapper.invokeEadc(messageContext, _returnMessageContext, this._getServiceClient(), null,
                     transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                    EadcUtil.Direction.OUTBOUND, ServiceType.PATIENT_IDENTIFICATION_QUERY);
+                    EadcUtil.Direction.OUTBOUND, ServiceType.PATIENT_IDENTIFICATION_QUERY, null);
 
             // TMP
             // eADC end time
@@ -506,7 +506,7 @@ public class RespondingGateway_ServiceStub extends Stub {
             if(!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(messageContext, _returnMessageContext, this._getServiceClient(), null,
                         transactionStartTime, transactionEndTime, this.countryCode, EadcEntry.DsTypes.EADC,
-                        EadcUtil.Direction.OUTBOUND, ServiceType.PATIENT_IDENTIFICATION_QUERY, eadcError);
+                        EadcUtil.Direction.OUTBOUND, ServiceType.PATIENT_IDENTIFICATION_QUERY, eadcError, null);
             }
         }
     }

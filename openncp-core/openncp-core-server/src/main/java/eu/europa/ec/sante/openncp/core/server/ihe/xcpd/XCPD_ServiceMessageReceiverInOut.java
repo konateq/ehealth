@@ -176,7 +176,7 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
 
                 EadcUtilWrapper.invokeEadc(msgContext, newMsgContext, null, null, startTime,
                         new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
-                        ServiceType.PATIENT_IDENTIFICATION_RESPONSE);
+                        ServiceType.PATIENT_IDENTIFICATION_RESPONSE, null);
             }
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -192,7 +192,7 @@ public class XCPD_ServiceMessageReceiverInOut extends AbstractInOutMessageReceiv
             if (!eadcError.isEmpty()) {
                 EadcUtilWrapper.invokeEadcFailure(msgContext, newMsgContext, null, null, startTime,
                         new Date(), Constants.COUNTRY_CODE, EadcEntry.DsTypes.EADC, EadcUtil.Direction.INBOUND,
-                        ServiceType.PATIENT_IDENTIFICATION_RESPONSE, eadcError);
+                        ServiceType.PATIENT_IDENTIFICATION_RESPONSE, eadcError, null);
             }
         }
     }
