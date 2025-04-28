@@ -4,25 +4,25 @@ import eu.europa.ec.sante.openncp.common.configuration.ConfigurationManagerFacto
 import eu.europa.ec.sante.openncp.common.configuration.StandardProperties;
 import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.SslUtil;
-import eu.europa.ec.sante.openncp.common.util.proxy.CustomProxySelector;
 import eu.europa.ec.sante.openncp.common.util.proxy.ProxyCredentials;
 import org.cryptacular.util.CertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocket;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
-import java.net.ProxySelector;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
-import java.security.cert.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 public class HttpUtil {
 
@@ -56,126 +56,6 @@ public class HttpUtil {
         }
         LOGGER.debug("Client Certificate: '{}'", result);
         return result;
-    }
-
-
-    public static String getTlsCertificateCommonName(final CertificatesDataHolder.CertificateData certificateData, final String host) {
-        final Certificate[] certificates = getSSLPeerCertificate(certificateData, host, false);
-        if (certificates != null && certificates.length > 0) {
-            final X509Certificate cert = (X509Certificate) certificates[0];
-            return getCommonName(cert);
-        }
-        return WARNING_NO_CERTIFICATE_FOUND;
-    }
-
-    public static String getTlsCertificateCommonName(final String host) {
-        final CertificatesDataHolder.CertificateData certificateData = ImmutableCertificateData.builder()
-                .keystorePath(Constants.SC_KEYSTORE_PATH)
-                .keystorePassword(Constants.SC_KEYSTORE_PASSWORD)
-                .privateKeyAlias(Constants.SC_PRIVATEKEY_ALIAS)
-                .privateKeyPassword(Constants.SC_PRIVATEKEY_PASSWORD)
-                .build();
-
-        return getTlsCertificateCommonName(certificateData, host);
-    }
-
-    private static Certificate[] getSSLPeerCertificate(final CertificatesDataHolder.CertificateData certificateData, final String host, final boolean sslValidation) {
-
-        HttpsURLConnection urlConnection = null;
-
-        if (!sslValidation) {
-
-            final var trustAllCerts = new TrustManager[]{new X509TrustManager() {
-
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-
-                @Override
-                public void checkClientTrusted(final X509Certificate[] certificates, final String authType) {
-                    try {
-                        if (this.getAcceptedIssuers().length > 0) {
-                            this.getAcceptedIssuers()[0].checkValidity();
-                        }
-                    } catch (final CertificateExpiredException | CertificateNotYetValidException e) {
-                        if (this.getAcceptedIssuers().length > 0) {
-                            LOGGER.error("Error: Invalid server certificate : {} : {}", this.getAcceptedIssuers()[0].getSubjectDN().getName(), authType);
-                        } else {
-                            LOGGER.error("Error: Invalid server certificate : UNKNOWN : {}", authType);
-                        }
-                    }
-                }
-
-                @Override
-                public void checkServerTrusted(final X509Certificate[] arg0, final String arg1) {
-                    try {
-                        if (this.getAcceptedIssuers().length > 0) {
-                            this.getAcceptedIssuers()[0].checkValidity();
-                        }
-                    } catch (final CertificateExpiredException | CertificateNotYetValidException e) {
-                        if (this.getAcceptedIssuers().length > 0) {
-                            LOGGER.error("Error: Invalid server certificate : {} : {}", this.getAcceptedIssuers()[0].getSubjectDN().getName(), arg1);
-                        } else {
-                            LOGGER.error("Error: Invalid server certificate : UNKNOWN : {}", arg1);
-                        }
-                    }
-                }
-            }
-            };
-
-
-            try (final var keystoreInputStream = getKeystoreInputStream(certificateData.getKeystorePath())) {
-
-                // Install the all-trusting trust manager
-                final var keyStore = KeyStore.getInstance("JKS");
-                keyStore.load(keystoreInputStream, certificateData.getKeystorePassword().toCharArray());
-                final var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-                keyManagerFactory.init(keyStore, certificateData.getKeystorePassword().toCharArray());
-
-                // Install the all-trusting trust manager
-                final SSLContext sslContext;
-                sslContext = SSLContext.getInstance("TLSv1.2");
-                sslContext.init(keyManagerFactory.getKeyManagers(), trustAllCerts, new java.security.SecureRandom());
-                HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-
-                final URL url;
-                url = new URL(host);
-                urlConnection = (HttpsURLConnection) url.openConnection();
-                urlConnection.setHostnameVerifier((hostname, session) -> session.isValid() && !hostname.isEmpty());
-                urlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
-                urlConnection.connect();
-                return urlConnection.getServerCertificates();
-
-            } catch (final IOException | UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException
-                           | KeyManagementException | CertificateException e) {
-                LOGGER.error("Error: '{}'", e.getMessage(), e);
-            } finally {
-
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-            }
-        }
-        return new Certificate[]{};
-    }
-
-    private static InputStream getKeystoreInputStream(final String location) {
-
-        try {
-            final var file = new File(location);
-            if (file.exists()) {
-                return new FileInputStream(file);
-            }
-            final var url = new URL(location);
-            return url.openStream();
-
-        } catch (final Exception e) {
-            LOGGER.error("Exception: '{}'", e.getMessage(), e);
-        }
-
-        LOGGER.warn("Could not open stream to: '{}'", location);
-        return null;
     }
 
     public static String getCommonNameFromServerCertificate(final String endpoint) {
@@ -286,18 +166,6 @@ public class HttpUtil {
 
     private static String getCommonName(final java.security.cert.X509Certificate cert) {
         return CertUtil.subjectCN(cert);
-    }
-
-
-    public CustomProxySelector setCustomProxyServerForURLConnection() {
-
-        final CustomProxySelector customProxySelector;
-        if (isBehindProxy()) {
-            final var proxyCredentials = getProxyCredentials();
-            customProxySelector = new CustomProxySelector(ProxySelector.getDefault(), proxyCredentials);
-            return customProxySelector;
-        }
-        return null;
     }
 }
 

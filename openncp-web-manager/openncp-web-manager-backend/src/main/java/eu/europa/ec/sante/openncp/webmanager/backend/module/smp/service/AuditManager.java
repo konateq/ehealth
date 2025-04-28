@@ -132,7 +132,7 @@ public class AuditManager {
                 .build();
 
         final String serviceConsumerUserId = HttpUtil.getSubjectDN(certificatesDataHolder, false);
-        final String serviceProviderUserId = HttpUtil.getTlsCertificateCommonName(consumerCertificateData, smpServerUri);
+        final String serviceProviderUserId = HttpUtil.getCommonNameFromServerCertificate(smpServerUri);
         final String localIp = IPUtil.getPrivateServerIp();
         final String participantId = propertyService.getPropertyValueMandatory("COUNTRY_PRINCIPAL_SUBDIVISION");
         URI uri = null;

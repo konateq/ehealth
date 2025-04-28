@@ -106,7 +106,7 @@ public class DynamicDiscoveryService {
                 LOGGER.error(null, ex);
             }
             final String serviceConsumerUserId = HttpUtil.getSubjectDN(false);
-            final String serviceProviderUserId = HttpUtil.getTlsCertificateCommonName(smpServer);
+            final String serviceProviderUserId = HttpUtil.getCommonNameFromServerCertificate(smpServer);
 
             final EventLog eventLog1 = EventLog.createEventLogPatientPrivacy(TransactionName.SMP_QUERY, EventActionCode.EXECUTE,
                     date2, EventOutcomeIndicator.FULL_SUCCESS, null, null, null,
