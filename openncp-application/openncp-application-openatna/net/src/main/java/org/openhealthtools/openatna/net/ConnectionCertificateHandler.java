@@ -38,6 +38,7 @@ public class ConnectionCertificateHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionCertificateHandler.class);
     private static final Logger LOGGER_CLINICAL = LoggerFactory.getLogger("LOGGER_CLINICAL");
     private static final String SERVER_EHEALTH_MODE = "server.ehealth.mode";
+    private static final String PRODUCTION = "PRODUCTION";
 
     private ConnectionCertificateHandler() {
     }
@@ -121,7 +122,7 @@ public class ConnectionCertificateHandler {
                         message.append("\n  Issuer: ").append(x509Certificate.getIssuerDN());
                     }
                 }
-                if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), "PRODUCTION") && LOGGER_CLINICAL.isDebugEnabled()) {
+                if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && LOGGER_CLINICAL.isDebugEnabled()) {
                     LOGGER_CLINICAL.debug(message.toString());
                 }
             }
@@ -150,7 +151,7 @@ public class ConnectionCertificateHandler {
                 message += "\n  Valid until: " + certificate.getNotAfter();
                 message += "\n  Issuer: " + certificate.getIssuerDN();
             }
-            if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), "PRODUCTION")
+            if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION)
                     && LOGGER_CLINICAL.isDebugEnabled()) {
                 LOGGER_CLINICAL.debug(message);
             }
@@ -183,7 +184,7 @@ public class ConnectionCertificateHandler {
                         message.append("\n  Issuer: ").append(x509Certificate.getIssuerDN());
                     }
                 }
-                if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), "PRODUCTION") && LOGGER_CLINICAL.isDebugEnabled()) {
+                if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && LOGGER_CLINICAL.isDebugEnabled()) {
                     LOGGER_CLINICAL.debug(message.toString());
                 }
             }

@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.openncp.core.common.ihe.eadc.extractor;
 
 import com.ibatis.common.jdbc.ScriptRunner;
+import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.EadcUtil;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.db.EadcDbConnect;
@@ -37,7 +38,6 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
             + "EADC_resources" + File.separator + "config" + File.separator + "config.xml";
     private static final String SERVER_EHEALTH_MODE = "server.ehealth.mode";
     public static final int ERROR_DESC_MAX_SIZE = 2000;
-    private static final String PRODUCTION = "PRODUCTION";
     private static final String INSERT_THE_FOLLOWING_SQL_QUERIES = "Insert the following sql-queries:\n'{}'";
     private static AutomaticDataCollectorImpl INSTANCE = null;
     private final Logger logger = LoggerFactory.getLogger(AutomaticDataCollectorImpl.class);
@@ -91,7 +91,7 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
 
         logger.debug("Processing a Transaction Object as Document");
         String sqlInsertStatementList = this.extractDataAndCreateAccordingSqlInserts(transaction);
-        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && loggerClinical.isDebugEnabled()) {
+        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && loggerClinical.isDebugEnabled()) {
             loggerClinical.debug(INSERT_THE_FOLLOWING_SQL_QUERIES, sqlInsertStatementList);
         }
         this.runSqlScript(dataSourceName, sqlInsertStatementList);
@@ -102,13 +102,13 @@ public class AutomaticDataCollectorImpl implements AutomaticDataCollector {
 
         logger.debug("Processing a Transaction Failure Object as Document");
         String sqlInsertStatementList = this.extractDataAndCreateAccordingSqlInserts(transaction);
-        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && loggerClinical.isDebugEnabled()) {
+        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && loggerClinical.isDebugEnabled()) {
             loggerClinical.debug(INSERT_THE_FOLLOWING_SQL_QUERIES, sqlInsertStatementList);
         }
         this.runSqlScript(dataSourceName, sqlInsertStatementList);
 
         String sqlInsertStatementError = this.createErrorSqlInserts(sqlInsertStatementList, errorDescription);
-        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), PRODUCTION) && loggerClinical.isDebugEnabled()) {
+        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && loggerClinical.isDebugEnabled()) {
             loggerClinical.debug(INSERT_THE_FOLLOWING_SQL_QUERIES, sqlInsertStatementError);
         }
         this.runSqlScript(dataSourceName, sqlInsertStatementError);
