@@ -3,6 +3,7 @@ package org.openhealthtools.openatna.audit.process;
 import eu.europa.ec.sante.openncp.common.audit.handler.MessageHandlerListener;
 import eu.europa.ec.sante.openncp.common.audit.serialization.AuditLogSerializer;
 import eu.europa.ec.sante.openncp.common.audit.serialization.AuditLogSerializerImpl;
+import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import org.apache.commons.lang3.StringUtils;
 import org.openhealthtools.openatna.anom.AtnaMessage;
 import org.openhealthtools.openatna.audit.AtnaFactory;
@@ -83,7 +84,7 @@ public class AtnaMessageListener implements SyslogListener<AtnaMessage>, Message
             boolean persisted = false;
             try {
                 persisted = service.process(atnaMessage);
-                if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), "PRODUCTION") && loggerClinical.isDebugEnabled()) {
+                if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && loggerClinical.isDebugEnabled()) {
                     logger.debug("[ATNA Listener] Syslog message '{}' persisted: '{}'\n'{}'", atnaMessage.getMessageId(),
                             persisted, new String(atnaMessage.getMessageContent(), StandardCharsets.UTF_8));
                 }

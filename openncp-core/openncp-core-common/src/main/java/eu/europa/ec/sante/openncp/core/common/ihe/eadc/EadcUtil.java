@@ -1,5 +1,6 @@
 package eu.europa.ec.sante.openncp.core.common.ihe.eadc;
 
+import eu.europa.ec.sante.openncp.common.configuration.util.ServerMode;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.ObjectFactory;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.Transaction;
 import eu.europa.ec.sante.openncp.core.common.ihe.eadc.datamodel.TransactionInfo;
@@ -67,7 +68,7 @@ public class EadcUtil {
         } else {
             transactionDocument = TransactionHelper.convertTransaction(transaction);
         }
-        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), "PRODUCTION") && LOGGER_CLINICAL.isDebugEnabled()) {
+        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && LOGGER_CLINICAL.isDebugEnabled()) {
             LOGGER_CLINICAL.debug("[EADC] XML Transaction:\n'{}'", xmlToString(transactionDocument));
         }
         EadcEntry eadcEntry = EadcFactory.INSTANCE.getEntry(datasource.toString(), transactionDocument, reqEnv, respEnv);
@@ -116,7 +117,7 @@ public class EadcUtil {
         } else {
             transactionDocument = TransactionHelper.convertTransaction(transaction);
         }
-        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), "PRODUCTION") && LOGGER_CLINICAL.isDebugEnabled()) {
+        if (!StringUtils.equals(System.getProperty(SERVER_EHEALTH_MODE), ServerMode.PRODUCTION.name()) && LOGGER_CLINICAL.isDebugEnabled()) {
             LOGGER_CLINICAL.debug("[EADC] XML Transaction:\n'{}'", xmlToString(transactionDocument));
         }
         EadcEntry eadcEntry = EadcFactory.INSTANCE.getEntry(datasource.toString(), transactionDocument, reqEnv, respEnv);

@@ -22,6 +22,17 @@
               ></v-combobox>
             </v-col>
 
+            <!--v-col>
+              <v-combobox
+                v-model="searchEventTypeCode"
+                clearable
+                label="Event Type Codes"
+                :items="EventTypeCodeItems"
+                single-line
+                hide-details
+              ></v-combobox>
+            </v-col-->
+
             <v-col>
               <v-text-field
                 v-model="activeParticipantId"
@@ -64,16 +75,7 @@
                 <input type="datetime-local" v-model="searchEventStartDate" />
               </v-menu>
             </v-col>
-            <v-col>
-              <v-combobox
-                v-model="messageType"
-                clearable
-                label="Message Type"
-                :items="MessageTypeItems"
-                single-line
-                hide-details
-              ></v-combobox>
-            </v-col>
+
             <v-col>
               <v-menu
                 v-model="searchEndDateMenu"
@@ -95,6 +97,18 @@
                 <input type="datetime-local" v-model="searchEventEndDate" />
               </v-menu>
             </v-col>
+
+            <v-col>
+              <v-combobox
+                v-model="messageType"
+                clearable
+                label="Message Type"
+                :items="MessageTypeItems"
+                single-line
+                hide-details
+              ></v-combobox>
+            </v-col>
+
             <v-col><v-btn block @click="searchDataFromApi(true)"> Search </v-btn></v-col>
           </v-row>
         </v-card-title>
@@ -178,12 +192,47 @@ export default {
         }
       ],
       EventIdCodeItems: [
+        '110100',
+        '110101',
+        '110102',
+        '110103',
+        '110104',
+        '110105',
+        '110106',
+        '110107',
+        '110150',
+        '110152',
+        '110153',
+        '110112',
+        '110113',
         'EHDSI-91',
         'EHDSI-92',
         'EHDSI-93',
         'EHDSI-94',
         'EHDSI-96',
         'EHDSI-CF',
+        'ITI-38',
+        'ITI-39',
+        'ITI-40',
+        'ITI-41',
+        'ITI-55'
+      ],
+      EventTypeCodeItems: [
+        'EHDSI-11',
+        'EHDSI-21',
+        'EHDSI-31',
+        'EHDSI-41',
+        'EHDSI-42',
+        'EHDSI-51',
+        'EHDSI-52',
+        'EHDSI-53',
+        'EHDSI-91',
+        'EHDSI-92',
+        'EHDSI-93',
+        'EHDSI-94',
+        'EHDSI-96',
+        'EHDSI-CF',
+        'EHDSI-193',
         'ITI-38',
         'ITI-39',
         'ITI-40',
@@ -229,6 +278,12 @@ export default {
       get () { return this.$store.getters.searchAtnaOpts.searchEventId },
       set (value) {
         this.$store.commit('searchAtnaOpts', { searchEventId: value })
+      }
+    },
+    searchEventTypeCode: {
+      get () { return this.$store.getters.searchAtnaOpts.searchEventTypeCode },
+      set (value) {
+        this.$store.commit('searchAtnaOpts', { searchEventTypeCode: value })
       }
     },
     activeParticipantId: {
