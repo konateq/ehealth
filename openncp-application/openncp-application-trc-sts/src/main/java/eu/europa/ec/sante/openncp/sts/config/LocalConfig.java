@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.sts;
+package eu.europa.ec.sante.openncp.sts.config;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
