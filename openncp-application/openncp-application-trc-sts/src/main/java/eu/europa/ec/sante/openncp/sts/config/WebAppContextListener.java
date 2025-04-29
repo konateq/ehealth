@@ -1,4 +1,4 @@
-package eu.europa.ec.sante.openncp.sts;
+package eu.europa.ec.sante.openncp.sts.config;
 
 
 import eu.europa.ec.sante.openncp.common.audit.AuditServiceFactory;
