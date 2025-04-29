@@ -17,7 +17,7 @@ import java.util.List;
 @Configuration
 public class SpringFoxConfig {
 
-    @Bean
+    @Bean(destroyMethod="")
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .securityContexts(List.of(securityContext()))
@@ -43,7 +43,7 @@ public class SpringFoxConfig {
         return List.of(new SecurityReference("JWT", authorizationScopes));
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public UiConfiguration uiConfig() {
         return UiConfigurationBuilder.builder()
                 .deepLinking(true)

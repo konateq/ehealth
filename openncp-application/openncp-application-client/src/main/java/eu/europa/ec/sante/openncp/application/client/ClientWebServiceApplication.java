@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Primary;
 @SpringBootApplication(scanBasePackages = {"eu.europa.ec.sante.openncp"})
 public class ClientWebServiceApplication extends SpringBootServletInitializer {
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     public ServerContext serverContext() {
         return ServerContext.of(NcpSide.NCP_B,

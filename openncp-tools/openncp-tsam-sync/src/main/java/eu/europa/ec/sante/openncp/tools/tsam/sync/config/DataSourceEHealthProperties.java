@@ -80,13 +80,13 @@ public class DataSourceEHealthProperties {
     @Autowired
     private Environment env;
 
-    @Bean
+    @Bean(destroyMethod="")
     @ConfigurationProperties(prefix = "spring.datasource.datasource2")
     public DataSource secondDataSource(){
         return DataSourceBuilder.create().build();
     }
 
-    @Bean("secondEntityManager")
+    @Bean(name="secondEntityManager", destroyMethod="")
     public LocalContainerEntityManagerFactoryBean secondEntityManager(){
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(secondDataSource());
@@ -101,7 +101,7 @@ public class DataSourceEHealthProperties {
         return em;
     }
 
-    @Bean(name = "secondPlatformTransactionManager")
+    @Bean(name = "secondPlatformTransactionManager", destroyMethod="")
     public PlatformTransactionManager secondPlatformTransactionManager(){
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(secondEntityManager().getObject());

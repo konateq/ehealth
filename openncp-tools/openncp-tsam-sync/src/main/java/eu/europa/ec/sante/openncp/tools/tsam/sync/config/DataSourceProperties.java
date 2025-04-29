@@ -82,14 +82,14 @@ public class DataSourceProperties {
     @Autowired
     private Environment env;
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     @ConfigurationProperties(prefix = "spring.datasource.datasource1")
     public DataSource firstDataSource(){
         return DataSourceBuilder.create().build();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(){
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
@@ -108,7 +108,7 @@ public class DataSourceProperties {
     }
 
     @Primary
-    @Bean
+    @Bean(destroyMethod="")
     public PlatformTransactionManager transactionManager(){
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());

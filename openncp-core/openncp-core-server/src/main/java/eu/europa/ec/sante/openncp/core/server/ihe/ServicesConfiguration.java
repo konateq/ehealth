@@ -53,7 +53,7 @@ public class ServicesConfiguration {
      *
      * @return a PatientSearchInterfaceWithDemographics implementation if available, or null otherwise.
      */
-    @Bean
+    @Bean(destroyMethod="")
     @ConditionalOnMissingBean
     public PatientSearchInterface patientSearchInterfaceWithDemographics() {
         return loadBeanViaServiceLoader(PatientSearchInterfaceWithDemographics.class)
@@ -100,7 +100,7 @@ public class ServicesConfiguration {
         }));
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @ConditionalOnMissingBean
     public DocumentSearchInterface documentSearchInterface() {
         return loadWithFallBack(DocumentSearchInterface.class, () -> Optional.of(new DocumentSearchInterface() {
@@ -146,7 +146,7 @@ public class ServicesConfiguration {
         }));
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @ConditionalOnMissingBean
     public DocumentSubmitInterface documentSubmitInterface() {
         return loadWithFallBack(DocumentSubmitInterface.class, () -> Optional.of(new DocumentSubmitInterface() {
@@ -168,7 +168,7 @@ public class ServicesConfiguration {
         }));
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @ConditionalOnMissingBean
     public DispatchingService dispatchingService() {
         return loadWithFallBack(DispatchingService.class, () -> Optional.of(new DispatchingService() {

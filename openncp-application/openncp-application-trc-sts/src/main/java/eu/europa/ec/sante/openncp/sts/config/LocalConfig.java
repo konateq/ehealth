@@ -25,19 +25,19 @@ import java.util.List;
 @EnableConfigurationProperties
 @Profile("local")
 public class LocalConfig {
-    @Bean
+    @Bean(destroyMethod="")
     @ConfigurationProperties(prefix = "spring.datasource.properties")
     public DataSourcePropertyHolder propertiesDataSourcePropertyHolder() {
         return new DataSourcePropertyHolder();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @ConfigurationProperties(prefix = "spring.datasource.tsam")
     public DataSourcePropertyHolder tsamDataSourcePropertyHolder() {
         return new DataSourcePropertyHolder();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public TomcatServletWebServerFactory tomcatFactory(final List<DataSourcePropertyHolder> dataSourcePropertyHolders) {
         final TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory() {
             @Override

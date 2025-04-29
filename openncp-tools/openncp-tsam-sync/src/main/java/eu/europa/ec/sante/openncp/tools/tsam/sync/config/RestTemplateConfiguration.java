@@ -22,7 +22,7 @@ public class RestTemplateConfiguration {
         this.proxyProperties = proxyProperties;
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public HttpClient httpClient() {
         HttpClientBuilder builder = HttpClientBuilder.create();
         if (!StringUtils.isEmpty(proxyProperties.getHost())) {
@@ -45,7 +45,7 @@ public class RestTemplateConfiguration {
         return builder.build();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public RestTemplate restTemplate() {
         return new RestTemplate(new SimpleClientHttpRequestFactory(httpClient()));
     }

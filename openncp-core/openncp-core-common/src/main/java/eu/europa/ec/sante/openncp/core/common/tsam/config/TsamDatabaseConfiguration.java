@@ -23,20 +23,20 @@ import javax.sql.DataSource;
     )
     @Configuration
     public class TsamDatabaseConfiguration {
-        @Bean
+        @Bean(destroyMethod="")
         @ConfigurationProperties(prefix = "spring.datasource.jndi.tsam")
         public JndiPropertyHolder tsamJndiPropertyHolder() {
             return new JndiPropertyHolder();
         }
 
-        @Bean
+        @Bean(destroyMethod="")
         public DataSource tsamDataSource() {
             final JndiDataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
             final DataSource dataSource = dataSourceLookup.getDataSource(tsamJndiPropertyHolder().getJndiName());
             return dataSource;
         }
 
-        @Bean
+        @Bean(destroyMethod="")
         public LocalContainerEntityManagerFactoryBean tsamEntityManagerFactory(EntityManagerFactoryBuilder builder) {
             return builder
                     .dataSource(tsamDataSource())
@@ -44,7 +44,7 @@ import javax.sql.DataSource;
                     .build();
         }
 
-        @Bean
+        @Bean(destroyMethod="")
         public PlatformTransactionManager tsamTransactionManager(@Qualifier("tsamEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
             return new JpaTransactionManager(entityManagerFactory);
         }

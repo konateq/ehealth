@@ -27,7 +27,7 @@ import java.util.Map;
 )
 public class AtnaConfiguration {
 
-    @Bean(name = "atnaDataSourceProperties")
+    @Bean(name = "atnaDataSourceProperties", destroyMethod="")
     @ConfigurationProperties(prefix = "spring.datasource.jndi.atna")
     public DataSourceProperties dataSourceProperties() {
         return new DataSourceProperties();
@@ -39,7 +39,7 @@ public class AtnaConfiguration {
         return dataSourceLookup.getDataSource(dataSourceProperties.getJndiName());
     }
 
-    @Bean(name = "atnaEntityManagerFactory")
+    @Bean(name = "atnaEntityManagerFactory", destroyMethod="")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(final EntityManagerFactoryBuilder builder,
                                                                        @Qualifier("atnaDataSource") final DataSource dataSource) {
         return builder
@@ -48,12 +48,12 @@ public class AtnaConfiguration {
                 .build();
     }
 
-    @Bean(name = "atnaTransactionManager")
+    @Bean(name = "atnaTransactionManager", destroyMethod="")
     public PlatformTransactionManager transactionManager(@Qualifier("atnaEntityManagerFactory") final EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public Jaxb2Marshaller marshaller() {
         final Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setPackagesToScan("net.RFC3881.dicom");

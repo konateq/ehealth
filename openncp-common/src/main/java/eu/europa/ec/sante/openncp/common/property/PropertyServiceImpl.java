@@ -1,6 +1,7 @@
 package eu.europa.ec.sante.openncp.common.property;
 
 import org.apache.commons.lang3.Validate;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

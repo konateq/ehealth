@@ -16,7 +16,7 @@ public class WebServiceConfig {
 
     private static final String BINDING_URI = "http://www.w3.org/2003/05/soap/bindings/HTTP/";
 
-    @Bean(name = Bus.DEFAULT_BUS_ID)
+    @Bean(name = Bus.DEFAULT_BUS_ID, destroyMethod="")
     public SpringBus springBus() {
         var springBus = new SpringBus();
         springBus.getFeatures().add(new LoggingFeature());
@@ -30,7 +30,7 @@ public class WebServiceConfig {
 //        return factory;
 //    }
 
-    @Bean
+    @Bean(destroyMethod="")
     public Endpoint endpoint(Bus bus, STSService stsService) {
         EndpointImpl endpoint = new EndpointImpl(bus, stsService);
         endpoint.setBindingUri(BINDING_URI);
@@ -38,7 +38,7 @@ public class WebServiceConfig {
         return endpoint;
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public Endpoint endpoint2(Bus bus, NextOfKinService nokService) {
         EndpointImpl endpoint = new EndpointImpl(bus, nokService);
         endpoint.setBindingUri(BINDING_URI);
