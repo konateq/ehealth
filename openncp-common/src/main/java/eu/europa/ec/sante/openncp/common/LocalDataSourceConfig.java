@@ -24,7 +24,7 @@ public class LocalDataSourceConfig {
         this.environment = environment;
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     public DataSource propertiesDataSource() {
         final DriverManagerDataSource dataSource = new DriverManagerDataSource();

@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Primary;
 public class ServerContextConfig {
     private static final Logger logger = LoggerFactory.getLogger(ServerContextConfig.class);
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     public ServerContext serverContext() {
         return ServerContext.of(NcpSide.CLIENT_CONNECTOR,

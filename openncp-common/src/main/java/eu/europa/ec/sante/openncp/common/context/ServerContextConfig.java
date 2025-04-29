@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration("officerServerContextConfig")
 public class ServerContextConfig {
 
-    @Bean
+    @Bean(destroyMethod="")
     public ServerContext defaultServerContext() {
         return ServerContext.of(NcpSide.OFFICER,
                 ServerMode.fromValue(System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE)));

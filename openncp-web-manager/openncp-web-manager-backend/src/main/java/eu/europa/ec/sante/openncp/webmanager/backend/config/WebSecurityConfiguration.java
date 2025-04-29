@@ -26,7 +26,7 @@ public class WebSecurityConfiguration {
         this.tokenProvider = tokenProvider;
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
@@ -45,7 +45,7 @@ public class WebSecurityConfiguration {
         return http.build();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @Order(0)
     SecurityFilterChain resources(HttpSecurity http) throws Exception {
         // @formatter:off
@@ -60,22 +60,22 @@ public class WebSecurityConfiguration {
         return http.build();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(tokenProvider);
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public UserDetailsService userDetailsService(UserRepository userRepository) {
         return new DefaultUserDetailsService(userRepository);
     }

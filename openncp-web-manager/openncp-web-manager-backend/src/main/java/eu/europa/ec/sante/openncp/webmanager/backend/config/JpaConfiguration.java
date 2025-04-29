@@ -17,7 +17,7 @@ import javax.sql.DataSource;
         entityManagerFactoryRef = "webmanagerEntityManagerFactory",
         transactionManagerRef = "webmanagerTransactionManager")
 public class JpaConfiguration {
-    @Bean
+    @Bean(destroyMethod="")
     public LocalContainerEntityManagerFactoryBean webmanagerEntityManagerFactory(final EntityManagerFactoryBuilder builder, @Qualifier("propertiesDataSource") final DataSource dataSource) {
         return builder
                 .dataSource(dataSource)
@@ -25,7 +25,7 @@ public class JpaConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public PlatformTransactionManager webmanagerTransactionManager(@Qualifier("webmanagerEntityManagerFactory") final EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }

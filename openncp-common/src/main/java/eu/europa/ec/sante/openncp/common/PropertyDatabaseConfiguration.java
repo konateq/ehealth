@@ -25,13 +25,13 @@ public class PropertyDatabaseConfiguration {
     @Configuration
     @Profile("!local")
     public static class PropertiesDatabaseConfiguration {
-        @Bean
+        @Bean(destroyMethod="")
         @ConfigurationProperties(prefix = "spring.datasource.jndi.properties")
         public JndiPropertyHolder propertiesJndiPropertyHolder() {
             return new JndiPropertyHolder();
         }
 
-        @Bean
+        @Bean(destroyMethod="")
         @Primary
         public DataSource propertiesDataSource() {
             final JndiDataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
@@ -42,7 +42,7 @@ public class PropertyDatabaseConfiguration {
     }
 
     @Primary
-    @Bean
+    @Bean(destroyMethod="")
     public LocalContainerEntityManagerFactoryBean propertiesEntityManagerFactory(final EntityManagerFactoryBuilder builder, final DataSource propertiesDataSource) {
         return builder
                 .dataSource(propertiesDataSource)
@@ -51,7 +51,7 @@ public class PropertyDatabaseConfiguration {
     }
 
     @Primary
-    @Bean
+    @Bean(destroyMethod="")
     public PlatformTransactionManager propertiesTransactionManager(@Qualifier("propertiesEntityManagerFactory") final EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
