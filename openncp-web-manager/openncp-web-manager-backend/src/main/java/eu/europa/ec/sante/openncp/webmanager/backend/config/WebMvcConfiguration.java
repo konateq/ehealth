@@ -23,7 +23,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
         registry.addMapping("/**").allowedOrigins("*").allowedMethods("GET", "POST", "PUT", "DELETE");
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @Profile("local")
     public TomcatServletWebServerFactory tomcatFactory(final Environment environment) {
         return new TomcatServletWebServerFactory() {

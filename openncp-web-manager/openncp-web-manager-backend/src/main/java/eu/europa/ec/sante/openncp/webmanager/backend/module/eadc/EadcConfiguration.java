@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 )
 public class EadcConfiguration {
 
-    @Bean(name = "eadcDataSourceProperties")
+    @Bean(name = "eadcDataSourceProperties", destroyMethod="")
     @ConfigurationProperties(prefix = "spring.datasource.jndi.eadc")
     public DataSourceProperties dataSourceProperties() {
         return new DataSourceProperties();
@@ -35,7 +35,7 @@ public class EadcConfiguration {
         return dataSourceLookup.getDataSource(dataSourceProperties.getJndiName());
     }
 
-    @Bean(name = "eadcEntityManagerFactory")
+    @Bean(name = "eadcEntityManagerFactory", destroyMethod="")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(final EntityManagerFactoryBuilder builder,
                                                                        @Qualifier("eadcDataSource") final DataSource dataSource) {
         return builder
@@ -44,7 +44,7 @@ public class EadcConfiguration {
                 .build();
     }
 
-    @Bean(name = "eadcTransactionManager")
+    @Bean(name = "eadcTransactionManager", destroyMethod="")
     public PlatformTransactionManager transactionManager(@Qualifier("eadcEntityManagerFactory") final EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }

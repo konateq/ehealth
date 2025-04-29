@@ -31,7 +31,7 @@ import java.util.UUID;
 public class WebServiceConfig {
     private static final Logger logger = LoggerFactory.getLogger(WebServiceConfig.class);
 
-    @Bean
+    @Bean(destroyMethod="")
     public LoggingFeature loggingFeature(ServerContext serverContext) {
         final LoggingFeature loggingFeature = new LoggingFeature();
         loggingFeature.setPrettyLogging(true);
@@ -45,14 +45,14 @@ public class WebServiceConfig {
         return loggingFeature;
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public PasswordEncryptor passwordEncryptor() {
         // We can just use a random password since this class is used to encrypt and decrypt the actual password.
         return new JasyptPasswordEncryptor(UUID.randomUUID().toString());
     }
 
 
-    @Bean
+    @Bean(destroyMethod="")
     public Merlin signatureCrypto(final ConfigurationManager configurationManager, final PasswordEncryptor passwordEncryptor) throws WSSecurityException, IOException {
         final Properties cryptoProperties = new Properties();
         cryptoProperties.put("org.apache.ws.security.crypto.merlin.truststore.file",
@@ -63,7 +63,7 @@ public class WebServiceConfig {
         return new Merlin(cryptoProperties, Thread.currentThread().getContextClassLoader(), passwordEncryptor);
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public Endpoint endpoint(final Bus bus,
                              final ClientServicePortType clientConnectorServicePortType,
                              final LoggingFeature loggingFeature,

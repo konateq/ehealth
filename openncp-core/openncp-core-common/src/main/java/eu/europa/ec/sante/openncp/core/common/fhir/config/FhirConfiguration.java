@@ -46,19 +46,19 @@ public class FhirConfiguration {
 
     final Logger LOG = LoggerFactory.getLogger(FhirConfiguration.class);
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     public FhirContext fhirContext() {
         return EuFhirContextFactory.createFhirContext();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @ConditionalOnExpression("${hapi.fhir.openapi.enabled:false} == true && ${hapi.fhir.openapi.secured:false} == true")
     public OpenApiInterceptor getSecuredOpenApiInterceptor() {
         return new SecuredOpenApiInterceptor();
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     @DependsOn("fhirContext")
     public FhirValidator fhirValidator(final FhirContext fhirContext) {
         final NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(fhirContext);
@@ -88,7 +88,7 @@ public class FhirConfiguration {
         return validator;
     }
 
-    @Bean
+    @Bean(destroyMethod="")
     public OpenApiInterceptor getUnSecuredOpenApiInterceptor() {
         return new UnsecuredOpenApiInterceptor();
     }
@@ -99,7 +99,7 @@ public class FhirConfiguration {
         @Value("${fhirserver.url:}")
         private String externalFhirServerUrl;
 
-        @Bean
+        @Bean(destroyMethod="")
         public IGenericClient getClient(final FhirContext context) {
             return context.newRestfulGenericClient(externalFhirServerUrl);
         }
@@ -139,7 +139,7 @@ public class FhirConfiguration {
             this.euCorsInterceptor = euCorsInterceptor;
         }
 
-        @Bean
+        @Bean(destroyMethod="")
         public ServletRegistrationBean<RestfulServer> fhirServerRegistrationBean() {
             final ServletRegistrationBean<RestfulServer> registration = new ServletRegistrationBean<>(this,
                     this.properties.getServer().getServletPath());

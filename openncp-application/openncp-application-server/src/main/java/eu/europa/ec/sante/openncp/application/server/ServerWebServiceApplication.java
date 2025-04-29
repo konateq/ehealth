@@ -13,11 +13,14 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
 
 @SpringBootApplication(scanBasePackages = {"eu.europa.ec.sante.openncp"})
-public class ServerWebServiceApplication extends SpringBootServletInitializer {
+public class ServerWebServiceApplication extends SpringBootServletInitializer implements ServletContextListener {
 
-    @Bean
+    @Bean(destroyMethod="")
     @Primary
     public ServerContext serverContext() {
         return ServerContext.of(NcpSide.NCP_A,
@@ -26,11 +29,15 @@ public class ServerWebServiceApplication extends SpringBootServletInitializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerWebServiceApplication.class);
 
-
     public static void main(final String... args) {
         SpringApplication.run(eu.europa.ec.sante.openncp.application.server.ServerWebServiceApplication.class, args);
 
         final String serverMode = System.getProperty(OpenNCPConstants.SERVER_EHEALTH_MODE);
         LOGGER.info("Server Mode: '{}'", StringUtils.isNotBlank(serverMode) ? serverMode : "N/A");
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent servletContextEvent) {
+        LOGGER.info("Web Application Destroyed");
     }
 }

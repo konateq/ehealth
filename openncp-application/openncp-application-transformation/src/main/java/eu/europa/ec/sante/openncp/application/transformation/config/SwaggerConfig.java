@@ -27,7 +27,7 @@ public class SwaggerConfig {
     private String contactName;
     private String contactEmail;
 
-    @Bean
+    @Bean(destroyMethod="")
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
