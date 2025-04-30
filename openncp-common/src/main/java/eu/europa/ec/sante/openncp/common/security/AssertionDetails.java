@@ -8,6 +8,7 @@ import eu.europa.ec.sante.openncp.common.immutables.Domain;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -61,7 +62,8 @@ public interface AssertionDetails {
         Validate.notNull(jwt, "Decoded JWT token must not be null");
 
         final Claim claim = jwt.getClaim(assertionType.name());
-        if (claim == null || claim.isNull()) {
+        // StringUtils.isBlank(claim.asString()) can (and should?) be replaced by claim.isMissing() from version 4 and onwards, see EHEALTH-13780
+        if (claim == null || claim.isNull() || StringUtils.isBlank(claim.asString())) {
             return Optional.empty();
         }
 
