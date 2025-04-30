@@ -11,13 +11,12 @@ import org.opensaml.xmlsec.signature.Q;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.soap.Detail;
 import java.util.Optional;
+import javax.xml.soap.Detail;
+import javax.xml.soap.SOAPFactory;
 
 @Component
 public class MyHealthEuSoapFaultInterceptor extends AbstractSoapInterceptor {
@@ -40,20 +39,15 @@ public class MyHealthEuSoapFaultInterceptor extends AbstractSoapInterceptor {
                 soapFault.setFaultCode(Fault.FAULT_CODE_SERVER);
                 soapFault.addSubCode(new QName(exceptionWithContext.getErrorCode().getCode()));
                 try{
-                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-                    factory.setNamespaceAware(true);
+                    SOAPFactory soapFactory = SOAPFactory.newInstance();
+                    Detail detail = soapFactory.createDetail();
 
-                    // Create a DocumentBuilder
-                    DocumentBuilder builder = factory.newDocumentBuilder();
+                    QName detailName = new QName(exceptionWithContext.getClass().getSimpleName());
+                    detail.addDetailEntry(detailName).addTextNode(exceptionWithContext.getMessage());
 
-                    // Create a new Document
-                    Document document = builder.newDocument();
-
-                    Element element = document.createElementNS("http://clientconnector.protocolterminator.openncp.epsos/","soapenv:" + exceptionWithContext.getClass().getSimpleName());
-                    element.setNodeValue(exceptionWithContext.getMessage());
-
-                    soapFault.setDetail(element);
+                    // Set the detail on the fault
+                    soapFault.setDetail(detail);
                 }catch (Exception e){
                     LOGGER.error("Error creating detail element: {} ", e.getMessage() );
                 }
