@@ -62,7 +62,7 @@ public interface AssertionDetails {
         Validate.notNull(jwt, "Decoded JWT token must not be null");
 
         final Claim claim = jwt.getClaim(assertionType.name());
-        // StringUtils.isBlank(claim.asString()) should be replaced claim.isMissing() from version 4 and onwards, see EHEALTH-13780
+        // StringUtils.isBlank(claim.asString()) can (and should?) be replaced by claim.isMissing() from version 4 and onwards, see EHEALTH-13780
         if (claim == null || claim.isNull() || StringUtils.isBlank(claim.asString())) {
             return Optional.empty();
         }
