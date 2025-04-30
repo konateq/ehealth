@@ -122,7 +122,7 @@ services:
         -Dtls_keystore_path=${TLS_KEYSTORE_PATH}
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
-      LOGGING_LEVEL_ROOT: DEBUG
+      LOGGING_LEVEL_ROOT: INFO
     networks:
       - openncp
   tomcat_node_b:
@@ -159,7 +159,7 @@ services:
         -Dtls_keystore_path=${TLS_KEYSTORE_PATH}
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
-      LOGGING_LEVEL_ROOT: DEBUG
+      LOGGING_LEVEL_ROOT: INFO
     networks:
       - openncp
   openncp-openatna:
@@ -192,7 +192,7 @@ services:
         -Dtls_keystore_path=${TLS_KEYSTORE_PATH}
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
-      LOGGING_LEVEL_ROOT: DEBUG
+      LOGGING_LEVEL_ROOT: INFO
     networks:
       - openncp
   openncp-trc-sts:
@@ -222,7 +222,7 @@ services:
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}
         -Dorg.apache.cxf.stax.allowInsecureParser=true"
-      LOGGING_LEVEL_ROOT: DEBUG
+      LOGGING_LEVEL_ROOT: INFO
     networks:
       - openncp
   openncp-translations-and-mappings:
@@ -257,7 +257,7 @@ services:
         -Dtls_keystore_path=${TLS_KEYSTORE_PATH}
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
-      LOGGING_LEVEL_ROOT: DEBUG
+      LOGGING_LEVEL_ROOT: INFO
     networks:
       - openncp
   openncp-web-manager-backend:
@@ -296,7 +296,7 @@ services:
         -Dtls_keystore_path=${TLS_KEYSTORE_PATH}
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
-      LOGGING_LEVEL_ROOT: DEBUG
+      LOGGING_LEVEL_ROOT: INFO
     networks:
       - openncp
   openncp-web-manager-frontend:
