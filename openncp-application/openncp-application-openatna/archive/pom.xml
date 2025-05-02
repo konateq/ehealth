@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.europa.ec.sante</groupId>
         <artifactId>openncp-application-openatna</artifactId>
-        <version>8.1.0-SNAPSHOT</version>
+        <version>8.1.0</version>
     </parent>
 
     <artifactId>openatna-archive</artifactId>
