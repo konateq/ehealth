@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:n1="urn:hl7-org:v3"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+>
 
     <xsl:variable name="currentProblemsSectionCode"
                   select="'11450-4'"/>
@@ -109,7 +109,7 @@
                                                     </th>
                                                 </tr>
                                                 <!-- Active Problems -->
-                                                <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="activeProblems"/>
+                                                <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[not(@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5')]" mode="activeProblems"/>
                                                 <!-- Rare Diseases -->
                                                 <tr>
                                                     <th class="subtitle" colspan="5">
@@ -119,7 +119,7 @@
                                                         </xsl:call-template>
                                                     </th>
                                                 </tr>
-                                                <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="rarediseases"/>
+                                                <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="rarediseases"/>
                                             </xsl:otherwise>
                                         </xsl:choose>
                                     </tbody>
@@ -132,7 +132,7 @@
         </div>
     </xsl:template>
 
-    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="rarediseases">
+    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="rarediseases">
 
         <xsl:variable name="problemCondition"
                       select="."/>
@@ -205,7 +205,7 @@
         </xsl:choose>
     </xsl:template>
 
-    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="activeProblems">
+    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[not(@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5')]" mode="activeProblems">
 
         <xsl:variable name="problemCondition"
                       select="."/>
