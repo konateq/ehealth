@@ -95,7 +95,7 @@
                                             </th>
                                         </tr>
                                         <!-- General Problems -->
-                                        <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="historyOfPastIllnesses"/>
+                                        <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[not(@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5')]" mode="historyOfPastIllnesses"/>
                                         <!-- Rare Diseases -->
                                         <tr>
                                             <th class="subtitle" colspan="7">
@@ -105,7 +105,7 @@
                                                 </xsl:call-template>
                                             </th>
                                         </tr>
-                                        <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="historyOfRareDiseases"/>
+                                        <xsl:apply-templates select="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="historyOfRareDiseases"/>
                                     </tbody>
                                 </table>
                             </div>
@@ -117,7 +117,7 @@
         <br />
     </xsl:template>
 
-    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="historyOfRareDiseases">
+    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5']" mode="historyOfRareDiseases">
 
         <xsl:variable name="problemCondition"
                       select="."/>
@@ -206,7 +206,7 @@
         </xsl:choose>
     </xsl:template>
 
-    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation/n1:value" mode="historyOfPastIllnesses">
+    <xsl:template match="n1:entry/n1:act/n1:entryRelationship[@typeCode='SUBJ']/n1:observation[n1:templateId/@root='1.3.6.1.4.1.12559.11.10.1.3.1.3.7']/n1:value[not(@codeSystem='1.3.6.1.4.1.12559.11.10.1.3.1.44.5')]" mode="historyOfPastIllnesses">
 
         <xsl:variable name="problemCondition"
                       select="."/>
