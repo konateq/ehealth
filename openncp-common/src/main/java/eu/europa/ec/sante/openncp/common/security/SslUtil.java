@@ -1,6 +1,5 @@
 package eu.europa.ec.sante.openncp.common.security;
 
-import eu.europa.ec.sante.openncp.common.configuration.util.Constants;
 import eu.europa.ec.sante.openncp.common.security.key.DefaultKeyStoreManager;
 import eu.europa.ec.sante.openncp.common.security.key.KeyStoreManager;
 import eu.europa.ec.sante.openncp.common.util.CertificatesDataHolder;
@@ -63,10 +62,10 @@ public class SslUtil {
     public static SSLSocketFactory getSSLSocketFactory(final CertificatesDataHolder certificatesDataHolder) {
         final KeyStoreManager keyStoreManager = DefaultKeyStoreManager.forConsumer(certificatesDataHolder);
 
-        try { String sigKeystorePassword = Constants.NCP_SIG_KEYSTORE_PASSWORD;
+        try {
             final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
             var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-            keyManagerFactory.init(keyStoreManager.getKeyStore(), sigKeystorePassword.toCharArray());
+            keyManagerFactory.init(keyStoreManager.getKeyStore(), certificatesDataHolder.getServiceConsumerData().get().getKeystorePassword().toCharArray());
             var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStoreManager.getTrustStore());
             sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new SecureRandom());

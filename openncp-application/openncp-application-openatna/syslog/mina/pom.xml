@@ -6,7 +6,7 @@
     <parent>
         <groupId>eu.europa.ec.sante</groupId>
         <artifactId>syslog</artifactId>
-        <version>8.1.0</version>
+        <version>8.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>syslog-mina</artifactId>
