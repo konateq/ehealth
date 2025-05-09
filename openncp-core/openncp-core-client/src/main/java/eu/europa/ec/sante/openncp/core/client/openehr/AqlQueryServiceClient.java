@@ -4,11 +4,14 @@ import eu.europa.ec.sante.openncp.common.configuration.RegisteredService;
 import eu.europa.ec.sante.openncp.core.common.HttpsClientConfiguration;
 import eu.europa.ec.sante.openncp.core.common.dynamicdiscovery.DynamicDiscoveryService;
 import eu.europa.ec.sante.openncp.core.common.openehr.domain.AdhocQueryExecute;
+import eu.europa.ec.sante.openncp.core.common.openehr.domain.CompositionRequest;
 import eu.europa.ec.sante.openncp.core.common.openehr.domain.ResultSet;
+import eu.europa.ec.sante.openncp.core.common.openehr.domain.TemplateRequest;
 import eu.europa.ec.sante.openncp.core.common.openehr.service.AqlQueryService;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -17,6 +20,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.WebRequest;
+
+import java.util.List;
 
 @Service
 public class AqlQueryServiceClient implements AqlQueryService {
@@ -52,7 +57,35 @@ public class AqlQueryServiceClient implements AqlQueryService {
         }
         HttpEntity<AdhocQueryExecute> entity = new HttpEntity<>(queryExecute, headers);
 
-        ResponseEntity<ResultSet> response = getRestTemplate().exchange(url, HttpMethod.POST, entity, ResultSet.class);
+        ResponseEntity<ResultSet> response = getRestTemplate().exchange(url + "/aql", HttpMethod.POST, entity, ResultSet.class);
+        return response.getBody();
+    }
+
+    @Override
+    public List<String> getAvailableTemplatesForPatient(TemplateRequest templateRequest, WebRequest request) {
+        String url = getTargetUrl(request);
+        HttpHeaders headers = new HttpHeaders();
+        if (request.getHeader(HttpHeaders.AUTHORIZATION) != null) {
+            headers.add(HttpHeaders.AUTHORIZATION, request.getHeader(HttpHeaders.AUTHORIZATION));
+        }
+        HttpEntity<TemplateRequest> entity = new HttpEntity<>(templateRequest, headers);
+
+        ResponseEntity<List<String>> response = getRestTemplate().exchange(url + "/templates", HttpMethod.POST, entity,
+                new ParameterizedTypeReference<List<String>>() {});
+        return response.getBody();
+    }
+
+    @Override
+    public List<String> getOpenEhrCompositions(CompositionRequest compositionRequest, WebRequest request) {
+        String url = getTargetUrl(request);
+        HttpHeaders headers = new HttpHeaders();
+        if (request.getHeader(HttpHeaders.AUTHORIZATION) != null) {
+            headers.add(HttpHeaders.AUTHORIZATION, request.getHeader(HttpHeaders.AUTHORIZATION));
+        }
+        HttpEntity<CompositionRequest> entity = new HttpEntity<>(compositionRequest, headers);
+
+        ResponseEntity<List<String>> response = getRestTemplate().exchange(url + "/compositions", HttpMethod.POST, entity,
+                new ParameterizedTypeReference<List<String>>() {});
         return response.getBody();
     }
 

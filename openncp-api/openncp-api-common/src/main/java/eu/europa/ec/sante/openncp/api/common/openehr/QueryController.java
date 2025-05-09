@@ -1,7 +1,9 @@
 package eu.europa.ec.sante.openncp.api.common.openehr;
 
 import eu.europa.ec.sante.openncp.core.common.openehr.domain.AdhocQueryExecute;
+import eu.europa.ec.sante.openncp.core.common.openehr.domain.CompositionRequest;
 import eu.europa.ec.sante.openncp.core.common.openehr.domain.ResultSet;
+import eu.europa.ec.sante.openncp.core.common.openehr.domain.TemplateRequest;
 import eu.europa.ec.sante.openncp.core.common.openehr.service.AqlQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * Controller for executing AQL queries.
@@ -36,5 +39,19 @@ public class QueryController {
                                                        WebRequest request) {
         ResultSet resultSet = aqlQueryService.executeAdhocQuery(queryRequest, request);
         return ResponseEntity.ok(resultSet);
+    }
+
+    @PostMapping(path = "/templates")
+    public ResponseEntity<List<String>> getOpenEhrTemplates(@RequestBody @Valid TemplateRequest templateRequest,
+                                                               WebRequest request) {
+        List<String> list = aqlQueryService.getAvailableTemplatesForPatient(templateRequest, request);
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping(path = "/compositions")
+    public ResponseEntity<List<String>> getOpenEhrCompositions(@RequestBody @Valid CompositionRequest compositionRequest,
+                                                               WebRequest request) {
+        List<String> list = aqlQueryService.getOpenEhrCompositions(compositionRequest, request);
+        return ResponseEntity.ok(list);
     }
 }

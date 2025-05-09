@@ -155,7 +155,7 @@ services:
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
       LOGGING_LEVEL_ROOT: INFO
       FHIRSERVER_URL: "https://sandbox.hl7europe.eu/laboratory/fhir/"
-      OPENEHR_ENDPOINTS_QUERY_URL: "https://sandbox.ehrbase.org/ehrbase/rest/openehr/v1/query"
+      OPENEHR_ENDPOINTS_QUERY_URL: "https://sandbox.ehrbase.org/ehrbase/rest/openehr/v1"
     networks:
       - openncp
   tomcat_node_b:

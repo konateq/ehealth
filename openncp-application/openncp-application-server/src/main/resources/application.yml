@@ -30,7 +30,10 @@ fhirserver:
 openehr:
   endpoints:
     query:
-      url: https://sandbox.ehrbase.org/ehrbase/rest/openehr/v1/query
+      url: https://sandbox.ehrbase.org/ehrbase/rest/openehr/v1
+      user: ""
+      pass: ""
+      token: ""
 fhir:
   server:
     inclusion: true
