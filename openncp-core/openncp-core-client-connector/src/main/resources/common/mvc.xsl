@@ -9,6 +9,7 @@
     <!-- Global variables -->
     <xsl:param name="userLang" select="'en-GB'"/>
     <xsl:param name="epsosLangDir" select="'../EpsosRepository'"/>
+    <xsl:param name="normalizedEpsosLangDir" select="translate($epsosLangDir, '\', '/')"/>
     <xsl:param name="defaultUserLang" select="'en-GB'"/>
 
     <!-- eHDSIAbsentOrUnknownAllergy -->
@@ -319,12 +320,9 @@
     <xsl:template name="show-eHDSIDisplayLabel">
         <xsl:param name="code"/>
         <xsl:variable name="dirFile"
-                      select="concat($epsosLangDir,'/1.3.6.1.4.1.12559.11.10.1.3.1.42.46.xml')"/>
+                      select="concat($normalizedEpsosLangDir,'/1.3.6.1.4.1.12559.11.10.1.3.1.42.46.xml')"/>
         <xsl:variable name="foundKey"
-                      select="document(concat('file://', $dirFile))/ValueSet/concept[@code=$code]"/>
-        <!-- Windows format -->
-        <!-- <xsl:variable name="foundKey"
-                      select="document(concat('file:///', translate($dirFile,'\','/')))/ValueSet/concept[@code=$code]"/> -->
+                      select="document($dirFile)/ValueSet/concept[@code=$code]"/>
         <xsl:variable name="foundKeyLang"
                       select="$foundKey/designation[@lang=$userLang]"/>
         <xsl:variable name="defFoundKeyLang"
@@ -698,12 +696,10 @@
         <xsl:param name="code"/>
         <xsl:param name="xmlFile"/>
         <xsl:param name="codeSystem"/>
-        <xsl:variable name="dirFile" select="concat($epsosLangDir,'/',$xmlFile)"/>
+        <xsl:variable name="dirFile"
+                      select="concat($normalizedEpsosLangDir,'/', $xmlFile)"/>
         <xsl:variable name="foundKey"
-                      select="document(concat('file://', $dirFile))/ValueSet/concept[@code=$code and @codeSystem=$codeSystem]"/>
-        <!-- Windows format -->
-        <!--<xsl:variable name="foundKey"
-                      select="document(concat('file:///', translate($dirFile,'\','/')))/ValueSet/concept[@code=$code and @codeSystem=$codeSystem]"/> -->
+                      select="document($dirFile)/ValueSet/concept[@code=$code and @codeSystem=$codeSystem]"/>
         <xsl:variable name="foundKeyLang" select="$foundKey/designation[@lang=$userLang]"/>
         <xsl:variable name="defFoundKeyLang" select="$foundKey/designation[@lang=$defaultUserLang]"/>
         <xsl:choose>
