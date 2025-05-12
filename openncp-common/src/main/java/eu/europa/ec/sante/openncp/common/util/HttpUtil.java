@@ -9,7 +9,6 @@ import org.cryptacular.util.CertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocket;
 import javax.servlet.http.HttpServletRequest;
 import java.io.FileInputStream;
@@ -62,7 +61,6 @@ public class HttpUtil {
 
         LOGGER.debug("Trying to find certificate from : '{}'", endpoint);
         String result = WARNING_NO_CERTIFICATE_FOUND;
-        HttpsURLConnection urlConnection = null;
 
         final CertificatesDataHolder certificatesDataHolder = CertificatesDataHolder.builder()
                 .trustoreData(CertificatesDataHolder.CertificateData.builder()
@@ -95,7 +93,7 @@ public class HttpUtil {
                     }
                 }
             }
-        } catch (final IOException e) {
+        } catch (final Throwable e) {
             LOGGER.error(String.format("Error fetching the server certificate at [%s] with exception message [%s]", endpoint, e.getMessage()), e);
         }
         LOGGER.debug("Server Certificate: '{}'", result);
