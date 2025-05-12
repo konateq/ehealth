@@ -65,7 +65,11 @@ public class SslUtil {
         try {
             final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
             var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-            keyManagerFactory.init(keyStoreManager.getKeyStore(), certificatesDataHolder.getServiceConsumerData().get().getKeystorePassword().toCharArray());
+            keyManagerFactory.init(keyStoreManager.getKeyStore(), certificatesDataHolder
+                    .getServiceConsumerData()
+                    .orElseThrow(() -> new RuntimeException("No ServiceConsumerData found in certificateDataHolder found"))
+                    .getKeystorePassword()
+                    .toCharArray());
             var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStoreManager.getTrustStore());
             sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new SecureRandom());

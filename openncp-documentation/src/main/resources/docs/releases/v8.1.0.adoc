@@ -1,0 +1,11 @@
+
+=== Release 8.1.0
+
+==== Breaking changes
+
+A new property needs to be added to the EHNCP_PROPERTY database: `AVAILABLE_TRANSLATION_LANGUAGES` with an empty value.
+
+==== Other
+
+This release contains additional bugfixes.
+
