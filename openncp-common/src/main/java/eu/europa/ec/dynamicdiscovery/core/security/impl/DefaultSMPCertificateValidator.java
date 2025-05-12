@@ -3,13 +3,11 @@ package eu.europa.ec.dynamicdiscovery.core.security.impl;
 import eu.europa.ec.dynamicdiscovery.core.security.ISMPCertificateValidator;
 import eu.europa.ec.dynamicdiscovery.exception.SignatureException;
 import eu.europa.ec.dynamicdiscovery.exception.TechnicalException;
-import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.UnrecoverableEntryException;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
@@ -17,13 +15,10 @@ import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * TODO: This class needs to be removed as soon as the issue reported is fixed by the dynamic discovery team
- * Override of the class of the same name in dinamycdiscovery because of https://citnet.tech.ec.europa.eu/CITnet/jira/browse/EHEALTH-12803
+ * Override of the class of the same name in dynamicdiscovery because of https://citnet.tech.ec.europa.eu/CITnet/jira/browse/EHEALTH-12803
  */
 
 public class DefaultSMPCertificateValidator implements ISMPCertificateValidator {
