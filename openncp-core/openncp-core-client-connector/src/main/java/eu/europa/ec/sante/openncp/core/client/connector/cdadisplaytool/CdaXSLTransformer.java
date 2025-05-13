@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.XMLConstants;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
@@ -123,6 +120,41 @@ public class CdaXSLTransformer {
 
             final TransformerFactory transformerFactory = TransformerFactory.newInstance();
             transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            final URIResolver defaultUriResolver = transformerFactory.getURIResolver();
+            transformerFactory.setURIResolver((href, base) -> {
+                try {
+                    // First try as classpath resource
+                    final InputStream classpathStream = getClass().getResourceAsStream(href);
+                    if (classpathStream != null) {
+                        return new StreamSource(classpathStream);
+                    }
+
+                    // if that fails, try as file
+                    final File file = new File(href);
+                    if (file.exists()) {
+                        return new StreamSource(file);
+                    }
+
+                    // try with file:// prefix
+                    final File fileWithNormalPrefix = new File(href.replace("file://", ""));
+                    if (fileWithNormalPrefix.exists()) {
+                        return new StreamSource(fileWithNormalPrefix);
+                    }
+
+                    // try with file:// prefix
+                    final File fileWithWindowsPrefix = new File(href.replace("file:///", ""));
+                    if (fileWithWindowsPrefix.exists()) {
+                        return new StreamSource(fileWithWindowsPrefix);
+                    }
+
+                    // finally try it with the original default URI resolver of
+                    return defaultUriResolver.resolve(href, base);
+                } catch (final Exception e) {
+                    throw new TransformerException("Failed to resolve: " + href, e);
+                }
+            });
+
+
             final Transformer transformer = transformerFactory.newTransformer(xslSource);
             transformer.setOutputProperty(OutputKeys.ENCODING, StandardCharsets.UTF_8.name());
             transformer.setParameter("epsosLangDir", path);
