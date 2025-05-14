@@ -19,7 +19,8 @@ public enum RegisteredService {
     EHDSI_91("EHDSI-91", "urn:ehealth:CountryBIdentityProvider::identityProvider::HPAuthentication##EHDSI-91"),
     EHEALTH_105("ehealth-105", "urn:ehealth:VPN::VPNGatewayServer##ehealth-105"),
     EHEALTH_106("ehealth-106", "urn:ehealth:VPN::VPNGatewayClient##ehealth-106"),
-    EHEALTH_107("ehealth-107", "urn:ehealth:ISM::InternationalSearchMask##ehealth-107");
+    EHEALTH_107("ehealth-107", "urn:ehealth:ISM::InternationalSearchMask##ehealth-107"),
+    OPENEHR_QUERY_SERVICE("openEHRQueryService", "urn:ehealth:openEHRQueryService");
 
     private static final Map<String, RegisteredService> MAP = Stream.of(RegisteredService.values()).collect(Collectors.toMap(RegisteredService::getServiceName, Function.identity()));
     private final String serviceName;

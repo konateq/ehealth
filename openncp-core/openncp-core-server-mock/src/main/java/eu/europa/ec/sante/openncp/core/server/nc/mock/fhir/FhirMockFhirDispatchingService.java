@@ -11,6 +11,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,6 +23,8 @@ public class FhirMockFhirDispatchingService implements FhirDispatchingService {
 
     private final HapiWebClientFactory webClientFactory;
 
+    @Value("${fhirserver.url}")
+    private String fhirServerBaseUrl;
 
     public FhirMockFhirDispatchingService(final FhirContext fhirContext, final HapiWebClientFactory webClientFactory) {
         this.fhirContext = Validate.notNull(fhirContext, "FhirContext cannot be null");
@@ -33,7 +36,7 @@ public class FhirMockFhirDispatchingService implements FhirDispatchingService {
     public <T extends IBaseResource> T dispatchSearch(final DispatchContext dispatchContext) {
         Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
 
-        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
+        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient(fhirServerBaseUrl);
         final Bundle result = hapiWebClient.dispatchSearch(dispatchContext);
 
         return (T) result;
@@ -44,14 +47,14 @@ public class FhirMockFhirDispatchingService implements FhirDispatchingService {
     @SuppressWarnings("unchecked")
     public <T extends IBaseResource> T dispatchRead(final DispatchContext dispatchContext) {
         Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
-        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
+        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient(fhirServerBaseUrl);
         return hapiWebClient.dispatchRead(dispatchContext);
     }
 
     @Override
     public MethodOutcome dispatchWrite(final DispatchContext dispatchContext, final IBaseResource resourceToCreate) {
         Validate.notNull(dispatchContext, "The dispatchContext cannot be null");
-        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient("https://sandbox.hl7europe.eu/laboratory/fhir/");
+        final FhirDispatchingClient hapiWebClient = webClientFactory.createClient(fhirServerBaseUrl);
         return hapiWebClient.dispatchWrite(dispatchContext, resourceToCreate);
     }
 }
