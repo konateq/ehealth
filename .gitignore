@@ -43,3 +43,7 @@ atlassian-ide-plugin.xml
 /openncp-core/openncp-core-server/overlays/
 /openncp-application/openncp-application-server/overlays/
 /openncp-docker/logs/
+
+.DS_Store
+*-local.yml
+*.log

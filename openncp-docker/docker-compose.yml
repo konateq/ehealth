@@ -154,6 +154,8 @@ services:
         -Dtls_truststore_pwd=${TLS_TRUSTSTORE_PWD}
         -Dtls_truststore_path=${TLS_TRUSTSTORE_PATH}"
       LOGGING_LEVEL_ROOT: INFO
+      FHIRSERVER_URL: "https://sandbox.hl7europe.eu/laboratory/fhir/"
+      OPENEHR_ENDPOINTS_QUERY_URL: "https://sandbox.ehrbase.org/ehrbase/rest/openehr/v1"
     networks:
       - openncp
   tomcat_node_b:
@@ -273,8 +275,8 @@ services:
         condition: service_healthy
       openncp-configuration-utility:
         condition: service_completed_successfully
-#      openncp-tsam-sync:
-#        condition: service_completed_successfully
+    #      openncp-tsam-sync:
+    #        condition: service_completed_successfully
     environment:
       CATALINA_OPTS: "
         -DopenATNA.properties.path=file:/opt/openncp-configuration/ATNA_resources/openatna.properties

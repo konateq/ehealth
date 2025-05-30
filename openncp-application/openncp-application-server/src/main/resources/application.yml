@@ -27,11 +27,18 @@ logging:
     ca.uhn.fhir.jaxrs: debug
 fhirserver:
   url: https://sandbox.hl7europe.eu/laboratory/fhir
+openehr:
+  endpoints:
+    query:
+      url: https://sandbox.ehrbase.org/ehrbase/rest/openehr/v1
+      user: ""
+      pass: ""
+      token: ""
 fhir:
   server:
     inclusion: true
 server:
-    max-http-header-size: 1MB
+  max-http-header-size: 1MB
 spring:
   jpa:
     generate-ddl: true
